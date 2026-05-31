@@ -9,6 +9,8 @@ Rails.application.routes.draw do
 
   root to: redirect("/users/sign_in")
 
+  resources :shops, only: %i[index show edit update]
+
   resources :payments, only: %i[index show] do
     resource :timeline, only: :show, controller: "payment_timelines"
     member do

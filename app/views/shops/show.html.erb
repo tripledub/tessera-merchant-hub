@@ -1,0 +1,37 @@
+<% content_for :title, @shop.name %>
+
+<div class="px-4 sm:px-6 lg:px-8 max-w-2xl">
+  <div class="mb-6 flex items-center justify-between">
+    <%= link_to "← Back", :back, class: "text-sm text-indigo-600 hover:text-indigo-900" %>
+    <% if policy(@shop).update? %>
+      <%= link_to "Edit", edit_shop_path(@shop),
+            class: "px-4 py-2 bg-indigo-600 text-white text-sm rounded-md hover:bg-indigo-700" %>
+    <% end %>
+  </div>
+
+  <h1 class="text-2xl font-semibold text-gray-900"><%= @shop.name %></h1>
+
+  <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="bg-gray-50 rounded-lg px-4 py-4">
+      <dt class="text-xs font-medium text-gray-500 uppercase">Shop ID</dt>
+      <dd class="mt-1 text-sm font-mono text-gray-900"><%= @shop.shop_id %></dd>
+    </div>
+
+    <div class="bg-gray-50 rounded-lg px-4 py-4">
+      <dt class="text-xs font-medium text-gray-500 uppercase">Mode</dt>
+      <dd class="mt-1">
+        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
+          <%= @shop.test_mode? ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800' %>">
+          <%= @shop.test_mode? ? "Test" : "Live" %>
+        </span>
+      </dd>
+    </div>
+
+    <div class="bg-gray-50 rounded-lg px-4 py-4 sm:col-span-2">
+      <dt class="text-xs font-medium text-gray-500 uppercase">Notification URL</dt>
+      <dd class="mt-1 text-sm text-gray-900 break-all">
+        <%= @shop.notification_url.presence || "Not set" %>
+      </dd>
+    </div>
+  </dl>
+</div>

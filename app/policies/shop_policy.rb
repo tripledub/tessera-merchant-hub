@@ -6,7 +6,7 @@ class ShopPolicy < ApplicationPolicy
   end
 
   def show?
-    psp_role? || user.shop_id == record.id
+    psp_role? || user.shop_id == record.shop_id
   end
 
   def update?
@@ -17,9 +17,9 @@ class ShopPolicy < ApplicationPolicy
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      return scope if user.psp_role?
+      return scope.all if user.psp_role?
 
-      scope.where(id: user.shop_id)
+      scope.where(shop_id: user.shop_id)
     end
   end
 end
