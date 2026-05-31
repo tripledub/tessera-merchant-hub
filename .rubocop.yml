@@ -1,9 +1,12 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
-require:
+plugins:
   - rubocop-performance
   - rubocop-rspec
+
+AllCops:
+  NewCops: enable
 
 # Overwrite or add rules to create your own house style
 RSpec/MultipleExpectations:
@@ -11,3 +14,11 @@ RSpec/MultipleExpectations:
 
 RSpec/ExampleLength:
   Max: 20
+
+# Policy specs need multiple role users — raise the limit
+RSpec/MultipleMemoizedHelpers:
+  Max: 8
+
+# Struct stubs in policy specs are guarded with unless defined?
+RSpec/LeakyConstantDeclaration:
+  Enabled: false

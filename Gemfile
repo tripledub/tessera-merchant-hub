@@ -61,6 +61,7 @@ group :development, :test do
 
   gem "rspec-rails"
   gem "factory_bot_rails"
+  gem "pundit-matchers"
   gem "shoulda-matchers"
   gem "webmock"
   gem "simplecov", require: false
