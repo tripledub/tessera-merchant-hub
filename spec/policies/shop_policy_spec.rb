@@ -1,15 +1,15 @@
 require "rails_helper"
 
 RSpec.describe ShopPolicy, type: :policy do
-  Shop = Struct.new(:id) unless defined?(Shop)
+  ShopStub = Struct.new(:shop_id) unless defined?(ShopStub)
 
   let(:psp_admin)       { build_stubbed(:user, :psp_admin) }
   let(:psp_support)     { build_stubbed(:user, :psp_support) }
   let(:merchant_admin)  { build_stubbed(:user, :merchant_admin, shop_id: "shop_1") }
   let(:merchant_viewer) { build_stubbed(:user, :merchant_viewer, shop_id: "shop_1") }
 
-  let(:own_shop)   { Shop.new("shop_1") }
-  let(:other_shop) { Shop.new("shop_2") }
+  let(:own_shop)   { ShopStub.new("shop_1") }
+  let(:other_shop) { ShopStub.new("shop_2") }
 
   describe "index?" do
     it "permits psp_admin" do
