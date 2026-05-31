@@ -11,6 +11,10 @@ Rails.application.routes.draw do
 
   resources :payments, only: %i[index show] do
     resource :timeline, only: :show, controller: "payment_timelines"
+    member do
+      post :refund
+      post :void
+    end
   end
 
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)

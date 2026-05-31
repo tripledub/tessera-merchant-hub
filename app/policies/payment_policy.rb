@@ -9,6 +9,14 @@ class PaymentPolicy < ApplicationPolicy
     psp_role? || own_shop?(record)
   end
 
+  def refund?
+    (psp_role? || merchant_admin?) && (psp_role? || own_shop?(record))
+  end
+
+  def void?
+    refund?
+  end
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       return scope if user.psp_role?
