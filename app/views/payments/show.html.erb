@@ -44,6 +44,25 @@
     </div>
   </dl>
 
+  <%# Actions %>
+  <% if PaymentPolicy.new(current_user, @payment).refund? %>
+    <div class="mt-6 flex gap-3">
+      <% if @payment.status == "succeeded" %>
+        <%= button_to "Refund", refund_payment_path(@payment.id),
+              method: :post,
+              params: { amount: @payment.amount },
+              data: { turbo_confirm: "Submit a full refund of #{number_to_currency(@payment.amount / 100.0, unit: @payment.currency + ' ')}?" },
+              class: "px-4 py-2 bg-red-600 text-white text-sm rounded-md hover:bg-red-700 font-medium" %>
+      <% end %>
+      <% if @payment.status == "authorized" %>
+        <%= button_to "Void", void_payment_path(@payment.id),
+              method: :post,
+              data: { turbo_confirm: "Void this authorisation?" },
+              class: "px-4 py-2 bg-yellow-600 text-white text-sm rounded-md hover:bg-yellow-700 font-medium" %>
+      <% end %>
+    </div>
+  <% end %>
+
   <%# Tab links for future timeline/webhook views %>
   <div class="mt-8 border-b border-gray-200">
     <nav class="-mb-px flex gap-6">
