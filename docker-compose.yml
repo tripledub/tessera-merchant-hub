@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: merchanthub
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: merchanthub_development
+    ports:
+      - "5433:5432"  # 5433 to avoid clashing with tessera-core on 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build: .
+    command: bin/rails server -b 0.0.0.0
+    volumes:
+      - .:/rails
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://merchanthub:password@db:5432/merchanthub_development
+      TESSERA_CORE_URL: http://host.docker.internal:4000
+      TESSERA_INTERNAL_API_KEY: changeme
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:
