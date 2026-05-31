@@ -9,7 +9,9 @@ Rails.application.routes.draw do
 
   root to: redirect("/users/sign_in")
 
-  resources :payments, only: %i[index show]
+  resources :payments, only: %i[index show] do
+    resource :timeline, only: :show, controller: "payment_timelines"
+  end
 
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest

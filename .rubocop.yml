@@ -15,10 +15,14 @@ RSpec/MultipleExpectations:
 RSpec/ExampleLength:
   Max: 20
 
-# Policy specs need multiple role users — raise the limit
+# Policy and request specs legitimately need multiple role users / records
 RSpec/MultipleMemoizedHelpers:
-  Max: 8
+  Max: 10
 
 # Struct stubs in policy specs are guarded with unless defined?
 RSpec/LeakyConstantDeclaration:
+  Enabled: false
+
+# let! is intentional for test data that must exist in the DB before the example runs
+RSpec/LetSetup:
   Enabled: false
