@@ -63,6 +63,9 @@ group :development, :test do
   gem "factory_bot_rails"
   gem "shoulda-matchers"
   gem "webmock"
+  gem "simplecov", require: false
+  gem "rubocop-performance", require: false
+  gem "rubocop-rspec", require: false
 
   # Audits gems for known security defects (use config/bundler-audit.yml to ignore issues)
   gem "bundler-audit", require: false
