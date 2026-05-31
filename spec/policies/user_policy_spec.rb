@@ -3,11 +3,11 @@ require "rails_helper"
 RSpec.describe UserPolicy, type: :policy do
   let(:psp_admin)       { build_stubbed(:user, :psp_admin) }
   let(:psp_support)     { build_stubbed(:user, :psp_support) }
-  let(:merchant_admin)  { build_stubbed(:user, :merchant_admin, shop_id: 1) }
-  let(:merchant_viewer) { build_stubbed(:user, :merchant_viewer, shop_id: 1) }
+  let(:merchant_admin)  { build_stubbed(:user, :merchant_admin, shop_id: "shop_1") }
+  let(:merchant_viewer) { build_stubbed(:user, :merchant_viewer, shop_id: "shop_1") }
 
-  let(:same_shop_user)  { build_stubbed(:user, :merchant_viewer, shop_id: 1) }
-  let(:other_shop_user) { build_stubbed(:user, :merchant_viewer, shop_id: 2) }
+  let(:same_shop_user)  { build_stubbed(:user, :merchant_viewer, shop_id: "shop_1") }
+  let(:other_shop_user) { build_stubbed(:user, :merchant_viewer, shop_id: "shop_2") }
 
   describe "index?" do
     it "permits psp_admin" do

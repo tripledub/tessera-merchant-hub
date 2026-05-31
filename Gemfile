@@ -50,7 +50,7 @@ gem "pundit"
 gem "tailwindcss-rails"
 
 # Pagination
-gem "pagy"
+gem "pagy", "~> 9.4"
 
 # HTTP client for tessera-core API calls
 gem "faraday"
