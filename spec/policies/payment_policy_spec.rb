@@ -5,11 +5,11 @@ RSpec.describe PaymentPolicy, type: :policy do
 
   let(:psp_admin)       { build_stubbed(:user, :psp_admin) }
   let(:psp_support)     { build_stubbed(:user, :psp_support) }
-  let(:merchant_admin)  { build_stubbed(:user, :merchant_admin, shop_id: 1) }
-  let(:merchant_viewer) { build_stubbed(:user, :merchant_viewer, shop_id: 1) }
+  let(:merchant_admin)  { build_stubbed(:user, :merchant_admin, shop_id: "shop_1") }
+  let(:merchant_viewer) { build_stubbed(:user, :merchant_viewer, shop_id: "shop_1") }
 
-  let(:own_payment)   { Payment.new(1) }
-  let(:other_payment) { Payment.new(2) }
+  let(:own_payment)   { Payment.new("shop_1") }
+  let(:other_payment) { Payment.new("shop_2") }
 
   describe "index?" do
     subject { described_class.new(user, Payment) }
@@ -54,16 +54,16 @@ RSpec.describe PaymentPolicy, type: :policy do
   end
 
   describe "Scope" do
-    let(:all_payments) { [ Payment.new(1), Payment.new(2), Payment.new(3) ] }
-
-    it "returns all payments for PSP roles" do
-      scope = PaymentPolicy::Scope.new(psp_admin, all_payments)
-      expect(scope.resolve).to eq(all_payments)
+    it "returns all payments for PSP roles (passes scope through)" do
+      ar_scope = Tessera::Payment.all
+      scope = PaymentPolicy::Scope.new(psp_admin, ar_scope)
+      expect(scope.resolve).to eq(ar_scope)
     end
 
     it "returns only own shop payments for merchant roles" do
-      scope = PaymentPolicy::Scope.new(merchant_admin, all_payments)
-      expect(scope.resolve).to contain_exactly(Payment.new(1))
+      ar_scope = Tessera::Payment.all
+      scope = PaymentPolicy::Scope.new(merchant_admin, ar_scope)
+      expect(scope.resolve.to_sql).to include("shop_1")
     end
   end
 end

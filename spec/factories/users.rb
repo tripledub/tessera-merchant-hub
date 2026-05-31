@@ -17,12 +17,12 @@ FactoryBot.define do
 
     trait :merchant_admin do
       role { :merchant_admin }
-      sequence(:shop_id) { |n| n }
+      sequence(:shop_id) { |n| "shop_#{n}" }
     end
 
     trait :merchant_viewer do
       role { :merchant_viewer }
-      sequence(:shop_id) { |n| n }
+      sequence(:shop_id) { |n| "shop_#{n}" }
     end
   end
 end
