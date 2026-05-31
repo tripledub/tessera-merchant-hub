@@ -2,8 +2,9 @@ name: CI
 
 on:
   pull_request:
+    branches: [main]
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   scan_ruby:
@@ -11,45 +12,52 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
+          ruby-version: .ruby-version
           bundler-cache: true
 
-      - name: Scan for common Rails security vulnerabilities using static analysis
+      - name: Scan for Rails security vulnerabilities (Brakeman)
         run: bin/brakeman --no-pager
-      
-      - name: Scan for known security vulnerabilities in gems used
-        run: bin/bundler-audit
-      
+
+      - name: Scan for gem CVEs (bundler-audit)
+        run: bin/bundler-audit check --update
+
+      - name: Check for retired / yanked gems
+        run: bundle exec bundler-audit check --update
+
   scan_js:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
+          ruby-version: .ruby-version
           bundler-cache: true
 
-      - name: Scan for security vulnerabilities in JavaScript dependencies
+      - name: Scan for JS dependency vulnerabilities
         run: bin/importmap audit
 
   lint:
     runs-on: ubuntu-latest
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
+
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
+          ruby-version: .ruby-version
           bundler-cache: true
 
       - name: Prepare RuboCop cache
@@ -62,7 +70,7 @@ jobs:
           restore-keys: |
             rubocop-${{ runner.os }}-${{ env.DEPENDENCIES_HASH }}-
 
-      - name: Lint code for consistent style
+      - name: Lint (RuboCop + performance + rspec extensions)
         run: bin/rubocop -f github
 
   test:
@@ -85,19 +93,32 @@ jobs:
     env:
       DATABASE_URL: postgres://merchanthub:password@localhost:5432/merchanthub_test
       RAILS_ENV: test
+      TESSERA_CORE_URL: http://localhost:4000
+      TESSERA_INTERNAL_API_KEY: test-internal-key
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v4
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
+          ruby-version: .ruby-version
           bundler-cache: true
 
-      - name: Set up database
-        run: bin/rails db:schema:load
+      - name: Check autoload integrity (zeitwerk)
+        run: bundle exec rails zeitwerk:check
 
-      - name: Run tests
+      - name: Set up database
+        run: bin/rails db:migrate
+
+      - name: Run tests with coverage
         run: bundle exec rspec
 
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7
