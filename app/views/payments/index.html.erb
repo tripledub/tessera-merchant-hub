@@ -71,6 +71,6 @@
 <%# Pagination %>
 <% if @pagy.pages > 1 %>
   <div class="mt-4 flex justify-center text-sm">
-    <%== pagy_nav(@pagy) %>
+    <%== @pagy.series_nav %>
   </div>
 <% end %>
