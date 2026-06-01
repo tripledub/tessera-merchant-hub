@@ -23,14 +23,17 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <% if notice.present? %>
-      <p class="notice"><%= notice %></p>
+  <body class="min-h-screen bg-gray-50 text-gray-900 antialiased">
+    <% if user_signed_in? %>
+      <%= render "layouts/navigation" %>
     <% end %>
-    <% if alert.present? %>
-      <p class="alert"><%= alert %></p>
-    <% end %>
-    <main class="container mx-auto mt-28 px-5 flex">
+
+    <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+      <% if flash.any? %>
+        <div class="mb-6 space-y-3">
+          <%= render "layouts/flash" %>
+        </div>
+      <% end %>
       <%= yield %>
     </main>
   </body>
