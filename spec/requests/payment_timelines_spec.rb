@@ -1,27 +1,27 @@
 require "rails_helper"
 
 RSpec.describe "Payment Timelines", type: :request do
-  let(:psp_admin)      { create(:user, :psp_admin) }
-  let(:psp_support)    { create(:user, :psp_support) }
-  let(:merchant_admin) { create(:user, :merchant_admin, shop_id: "shop_abc") }
-  let(:merchant_viewer) { create(:user, :merchant_viewer, shop_id: "shop_abc") }
+  let_it_be(:psp_admin)      { create(:user, :psp_admin) }
+  let_it_be(:psp_support)    { create(:user, :psp_support) }
+  let_it_be(:merchant_admin) { create(:user, :merchant_admin, shop_id: "shop_abc") }
+  let_it_be(:merchant_viewer) { create(:user, :merchant_viewer, shop_id: "shop_abc") }
 
-  let!(:payment)       { create(:tessera_payment, shop_id: "shop_abc") }
-  let!(:other_payment) { create(:tessera_payment, shop_id: "shop_xyz") }
+  let_it_be(:payment)       { create(:tessera_payment, shop_id: "shop_abc") }
+  let_it_be(:other_payment) { create(:tessera_payment, shop_id: "shop_xyz") }
 
-  let!(:system_event) do
+  let_it_be(:system_event) do
     create(:tessera_audit_event, payment: payment,
       event_type: "acquirer_request", actor: "system",
       outcome: "success", occurred_at: 1.hour.ago)
   end
 
-  let!(:merchant_event) do
+  let_it_be(:merchant_event) do
     create(:tessera_audit_event, payment: payment,
       event_type: "refund_requested", actor: "merchant",
       outcome: "success", occurred_at: 30.minutes.ago)
   end
 
-  let!(:webhook_delivery) do
+  let_it_be(:webhook_delivery) do
     create(:tessera_webhook_delivery, payment: payment,
       status: "delivered", attempts: 1)
   end

@@ -64,6 +64,7 @@ group :development, :test do
   gem "pundit-matchers"
   gem "shoulda-matchers"
   gem "webmock"
+  gem "test-prof"
   gem "simplecov", require: false
   gem "rubocop-performance", require: false
   gem "rubocop-rspec", require: false

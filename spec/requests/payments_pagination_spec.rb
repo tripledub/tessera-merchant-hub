@@ -1,14 +1,15 @@
 require "rails_helper"
 
 RSpec.describe "Payments pagination", type: :request do
-  let(:psp_admin) { create(:user, :psp_admin) }
+  let_it_be(:psp_admin) { create(:user, :psp_admin) }
 
   before { sign_in psp_admin }
 
   context "with more than one page of payments" do
-    before do
-      # 55 payments → 2 pages at limit 50
-      55.times { create(:tessera_payment, shop_id: "shop_demo", status: "succeeded") }
+    # 55 payments → 2 pages at limit 50. Read-only across the examples below,
+    # so create them once for the group rather than per example.
+    let_it_be(:payments) do
+      create_list(:tessera_payment, 55, shop_id: "shop_demo", status: "succeeded")
     end
 
     it "renders the first page with a pagination nav" do
@@ -32,7 +33,9 @@ RSpec.describe "Payments pagination", type: :request do
   end
 
   context "with a single page of payments" do
-    before { 3.times { create(:tessera_payment, shop_id: "shop_demo") } }
+    let_it_be(:few_payments) do
+      create_list(:tessera_payment, 3, shop_id: "shop_demo")
+    end
 
     it "does not render pagination nav" do
       get payments_path

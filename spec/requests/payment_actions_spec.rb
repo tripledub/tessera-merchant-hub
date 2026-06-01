@@ -1,13 +1,13 @@
 require "rails_helper"
 
 RSpec.describe "Payment Actions", type: :request do
-  let(:merchant_admin)  { create(:user, :merchant_admin, shop_id: "shop_abc") }
-  let(:merchant_viewer) { create(:user, :merchant_viewer, shop_id: "shop_abc") }
-  let(:psp_admin)       { create(:user, :psp_admin) }
+  let_it_be(:merchant_admin)  { create(:user, :merchant_admin, shop_id: "shop_abc") }
+  let_it_be(:merchant_viewer) { create(:user, :merchant_viewer, shop_id: "shop_abc") }
+  let_it_be(:psp_admin)       { create(:user, :psp_admin) }
 
-  let!(:succeeded_payment) { create(:tessera_payment, shop_id: "shop_abc", status: "succeeded") }
-  let!(:authorized_payment) { create(:tessera_payment, shop_id: "shop_abc", status: "authorized") }
-  let!(:other_payment)  { create(:tessera_payment, shop_id: "shop_xyz", status: "succeeded") }
+  let_it_be(:succeeded_payment) { create(:tessera_payment, shop_id: "shop_abc", status: "succeeded") }
+  let_it_be(:authorized_payment) { create(:tessera_payment, shop_id: "shop_abc", status: "authorized") }
+  let_it_be(:other_payment)  { create(:tessera_payment, shop_id: "shop_xyz", status: "succeeded") }
 
   let(:refund_success_body) { { "id" => SecureRandom.uuid, "status" => "refunded" }.to_json }
   let(:void_success_body)   { { "id" => SecureRandom.uuid, "status" => "voided" }.to_json }

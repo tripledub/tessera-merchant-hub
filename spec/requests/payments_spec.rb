@@ -1,12 +1,12 @@
 require "rails_helper"
 
 RSpec.describe "Payments", type: :request do
-  let(:psp_admin)      { create(:user, :psp_admin) }
-  let(:merchant_admin) { create(:user, :merchant_admin, shop_id: "shop_abc") }
-  let(:merchant_viewer) { create(:user, :merchant_viewer, shop_id: "shop_abc") }
+  let_it_be(:psp_admin)      { create(:user, :psp_admin) }
+  let_it_be(:merchant_admin) { create(:user, :merchant_admin, shop_id: "shop_abc") }
+  let_it_be(:merchant_viewer) { create(:user, :merchant_viewer, shop_id: "shop_abc") }
 
-  let!(:own_payment)   { create(:tessera_payment, shop_id: "shop_abc", status: "succeeded") }
-  let!(:other_payment) { create(:tessera_payment, shop_id: "shop_xyz", status: "failed") }
+  let_it_be(:own_payment)   { create(:tessera_payment, shop_id: "shop_abc", status: "succeeded") }
+  let_it_be(:other_payment) { create(:tessera_payment, shop_id: "shop_xyz", status: "failed") }
 
   describe "GET /payments" do
     context "when signed in as psp_admin" do
