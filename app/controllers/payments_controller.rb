@@ -5,7 +5,7 @@ class PaymentsController < ApplicationController
     scope = policy_scope(Tessera::Payment, policy_scope_class: PaymentPolicy::Scope)
     scope = scope.where(status: params[:status]) if params[:status].present?
     scope = scope.order(inserted_at: :desc)
-    @pagy, @payments = pagy(scope, limit: 50)
+    @pagy, @payments = pagy(:offset, scope, limit: 50)
     authorize Tessera::Payment, :index?, policy_class: PaymentPolicy
   end
 
