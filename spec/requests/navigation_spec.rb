@@ -1,8 +1,8 @@
 require "rails_helper"
 
 RSpec.describe "Navigation", type: :request do
-  let(:psp_admin)       { create(:user, :psp_admin) }
-  let(:merchant_admin)  { create(:user, :merchant_admin, shop_id: "shop_abc") }
+  let_it_be(:psp_admin)       { create(:user, :psp_admin) }
+  let_it_be(:merchant_admin)  { create(:user, :merchant_admin, shop_id: "shop_abc") }
 
   describe "root path" do
     it "redirects unauthenticated users to sign in" do

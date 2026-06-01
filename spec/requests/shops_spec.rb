@@ -1,13 +1,15 @@
 require "rails_helper"
 
 RSpec.describe "Shops", type: :request do
-  let(:psp_admin)       { create(:user, :psp_admin) }
-  let(:psp_support)     { create(:user, :psp_support) }
-  let(:merchant_admin)  { create(:user, :merchant_admin, shop_id: "shop_abc") }
-  let(:merchant_viewer) { create(:user, :merchant_viewer, shop_id: "shop_abc") }
+  let_it_be(:psp_admin)       { create(:user, :psp_admin) }
+  let_it_be(:psp_support)     { create(:user, :psp_support) }
+  let_it_be(:merchant_admin)  { create(:user, :merchant_admin, shop_id: "shop_abc") }
+  let_it_be(:merchant_viewer) { create(:user, :merchant_viewer, shop_id: "shop_abc") }
 
-  let!(:shop)       { create(:shop, shop_id: "shop_abc", name: "Acme Store") }
-  let!(:other_shop) { create(:shop, shop_id: "shop_xyz", name: "Other Store") }
+  # reload (the configured default) gives each example a fresh instance and the
+  # per-example transaction rolls back the PATCH mutations below.
+  let_it_be(:shop)       { create(:shop, shop_id: "shop_abc", name: "Acme Store") }
+  let_it_be(:other_shop) { create(:shop, shop_id: "shop_xyz", name: "Other Store") }
 
   describe "GET /shops" do
     context "when signed in as psp_admin" do
