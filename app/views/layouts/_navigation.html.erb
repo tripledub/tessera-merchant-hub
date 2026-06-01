@@ -1,0 +1,51 @@
+<nav data-controller="mobile-menu" data-testid="primary-nav"
+     class="bg-white border-b border-gray-200 sticky top-0 z-10">
+  <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <div class="flex h-16 items-center justify-between">
+      <%# Brand + desktop links %>
+      <div class="flex items-center gap-6">
+        <%= link_to "MerchantHub", payments_path, class: "text-lg font-semibold text-gray-900" %>
+        <div class="hidden sm:flex sm:items-center sm:gap-1">
+          <%= nav_link_to "Payments", payments_path, controller: "payments" %>
+          <% if current_user.psp_role? %>
+            <%= nav_link_to "Shops", shops_path, controller: "shops" %>
+          <% end %>
+        </div>
+      </div>
+
+      <%# Desktop user menu %>
+      <div class="hidden sm:flex sm:items-center sm:gap-4">
+        <span class="text-sm text-gray-500"><%= current_user.email %></span>
+        <%= button_to "Sign out", destroy_user_session_path, method: :delete,
+              class: "min-h-11 px-3 inline-flex items-center text-sm font-medium text-gray-600 hover:text-gray-900" %>
+      </div>
+
+      <%# Mobile hamburger %>
+      <button type="button"
+              data-mobile-menu-target="button"
+              data-action="mobile-menu#toggle"
+              aria-expanded="false"
+              aria-label="Toggle navigation menu"
+              class="sm:hidden inline-flex items-center justify-center h-11 w-11 rounded-md text-gray-600 hover:bg-gray-100">
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <%# Mobile drawer %>
+  <div data-mobile-menu-target="panel" hidden class="sm:hidden border-t border-gray-200">
+    <div class="space-y-1 px-4 py-3">
+      <%= nav_link_to "Payments", payments_path, controller: "payments" %>
+      <% if current_user.psp_role? %>
+        <%= nav_link_to "Shops", shops_path, controller: "shops" %>
+      <% end %>
+    </div>
+    <div class="border-t border-gray-200 px-4 py-3">
+      <p class="text-sm text-gray-500 mb-2"><%= current_user.email %></p>
+      <%= button_to "Sign out", destroy_user_session_path, method: :delete,
+            class: "min-h-11 w-full px-3 inline-flex items-center text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-md" %>
+    </div>
+  </div>
+</nav>

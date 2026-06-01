@@ -1,13 +1,12 @@
 <% content_for :title, "Shops" %>
 
-<div class="px-4 sm:px-6 lg:px-8">
-  <div class="sm:flex sm:items-center mb-6">
-    <div class="sm:flex-auto">
-      <h1 class="text-2xl font-semibold text-gray-900">Shops</h1>
-    </div>
+<div class="sm:flex sm:items-center mb-6">
+  <div class="sm:flex-auto">
+    <h1 class="text-2xl font-semibold text-gray-900">Shops</h1>
   </div>
+</div>
 
-  <div class="overflow-x-auto">
+<div class="overflow-x-auto -mx-4 sm:mx-0">
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
         <tr>
@@ -32,10 +31,10 @@
             <td class="px-4 py-3 text-sm text-gray-500 truncate max-w-xs">
               <%= shop.notification_url.presence || "—" %>
             </td>
-            <td class="px-4 py-3 text-sm text-right">
-              <%= link_to "View", shop_path(shop), class: "text-indigo-600 hover:text-indigo-900 font-medium mr-3" %>
+            <td class="px-4 py-3 text-sm text-right whitespace-nowrap">
+              <%= link_to "View", shop_path(shop), class: "table-action mr-4" %>
               <% if policy(shop).update? %>
-                <%= link_to "Edit", edit_shop_path(shop), class: "text-indigo-600 hover:text-indigo-900 font-medium" %>
+                <%= link_to "Edit", edit_shop_path(shop), class: "table-action" %>
               <% end %>
             </td>
           </tr>
@@ -48,4 +47,3 @@
       </tbody>
     </table>
   </div>
-</div>
