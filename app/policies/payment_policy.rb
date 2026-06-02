@@ -21,7 +21,7 @@ class PaymentPolicy < ApplicationPolicy
     def resolve
       return scope if user.psp_role?
 
-      scope.for_shop(user.shop_id)
+      scope.where(shop_id: user.accessible_shop_ids)
     end
   end
 end

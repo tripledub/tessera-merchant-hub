@@ -13,7 +13,7 @@ Rails.application.routes.draw do
   end
   root to: redirect("/users/sign_in")
 
-  resources :shops, only: %i[index show edit update]
+  resources :shops, only: %i[index show]
 
   resources :payments, only: %i[index show] do
     resource :timeline, only: :show, controller: "payment_timelines"

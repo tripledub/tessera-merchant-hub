@@ -69,7 +69,8 @@ class ApplicationPolicy
     user.merchant_role?
   end
 
+  # True when the record's shop belongs to the user's merchant.
   def own_shop?(record)
-    user.shop_id == record.shop_id
+    user.accessible_shop_ids&.include?(record.shop_id)
   end
 end

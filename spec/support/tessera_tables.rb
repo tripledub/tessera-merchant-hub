@@ -45,6 +45,30 @@ RSpec.configure do |config|
         t.datetime :delivered_at
       end
     end
+
+    unless conn.table_exists?(:merchants)
+      conn.create_table :merchants, id: :uuid, force: :cascade do |t|
+        t.string :merchant_id, null: false
+        t.string :name, null: false
+        t.string :company_name
+        t.string :country
+        t.datetime :inserted_at, null: false
+        t.datetime :updated_at, null: false
+      end
+    end
+
+    unless conn.table_exists?(:shops)
+      conn.create_table :shops, id: :uuid, force: :cascade do |t|
+        t.string :shop_id, null: false
+        t.string :merchant_id, null: false
+        t.string :name, null: false
+        t.string :notification_url
+        t.boolean :test_mode, default: false, null: false
+        t.string :country
+        t.datetime :inserted_at, null: false
+        t.datetime :updated_at, null: false
+      end
+    end
   end
 
   config.after(:suite) do
@@ -52,5 +76,7 @@ RSpec.configure do |config|
     conn.drop_table :webhook_deliveries, if_exists: true
     conn.drop_table :audit_events, if_exists: true
     conn.drop_table :payments, if_exists: true
+    conn.drop_table :shops, if_exists: true
+    conn.drop_table :merchants, if_exists: true
   end
 end
