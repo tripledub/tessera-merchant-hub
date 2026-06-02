@@ -10,19 +10,9 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_05_31_183303) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_02_090100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
-
-  create_table "shops", force: :cascade do |t|
-    t.datetime "created_at", null: false
-    t.string "name", null: false
-    t.string "notification_url"
-    t.string "shop_id", null: false
-    t.boolean "test_mode", default: false, null: false
-    t.datetime "updated_at", null: false
-    t.index ["shop_id"], name: "index_shops_on_shop_id", unique: true
-  end
 
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -34,17 +24,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_05_31_183303) do
     t.datetime "last_sign_in_at"
     t.string "last_sign_in_ip"
     t.datetime "locked_at"
+    t.string "merchant_id"
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
     t.integer "role", default: 0, null: false
-    t.string "shop_id"
     t.integer "sign_in_count", default: 0, null: false
     t.string "unlock_token"
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["merchant_id"], name: "index_users_on_merchant_id"
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
-    t.index ["shop_id"], name: "index_users_on_shop_id"
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 end

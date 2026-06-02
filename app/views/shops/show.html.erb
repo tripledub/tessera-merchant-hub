@@ -1,11 +1,8 @@
 <% content_for :title, @shop.name %>
 
 <div class="max-w-2xl">
-  <div class="mb-6 flex items-center justify-between">
-    <%= link_to "← Back", :back, class: "inline-flex items-center min-h-11 text-sm text-indigo-600 hover:text-indigo-900" %>
-    <% if policy(@shop).update? %>
-      <%= link_to "Edit", edit_shop_path(@shop), class: "btn-primary" %>
-    <% end %>
+  <div class="mb-6">
+    <%= link_to "← Back to shops", shops_path, class: "inline-flex items-center min-h-11 text-sm text-indigo-600 hover:text-indigo-900" %>
   </div>
 
   <h1 class="text-2xl font-semibold text-gray-900"><%= @shop.name %></h1>
@@ -14,6 +11,11 @@
     <div class="bg-gray-50 rounded-lg px-4 py-4">
       <dt class="text-xs font-medium text-gray-500 uppercase">Shop ID</dt>
       <dd class="mt-1 text-sm font-mono text-gray-900"><%= @shop.shop_id %></dd>
+    </div>
+
+    <div class="bg-gray-50 rounded-lg px-4 py-4">
+      <dt class="text-xs font-medium text-gray-500 uppercase">Territory</dt>
+      <dd class="mt-1 text-sm text-gray-900"><%= @shop.country.presence || "—" %></dd>
     </div>
 
     <div class="bg-gray-50 rounded-lg px-4 py-4">

@@ -3,8 +3,11 @@ require "rails_helper"
 RSpec.describe "Payment Timelines", type: :request do
   let_it_be(:psp_admin)      { create(:user, :psp_admin) }
   let_it_be(:psp_support)    { create(:user, :psp_support) }
-  let_it_be(:merchant_admin) { create(:user, :merchant_admin, shop_id: "shop_abc") }
-  let_it_be(:merchant_viewer) { create(:user, :merchant_viewer, shop_id: "shop_abc") }
+  let_it_be(:merchant_admin) { create(:user, :merchant_admin, merchant_id: "merch_abc") }
+  let_it_be(:merchant_viewer) { create(:user, :merchant_viewer, merchant_id: "merch_abc") }
+
+  # merch_abc owns shop_abc
+  let_it_be(:own_shop) { create(:tessera_shop, merchant_id: "merch_abc", shop_id: "shop_abc") }
 
   let_it_be(:payment)       { create(:tessera_payment, shop_id: "shop_abc") }
   let_it_be(:other_payment) { create(:tessera_payment, shop_id: "shop_xyz") }

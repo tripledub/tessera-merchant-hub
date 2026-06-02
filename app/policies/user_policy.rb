@@ -13,7 +13,7 @@ class UserPolicy < ApplicationPolicy
     return true if psp_admin?
     return false unless merchant_admin?
 
-    user.shop_id == record.shop_id
+    user.merchant_id == record.merchant_id
   end
 
   def destroy?
@@ -24,7 +24,7 @@ class UserPolicy < ApplicationPolicy
     def resolve
       return scope.all if user.psp_admin?
 
-      scope.where(shop_id: user.shop_id)
+      scope.where(merchant_id: user.merchant_id)
     end
   end
 end

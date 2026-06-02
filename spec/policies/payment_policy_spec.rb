@@ -5,11 +5,17 @@ RSpec.describe PaymentPolicy, type: :policy do
 
   let(:psp_admin)       { build_stubbed(:user, :psp_admin) }
   let(:psp_support)     { build_stubbed(:user, :psp_support) }
-  let(:merchant_admin)  { build_stubbed(:user, :merchant_admin, shop_id: "shop_1") }
-  let(:merchant_viewer) { build_stubbed(:user, :merchant_viewer, shop_id: "shop_1") }
+  let(:merchant_admin)  { build_stubbed(:user, :merchant_admin, merchant_id: "m1") }
+  let(:merchant_viewer) { build_stubbed(:user, :merchant_viewer, merchant_id: "m1") }
 
   let(:own_payment)   { Payment.new("shop_1") }
   let(:other_payment) { Payment.new("shop_2") }
+
+  before do
+    # merchant m1 owns shop_1 only
+    allow(merchant_admin).to receive(:accessible_shop_ids).and_return([ "shop_1" ])
+    allow(merchant_viewer).to receive(:accessible_shop_ids).and_return([ "shop_1" ])
+  end
 
   describe "index?" do
     subject { described_class.new(user, Payment) }
@@ -60,7 +66,7 @@ RSpec.describe PaymentPolicy, type: :policy do
       expect(scope.resolve).to eq(ar_scope)
     end
 
-    it "returns only own shop payments for merchant roles" do
+    it "returns only the merchant's shops' payments for merchant roles" do
       ar_scope = Tessera::Payment.all
       scope = PaymentPolicy::Scope.new(merchant_admin, ar_scope)
       expect(scope.resolve.to_sql).to include("shop_1")

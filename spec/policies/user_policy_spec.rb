@@ -3,11 +3,11 @@ require "rails_helper"
 RSpec.describe UserPolicy, type: :policy do
   let(:psp_admin)       { build_stubbed(:user, :psp_admin) }
   let(:psp_support)     { build_stubbed(:user, :psp_support) }
-  let(:merchant_admin)  { build_stubbed(:user, :merchant_admin, shop_id: "shop_1") }
-  let(:merchant_viewer) { build_stubbed(:user, :merchant_viewer, shop_id: "shop_1") }
+  let(:merchant_admin)  { build_stubbed(:user, :merchant_admin, merchant_id: "m1") }
+  let(:merchant_viewer) { build_stubbed(:user, :merchant_viewer, merchant_id: "m1") }
 
-  let(:same_shop_user)  { build_stubbed(:user, :merchant_viewer, shop_id: "shop_1") }
-  let(:other_shop_user) { build_stubbed(:user, :merchant_viewer, shop_id: "shop_2") }
+  let(:same_merchant_user)  { build_stubbed(:user, :merchant_viewer, merchant_id: "m1") }
+  let(:other_merchant_user) { build_stubbed(:user, :merchant_viewer, merchant_id: "m2") }
 
   describe "index?" do
     it "permits psp_admin" do
@@ -47,29 +47,29 @@ RSpec.describe UserPolicy, type: :policy do
 
   describe "update?" do
     it "permits psp_admin for any user" do
-      expect(described_class.new(psp_admin, other_shop_user)).to permit_action(:update)
+      expect(described_class.new(psp_admin, other_merchant_user)).to permit_action(:update)
     end
 
-    it "permits merchant_admin for same shop users" do
-      expect(described_class.new(merchant_admin, same_shop_user)).to permit_action(:update)
+    it "permits merchant_admin for same merchant users" do
+      expect(described_class.new(merchant_admin, same_merchant_user)).to permit_action(:update)
     end
 
-    it "denies merchant_admin for other shop users" do
-      expect(described_class.new(merchant_admin, other_shop_user)).to forbid_action(:update)
+    it "denies merchant_admin for other merchant users" do
+      expect(described_class.new(merchant_admin, other_merchant_user)).to forbid_action(:update)
     end
 
     it "denies merchant_viewer" do
-      expect(described_class.new(merchant_viewer, same_shop_user)).to forbid_action(:update)
+      expect(described_class.new(merchant_viewer, same_merchant_user)).to forbid_action(:update)
     end
   end
 
   describe "destroy?" do
     it "permits psp_admin" do
-      expect(described_class.new(psp_admin, other_shop_user)).to permit_action(:destroy)
+      expect(described_class.new(psp_admin, other_merchant_user)).to permit_action(:destroy)
     end
 
     it "denies merchant_admin" do
-      expect(described_class.new(merchant_admin, same_shop_user)).to forbid_action(:destroy)
+      expect(described_class.new(merchant_admin, same_merchant_user)).to forbid_action(:destroy)
     end
   end
 end

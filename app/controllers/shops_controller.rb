@@ -1,35 +1,13 @@
 class ShopsController < ApplicationController
-  before_action :set_shop, only: %i[show edit update]
-
+  # Shops are owned by tessera-core (ADR-007); MerchantHub reads them via
+  # Tessera::Shop. Editing shop config goes through the core API (MH-21).
   def index
-    @shops = policy_scope(Shop)
-    authorize Shop
+    @shops = policy_scope(Tessera::Shop, policy_scope_class: ShopPolicy::Scope)
+    authorize Tessera::Shop, :index?, policy_class: ShopPolicy
   end
 
   def show
-    authorize @shop
-  end
-
-  def edit
-    authorize @shop
-  end
-
-  def update
-    authorize @shop
-    if @shop.update(shop_params)
-      redirect_to shop_path(@shop), notice: "Shop updated successfully."
-    else
-      render :edit, status: :unprocessable_entity
-    end
-  end
-
-  private
-
-  def set_shop
-    @shop = Shop.find(params[:id])
-  end
-
-  def shop_params
-    params.require(:shop).permit(:notification_url, :test_mode)
+    @shop = Tessera::Shop.find_by!(shop_id: params[:id])
+    authorize @shop, :show?, policy_class: ShopPolicy
   end
 end

@@ -2,15 +2,15 @@
 
 class ShopPolicy < ApplicationPolicy
   def index?
-    psp_role?
+    true
   end
 
   def show?
-    psp_role? || user.shop_id == record.shop_id
+    psp_role? || own_merchant?(record)
   end
 
   def update?
-    psp_admin?
+    psp_admin? || (merchant_admin? && own_merchant?(record))
   end
 
   alias edit? update?
@@ -19,7 +19,13 @@ class ShopPolicy < ApplicationPolicy
     def resolve
       return scope.all if user.psp_role?
 
-      scope.where(shop_id: user.shop_id)
+      scope.for_merchant(user.merchant_id)
     end
+  end
+
+  private
+
+  def own_merchant?(record)
+    user.merchant_id.present? && user.merchant_id == record.merchant_id
   end
 end
