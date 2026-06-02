@@ -20,6 +20,16 @@ class ShopCredentialsController < ApplicationController
     redirect_to shop_path(@shop), alert: "Could not generate credentials: #{e.message}"
   end
 
+  def destroy
+    @shop = Tessera::Shop.find_by!(shop_id: params[:shop_id])
+    authorize @shop, :revoke_credential?, policy_class: ShopPolicy
+
+    client.revoke_credential(shop_id: @shop.shop_id, id: params[:id])
+    redirect_to shop_path(@shop), notice: "Credential revoked."
+  rescue TesseraCoreClient::Error => e
+    redirect_to shop_path(@shop), alert: "Could not revoke credential: #{e.message}"
+  end
+
   def show_once
     @shop = Tessera::Shop.find_by!(shop_id: params[:shop_id])
     authorize @shop, :generate_credential?, policy_class: ShopPolicy
