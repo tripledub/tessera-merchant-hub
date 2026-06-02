@@ -10,6 +10,9 @@
           <% if current_user.psp_role? %>
             <%= nav_link_to "Shops", shops_path, controller: "shops" %>
           <% end %>
+          <% if current_user.psp_admin? %>
+            <%= nav_link_to "Onboard", new_merchant_path, controller: "merchants" %>
+          <% end %>
         </div>
       </div>
 
@@ -40,6 +43,9 @@
       <%= nav_link_to "Payments", payments_path, controller: "payments" %>
       <% if current_user.psp_role? %>
         <%= nav_link_to "Shops", shops_path, controller: "shops" %>
+      <% end %>
+      <% if current_user.psp_admin? %>
+        <%= nav_link_to "Onboard", new_merchant_path, controller: "merchants" %>
       <% end %>
     </div>
     <div class="border-t border-gray-200 px-4 py-3">

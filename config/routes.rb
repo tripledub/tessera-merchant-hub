@@ -13,6 +13,7 @@ Rails.application.routes.draw do
   end
   root to: redirect("/users/sign_in")
 
+  resources :merchants, only: %i[new create]
   resources :shops, only: %i[index show]
 
   resources :payments, only: %i[index show] do
