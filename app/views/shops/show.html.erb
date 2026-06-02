@@ -5,7 +5,12 @@
     <%= link_to "← Back to shops", shops_path, class: "inline-flex items-center min-h-11 text-sm text-indigo-600 hover:text-indigo-900" %>
   </div>
 
-  <h1 class="text-2xl font-semibold text-gray-900"><%= @shop.name %></h1>
+  <div class="sm:flex sm:items-start sm:justify-between gap-4">
+    <h1 class="text-2xl font-semibold text-gray-900"><%= @shop.name %></h1>
+    <% if ShopPolicy.new(current_user, @shop).update? %>
+      <%= link_to "Edit configuration", edit_shop_path(@shop), class: "btn-ghost shrink-0" %>
+    <% end %>
+  </div>
 
   <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
     <div class="bg-gray-50 rounded-lg px-4 py-4">

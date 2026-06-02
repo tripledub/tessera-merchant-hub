@@ -85,4 +85,192 @@ RSpec.describe "Shops", type: :request do
       end
     end
   end
+
+  describe "GET /shops/new" do
+    context "when signed in as merchant_admin" do
+      before { sign_in merchant_admin }
+
+      it "renders the form" do
+        get new_shop_path
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context "when signed in as merchant_viewer" do
+      before { sign_in merchant_viewer }
+
+      it "is forbidden" do
+        get new_shop_path
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe "POST /shops" do
+    let(:shop_params) do
+      { shop: { name: "Acme EU", country: "DE", notification_url: "https://acme.test/hook" } }
+    end
+
+    def stub_core_create_shop!(merchant_id:, shop_id: "shop_new", name: "Acme EU", country: "DE")
+      stub_request(:post, %r{/v1/merchants/#{merchant_id}/shops\z}).to_return do |_request|
+        create(:tessera_shop, merchant_id: merchant_id, shop_id: shop_id, name: name, country: country)
+        {
+          status: 201,
+          body: { shop_id: shop_id, name: name, country: country }.to_json,
+          headers: { "Content-Type" => "application/json" }
+        }
+      end
+    end
+
+    context "when merchant_admin with valid params" do
+      before { sign_in merchant_admin }
+
+      it "provisions the shop in core and redirects to it" do
+        stub_core_create_shop!(merchant_id: "merch_abc")
+
+        post shops_path, params: shop_params
+
+        expect(response).to redirect_to(shop_path("shop_new"))
+        expect(a_request(:post, %r{/v1/merchants/merch_abc/shops})).to have_been_made
+      end
+
+      it "shows the new shop in the index" do
+        stub_core_create_shop!(merchant_id: "merch_abc")
+
+        post shops_path, params: shop_params
+        get shops_path
+
+        expect(response.body).to include("Acme EU")
+        expect(response.body).to include("DE")
+      end
+    end
+
+    context "when merchant_admin submits incomplete params" do
+      before { sign_in merchant_admin }
+
+      it "re-renders without calling core" do
+        post shops_path, params: { shop: { name: "", country: "" } }
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(a_request(:post, %r{/v1/merchants})).not_to have_been_made
+      end
+    end
+
+    context "when psp_admin without merchant_id" do
+      before { sign_in psp_admin }
+
+      it "is forbidden" do
+        post shops_path, params: shop_params
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "creates a shop for the given merchant" do
+        stub_core_create_shop!(merchant_id: "merch_xyz", shop_id: "shop_xyz")
+
+        post shops_path, params: shop_params.merge(shop: shop_params[:shop].merge(merchant_id: "merch_xyz"))
+
+        expect(response).to redirect_to(shop_path("shop_xyz"))
+      end
+    end
+
+    context "when signed in as merchant_viewer" do
+      before { sign_in merchant_viewer }
+
+      it "is forbidden" do
+        post shops_path, params: shop_params
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe "GET /shops/:id/edit" do
+    context "when signed in as merchant_admin" do
+      before { sign_in merchant_admin }
+
+      it "renders for own shop" do
+        get edit_shop_path(own_shop)
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "returns 403 for another merchant's shop" do
+        get edit_shop_path(other_shop)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe "PATCH /shops/:id" do
+    def stub_core_update_shop!(shop_id:, body:)
+      stub_request(:patch, %r{/v1/shops/#{shop_id}\z}).to_return do |_request|
+        conn = ActiveRecord::Base.connection
+        conn.execute(<<~SQL.squish)
+          UPDATE shops
+          SET notification_url = #{conn.quote(body[:notification_url])},
+              test_mode = #{body[:test_mode] ? 'TRUE' : 'FALSE'}
+          WHERE shop_id = #{conn.quote(shop_id)}
+        SQL
+        { status: 200, body: body.to_json, headers: { "Content-Type" => "application/json" } }
+      end
+    end
+
+    context "when merchant_admin updates own shop" do
+      before { sign_in merchant_admin }
+
+      it "calls core and redirects" do
+        stub_core_update_shop!(
+          shop_id: own_shop.shop_id,
+          body: { shop_id: own_shop.shop_id, notification_url: "https://new.test/hook", test_mode: true }
+        )
+
+        patch shop_path(own_shop), params: {
+          shop: { notification_url: "https://new.test/hook", test_mode: "1" }
+        }
+
+        expect(response).to redirect_to(shop_path(own_shop))
+        expect(a_request(:patch, %r{/v1/shops/#{own_shop.shop_id}})).to have_been_made
+      end
+
+      it "shows updated config on the shop page" do
+        stub_core_update_shop!(
+          shop_id: own_shop.shop_id,
+          body: { shop_id: own_shop.shop_id, notification_url: "https://new.test/hook", test_mode: true }
+        )
+
+        patch shop_path(own_shop), params: {
+          shop: { notification_url: "https://new.test/hook", test_mode: "1" }
+        }
+        follow_redirect!
+        get shop_path(own_shop)
+
+        expect(response.body).to include("https://new.test/hook")
+        expect(response.body).to include("Test")
+      end
+    end
+
+    context "when merchant_admin updates another merchant's shop" do
+      before { sign_in merchant_admin }
+
+      it "is forbidden" do
+        patch shop_path(other_shop), params: { shop: { notification_url: "https://evil.test/hook" } }
+        expect(response).to have_http_status(:forbidden)
+        expect(a_request(:patch, %r{/v1/shops})).not_to have_been_made
+      end
+    end
+
+    context "when core returns an error" do
+      before { sign_in merchant_admin }
+
+      it "re-renders edit" do
+        stub_request(:patch, %r{/v1/shops/#{own_shop.shop_id}})
+          .to_return(status: 422, body: { error: "invalid" }.to_json,
+                     headers: { "Content-Type" => "application/json" })
+
+        patch shop_path(own_shop), params: { shop: { notification_url: "https://new.test/hook" } }
+        expect(response).to have_http_status(:unprocessable_entity)
+      end
+    end
+  end
 end

@@ -14,7 +14,7 @@ Rails.application.routes.draw do
   root to: redirect("/users/sign_in")
 
   resources :merchants, only: %i[new create]
-  resources :shops, only: %i[index show]
+  resources :shops, only: %i[index show new create edit update]
 
   resources :payments, only: %i[index show] do
     resource :timeline, only: :show, controller: "payment_timelines"

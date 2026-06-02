@@ -9,6 +9,12 @@ class ShopPolicy < ApplicationPolicy
     psp_role? || own_merchant?(record)
   end
 
+  def create?
+    psp_admin? || merchant_admin?
+  end
+
+  alias new? create?
+
   def update?
     psp_admin? || (merchant_admin? && own_merchant?(record))
   end

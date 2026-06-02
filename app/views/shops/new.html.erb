@@ -1,0 +1,45 @@
+<% content_for :title, "Add shop" %>
+
+<div class="max-w-2xl">
+  <div class="mb-6">
+    <%= link_to "← Cancel", shops_path, class: "inline-flex items-center min-h-11 text-sm text-indigo-600 hover:text-indigo-900" %>
+  </div>
+
+  <h1 class="text-2xl font-semibold text-gray-900">Add shop</h1>
+  <p class="mt-1 text-sm text-gray-500">
+    Provisions a new shop in tessera-core under
+    <%= current_user.psp_admin? ? "the selected merchant" : "your merchant" %>.
+  </p>
+
+  <%= form_with url: shops_path, method: :post, class: "mt-6 space-y-5" do |f| %>
+    <% if current_user.psp_admin? %>
+      <div>
+        <%= label_tag "shop[merchant_id]", "Merchant ID", class: "block text-sm font-medium text-gray-700" %>
+        <%= text_field_tag "shop[merchant_id]", params.dig(:shop, :merchant_id), class: "form-input mt-1 font-mono" %>
+      </div>
+    <% end %>
+
+    <div>
+      <%= label_tag "shop[name]", "Shop name", class: "block text-sm font-medium text-gray-700" %>
+      <%= text_field_tag "shop[name]", params.dig(:shop, :name), class: "form-input mt-1" %>
+    </div>
+
+    <div>
+      <%= label_tag "shop[country]", "Territory (ISO-2)", class: "block text-sm font-medium text-gray-700" %>
+      <%= text_field_tag "shop[country]", params.dig(:shop, :country), maxlength: 2, class: "form-input mt-1" %>
+    </div>
+
+    <div>
+      <%= label_tag "shop[notification_url]", "Notification URL", class: "block text-sm font-medium text-gray-700" %>
+      <p class="text-xs text-gray-500 mt-0.5">Optional. HTTPS URL for payment webhooks.</p>
+      <%= url_field_tag "shop[notification_url]", params.dig(:shop, :notification_url),
+            placeholder: "https://your-server.com/webhooks",
+            class: "form-input mt-1" %>
+    </div>
+
+    <div class="flex flex-col gap-3 pt-2 sm:flex-row">
+      <%= f.submit "Create shop", class: "btn-primary w-full sm:w-auto" %>
+      <%= link_to "Cancel", shops_path, class: "btn-ghost w-full sm:w-auto" %>
+    </div>
+  <% end %>
+</div>
