@@ -7,7 +7,7 @@
         <%= link_to "MerchantHub", payments_path, class: "text-lg font-semibold text-gray-900" %>
         <div class="hidden sm:flex sm:items-center sm:gap-1">
           <%= nav_link_to "Payments", payments_path, controller: "payments" %>
-          <% if current_user.psp_role? %>
+          <% if current_user.psp_role? || current_user.merchant_admin? %>
             <%= nav_link_to "Shops", shops_path, controller: "shops" %>
           <% end %>
           <% if current_user.psp_admin? %>
@@ -41,7 +41,7 @@
   <div data-mobile-menu-target="panel" hidden class="sm:hidden border-t border-gray-200">
     <div class="space-y-1 px-4 py-3">
       <%= nav_link_to "Payments", payments_path, controller: "payments" %>
-      <% if current_user.psp_role? %>
+      <% if current_user.psp_role? || current_user.merchant_admin? %>
         <%= nav_link_to "Shops", shops_path, controller: "shops" %>
       <% end %>
       <% if current_user.psp_admin? %>

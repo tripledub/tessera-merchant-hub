@@ -37,6 +37,18 @@ RSpec.describe ShopPolicy, type: :policy do
     end
   end
 
+  describe "create?" do
+    it "permits psp_admin and merchant_admin" do
+      expect(described_class.new(psp_admin, ShopStub)).to permit_action(:create)
+      expect(described_class.new(merchant_admin, ShopStub)).to permit_action(:create)
+    end
+
+    it "denies psp_support and merchant_viewer" do
+      expect(described_class.new(psp_support, ShopStub)).to forbid_action(:create)
+      expect(described_class.new(merchant_viewer, ShopStub)).to forbid_action(:create)
+    end
+  end
+
   describe "update?" do
     it "permits psp_admin for any shop" do
       expect(described_class.new(psp_admin, other_shop)).to permit_action(:update)

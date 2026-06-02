@@ -4,6 +4,11 @@
   <div class="sm:flex-auto">
     <h1 class="text-2xl font-semibold text-gray-900">Shops</h1>
   </div>
+  <% if ShopPolicy.new(current_user, Tessera::Shop).create? %>
+    <div class="mt-4 sm:mt-0 sm:ml-4">
+      <%= link_to "Add shop", new_shop_path, class: "btn-primary" %>
+    </div>
+  <% end %>
 </div>
 
 <div class="overflow-x-auto -mx-4 sm:mx-0">

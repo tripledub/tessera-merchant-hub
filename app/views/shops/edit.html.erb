@@ -6,21 +6,22 @@
   </div>
 
   <h1 class="text-2xl font-semibold text-gray-900">Edit <%= @shop.name %></h1>
+  <p class="mt-1 text-sm text-gray-500">Changes are saved in tessera-core via the internal API.</p>
 
-  <%= form_with model: @shop, class: "mt-6 space-y-5" do |f| %>
-    <%= render "shared/error_messages", object: @shop %>
-
+  <%= form_with url: shop_path(@shop), method: :patch, class: "mt-6 space-y-5" do |f| %>
     <div>
-      <%= f.label :notification_url, "Notification URL", class: "block text-sm font-medium text-gray-700" %>
+      <%= label_tag "shop[notification_url]", "Notification URL", class: "block text-sm font-medium text-gray-700" %>
       <p class="text-xs text-gray-500 mt-0.5">Must be an HTTPS URL. Leave blank to disable webhooks.</p>
-      <%= f.url_field :notification_url,
+      <%= url_field_tag "shop[notification_url]", params.dig(:shop, :notification_url) || @shop.notification_url,
             placeholder: "https://your-server.com/webhooks",
             class: "form-input mt-1" %>
     </div>
 
     <div class="flex items-center gap-3">
-      <%= f.check_box :test_mode, class: "h-5 w-5 rounded border-gray-300 text-indigo-600" %>
-      <%= f.label :test_mode, "Test mode", class: "text-sm font-medium text-gray-700" %>
+      <%= hidden_field_tag "shop[test_mode]", "0" %>
+      <%= check_box_tag "shop[test_mode]", "1", params.key?(:shop) ? ActiveModel::Type::Boolean.new.cast(params.dig(:shop, :test_mode)) : @shop.test_mode?,
+            class: "h-5 w-5 rounded border-gray-300 text-indigo-600" %>
+      <%= label_tag "shop[test_mode]", "Test mode", class: "text-sm font-medium text-gray-700" %>
     </div>
 
     <div class="flex flex-col gap-3 pt-2 sm:flex-row">

@@ -47,9 +47,9 @@ RSpec.describe "Navigation", type: :request do
         expect(response.body).to include(payments_path)
       end
 
-      it "does not show the Shops index link (PSP-only)" do
+      it "shows Shops for merchant_admin" do
         get payments_path
-        expect(response.body).not_to include(">Shops<")
+        expect(response.body).to include(shops_path)
       end
     end
 
