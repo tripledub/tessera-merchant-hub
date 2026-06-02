@@ -9,9 +9,22 @@ RSpec.describe "Shops", type: :request do
   let_it_be(:own_shop)   { create(:tessera_shop, merchant_id: "merch_abc", shop_id: "shop_abc", name: "Acme Store") }
   let_it_be(:other_shop) { create(:tessera_shop, merchant_id: "merch_xyz", shop_id: "shop_xyz", name: "Other Store") }
 
-  def stub_core_credentials_metadata!(shop_id)
+  let(:credential_metadata) do
+    {
+      "id" => "cred_1",
+      "pk" => "pk_live_123",
+      "sk" => "sk_live_secret",
+      "signing_secret" => "whsec_secret",
+      "status" => "revoked",
+      "created" => "2026-06-01T10:00:00Z",
+      "last_used" => "2026-06-02T12:00:00Z",
+      "signing_required" => true
+    }
+  end
+
+  def stub_core_credentials_metadata!(shop_id, response_body: [])
     stub_request(:get, %r{/v1/shops/#{shop_id}/credentials\z})
-      .to_return(status: 200, body: [].to_json, headers: { "Content-Type" => "application/json" })
+      .to_return(status: 200, body: response_body.to_json, headers: { "Content-Type" => "application/json" })
   end
 
   describe "GET /shops" do
@@ -77,6 +90,22 @@ RSpec.describe "Shops", type: :request do
         get shop_path(own_shop)
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Acme Store")
+      end
+
+      it "lists credential public metadata without secret material" do
+        stub_core_credentials_metadata!(
+          own_shop.shop_id,
+          response_body: [ credential_metadata ]
+        )
+
+        get shop_path(own_shop)
+
+        expect(response.body).to include("pk_live_123")
+        expect(response.body).to include("Revoked")
+        expect(response.body).to include("2026-06-01T10:00:00Z")
+        expect(response.body).to include("2026-06-02T12:00:00Z")
+        expect(response.body).not_to include("sk_live_secret")
+        expect(response.body).not_to include("whsec_secret")
       end
 
       it "returns 403 for another merchant's shop" do

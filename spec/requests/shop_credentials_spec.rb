@@ -22,6 +22,11 @@ RSpec.describe "Shop credentials", type: :request do
       .to_return(status: 201, body: response_body.to_json, headers: { "Content-Type" => "application/json" })
   end
 
+  def stub_core_revoke_credential!(shop_id:, credential_id:, response_body:)
+    stub_request(:delete, %r{/v1/shops/#{shop_id}/credentials/#{credential_id}\z})
+      .to_return(status: 200, body: response_body.to_json, headers: { "Content-Type" => "application/json" })
+  end
+
   describe "POST /shops/:shop_id/credential" do
     context "when merchant_admin generates credentials for their own shop" do
       before { sign_in merchant_admin }
@@ -114,6 +119,61 @@ RSpec.describe "Shop credentials", type: :request do
 
       expect(response).to redirect_to(shop_path(own_shop))
       expect(response.body).not_to include("sk_live_secret_123")
+    end
+  end
+
+  describe "DELETE /shops/:shop_id/credentials/:id" do
+    context "when merchant_admin revokes a credential for their own shop" do
+      before { sign_in merchant_admin }
+
+      it "calls core and redirects to the shop" do
+        stub_core_revoke_credential!(
+          shop_id: own_shop.shop_id,
+          credential_id: "cred_1",
+          response_body: { "id" => "cred_1", "pk" => "pk_live_123", "status" => "revoked" }
+        )
+
+        delete shop_credential_revoke_path(own_shop, "cred_1")
+
+        expect(response).to redirect_to(shop_path(own_shop))
+        expect(a_request(:delete, %r{/v1/shops/#{own_shop.shop_id}/credentials/cred_1})).to have_been_made
+      end
+    end
+
+    context "when merchant_admin targets another merchant's shop" do
+      before { sign_in merchant_admin }
+
+      it "is forbidden" do
+        delete shop_credential_revoke_path(other_shop, "cred_1")
+        expect(response).to have_http_status(:forbidden)
+        expect(a_request(:delete, %r{/v1/shops})).not_to have_been_made
+      end
+    end
+
+    context "when signed in as merchant_viewer" do
+      before { sign_in merchant_viewer }
+
+      it "is forbidden" do
+        delete shop_credential_revoke_path(own_shop, "cred_1")
+        expect(response).to have_http_status(:forbidden)
+        expect(a_request(:delete, %r{/v1/shops})).not_to have_been_made
+      end
+    end
+
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "can revoke credentials for any shop" do
+        stub_core_revoke_credential!(
+          shop_id: other_shop.shop_id,
+          credential_id: "cred_1",
+          response_body: { "id" => "cred_1", "pk" => "pk_live_123", "status" => "revoked" }
+        )
+
+        delete shop_credential_revoke_path(other_shop, "cred_1")
+
+        expect(response).to redirect_to(shop_path(other_shop))
+      end
     end
   end
 end

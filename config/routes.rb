@@ -16,6 +16,7 @@ Rails.application.routes.draw do
   resources :merchants, only: %i[new create]
   resources :shops, only: %i[index show new create edit update] do
     post :credential, to: "shop_credentials#create"
+    delete "credentials/:id", to: "shop_credentials#destroy", as: :credential_revoke
     get "credentials/show_once", to: "shop_credentials#show_once", as: :credential_show_once
   end
 

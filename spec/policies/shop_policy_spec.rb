@@ -86,4 +86,23 @@ RSpec.describe ShopPolicy, type: :policy do
       expect(described_class.new(merchant_viewer, own_shop)).to forbid_action(:generate_credential)
     end
   end
+
+  describe "revoke_credential?" do
+    it "permits psp_admin for any shop" do
+      expect(described_class.new(psp_admin, other_shop)).to permit_action(:revoke_credential)
+    end
+
+    it "permits merchant_admin for their own merchant's shop" do
+      expect(described_class.new(merchant_admin, own_shop)).to permit_action(:revoke_credential)
+    end
+
+    it "denies merchant_admin for another merchant's shop" do
+      expect(described_class.new(merchant_admin, other_shop)).to forbid_action(:revoke_credential)
+    end
+
+    it "denies psp_support and merchant_viewer" do
+      expect(described_class.new(psp_support, own_shop)).to forbid_action(:revoke_credential)
+      expect(described_class.new(merchant_viewer, own_shop)).to forbid_action(:revoke_credential)
+    end
+  end
 end
