@@ -9,6 +9,7 @@ class ShopsController < ApplicationController
   def show
     @shop = Tessera::Shop.find_by!(shop_id: params[:id])
     authorize @shop, :show?, policy_class: ShopPolicy
+    load_credentials_metadata
   end
 
   def new
@@ -83,6 +84,13 @@ class ShopsController < ApplicationController
     attrs = permitted.to_h.symbolize_keys
     attrs[:test_mode] = ActiveModel::Type::Boolean.new.cast(attrs[:test_mode]) if attrs.key?(:test_mode)
     attrs
+  end
+
+  def load_credentials_metadata
+    @credentials = client.list_credentials(shop_id: @shop.shop_id)
+  rescue TesseraCoreClient::Error => e
+    @credentials = []
+    @credentials_error = e.message
   end
 
   def client
