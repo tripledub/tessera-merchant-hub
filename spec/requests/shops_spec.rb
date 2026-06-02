@@ -9,6 +9,11 @@ RSpec.describe "Shops", type: :request do
   let_it_be(:own_shop)   { create(:tessera_shop, merchant_id: "merch_abc", shop_id: "shop_abc", name: "Acme Store") }
   let_it_be(:other_shop) { create(:tessera_shop, merchant_id: "merch_xyz", shop_id: "shop_xyz", name: "Other Store") }
 
+  def stub_core_credentials_metadata!(shop_id)
+    stub_request(:get, %r{/v1/shops/#{shop_id}/credentials\z})
+      .to_return(status: 200, body: [].to_json, headers: { "Content-Type" => "application/json" })
+  end
+
   describe "GET /shops" do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
@@ -55,6 +60,8 @@ RSpec.describe "Shops", type: :request do
       before { sign_in psp_admin }
 
       it "shows any shop" do
+        stub_core_credentials_metadata!(other_shop.shop_id)
+
         get shop_path(other_shop)
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Other Store")
@@ -65,6 +72,8 @@ RSpec.describe "Shops", type: :request do
       before { sign_in merchant_admin }
 
       it "shows a shop in their merchant" do
+        stub_core_credentials_metadata!(own_shop.shop_id)
+
         get shop_path(own_shop)
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Acme Store")
@@ -80,6 +89,8 @@ RSpec.describe "Shops", type: :request do
       before { sign_in merchant_viewer }
 
       it "shows a shop in their merchant" do
+        stub_core_credentials_metadata!(own_shop.shop_id)
+
         get shop_path(own_shop)
         expect(response).to have_http_status(:ok)
       end
@@ -242,6 +253,7 @@ RSpec.describe "Shops", type: :request do
         patch shop_path(own_shop), params: {
           shop: { notification_url: "https://new.test/hook", test_mode: "1" }
         }
+        stub_core_credentials_metadata!(own_shop.shop_id)
         follow_redirect!
         get shop_path(own_shop)
 

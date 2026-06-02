@@ -21,6 +21,10 @@ class ShopPolicy < ApplicationPolicy
 
   alias edit? update?
 
+  def generate_credential?
+    update?
+  end
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       return scope.all if user.psp_role?
