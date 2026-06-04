@@ -12,19 +12,16 @@ RSpec.describe "Shops", type: :request do
   let(:credential_metadata) do
     {
       "id" => "cred_1",
-      "pk" => "pk_live_123",
-      "sk" => "sk_live_secret",
-      "signing_secret" => "whsec_secret",
+      "api_key" => "pk_live_123",
       "status" => "revoked",
-      "created" => "2026-06-01T10:00:00Z",
-      "last_used" => "2026-06-02T12:00:00Z",
+      "created_at" => "2026-06-01T10:00:00Z",
+      "last_used_at" => "2026-06-02T12:00:00Z",
       "signing_required" => true
     }
   end
 
-  def stub_core_credentials_metadata!(shop_id, response_body: [])
-    stub_request(:get, %r{/v1/shops/#{shop_id}/credentials\z})
-      .to_return(status: 200, body: response_body.to_json, headers: { "Content-Type" => "application/json" })
+  def stub_core_credentials_metadata!(shop, response_body: [])
+    stub_core_list_credentials!(integration_account_id: shop.integration_account_id, response_body: response_body)
   end
 
   describe "GET /shops" do
@@ -73,7 +70,7 @@ RSpec.describe "Shops", type: :request do
       before { sign_in psp_admin }
 
       it "shows any shop" do
-        stub_core_credentials_metadata!(other_shop.shop_id)
+        stub_core_credentials_metadata!(other_shop)
 
         get shop_path(other_shop)
         expect(response).to have_http_status(:ok)
@@ -85,7 +82,7 @@ RSpec.describe "Shops", type: :request do
       before { sign_in merchant_admin }
 
       it "shows a shop in their merchant" do
-        stub_core_credentials_metadata!(own_shop.shop_id)
+        stub_core_credentials_metadata!(own_shop)
 
         get shop_path(own_shop)
         expect(response).to have_http_status(:ok)
@@ -94,7 +91,7 @@ RSpec.describe "Shops", type: :request do
 
       it "lists credential public metadata without secret material" do
         stub_core_credentials_metadata!(
-          own_shop.shop_id,
+          own_shop,
           response_body: [ credential_metadata ]
         )
 
@@ -118,7 +115,7 @@ RSpec.describe "Shops", type: :request do
       before { sign_in merchant_viewer }
 
       it "shows a shop in their merchant" do
-        stub_core_credentials_metadata!(own_shop.shop_id)
+        stub_core_credentials_metadata!(own_shop)
 
         get shop_path(own_shop)
         expect(response).to have_http_status(:ok)
@@ -152,14 +149,12 @@ RSpec.describe "Shops", type: :request do
     end
 
     def stub_core_create_shop!(merchant_id:, shop_id: "shop_new", name: "Acme EU", country: "DE")
-      stub_request(:post, %r{/v1/merchants/#{merchant_id}/shops\z}).to_return do |_request|
-        create(:tessera_shop, merchant_id: merchant_id, shop_id: shop_id, name: name, country: country)
-        {
-          status: 201,
-          body: { shop_id: shop_id, name: name, country: country }.to_json,
-          headers: { "Content-Type" => "application/json" }
-        }
-      end
+      stub_core_create_integration_account!(
+        merchant_id: merchant_id,
+        shop_id: shop_id,
+        name: name,
+        country: country
+      )
     end
 
     context "when merchant_admin with valid params" do
@@ -168,10 +163,13 @@ RSpec.describe "Shops", type: :request do
       it "provisions the shop in core and redirects to it" do
         stub_core_create_shop!(merchant_id: "merch_abc")
 
-        post shops_path, params: shop_params
+        expect do
+          post shops_path, params: shop_params
+        end.to change(Tessera::Shop, :count).by(1)
 
-        expect(response).to redirect_to(shop_path("shop_new"))
-        expect(a_request(:post, %r{/v1/merchants/merch_abc/shops})).to have_been_made
+        created = Tessera::Shop.order(inserted_at: :desc).first
+        expect(response).to redirect_to(shop_path(created.shop_id))
+        expect(a_request(:post, %r{/internal/integration_accounts})).to have_been_made
       end
 
       it "shows the new shop in the index" do
@@ -191,7 +189,7 @@ RSpec.describe "Shops", type: :request do
       it "re-renders without calling core" do
         post shops_path, params: { shop: { name: "", country: "" } }
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(a_request(:post, %r{/v1/merchants})).not_to have_been_made
+        expect(a_request(:post, %r{/internal/integration_accounts})).not_to have_been_made
       end
     end
 
@@ -208,11 +206,14 @@ RSpec.describe "Shops", type: :request do
       before { sign_in psp_admin }
 
       it "creates a shop for the given merchant" do
-        stub_core_create_shop!(merchant_id: "merch_xyz", shop_id: "shop_xyz")
+        stub_core_create_shop!(merchant_id: "merch_xyz")
 
-        post shops_path, params: shop_params.merge(shop: shop_params[:shop].merge(merchant_id: "merch_xyz"))
+        expect do
+          post shops_path, params: shop_params.merge(shop: shop_params[:shop].merge(merchant_id: "merch_xyz"))
+        end.to change { Tessera::Shop.where(merchant_id: "merch_xyz").count }.by(1)
 
-        expect(response).to redirect_to(shop_path("shop_xyz"))
+        created = Tessera::Shop.where(merchant_id: "merch_xyz").order(inserted_at: :desc).first
+        expect(response).to redirect_to(shop_path(created.shop_id))
       end
     end
 
@@ -243,46 +244,33 @@ RSpec.describe "Shops", type: :request do
   end
 
   describe "PATCH /shops/:id" do
-    def stub_core_update_shop!(shop_id:, body:)
-      stub_request(:patch, %r{/v1/shops/#{shop_id}\z}).to_return do |_request|
-        conn = ActiveRecord::Base.connection
-        conn.execute(<<~SQL.squish)
-          UPDATE shops
-          SET notification_url = #{conn.quote(body[:notification_url])},
-              test_mode = #{body[:test_mode] ? 'TRUE' : 'FALSE'}
-          WHERE shop_id = #{conn.quote(shop_id)}
-        SQL
-        { status: 200, body: body.to_json, headers: { "Content-Type" => "application/json" } }
-      end
+    def apply_local_shop_config!(shop_id:, body:)
+      conn = ActiveRecord::Base.connection
+      conn.execute(<<~SQL.squish)
+        UPDATE shops
+        SET notification_url = #{conn.quote(body[:notification_url])},
+            test_mode = #{body[:test_mode] ? 'TRUE' : 'FALSE'}
+        WHERE shop_id = #{conn.quote(shop_id)}
+      SQL
     end
 
     context "when merchant_admin updates own shop" do
       before { sign_in merchant_admin }
 
-      it "calls core and redirects" do
-        stub_core_update_shop!(
-          shop_id: own_shop.shop_id,
-          body: { shop_id: own_shop.shop_id, notification_url: "https://new.test/hook", test_mode: true }
-        )
-
+      it "updates local shop config and redirects" do
         patch shop_path(own_shop), params: {
           shop: { notification_url: "https://new.test/hook", test_mode: "1" }
         }
 
         expect(response).to redirect_to(shop_path(own_shop))
-        expect(a_request(:patch, %r{/v1/shops/#{own_shop.shop_id}})).to have_been_made
+        expect(a_request(:patch, %r{/internal/})).not_to have_been_made
       end
 
       it "shows updated config on the shop page" do
-        stub_core_update_shop!(
-          shop_id: own_shop.shop_id,
-          body: { shop_id: own_shop.shop_id, notification_url: "https://new.test/hook", test_mode: true }
-        )
-
         patch shop_path(own_shop), params: {
           shop: { notification_url: "https://new.test/hook", test_mode: "1" }
         }
-        stub_core_credentials_metadata!(own_shop.shop_id)
+        stub_core_credentials_metadata!(own_shop)
         follow_redirect!
         get shop_path(own_shop)
 
@@ -297,17 +285,17 @@ RSpec.describe "Shops", type: :request do
       it "is forbidden" do
         patch shop_path(other_shop), params: { shop: { notification_url: "https://evil.test/hook" } }
         expect(response).to have_http_status(:forbidden)
-        expect(a_request(:patch, %r{/v1/shops})).not_to have_been_made
+        expect(a_request(:patch, %r{/internal/})).not_to have_been_made
       end
     end
 
     context "when core returns an error" do
       before { sign_in merchant_admin }
 
-      it "re-renders edit" do
-        stub_request(:patch, %r{/v1/shops/#{own_shop.shop_id}})
-          .to_return(status: 422, body: { error: "invalid" }.to_json,
-                     headers: { "Content-Type" => "application/json" })
+      it "re-renders edit when local update raises" do
+        allow(ControlPlane::ShopConfigStore).to receive(:update!).and_raise(
+          TesseraCoreClient::Error, "update failed"
+        )
 
         patch shop_path(own_shop), params: { shop: { notification_url: "https://new.test/hook" } }
         expect(response).to have_http_status(:unprocessable_entity)

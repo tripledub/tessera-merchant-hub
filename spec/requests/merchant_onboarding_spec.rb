@@ -12,13 +12,22 @@ RSpec.describe "Merchant onboarding", type: :request do
     }
   end
 
-  def stub_core_success(merchant_id: "merch_new")
-    stub_request(:post, %r{/v1/merchants\z})
-      .to_return(status: 201, body: { merchant_id: merchant_id, name: "Acme" }.to_json,
-                 headers: { "Content-Type" => "application/json" })
-    stub_request(:post, %r{/v1/merchants/.+/shops\z})
-      .to_return(status: 201, body: { shop_id: "shop_new", name: "Acme UK" }.to_json,
-                 headers: { "Content-Type" => "application/json" })
+  def stub_core_integration_account_for_onboarding!
+    stub_request(:post, %r{/internal/integration_accounts\z}).to_return do |request|
+      body = JSON.parse(request.body)
+      shop_id = body["merchant_hub_shop_id"]
+      integration_account_id = "intacct_#{shop_id}"
+
+      {
+        status: 201,
+        body: {
+          id: integration_account_id,
+          merchant_hub_merchant_id: body["merchant_hub_merchant_id"],
+          merchant_hub_shop_id: shop_id
+        }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      }
+    end
   end
 
   describe "GET /merchants/new" do
@@ -52,21 +61,26 @@ RSpec.describe "Merchant onboarding", type: :request do
     context "when psp_admin with valid params" do
       before { sign_in psp_admin }
 
-      it "provisions merchant + shop in core and creates the first merchant_admin" do
-        stub_core_success(merchant_id: "merch_new")
+      it "creates the merchant locally, provisions the core integration account, and invites the admin" do
+        stub_core_integration_account_for_onboarding!
 
         expect do
           post merchants_path, params: valid_params
         end.to change(User, :count).by(1)
+          .and change(Tessera::Merchant, :count).by(1)
+          .and change(Tessera::Shop, :count).by(1)
 
         user = User.find_by(email: "owner@acme.test")
         expect(user).to be_merchant_admin
-        expect(user.merchant_id).to eq("merch_new")
+        expect(user.merchant_id).to be_present
+        expect(Tessera::Merchant.find_by(merchant_id: user.merchant_id)).to be_present
+        expect(a_request(:post, %r{/internal/integration_accounts})).to have_been_made
+        expect(a_request(:post, %r{/v1/merchants})).not_to have_been_made
         expect(response).to redirect_to(authenticated_root_path)
       end
 
       it "sends the new admin a password-set email" do
-        stub_core_success
+        stub_core_integration_account_for_onboarding!
         expect do
           post merchants_path, params: valid_params
         end.to change { ActionMailer::Base.deliveries.size }.by(1)
@@ -77,7 +91,7 @@ RSpec.describe "Merchant onboarding", type: :request do
       before { sign_in psp_admin }
 
       it "does not create a user and surfaces the error" do
-        stub_request(:post, %r{/v1/merchants\z})
+        stub_request(:post, %r{/internal/integration_accounts\z})
           .to_return(status: 422, body: { error: "invalid" }.to_json,
                      headers: { "Content-Type" => "application/json" })
 
@@ -94,7 +108,7 @@ RSpec.describe "Merchant onboarding", type: :request do
       it "re-renders without calling core" do
         post merchants_path, params: valid_params.merge(admin: { email: "" })
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(a_request(:post, %r{/v1/merchants})).not_to have_been_made
+        expect(a_request(:post, %r{/internal/integration_accounts})).not_to have_been_made
       end
     end
 

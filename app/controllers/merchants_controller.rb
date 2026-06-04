@@ -13,8 +13,8 @@ class MerchantsController < ApplicationController
       return render :new, status: :unprocessable_entity
     end
 
-    merchant = client.create_merchant(**merchant_params)
-    client.create_shop(merchant_id: merchant["merchant_id"], **shop_params)
+    merchant = ControlPlane::MerchantProvisioner.create!(**merchant_params)
+    ControlPlane::ShopProvisioner.create!(merchant_id: merchant["merchant_id"], **shop_params)
     create_first_admin(merchant["merchant_id"])
 
     redirect_to authenticated_root_path,
@@ -53,9 +53,5 @@ class MerchantsController < ApplicationController
 
   def shop_params
     params.fetch(:shop, {}).permit(:name, :country).to_h.symbolize_keys
-  end
-
-  def client
-    @client ||= TesseraCoreClient.new
   end
 end

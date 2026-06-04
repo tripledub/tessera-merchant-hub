@@ -4,6 +4,7 @@ FactoryBot.define do
   factory :tessera_shop, class: "Tessera::Shop" do
     id { SecureRandom.uuid }
     sequence(:shop_id) { |n| "shop_#{n}" }
+    integration_account_id { shop_id }
     merchant_id { "merch_#{SecureRandom.hex(3)}" }
     name { "Shop #{SecureRandom.hex(3)}" }
     notification_url { "https://example.com/webhooks" }

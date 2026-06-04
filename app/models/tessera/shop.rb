@@ -19,5 +19,10 @@ module Tessera
     def to_param
       shop_id
     end
+
+    # Core gateway account id (GW-52). Falls back to shop_id for legacy rows.
+    def integration_account_id
+      self[:integration_account_id].presence || shop_id
+    end
   end
 end

@@ -2,6 +2,7 @@
 
 require "faraday"
 require "json"
+require "uri"
 
 class TesseraCoreClient
   class Error < StandardError; end
@@ -9,6 +10,8 @@ class TesseraCoreClient
   class UnauthorizedError < Error; end
   class RefundError < Error; end
   class ServerError < Error; end
+
+  INTERNAL_PREFIX = "/internal/integration_accounts"
 
   def initialize(base_url: ENV.fetch("TESSERA_CORE_URL"), api_key: ENV.fetch("TESSERA_INTERNAL_API_KEY"))
     @connection = Faraday.new(url: base_url) do |f|
@@ -35,35 +38,88 @@ class TesseraCoreClient
     parse(response)
   end
 
-  def create_merchant(name:, company_name: nil, country: nil)
-    body = compact(name: name, company_name: company_name, country: country)
-    parse(post("/v1/merchants", body))
+  def create_integration_account(
+    merchant_hub_merchant_id:,
+    merchant_hub_shop_id:,
+    secret_key:,
+    id: nil,
+    acquirer_key: nil,
+    credentials_ref: nil
+  )
+    body = compact(
+      id: id,
+      secret_key: secret_key,
+      merchant_hub_merchant_id: merchant_hub_merchant_id,
+      merchant_hub_shop_id: merchant_hub_shop_id,
+      acquirer_key: acquirer_key,
+      credentials_ref: credentials_ref
+    )
+    parse(post(INTERNAL_PREFIX, body))
   end
 
-  def create_shop(merchant_id:, name:, country:, notification_url: nil)
-    body = compact(name: name, country: country, notification_url: notification_url)
-    parse(post("/v1/merchants/#{merchant_id}/shops", body))
+  def get_integration_account(integration_account_id:)
+    parse(get("#{INTERNAL_PREFIX}/#{integration_account_id}"))
   end
 
-  def update_shop(shop_id:, **attrs)
-    parse(patch("/v1/shops/#{shop_id}", compact(attrs)))
+  def lookup_integration_account(merchant_hub_shop_id:)
+    parse(
+      get(
+        "#{INTERNAL_PREFIX}/lookup?merchant_hub_shop_id=#{URI.encode_www_form_component(merchant_hub_shop_id)}"
+      )
+    )
   end
 
-  def create_credential(shop_id:)
-    parse(post("/v1/shops/#{shop_id}/credentials", {}))
+  def update_integration_account(integration_account_id:, **attrs)
+    body = compact(
+      merchant_hub_merchant_id: attrs[:merchant_hub_merchant_id],
+      merchant_hub_shop_id: attrs[:merchant_hub_shop_id],
+      acquirer_key: attrs[:acquirer_key],
+      credentials_ref: attrs[:credentials_ref]
+    )
+    parse(patch("#{INTERNAL_PREFIX}/#{integration_account_id}", body))
   end
 
-  def list_credentials(shop_id:)
-    parse(get("/v1/shops/#{shop_id}/credentials"))
+  def create_acquirer_config(integration_account_id:, **attrs)
+    body = compact(
+      id: attrs[:id],
+      acquirer_key: attrs[:acquirer_key],
+      credentials_ref: attrs[:credentials_ref],
+      enabled: attrs[:enabled]
+    )
+    parse(post("#{INTERNAL_PREFIX}/#{integration_account_id}/acquirer_configs", body))
   end
 
-  def revoke_credential(shop_id:, id:)
-    parse(delete("/v1/shops/#{shop_id}/credentials/#{id}"))
+  def update_acquirer_config(integration_account_id:, config_id:, **attrs)
+    body = compact(
+      acquirer_key: attrs[:acquirer_key],
+      credentials_ref: attrs[:credentials_ref],
+      enabled: attrs[:enabled]
+    )
+    parse(patch("#{INTERNAL_PREFIX}/#{integration_account_id}/acquirer_configs/#{config_id}", body))
   end
 
-  def configure_credential(shop_id:, id:, ip_allowlist: nil, signing_required: nil)
+  def create_credential(integration_account_id:, ip_allowlist: nil, signing_required: nil)
     body = compact(ip_allowlist: ip_allowlist, signing_required: signing_required)
-    parse(patch("/v1/shops/#{shop_id}/credentials/#{id}", body))
+    normalize_credential(parse(post("#{INTERNAL_PREFIX}/#{integration_account_id}/credentials", body)))
+  end
+
+  def list_credentials(integration_account_id:)
+    body = parse(get("#{INTERNAL_PREFIX}/#{integration_account_id}/credentials"))
+    credentials = body.fetch("credentials", body)
+    Array(credentials).map { |item| normalize_credential_metadata(item) }
+  end
+
+  def revoke_credential(integration_account_id:, credential_id:)
+    normalize_credential_metadata(
+      parse(delete("#{INTERNAL_PREFIX}/#{integration_account_id}/credentials/#{credential_id}"))
+    )
+  end
+
+  def configure_credential(integration_account_id:, credential_id:, ip_allowlist: nil, signing_required: nil)
+    body = compact(ip_allowlist: ip_allowlist, signing_required: signing_required)
+    normalize_credential_metadata(
+      parse(patch("#{INTERNAL_PREFIX}/#{integration_account_id}/credentials/#{credential_id}", body))
+    )
   end
 
   private
@@ -117,5 +173,21 @@ class TesseraCoreClient
 
   def parse(response)
     JSON.parse(response.body)
+  end
+
+  def normalize_credential(payload)
+    normalize_credential_metadata(payload).merge(
+      "pk" => payload["api_key"] || payload["pk"],
+      "sk" => payload["secret_key"] || payload["sk"],
+      "signing_secret" => payload["signing_secret"]
+    )
+  end
+
+  def normalize_credential_metadata(payload)
+    payload.merge(
+      "pk" => payload["api_key"] || payload["pk"],
+      "created" => payload["created_at"] || payload["created"],
+      "last_used" => payload["last_used_at"] || payload["last_used"]
+    )
   end
 end

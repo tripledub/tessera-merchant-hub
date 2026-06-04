@@ -1,6 +1,7 @@
 class ShopsController < ApplicationController
+  include IntegrationAccountScoped
   # Shops are owned by tessera-core (ADR-007); MerchantHub reads them via
-  # Tessera::Shop. Provisioning and config changes go through TesseraCoreClient.
+  # Tessera::Shop. Core integration accounts via TesseraCoreClient; shop UI config is local (ADR-007).
   def index
     @shops = policy_scope(Tessera::Shop, policy_scope_class: ShopPolicy::Scope)
     authorize Tessera::Shop, :index?, policy_class: ShopPolicy
@@ -25,7 +26,7 @@ class ShopsController < ApplicationController
       return render :new, status: :unprocessable_entity
     end
 
-    result = client.create_shop(merchant_id: target_merchant_id, **shop_create_params)
+    result = ControlPlane::ShopProvisioner.create!(merchant_id: target_merchant_id, **shop_create_params)
     redirect_to shop_path(result["shop_id"]),
                 notice: "Shop #{result['name']} created."
   rescue TesseraCoreClient::Error => e
@@ -42,7 +43,7 @@ class ShopsController < ApplicationController
     @shop = Tessera::Shop.find_by!(shop_id: params[:id])
     authorize @shop, :update?, policy_class: ShopPolicy
 
-    client.update_shop(shop_id: @shop.shop_id, **shop_update_params)
+    ControlPlane::ShopConfigStore.update!(shop_id: @shop.shop_id, **shop_update_params)
     redirect_to shop_path(@shop), notice: "Shop configuration updated."
   rescue TesseraCoreClient::Error => e
     flash.now[:alert] = "Could not update shop: #{e.message}"
@@ -87,7 +88,7 @@ class ShopsController < ApplicationController
   end
 
   def load_credentials_metadata
-    @credentials = client.list_credentials(shop_id: @shop.shop_id)
+    @credentials = client.list_credentials(integration_account_id: integration_account_id_for(@shop))
   rescue TesseraCoreClient::Error => e
     @credentials = []
     @credentials_error = e.message
