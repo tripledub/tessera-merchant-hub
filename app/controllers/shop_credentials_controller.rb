@@ -1,13 +1,14 @@
 # frozen_string_literal: true
 
 class ShopCredentialsController < ApplicationController
+  include IntegrationAccountScoped
   SESSION_KEY = :credential_show_once
 
   def create
     @shop = Tessera::Shop.find_by!(shop_id: params[:shop_id])
     authorize @shop, :generate_credential?, policy_class: ShopPolicy
 
-    result = client.create_credential(shop_id: @shop.shop_id)
+    result = client.create_credential(integration_account_id: integration_account_id_for(@shop))
     session[SESSION_KEY] = {
       "shop_id" => @shop.shop_id,
       "pk" => result["pk"],
@@ -24,7 +25,10 @@ class ShopCredentialsController < ApplicationController
     @shop = Tessera::Shop.find_by!(shop_id: params[:shop_id])
     authorize @shop, :revoke_credential?, policy_class: ShopPolicy
 
-    client.revoke_credential(shop_id: @shop.shop_id, id: params[:id])
+    client.revoke_credential(
+      integration_account_id: integration_account_id_for(@shop),
+      credential_id: params[:id]
+    )
     redirect_to shop_path(@shop), notice: "Credential revoked."
   rescue TesseraCoreClient::Error => e
     redirect_to shop_path(@shop), alert: "Could not revoke credential: #{e.message}"

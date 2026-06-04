@@ -60,6 +60,7 @@ RSpec.configure do |config|
     unless conn.table_exists?(:shops)
       conn.create_table :shops, id: :uuid, force: :cascade do |t|
         t.string :shop_id, null: false
+        t.string :integration_account_id
         t.string :merchant_id, null: false
         t.string :name, null: false
         t.string :notification_url
