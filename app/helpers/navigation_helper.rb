@@ -1,14 +1,25 @@
 module NavigationHelper
-  # Base classes shared by every primary nav link. Touch target is >= 44px tall.
-  NAV_LINK_BASE = "flex items-center min-h-11 px-3 rounded-md text-sm font-medium transition-colors".freeze
-  NAV_LINK_ACTIVE = "bg-indigo-50 text-indigo-700".freeze
-  NAV_LINK_INACTIVE = "text-gray-600 hover:bg-gray-100 hover:text-gray-900".freeze
-
-  # Renders a primary nav link, highlighting it when the current request is
-  # within the given controller.
-  def nav_link_to(label, path, controller:)
+  # Sidebar nav link — uses TailAdmin menu-item utilities.
+  # Touch target is >= 44px (min-h-11) for Hotwire Native compatibility.
+  def nav_link_to(label, path, controller:, icon: nil)
     active = controller_name == controller
-    classes = "#{NAV_LINK_BASE} #{active ? NAV_LINK_ACTIVE : NAV_LINK_INACTIVE}"
-    link_to label, path, class: classes, aria: { current: active ? "page" : nil }
+    state  = active ? "menu-item-active" : "menu-item-inactive"
+
+    link_to path, class: "menu-item #{state} group min-h-11", aria: { current: active ? "page" : nil } do
+      concat icon_tag(icon, active: active) if icon
+      concat content_tag(:span, label, class: "menu-item-text")
+    end
+  end
+
+  private
+
+  def icon_tag(name, active:)
+    state = active ? "menu-item-icon-active" : "menu-item-icon-inactive"
+    content_tag(:span, class: "h-5 w-5 flex-shrink-0 #{state}") do
+      render "shared/icons/#{name}"
+    end
+  rescue ActionView::MissingTemplate
+    # Icon partial not yet created — renders nothing rather than erroring
+    "".html_safe
   end
 end
