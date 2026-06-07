@@ -1,52 +1,62 @@
 <% content_for :title, "Onboard a merchant" %>
 
 <div class="max-w-2xl">
-  <h1 class="text-2xl font-semibold text-gray-900">Onboard a merchant</h1>
-  <p class="mt-1 text-sm text-gray-500">
-    Creates the merchant and its first shop in tessera-core, and invites the first admin.
-  </p>
+  <%# Page header %>
+  <div class="mb-6">
+    <h1 class="text-xl font-semibold text-gray-900">Onboard a merchant</h1>
+    <p class="mt-0.5 text-theme-sm text-gray-500">
+      Creates the merchant and its first shop in tessera-core, and invites the first admin.
+    </p>
+  </div>
 
-  <%= form_with url: merchants_path, method: :post, class: "mt-6 space-y-8" do |f| %>
-    <section class="space-y-4">
-      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">Merchant</h2>
-      <div>
-        <%= label_tag "merchant[name]", "Name", class: "block text-sm font-medium text-gray-700" %>
-        <%= text_field_tag "merchant[name]", params.dig(:merchant, :name), class: "form-input mt-1" %>
-      </div>
-      <div>
-        <%= label_tag "merchant[company_name]", "Company name", class: "block text-sm font-medium text-gray-700" %>
-        <%= text_field_tag "merchant[company_name]", params.dig(:merchant, :company_name), class: "form-input mt-1" %>
-      </div>
-      <div>
-        <%= label_tag "merchant[country]", "Country (ISO-2)", class: "block text-sm font-medium text-gray-700" %>
-        <%= text_field_tag "merchant[country]", params.dig(:merchant, :country), maxlength: 2, class: "form-input mt-1" %>
-      </div>
-    </section>
+  <div class="card">
+    <%= form_with url: merchants_path, method: :post, class: "space-y-8" do |f| %>
 
-    <section class="space-y-4">
-      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">First shop</h2>
-      <div>
-        <%= label_tag "shop[name]", "Shop name", class: "block text-sm font-medium text-gray-700" %>
-        <%= text_field_tag "shop[name]", params.dig(:shop, :name), class: "form-input mt-1" %>
-      </div>
-      <div>
-        <%= label_tag "shop[country]", "Territory (ISO-2)", class: "block text-sm font-medium text-gray-700" %>
-        <%= text_field_tag "shop[country]", params.dig(:shop, :country), maxlength: 2, class: "form-input mt-1" %>
-      </div>
-    </section>
+      <section class="space-y-4">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500">Merchant</h2>
+        <div>
+          <%= label_tag "merchant[name]", "Name", class: "form-label" %>
+          <%= text_field_tag "merchant[name]", params.dig(:merchant, :name), class: "form-input mt-1" %>
+        </div>
+        <div>
+          <%= label_tag "merchant[company_name]", "Company name", class: "form-label" %>
+          <%= text_field_tag "merchant[company_name]", params.dig(:merchant, :company_name),
+                class: "form-input mt-1" %>
+        </div>
+        <div>
+          <%= label_tag "merchant[country]", "Country (ISO-2)", class: "form-label" %>
+          <%= text_field_tag "merchant[country]", params.dig(:merchant, :country),
+                maxlength: 2, class: "form-input mt-1" %>
+        </div>
+      </section>
 
-    <section class="space-y-4">
-      <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider">First admin</h2>
-      <div>
-        <%= label_tag "admin[email]", "Admin email", class: "block text-sm font-medium text-gray-700" %>
-        <p class="text-xs text-gray-500 mt-0.5">They'll receive an email to set their password.</p>
-        <%= email_field_tag "admin[email]", params.dig(:admin, :email), class: "form-input mt-1" %>
-      </div>
-    </section>
+      <section class="space-y-4 border-t border-gray-200 pt-6">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500">First shop</h2>
+        <div>
+          <%= label_tag "shop[name]", "Shop name", class: "form-label" %>
+          <%= text_field_tag "shop[name]", params.dig(:shop, :name), class: "form-input mt-1" %>
+        </div>
+        <div>
+          <%= label_tag "shop[country]", "Territory (ISO-2)", class: "form-label" %>
+          <%= text_field_tag "shop[country]", params.dig(:shop, :country),
+                maxlength: 2, class: "form-input mt-1" %>
+        </div>
+      </section>
 
-    <div class="flex flex-col gap-3 pt-2 sm:flex-row">
-      <%= f.submit "Onboard merchant", class: "btn-primary w-full sm:w-auto" %>
-      <%= link_to "Cancel", authenticated_root_path, class: "btn-ghost w-full sm:w-auto" %>
-    </div>
-  <% end %>
+      <section class="space-y-4 border-t border-gray-200 pt-6">
+        <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500">First admin</h2>
+        <div>
+          <%= label_tag "admin[email]", "Admin email", class: "form-label" %>
+          <p class="text-xs text-gray-500 mt-0.5">They'll receive an email to set their password.</p>
+          <%= email_field_tag "admin[email]", params.dig(:admin, :email), class: "form-input mt-1" %>
+        </div>
+      </section>
+
+      <div class="flex flex-col gap-3 border-t border-gray-200 pt-6 sm:flex-row">
+        <%= f.submit "Onboard merchant", class: "btn-primary w-full sm:w-auto" %>
+        <%= link_to "Cancel", authenticated_root_path, class: "btn-secondary w-full sm:w-auto" %>
+      </div>
+
+    <% end %>
+  </div>
 </div>
