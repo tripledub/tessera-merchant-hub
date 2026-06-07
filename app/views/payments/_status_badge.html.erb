@@ -1,13 +1,12 @@
+<%# Renders a TailAdmin badge for a payment status string.
+    Usage: render "payments/status_badge", status: payment.status %>
 <%
-  colours = {
-    "succeeded" => "bg-green-100 text-green-800",
-    "failed"    => "bg-red-100 text-red-800",
-    "pending"   => "bg-yellow-100 text-yellow-800",
-    "refunded"  => "bg-blue-100 text-blue-800",
-    "voided"    => "bg-gray-100 text-gray-800"
-  }
-  css = colours.fetch(status, "bg-gray-100 text-gray-600")
+  badge_class = {
+    "succeeded" => "badge badge-success",
+    "failed"    => "badge badge-error",
+    "pending"   => "badge badge-warning",
+    "refunded"  => "badge badge-info",
+    "voided"    => "badge badge-gray"
+  }.fetch(status.to_s, "badge badge-gray")
 %>
-<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium <%= css %>">
-  <%= status.capitalize %>
-</span>
+<span class="<%= badge_class %>"><%= status.to_s.humanize %></span>
