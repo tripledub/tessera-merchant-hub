@@ -31,7 +31,7 @@
             data-action="click->sidebar#close"
             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg
                    text-gray-400 hover:bg-white/[0.07] hover:text-white lg:hidden"
-            aria-label="Close sidebar">
+            aria-label="<%= t('layouts.navigation.close_sidebar') %>">
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
            class="h-5 w-5" aria-hidden="true">
@@ -45,7 +45,7 @@
 
     <% if current_user.psp_role? %>
       <p class="sidebar-group-title mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
-        Menu
+        <%= t('layouts.navigation.menu') %>
       </p>
       <%= nav_link_to t('layouts.navigation.payments'),  payments_path,     controller: "payments",  icon: :payments %>
       <%= nav_link_to t('layouts.navigation.shops'),     shops_path,        controller: "shops",     icon: :shops %>
@@ -55,7 +55,7 @@
 
     <% elsif current_user.merchant_role? %>
       <p class="sidebar-group-title mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
-        My Account
+        <%= t('layouts.navigation.my_account') %>
       </p>
       <%= nav_link_to t('layouts.navigation.payments'), payments_path, controller: "payments", icon: :payments %>
       <%= nav_link_to t('layouts.navigation.shops'),    shops_path,    controller: "shops",    icon: :shops %>

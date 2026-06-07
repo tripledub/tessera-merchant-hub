@@ -18,7 +18,7 @@ class MerchantsController < ApplicationController
     create_first_admin(merchant["merchant_id"])
 
     redirect_to authenticated_root_path,
-                notice: "Merchant onboarded. An invite has been sent to #{admin_email}."
+                notice: I18n.t('flash.merchants.onboard_success', email: admin_email)
   rescue TesseraCoreClient::Error => e
     flash.now[:alert] = I18n.t('flash.merchants.onboard_failed', message: e.message)
     render :new, status: :unprocessable_entity

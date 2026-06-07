@@ -18,6 +18,10 @@ en:
       onboard: "Onboard"
       sign_out: "Sign out"
       toggle_nav: "Toggle navigation menu"
+      menu: "Menu"
+      my_account: "My Account"
+      close_sidebar: "Close sidebar"
+      toggle_sidebar: "Toggle sidebar"
 
   # ── Errors ────────────────────────────────────────────────────────────────
   errors:
@@ -219,7 +223,10 @@ en:
       missing_fields: "Merchant name, shop name and admin email are all required."
       onboard_failed: "Onboarding failed: %{message}"
       admin_create_failed: "Could not create the admin user: %{errors}"
+      onboard_success: "Merchant onboarded. An invite has been sent to %{email}."
     shops:
       missing_fields: "Shop name and territory (country) are required."
       create_failed: "Could not create shop: %{message}"
       update_failed: "Could not update shop: %{message}"
+      create_success: "Shop %{name} created."
+      update_success: "Shop configuration updated."
