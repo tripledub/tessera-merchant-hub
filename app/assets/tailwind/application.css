@@ -325,6 +325,50 @@ aside[data-collapsed] .menu-item {
   @apply text-theme-sm font-medium text-brand-600 hover:text-brand-700 min-h-11 inline-flex items-center;
 }
 
+/* ─── Pagy pagination — TailAdmin data table style ─────────────────────── */
+
+.pagy.series-nav {
+  @apply flex items-center gap-0.5;
+}
+
+/* Previous / Next — pill buttons (first & last child) */
+.pagy.series-nav > a:first-child,
+.pagy.series-nav > a:last-child {
+  @apply shadow-theme-xs flex items-center justify-center rounded-lg border border-gray-300
+         bg-white px-3.5 py-2 text-theme-sm font-medium text-gray-700;
+}
+.pagy.series-nav > a:first-child { @apply mr-2; }
+.pagy.series-nav > a:last-child  { @apply ml-2; }
+
+.pagy.series-nav > a[href]:first-child:hover,
+.pagy.series-nav > a[href]:last-child:hover  { @apply bg-gray-50; }
+
+/* Disabled prev / next */
+.pagy.series-nav > a[role="link"]:first-child,
+.pagy.series-nav > a[role="link"]:last-child {
+  @apply opacity-50 cursor-not-allowed text-gray-400;
+}
+
+/* Page number items */
+.pagy.series-nav > a:not(:first-child):not(:last-child) {
+  @apply flex h-9 w-9 items-center justify-center rounded-lg text-theme-sm font-medium text-gray-700;
+}
+
+/* Inactive page hover */
+.pagy.series-nav > a[href]:not(:first-child):not(:last-child):hover {
+  @apply bg-blue-500/[0.08] text-brand-500;
+}
+
+/* Current page */
+.pagy.series-nav > a[aria-current] {
+  @apply bg-blue-500/[0.08] text-brand-500 cursor-default;
+}
+
+/* Gap */
+.pagy.series-nav > a[role="separator"] {
+  @apply text-gray-400 cursor-default;
+}
+
 /* ─── Flash messages ─────────────────────────────────────────────────────── */
 
 @utility flash-notice {
