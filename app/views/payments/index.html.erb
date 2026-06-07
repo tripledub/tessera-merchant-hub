@@ -62,7 +62,7 @@
                 <%= payment.inserted_at&.strftime("%d %b %Y %H:%M") %>
               </td>
               <td class="px-4 py-3 text-right">
-                <%= link_to "View", payment_path(payment.id), class: "table-action" %>
+                <%= link_to "View", payment_path(payment.id), class: "table-action", data: { turbo_frame: "_top" } %>
               </td>
             </tr>
           <% end %>
