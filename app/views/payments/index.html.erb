@@ -79,10 +79,15 @@
     </div>
   </div>
 
-  <%# Pagination %>
+  <%# Pagination footer — TailAdmin style %>
   <% if @pagy.pages > 1 %>
-    <div class="mt-4 flex justify-center text-theme-sm">
-      <%== @pagy.series_nav %>
+    <div class="border-t border-gray-100 py-4 px-4">
+      <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
+        <p class="text-center text-theme-sm font-medium text-gray-500 xl:text-left">
+          Showing <%= @pagy.from %> to <%= @pagy.to %> of <%= @pagy.count %> payments
+        </p>
+        <%== @pagy.series_nav %>
+      </div>
     </div>
   <% end %>
 </turbo-frame>
