@@ -1,13 +1,13 @@
-<% content_for :title, "Shops" %>
+<% content_for :title, t('.title') %>
 
 <%# Page header %>
 <div class="mb-6 flex items-center justify-between">
   <div>
-    <h1 class="text-xl font-semibold text-gray-900">Shops</h1>
-    <p class="mt-0.5 text-theme-sm text-gray-500">Manage your payment shops and API credentials</p>
+    <h1 class="text-xl font-semibold text-gray-900"><%= t('.title') %></h1>
+    <p class="mt-0.5 text-theme-sm text-gray-500"><%= t('.subtitle') %></p>
   </div>
   <% if ShopPolicy.new(current_user, Tessera::Shop).create? %>
-    <%= link_to "Add shop", new_shop_path, class: "btn-primary" %>
+    <%= link_to t('.add'), new_shop_path, class: "btn-primary" %>
   <% end %>
 </div>
 
@@ -17,12 +17,12 @@
     <table class="min-w-full divide-y divide-gray-200">
       <thead class="bg-gray-50">
         <tr>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Shop ID</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Name</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Territory</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Mode</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Notification URL</th>
-          <th class="relative px-4 py-3"><span class="sr-only">View</span></th>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.shop_id') %></th>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.name') %></th>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.territory') %></th>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.mode') %></th>
+          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.notification_url') %></th>
+          <th class="relative px-4 py-3"><span class="sr-only"><%= t('.table.view') %></span></th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-200 bg-white">
@@ -33,21 +33,21 @@
             <td class="px-4 py-3 text-theme-sm text-gray-500"><%= shop.country.presence || "—" %></td>
             <td class="px-4 py-3">
               <span class="<%= shop.test_mode? ? 'badge badge-warning' : 'badge badge-success' %>">
-                <%= shop.test_mode? ? "Test" : "Live" %>
+                <%= shop.test_mode? ? t('.table.test') : t('.table.live') %>
               </span>
             </td>
             <td class="px-4 py-3 text-theme-sm text-gray-500 truncate max-w-xs">
               <%= shop.notification_url.presence || "—" %>
             </td>
             <td class="px-4 py-3 text-right">
-              <%= link_to "View", shop_path(shop), class: "table-action" %>
+              <%= link_to t('.table.view'), shop_path(shop), class: "table-action" %>
             </td>
           </tr>
         <% end %>
         <% if @shops.empty? %>
           <tr>
             <td colspan="6" class="px-4 py-10 text-center text-theme-sm text-gray-500">
-              No shops found.
+              <%= t('.table.empty') %>
             </td>
           </tr>
         <% end %>

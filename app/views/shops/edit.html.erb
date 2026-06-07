@@ -10,14 +10,14 @@
   <%# Page header %>
   <div class="mb-6">
     <h1 class="text-xl font-semibold text-gray-900">Edit <%= @shop.name %></h1>
-    <p class="mt-0.5 text-theme-sm text-gray-500">Changes are saved in tessera-core via the internal API.</p>
+    <p class="mt-0.5 text-theme-sm text-gray-500"><%= t('.subtitle') %></p>
   </div>
 
   <div class="card">
     <%= form_with url: shop_path(@shop), method: :patch, class: "space-y-5" do |f| %>
       <div>
-        <%= label_tag "shop[notification_url]", "Notification URL", class: "form-label" %>
-        <p class="text-xs text-gray-500 mt-0.5">Must be an HTTPS URL. Leave blank to disable webhooks.</p>
+        <%= label_tag "shop[notification_url]", t('.fields.notification_url'), class: "form-label" %>
+        <p class="text-xs text-gray-500 mt-0.5"><%= t('.fields.notification_url_hint') %></p>
         <%= url_field_tag "shop[notification_url]",
               params.dig(:shop, :notification_url) || @shop.notification_url,
               placeholder: "https://your-server.com/webhooks",
@@ -29,13 +29,13 @@
         <%= check_box_tag "shop[test_mode]", "1",
               params.key?(:shop) ? ActiveModel::Type::Boolean.new.cast(params.dig(:shop, :test_mode)) : @shop.test_mode?,
               class: "h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500" %>
-        <%= label_tag "shop[test_mode]", "Test mode",
+        <%= label_tag "shop[test_mode]", t('.fields.test_mode'),
               class: "text-theme-sm font-medium text-gray-700 cursor-pointer" %>
       </div>
 
       <div class="flex flex-col gap-3 pt-2 sm:flex-row">
-        <%= f.submit "Save changes", class: "btn-primary w-full sm:w-auto" %>
-        <%= link_to "Cancel", shop_path(@shop), class: "btn-secondary w-full sm:w-auto" %>
+        <%= f.submit t('.submit'), class: "btn-primary w-full sm:w-auto" %>
+        <%= link_to t('.cancel'), shop_path(@shop), class: "btn-secondary w-full sm:w-auto" %>
       </div>
     <% end %>
   </div>
