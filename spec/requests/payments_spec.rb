@@ -76,6 +76,36 @@ RSpec.describe "Payments", type: :request do
       end
     end
 
+    context "when paginating" do
+      # Create 26 payments for shop_abc so page 2 exists (page size is 25)
+      let_it_be(:paginated_payments) do
+        26.times.map do |i|
+          create(:tessera_payment,
+            shop_id: "shop_abc",
+            status: "succeeded",
+            inserted_at: Time.current - i.hours,
+            updated_at:  Time.current - i.hours)
+        end
+      end
+
+      before { sign_in psp_admin }
+
+      it "returns 200 for page 1" do
+        get payments_path, params: { page: 1 }
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "returns 200 for page 2" do
+        get payments_path, params: { page: 2 }
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "returns 200 for page 1 with a status filter applied" do
+        get payments_path, params: { page: 1, status: "succeeded" }
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
     context "when unauthenticated" do
       it "redirects to sign in" do
         get payments_path
