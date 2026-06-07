@@ -1,21 +1,21 @@
-<% content_for :title, "Save your credentials" %>
+<% content_for :title, t('.page_title') %>
 
 <div class="max-w-2xl">
   <%# Back link %>
   <div class="mb-6">
-    <%= link_to "← Back to #{@shop.name}", shop_path(@shop),
+    <%= link_to t('.back', name: @shop.name), shop_path(@shop),
           class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
   </div>
 
   <%# Warning banner %>
   <div class="flash-alert mb-6">
-    <strong>Save these now.</strong>
-    The secret key and signing secret are shown exactly once and cannot be retrieved again.
+    <strong><%= t('.warning') %></strong>
+    <%= t('.warning_detail') %>
   </div>
 
   <%# Page header %>
   <div class="mb-6">
-    <h1 class="text-xl font-semibold text-gray-900">Your new API credentials</h1>
+    <h1 class="text-xl font-semibold text-gray-900"><%= t('.title') %></h1>
     <p class="mt-0.5 text-theme-sm text-gray-500">
       Shop <span class="font-mono"><%= @shop.shop_id %></span>
     </p>
@@ -23,9 +23,9 @@
 
   <div class="card space-y-6">
     <% [
-      ["Public key (pk_)",  @credential["pk"]],
-      ["Secret key (sk_)",  @credential["sk"]],
-      ["Signing secret",    @credential["signing_secret"]],
+      [t('.fields.public_key'),    @credential["pk"]],
+      [t('.fields.secret_key'),    @credential["sk"]],
+      [t('.fields.signing_secret'), @credential["signing_secret"]],
     ].each do |label, value| %>
       <div data-controller="clipboard">
         <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500"><%= label %></dt>
@@ -35,7 +35,7 @@
           <div class="mt-2 flex items-center gap-2">
             <button type="button" data-action="clipboard#copy"
                     class="btn-secondary text-xs py-1.5 px-3">
-              Copy
+              <%= t('.copy') %>
             </button>
             <span class="text-xs text-gray-500" data-clipboard-target="feedback"></span>
           </div>
@@ -46,18 +46,16 @@
 
   <%# Integration guide %>
   <div class="mt-6 card bg-gray-50 space-y-2 text-theme-sm text-gray-700">
-    <h2 class="font-semibold text-gray-900">How to integrate</h2>
-    <p>Send the secret key as a Bearer token on every request to tessera-core
-      (<code class="text-xs">Authorization: Bearer &lt;sk_…&gt;</code>).
+    <h2 class="font-semibold text-gray-900"><%= t('.integration.title') %></h2>
+    <p><%= t('.integration.bearer') %>
+      (<code class="text-xs"><%= t('.integration.bearer_code') %></code>).
     </p>
-    <p>Use the public key only where you need to identify the credential (logs, support, dashboards).</p>
-    <p>If request signing is enabled for this shop, sign each request with the signing secret:
-       HMAC over timestamp, HTTP method, path, and body.
-    </p>
-    <p>Store both secrets in your server-side configuration — never in a browser or mobile app.</p>
+    <p><%= t('.integration.public_key_usage') %></p>
+    <p><%= t('.integration.signing') %></p>
+    <p><%= t('.integration.security') %></p>
   </div>
 
   <div class="mt-6">
-    <%= link_to "Done — back to shop", shop_path(@shop), class: "btn-primary" %>
+    <%= link_to t('.done'), shop_path(@shop), class: "btn-primary" %>
   </div>
 </div>
