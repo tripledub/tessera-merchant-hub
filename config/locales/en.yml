@@ -1,31 +1,223 @@
-# Files in the config/locales directory are used for internationalization and
-# are automatically loaded by Rails. If you want to use locales other than
-# English, add the necessary files in this directory.
-#
-# To use the locales, use `I18n.t`:
-#
-#     I18n.t "hello"
-#
-# In views, this is aliased to just `t`:
-#
-#     <%= t("hello") %>
-#
-# To use a different locale, set it with `I18n.locale`:
-#
-#     I18n.locale = :es
-#
-# This would use the information in config/locales/es.yml.
-#
-# To learn more about the API, please read the Rails Internationalization guide
-# at https://guides.rubyonrails.org/i18n.html.
-#
-# Be aware that YAML interprets the following case-insensitive strings as
-# booleans: `true`, `false`, `on`, `off`, `yes`, `no`. Therefore, these strings
-# must be quoted to be interpreted as strings. For example:
-#
-#     en:
-#       "yes": yup
-#       enabled: "ON"
-
 en:
-  hello: "Hello world"
+  app:
+    title: "Tessera Merchant Hub"
+
+  # ── Shared ────────────────────────────────────────────────────────────────
+  shared:
+    error_messages:
+      header:
+        one: "1 error prevented this from being saved:"
+        other: "%{count} errors prevented this from being saved:"
+
+  # ── Layouts ───────────────────────────────────────────────────────────────
+  layouts:
+    navigation:
+      app_name: "MerchantHub"
+      payments: "Payments"
+      shops: "Shops"
+      onboard: "Onboard"
+      sign_out: "Sign out"
+      toggle_nav: "Toggle navigation menu"
+
+  # ── Errors ────────────────────────────────────────────────────────────────
+  errors:
+    forbidden:
+      code: "403"
+      title: "Access denied"
+      message: "You don't have permission to view this page."
+      go_back: "Go back"
+
+  # ── Payments ──────────────────────────────────────────────────────────────
+  payments:
+    index:
+      title: "Payments"
+      subtitle: "All payment transactions across your shops"
+      filter:
+        status_label: "Status"
+        all_statuses: "All statuses"
+        succeeded: "Succeeded"
+        failed: "Failed"
+        pending: "Pending"
+        refunded: "Refunded"
+        clear: "Clear"
+      table:
+        id: "ID"
+        shop: "Shop"
+        amount: "Amount"
+        status: "Status"
+        created: "Created"
+        view: "View"
+        empty: "No payments found."
+      pagination:
+        showing: "Showing %{from} to %{to} of %{count} payments"
+        previous: "Previous"
+        next: "Next"
+    show:
+      title: "Payment"
+      page_title: "Payment"
+      back: "← Back to payments"
+      fields:
+        amount: "Amount"
+        shop: "Shop"
+        merchant_reference: "Merchant Reference"
+        created: "Created"
+        idempotency_key: "Idempotency Key"
+      tabs:
+        details: "Details"
+        timeline: "Timeline"
+      actions:
+        refund: "Refund"
+        void: "Void"
+        refund_confirm: "Submit a full refund of %{amount}?"
+        void_confirm: "Void this authorisation?"
+    modal_detail:
+      label: "Payment"
+      close: "Close"
+      fields:
+        amount: "Amount"
+        shop: "Shop"
+        reference: "Reference"
+        created: "Created"
+        idempotency_key: "Idempotency Key"
+
+  # ── Shops ─────────────────────────────────────────────────────────────────
+  shops:
+    index:
+      title: "Shops"
+      subtitle: "Manage your payment shops and API credentials"
+      add: "Add shop"
+      table:
+        shop_id: "Shop ID"
+        name: "Name"
+        territory: "Territory"
+        mode: "Mode"
+        notification_url: "Notification URL"
+        view: "View"
+        empty: "No shops found."
+        test: "Test"
+        live: "Live"
+    show:
+      back: "← Back to shops"
+      edit: "Edit configuration"
+      fields:
+        shop_id: "Shop ID"
+        territory: "Territory"
+        mode: "Mode"
+        notification_url: "Notification URL"
+        not_set: "Not set"
+    new:
+      title: "Add shop"
+      page_title: "Add shop"
+      back: "← Back to shops"
+      subtitle_psp: "Provisions a new shop in tessera-core under the selected merchant."
+      subtitle_merchant: "Provisions a new shop in tessera-core under your merchant."
+      fields:
+        merchant_id: "Merchant ID"
+        name: "Shop name"
+        territory: "Territory (ISO-2)"
+        notification_url: "Notification URL"
+        notification_url_hint: "Optional. HTTPS URL for payment webhooks."
+      submit: "Create shop"
+      cancel: "Cancel"
+    edit:
+      subtitle: "Changes are saved in tessera-core via the internal API."
+      fields:
+        notification_url: "Notification URL"
+        notification_url_hint: "Must be an HTTPS URL. Leave blank to disable webhooks."
+        test_mode: "Test mode"
+      submit: "Save changes"
+      cancel: "Cancel"
+    credentials:
+      title: "API credentials"
+      subtitle: "Per-shop keys for integrating with tessera-core. Secret keys are shown only once at generation."
+      generate: "Generate credentials"
+      generate_confirm: "Generate new API credentials? Any existing active key may need to be rotated in your integration."
+      no_credentials: "No credentials yet. Generate a pair to start integrating."
+      load_error: "Could not load credentials: %{message}"
+      table:
+        public_key: "Public key"
+        status: "Status"
+        signing: "Signing"
+        created: "Created"
+        last_used: "Last used"
+        actions: "Actions"
+        signing_required: "Required"
+        signing_optional: "Optional"
+        unknown_status: "Unknown"
+      revoke: "Revoke"
+      revoke_confirm: "Revoke credential %{pk}? This cannot be undone."
+
+  # ── Shop credentials (show-once page) ────────────────────────────────────
+  shop_credentials:
+    show_once:
+      page_title: "Save your credentials"
+      title: "Your new API credentials"
+      back: "← Back to %{name}"
+      warning: "Save these now."
+      warning_detail: "The secret key and signing secret are shown exactly once and cannot be retrieved again."
+      fields:
+        public_key: "Public key (pk_)"
+        secret_key: "Secret key (sk_)"
+        signing_secret: "Signing secret"
+      copy: "Copy"
+      done: "Done — back to shop"
+      integration:
+        title: "How to integrate"
+        bearer: "Send the secret key as a Bearer token on every request to tessera-core."
+        bearer_code: "Authorization: Bearer <sk_…>"
+        public_key_usage: "Use the public key only where you need to identify the credential (logs, support, dashboards)."
+        signing: "If request signing is enabled for this shop, sign each request with the signing secret: HMAC over timestamp, HTTP method, path, and body."
+        security: "Store both secrets in your server-side configuration — never in a browser or mobile app."
+
+  # ── Payment timelines ─────────────────────────────────────────────────────
+  payment_timelines:
+    show:
+      title: "Payment Timeline"
+      back: "← Back to payment"
+      tabs:
+        details: "Details"
+        timeline: "Timeline"
+      events:
+        title: "Events"
+        empty: "No events recorded for this payment."
+        metadata: "Metadata"
+      webhooks:
+        title: "Webhook Deliveries"
+        empty: "No webhook deliveries recorded."
+        table:
+          status: "Status"
+          attempts: "Attempts"
+          last_attempt: "Last attempt"
+          delivered_at: "Delivered at"
+
+  # ── Merchants ─────────────────────────────────────────────────────────────
+  merchants:
+    new:
+      title: "Onboard a merchant"
+      page_title: "Onboard a merchant"
+      subtitle: "Creates the merchant and its first shop in tessera-core, and invites the first admin."
+      sections:
+        merchant: "Merchant"
+        first_shop: "First shop"
+        first_admin: "First admin"
+      fields:
+        name: "Name"
+        company_name: "Company name"
+        country: "Country (ISO-2)"
+        shop_name: "Shop name"
+        shop_territory: "Territory (ISO-2)"
+        admin_email: "Admin email"
+        admin_email_hint: "They'll receive an email to set their password."
+      submit: "Onboard merchant"
+      cancel: "Cancel"
+
+  # ── Flash messages (set by controllers) ───────────────────────────────────
+  flash:
+    merchants:
+      missing_fields: "Merchant name, shop name and admin email are all required."
+      onboard_failed: "Onboarding failed: %{message}"
+      admin_create_failed: "Could not create the admin user: %{errors}"
+    shops:
+      missing_fields: "Shop name and territory (country) are required."
+      create_failed: "Could not create shop: %{message}"
+      update_failed: "Could not update shop: %{message}"
