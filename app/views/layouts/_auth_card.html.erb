@@ -1,0 +1,22 @@
+<%# Centred card wrapper for all unauthenticated Devise views.
+    Usage: render "layouts/auth_card", title: "Sign in" do ... end %>
+<div class="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12">
+  <div class="w-full max-w-md">
+    <%# Brand mark %>
+    <div class="mb-8 flex flex-col items-center gap-3">
+      <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-brand-500">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+             class="h-7 w-7 text-white" aria-hidden="true">
+          <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1
+                   2-2zm0 2v2h16V6H4zm0 4v8h16v-8H4zm2 2h4v2H6v-2z"/>
+        </svg>
+      </div>
+      <span class="text-xl font-semibold text-gray-900">MerchantHub</span>
+    </div>
+    <%# Card %>
+    <div class="card">
+      <h1 class="mb-6 text-lg font-semibold text-gray-900"><%= local_assigns[:title] %></h1>
+      <%= yield %>
+    </div>
+  </div>
+</div>

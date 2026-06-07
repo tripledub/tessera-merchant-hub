@@ -1,0 +1,100 @@
+<%# Permanently dark sidebar — the `dark` class makes all dark: utility variants apply
+    inside this element without requiring system/page dark mode.
+    Stimulus `sidebar` controller manages mobile open/close and desktop collapse. %>
+<aside data-sidebar-target="panel"
+       class="dark
+              fixed left-0 top-0 z-[9999] flex h-screen w-[290px] shrink-0 flex-col
+              overflow-y-auto border-r border-gray-800 bg-gray-dark
+              transition-[width,transform] duration-300 ease-linear
+              -translate-x-full lg:static lg:translate-x-0
+              no-scrollbar">
+
+  <%# ── Logo header ──────────────────────────────────────────────────────── %>
+  <div class="flex items-center justify-between px-6 pt-8 pb-6">
+    <%= link_to payments_path, class: "flex items-center gap-3 min-w-0" do %>
+      <%# Brand mark — always visible, even in collapsed mode %>
+      <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-500">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"
+             class="h-5 w-5" aria-hidden="true">
+          <path d="M4.5 3.75a3 3 0 0 0-3 3v.75h21v-.75a3 3 0 0 0-3-3h-15Z" />
+          <path fill-rule="evenodd" d="M22.5 9.75h-21v7.5a3 3 0 0 0 3 3h15a3 3 0 0 0 3-3v-7.5Zm-18 3.75a.75.75 0 0 1 .75-.75h6a.75.75 0 0 1 0 1.5h-6a.75.75 0 0 1-.75-.75Zm.75 2.25a.75.75 0 0 0 0 1.5h3a.75.75 0 0 0 0-1.5h-3Z" clip-rule="evenodd" />
+        </svg>
+      </div>
+      <%# Wordmark — hidden in collapsed mode %>
+      <span class="sidebar-label text-base font-semibold text-white truncate">
+        MerchantHub
+      </span>
+    <% end %>
+
+    <%# Mobile close button %>
+    <button type="button"
+            data-action="click->sidebar#close"
+            class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg
+                   text-gray-400 hover:bg-white/[0.07] hover:text-white lg:hidden"
+            aria-label="Close sidebar">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+           class="h-5 w-5" aria-hidden="true">
+        <path d="M18 6L6 18M6 6l12 12"/>
+      </svg>
+    </button>
+  </div>
+
+  <%# ── Navigation ────────────────────────────────────────────────────────── %>
+  <nav class="flex flex-1 flex-col gap-0.5 px-4 pb-4">
+
+    <% if current_user.psp_role? %>
+      <p class="sidebar-group-title mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        Menu
+      </p>
+      <%= nav_link_to "Payments",  payments_path,     controller: "payments",  icon: :payments %>
+      <%= nav_link_to "Shops",     shops_path,        controller: "shops",     icon: :shops %>
+      <% if current_user.psp_admin? %>
+        <%= nav_link_to "Onboard Merchant", new_merchant_path, controller: "merchants", icon: :onboard %>
+      <% end %>
+
+    <% elsif current_user.merchant_role? %>
+      <p class="sidebar-group-title mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        My Account
+      </p>
+      <%= nav_link_to "Payments", payments_path, controller: "payments", icon: :payments %>
+      <%= nav_link_to "Shops",    shops_path,    controller: "shops",    icon: :shops %>
+    <% end %>
+
+  </nav>
+
+  <%# ── User footer ────────────────────────────────────────────────────────── %>
+  <div class="border-t border-gray-800 px-4 py-4">
+    <div class="flex items-center gap-3">
+      <%# Avatar initials %>
+      <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full
+                  bg-brand-500/20 text-sm font-semibold text-brand-400">
+        <%= current_user.email.first.upcase %>
+      </div>
+      <%# Email + role — hidden when collapsed %>
+      <div class="sidebar-label min-w-0 flex-1">
+        <p class="truncate text-theme-sm font-medium text-white">
+          <%= current_user.email %>
+        </p>
+        <p class="truncate text-xs capitalize text-gray-400">
+          <%= current_user.role.to_s.humanize %>
+        </p>
+      </div>
+      <%# Sign out — always visible %>
+      <%= button_to destroy_user_session_path,
+            method: :delete,
+            class: "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg
+                    text-gray-400 hover:bg-white/[0.07] hover:text-white",
+            title: "Sign out",
+            form: { "data-turbo": "false" } do %>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+             class="h-4 w-4" aria-hidden="true">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
+        </svg>
+        <span class="sr-only">Sign out</span>
+      <% end %>
+    </div>
+  </div>
+
+</aside>

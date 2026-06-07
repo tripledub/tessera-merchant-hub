@@ -1,61 +1,63 @@
 <% content_for :title, "Save your credentials" %>
 
 <div class="max-w-2xl">
+  <%# Back link %>
   <div class="mb-6">
-    <%= link_to "← Back to #{@shop.name}", shop_path(@shop), class: "inline-flex items-center min-h-11 text-sm text-indigo-600 hover:text-indigo-900" %>
+    <%= link_to "← Back to #{@shop.name}", shop_path(@shop),
+          class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
   </div>
 
-  <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-    <strong>Save these now.</strong> The secret key and signing secret are shown exactly once and cannot be retrieved again.
+  <%# Warning banner %>
+  <div class="flash-alert mb-6">
+    <strong>Save these now.</strong>
+    The secret key and signing secret are shown exactly once and cannot be retrieved again.
   </div>
 
-  <h1 class="mt-6 text-2xl font-semibold text-gray-900">Your new API credentials</h1>
-  <p class="mt-1 text-sm text-gray-500">Shop <span class="font-mono"><%= @shop.shop_id %></span></p>
+  <%# Page header %>
+  <div class="mb-6">
+    <h1 class="text-xl font-semibold text-gray-900">Your new API credentials</h1>
+    <p class="mt-0.5 text-theme-sm text-gray-500">
+      Shop <span class="font-mono"><%= @shop.shop_id %></span>
+    </p>
+  </div>
 
-  <dl class="mt-6 space-y-6">
-    <div>
-      <dt class="text-xs font-medium text-gray-500 uppercase">Public key (pk_)</dt>
-      <dd class="mt-2" data-controller="clipboard">
-        <div class="flex flex-wrap items-center gap-2">
-          <code class="text-sm font-mono bg-gray-100 px-2 py-1 rounded break-all" data-clipboard-target="source"><%= @credential["pk"] %></code>
-          <button type="button" data-action="clipboard#copy" class="btn-ghost text-sm">Copy</button>
-          <span class="text-xs text-gray-500" data-clipboard-target="feedback"></span>
-        </div>
-      </dd>
-    </div>
+  <div class="card space-y-6">
+    <% [
+      ["Public key (pk_)",  @credential["pk"]],
+      ["Secret key (sk_)",  @credential["sk"]],
+      ["Signing secret",    @credential["signing_secret"]],
+    ].each do |label, value| %>
+      <div data-controller="clipboard">
+        <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500"><%= label %></dt>
+        <dd class="mt-2">
+          <code class="block rounded-lg bg-gray-100 px-3 py-2 text-theme-sm font-mono break-all"
+                data-clipboard-target="source"><%= value %></code>
+          <div class="mt-2 flex items-center gap-2">
+            <button type="button" data-action="clipboard#copy"
+                    class="btn-secondary text-xs py-1.5 px-3">
+              Copy
+            </button>
+            <span class="text-xs text-gray-500" data-clipboard-target="feedback"></span>
+          </div>
+        </dd>
+      </div>
+    <% end %>
+  </div>
 
-    <div>
-      <dt class="text-xs font-medium text-gray-500 uppercase">Secret key (sk_)</dt>
-      <dd class="mt-2" data-controller="clipboard">
-        <code class="block text-sm font-mono bg-gray-100 px-2 py-2 rounded break-all" data-clipboard-target="source"><%= @credential["sk"] %></code>
-        <div class="mt-2 flex items-center gap-2">
-          <button type="button" data-action="clipboard#copy" class="btn-ghost text-sm">Copy secret key</button>
-          <span class="text-xs text-gray-500" data-clipboard-target="feedback"></span>
-        </div>
-      </dd>
-    </div>
-
-    <div>
-      <dt class="text-xs font-medium text-gray-500 uppercase">Signing secret</dt>
-      <dd class="mt-2" data-controller="clipboard">
-        <code class="block text-sm font-mono bg-gray-100 px-2 py-2 rounded break-all" data-clipboard-target="source"><%= @credential["signing_secret"] %></code>
-        <div class="mt-2 flex items-center gap-2">
-          <button type="button" data-action="clipboard#copy" class="btn-ghost text-sm">Copy signing secret</button>
-          <span class="text-xs text-gray-500" data-clipboard-target="feedback"></span>
-        </div>
-      </dd>
-    </div>
-  </dl>
-
-  <section class="mt-8 rounded-lg bg-gray-50 px-4 py-4 text-sm text-gray-700 space-y-2">
+  <%# Integration guide %>
+  <div class="mt-6 card bg-gray-50 space-y-2 text-theme-sm text-gray-700">
     <h2 class="font-semibold text-gray-900">How to integrate</h2>
-    <p>Send the secret key as a Bearer token on every request to tessera-core (<code class="text-xs">Authorization: Bearer &lt;sk_…&gt;</code>).</p>
+    <p>Send the secret key as a Bearer token on every request to tessera-core
+      (<code class="text-xs">Authorization: Bearer &lt;sk_…&gt;</code>).
+    </p>
     <p>Use the public key only where you need to identify the credential (logs, support, dashboards).</p>
-    <p>If request signing is enabled for this shop, sign each request with the signing secret: HMAC over timestamp, HTTP method, path, and body.</p>
+    <p>If request signing is enabled for this shop, sign each request with the signing secret:
+       HMAC over timestamp, HTTP method, path, and body.
+    </p>
     <p>Store both secrets in your server-side configuration — never in a browser or mobile app.</p>
-  </section>
+  </div>
 
-  <div class="mt-8">
+  <div class="mt-6">
     <%= link_to "Done — back to shop", shop_path(@shop), class: "btn-primary" %>
   </div>
 </div>

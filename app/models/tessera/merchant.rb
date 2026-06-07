@@ -1,15 +1,7 @@
 # frozen_string_literal: true
 
 module Tessera
-  # Read-only view of tessera-core's merchants (control-plane entity).
-  # Owned by tessera-core (ADR-007); MerchantHub never writes to it.
-  class Merchant < ReadOnlyRecord
-    self.table_name = "merchants"
-
-    has_many :shops,
-      class_name: "Tessera::Shop",
-      foreign_key: :merchant_id,
-      primary_key: :merchant_id,
-      inverse_of: :merchant
-  end
+  # ADR-007: merchants are now owned by MerchantHub.
+  # This alias keeps existing controller/policy references working without changes.
+  Merchant = ::Merchant
 end

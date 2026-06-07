@@ -38,5 +38,12 @@ module TesseraMerchantHub
 
     # Don't generate system test files.
     config.generators.system_tests = nil
+
+    # Exclude tessera-core stub tables from db/schema.rb.
+    # These tables are owned by tessera-core (Elixir/Phoenix) in production.
+    # The stub migration creates them in dev/test only so the app can run locally.
+    # They must never appear in schema.rb to make it clear MerchantHub doesn't own them.
+    config.active_record.schema_format = :ruby
+    ActiveRecord::SchemaDumper.ignore_tables += %w[payments audit_events webhook_deliveries]
   end
 end
