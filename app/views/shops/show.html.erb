@@ -1,41 +1,44 @@
 <% content_for :title, @shop.name %>
 
 <div class="max-w-2xl">
+  <%# Back link %>
   <div class="mb-6">
-    <%= link_to "← Back to shops", shops_path, class: "inline-flex items-center min-h-11 text-sm text-indigo-600 hover:text-indigo-900" %>
+    <%= link_to "← Back to shops", shops_path,
+          class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
   </div>
 
-  <div class="sm:flex sm:items-start sm:justify-between gap-4">
-    <h1 class="text-2xl font-semibold text-gray-900"><%= @shop.name %></h1>
+  <%# Page header %>
+  <div class="mb-6 flex items-start justify-between gap-4">
+    <h1 class="text-xl font-semibold text-gray-900"><%= @shop.name %></h1>
     <% if ShopPolicy.new(current_user, @shop).update? %>
-      <%= link_to "Edit configuration", edit_shop_path(@shop), class: "btn-ghost shrink-0" %>
+      <%= link_to "Edit configuration", edit_shop_path(@shop), class: "btn-secondary shrink-0" %>
     <% end %>
   </div>
 
-  <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-    <div class="bg-gray-50 rounded-lg px-4 py-4">
-      <dt class="text-xs font-medium text-gray-500 uppercase">Shop ID</dt>
-      <dd class="mt-1 text-sm font-mono text-gray-900"><%= @shop.shop_id %></dd>
+  <%# Detail grid %>
+  <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+    <div class="card">
+      <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500">Shop ID</dt>
+      <dd class="mt-1 text-theme-sm font-mono text-gray-900"><%= @shop.shop_id %></dd>
     </div>
 
-    <div class="bg-gray-50 rounded-lg px-4 py-4">
-      <dt class="text-xs font-medium text-gray-500 uppercase">Territory</dt>
-      <dd class="mt-1 text-sm text-gray-900"><%= @shop.country.presence || "—" %></dd>
+    <div class="card">
+      <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500">Territory</dt>
+      <dd class="mt-1 text-theme-sm text-gray-900"><%= @shop.country.presence || "—" %></dd>
     </div>
 
-    <div class="bg-gray-50 rounded-lg px-4 py-4">
-      <dt class="text-xs font-medium text-gray-500 uppercase">Mode</dt>
-      <dd class="mt-1">
-        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium
-          <%= @shop.test_mode? ? 'bg-yellow-100 text-yellow-800' : 'bg-green-100 text-green-800' %>">
+    <div class="card">
+      <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500">Mode</dt>
+      <dd class="mt-2">
+        <span class="<%= @shop.test_mode? ? 'badge badge-warning' : 'badge badge-success' %>">
           <%= @shop.test_mode? ? "Test" : "Live" %>
         </span>
       </dd>
     </div>
 
-    <div class="bg-gray-50 rounded-lg px-4 py-4 sm:col-span-2">
-      <dt class="text-xs font-medium text-gray-500 uppercase">Notification URL</dt>
-      <dd class="mt-1 text-sm text-gray-900 break-all">
+    <div class="card sm:col-span-2">
+      <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500">Notification URL</dt>
+      <dd class="mt-1 text-theme-sm text-gray-900 break-all">
         <%= @shop.notification_url.presence || "Not set" %>
       </dd>
     </div>
