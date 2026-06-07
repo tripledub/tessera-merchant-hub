@@ -35,7 +35,7 @@ The bulk of seeds.rb is wrapped in `if Rails.env.development?` so the PSP demo u
 
 ### Faker gem
 
-Added to the `development` group in `Gemfile` only — not test (factories handle test data independently).
+Added to the `development, test` group in `Gemfile` — available in both environments so factories can use it for realistic data without a separate Gemfile change later.
 
 ---
 
@@ -93,7 +93,7 @@ Added to the `development` group in `Gemfile` only — not test (factories handl
 
 | File | Action |
 |---|---|
-| `Gemfile` | Add `faker` to `development` group |
+| `Gemfile` | Add `faker` to `development, test` group |
 | `db/seeds.rb` | Rewrite — inline `Seeds::Payment` class, Faker data, scope guard |
 
 No migrations. No model changes. No test changes.
