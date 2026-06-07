@@ -41,7 +41,7 @@ module TesseraMerchantHub
 
     # i18n — English only for now; locale files in config/locales/
     config.i18n.default_locale = :en
-    config.i18n.available_locales = [:en]
+    config.i18n.available_locales = [ :en ]
 
     # Exclude tessera-core stub tables from db/schema.rb.
     # These tables are owned by tessera-core (Elixir/Phoenix) in production.

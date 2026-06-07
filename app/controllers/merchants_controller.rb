@@ -9,7 +9,7 @@ class MerchantsController < ApplicationController
     authorize Tessera::Merchant, :create?, policy_class: MerchantPolicy
 
     if onboarding_params_incomplete?
-      flash.now[:alert] = I18n.t('flash.merchants.missing_fields')
+      flash.now[:alert] = I18n.t("flash.merchants.missing_fields")
       return render :new, status: :unprocessable_entity
     end
 
@@ -18,12 +18,12 @@ class MerchantsController < ApplicationController
     create_first_admin(merchant["merchant_id"])
 
     redirect_to authenticated_root_path,
-                notice: I18n.t('flash.merchants.onboard_success', email: admin_email)
+                notice: I18n.t("flash.merchants.onboard_success", email: admin_email)
   rescue TesseraCoreClient::Error => e
-    flash.now[:alert] = I18n.t('flash.merchants.onboard_failed', message: e.message)
+    flash.now[:alert] = I18n.t("flash.merchants.onboard_failed", message: e.message)
     render :new, status: :unprocessable_entity
   rescue ActiveRecord::RecordInvalid => e
-    flash.now[:alert] = I18n.t('flash.merchants.admin_create_failed', errors: e.record.errors.full_messages.to_sentence)
+    flash.now[:alert] = I18n.t("flash.merchants.admin_create_failed", errors: e.record.errors.full_messages.to_sentence)
     render :new, status: :unprocessable_entity
   end
 
