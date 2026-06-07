@@ -48,10 +48,31 @@ RSpec.describe "Payments", type: :request do
     context "when filtering by status" do
       before { sign_in psp_admin }
 
-      it "returns only matching payments" do
+      it "returns only succeeded payments when status=succeeded" do
+        get payments_path, params: { status: "succeeded" }
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include(own_payment.id)
+        expect(response.body).not_to include(other_payment.id)
+      end
+
+      it "returns only failed payments when status=failed" do
         get payments_path, params: { status: "failed" }
+        expect(response).to have_http_status(:ok)
         expect(response.body).to include(other_payment.id)
         expect(response.body).not_to include(own_payment.id)
+      end
+
+      it "returns 200 with empty table when status matches no payments" do
+        get payments_path, params: { status: "voided" }
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("No payments found.")
+      end
+
+      it "returns all payments when status param is blank" do
+        get payments_path, params: { status: "" }
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include(own_payment.id)
+        expect(response.body).to include(other_payment.id)
       end
     end
 
