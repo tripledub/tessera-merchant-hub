@@ -10,6 +10,7 @@
 
 <%# Filter bar %>
 <%= form_with url: payments_path, method: :get,
+      data: { controller: "filter", turbo_action: "advance" },
       class: "mb-6 flex flex-col gap-3 sm:flex-row sm:items-end" do |f| %>
   <div class="sm:w-48">
     <%= f.label :status, "Status", class: "form-label" %>
@@ -17,71 +18,71 @@
           [["All statuses", ""], ["Succeeded", "succeeded"], ["Failed", "failed"],
            ["Pending", "pending"], ["Refunded", "refunded"]],
           { selected: params[:status] },
-          class: "form-select mt-1" %>
+          class: "form-select mt-1",
+          data: { action: "change->filter#submit" } %>
   </div>
-  <div class="flex gap-3">
-    <%= f.submit "Filter", class: "btn-primary" %>
-    <% if params[:status].present? %>
-      <%= link_to "Clear", payments_path, class: "btn-secondary" %>
-    <% end %>
-  </div>
+  <% if params[:status].present? %>
+    <%= link_to "Clear", payments_path, class: "btn-secondary self-end" %>
+  <% end %>
 <% end %>
 
-<%# Table %>
-<div class="card overflow-hidden p-0">
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">ID</th>
-          <% if current_user.psp_role? %>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Shop</th>
-          <% end %>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Amount</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Created</th>
-          <th class="relative px-4 py-3"><span class="sr-only">View</span></th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-200 bg-white">
-        <% @payments.each do |payment| %>
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 text-theme-sm font-mono text-gray-900 truncate max-w-[12rem]">
-              <%= payment.id %>
-            </td>
-            <% if current_user.psp_role? %>
-              <td class="px-4 py-3 text-theme-sm text-gray-500"><%= payment.shop_id %></td>
-            <% end %>
-            <td class="px-4 py-3 text-theme-sm text-gray-900 whitespace-nowrap">
-              <%= number_to_currency(payment.amount / 100.0, unit: payment.currency + " ") %>
-            </td>
-            <td class="px-4 py-3">
-              <%= render partial: "payments/status_badge", locals: { status: payment.status } %>
-            </td>
-            <td class="px-4 py-3 text-theme-sm text-gray-500 whitespace-nowrap">
-              <%= payment.inserted_at&.strftime("%d %b %Y %H:%M") %>
-            </td>
-            <td class="px-4 py-3 text-right">
-              <%= link_to "View", payment_path(payment.id), class: "table-action" %>
-            </td>
-          </tr>
-        <% end %>
-        <% if @payments.empty? %>
+<turbo-frame id="payments-table">
+  <%# Table %>
+  <div class="card overflow-hidden p-0">
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
           <tr>
-            <td colspan="<%= current_user.psp_role? ? 6 : 5 %>"
-                class="px-4 py-10 text-center text-theme-sm text-gray-500">
-              No payments found.
-            </td>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">ID</th>
+            <% if current_user.psp_role? %>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Shop</th>
+            <% end %>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Amount</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Created</th>
+            <th class="relative px-4 py-3"><span class="sr-only">View</span></th>
           </tr>
-        <% end %>
-      </tbody>
-    </table>
+        </thead>
+        <tbody class="divide-y divide-gray-200 bg-white">
+          <% @payments.each do |payment| %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 text-theme-sm font-mono text-gray-900 truncate max-w-[12rem]">
+                <%= payment.id %>
+              </td>
+              <% if current_user.psp_role? %>
+                <td class="px-4 py-3 text-theme-sm text-gray-500"><%= payment.shop_id %></td>
+              <% end %>
+              <td class="px-4 py-3 text-theme-sm text-gray-900 whitespace-nowrap">
+                <%= number_to_currency(payment.amount / 100.0, unit: payment.currency + " ") %>
+              </td>
+              <td class="px-4 py-3">
+                <%= render partial: "payments/status_badge", locals: { status: payment.status } %>
+              </td>
+              <td class="px-4 py-3 text-theme-sm text-gray-500 whitespace-nowrap">
+                <%= payment.inserted_at&.strftime("%d %b %Y %H:%M") %>
+              </td>
+              <td class="px-4 py-3 text-right">
+                <%= link_to "View", payment_path(payment.id), class: "table-action" %>
+              </td>
+            </tr>
+          <% end %>
+          <% if @payments.empty? %>
+            <tr>
+              <td colspan="<%= current_user.psp_role? ? 6 : 5 %>"
+                  class="px-4 py-10 text-center text-theme-sm text-gray-500">
+                No payments found.
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
   </div>
-</div>
 
-<%# Pagination %>
-<% if @pagy.pages > 1 %>
-  <div class="mt-4 flex justify-center text-theme-sm">
-    <%== @pagy.series_nav %>
-  </div>
-<% end %>
+  <%# Pagination %>
+  <% if @pagy.pages > 1 %>
+    <div class="mt-4 flex justify-center text-theme-sm">
+      <%== @pagy.series_nav %>
+    </div>
+  <% end %>
+</turbo-frame>
