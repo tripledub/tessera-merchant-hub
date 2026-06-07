@@ -1,18 +1,17 @@
-<% content_for :title, "Add shop" %>
+<% content_for :title, t('.page_title') %>
 
 <div class="max-w-2xl">
   <%# Back link %>
   <div class="mb-6">
-    <%= link_to "← Back to shops", shops_path,
+    <%= link_to t('.back'), shops_path,
           class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
   </div>
 
   <%# Page header %>
   <div class="mb-6">
-    <h1 class="text-xl font-semibold text-gray-900">Add shop</h1>
+    <h1 class="text-xl font-semibold text-gray-900"><%= t('.title') %></h1>
     <p class="mt-0.5 text-theme-sm text-gray-500">
-      Provisions a new shop in tessera-core under
-      <%= current_user.psp_admin? ? "the selected merchant" : "your merchant" %>.
+      <%= current_user.psp_admin? ? t('.subtitle_psp') : t('.subtitle_merchant') %>
     </p>
   </div>
 
@@ -20,34 +19,34 @@
     <%= form_with url: shops_path, method: :post, class: "space-y-5" do |f| %>
       <% if current_user.psp_admin? %>
         <div>
-          <%= label_tag "shop[merchant_id]", "Merchant ID", class: "form-label" %>
+          <%= label_tag "shop[merchant_id]", t('.fields.merchant_id'), class: "form-label" %>
           <%= text_field_tag "shop[merchant_id]", params.dig(:shop, :merchant_id),
                 class: "form-input mt-1 font-mono" %>
         </div>
       <% end %>
 
       <div>
-        <%= label_tag "shop[name]", "Shop name", class: "form-label" %>
+        <%= label_tag "shop[name]", t('.fields.name'), class: "form-label" %>
         <%= text_field_tag "shop[name]", params.dig(:shop, :name), class: "form-input mt-1" %>
       </div>
 
       <div>
-        <%= label_tag "shop[country]", "Territory (ISO-2)", class: "form-label" %>
+        <%= label_tag "shop[country]", t('.fields.territory'), class: "form-label" %>
         <%= text_field_tag "shop[country]", params.dig(:shop, :country),
               maxlength: 2, class: "form-input mt-1" %>
       </div>
 
       <div>
-        <%= label_tag "shop[notification_url]", "Notification URL", class: "form-label" %>
-        <p class="text-xs text-gray-500 mt-0.5">Optional. HTTPS URL for payment webhooks.</p>
+        <%= label_tag "shop[notification_url]", t('.fields.notification_url'), class: "form-label" %>
+        <p class="text-xs text-gray-500 mt-0.5"><%= t('.fields.notification_url_hint') %></p>
         <%= url_field_tag "shop[notification_url]", params.dig(:shop, :notification_url),
               placeholder: "https://your-server.com/webhooks",
               class: "form-input mt-1" %>
       </div>
 
       <div class="flex flex-col gap-3 pt-2 sm:flex-row">
-        <%= f.submit "Create shop", class: "btn-primary w-full sm:w-auto" %>
-        <%= link_to "Cancel", shops_path, class: "btn-secondary w-full sm:w-auto" %>
+        <%= f.submit t('.submit'), class: "btn-primary w-full sm:w-auto" %>
+        <%= link_to t('.cancel'), shops_path, class: "btn-secondary w-full sm:w-auto" %>
       </div>
     <% end %>
   </div>

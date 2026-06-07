@@ -22,15 +22,15 @@ class ShopsController < ApplicationController
     authorize_merchant_for_create!
 
     if shop_create_params_incomplete?
-      flash.now[:alert] = "Shop name and territory (country) are required."
+      flash.now[:alert] = I18n.t("flash.shops.missing_fields")
       return render :new, status: :unprocessable_entity
     end
 
     result = ControlPlane::ShopProvisioner.create!(merchant_id: target_merchant_id, **shop_create_params)
     redirect_to shop_path(result["shop_id"]),
-                notice: "Shop #{result['name']} created."
+                notice: I18n.t("flash.shops.create_success", name: result["name"])
   rescue TesseraCoreClient::Error => e
-    flash.now[:alert] = "Could not create shop: #{e.message}"
+    flash.now[:alert] = I18n.t("flash.shops.create_failed", message: e.message)
     render :new, status: :unprocessable_entity
   end
 
@@ -44,9 +44,9 @@ class ShopsController < ApplicationController
     authorize @shop, :update?, policy_class: ShopPolicy
 
     ControlPlane::ShopConfigStore.update!(shop_id: @shop.shop_id, **shop_update_params)
-    redirect_to shop_path(@shop), notice: "Shop configuration updated."
+    redirect_to shop_path(@shop), notice: I18n.t("flash.shops.update_success")
   rescue TesseraCoreClient::Error => e
-    flash.now[:alert] = "Could not update shop: #{e.message}"
+    flash.now[:alert] = I18n.t("flash.shops.update_failed", message: e.message)
     render :edit, status: :unprocessable_entity
   end
 

@@ -1,10 +1,10 @@
-<% content_for :title, "Payments" %>
+<% content_for :title, t('.title') %>
 
 <%# Page header %>
 <div class="mb-6 flex items-center justify-between">
   <div>
-    <h1 class="text-xl font-semibold text-gray-900">Payments</h1>
-    <p class="mt-0.5 text-theme-sm text-gray-500">All payment transactions across your shops</p>
+    <h1 class="text-xl font-semibold text-gray-900"><%= t('.title') %></h1>
+    <p class="mt-0.5 text-theme-sm text-gray-500"><%= t('.subtitle') %></p>
   </div>
 </div>
 
@@ -13,16 +13,16 @@
       data: { controller: "filter", turbo_action: "advance" },
       class: "mb-6 flex flex-col gap-3 sm:flex-row sm:items-end" do |f| %>
   <div class="sm:w-48">
-    <%= f.label :status, "Status", class: "form-label" %>
+    <%= f.label :status, t('.filter.status_label'), class: "form-label" %>
     <%= f.select :status,
-          [["All statuses", ""], ["Succeeded", "succeeded"], ["Failed", "failed"],
-           ["Pending", "pending"], ["Refunded", "refunded"]],
+          [[t('.filter.all_statuses'), ""], [t('.filter.succeeded'), "succeeded"], [t('.filter.failed'), "failed"],
+           [t('.filter.pending'), "pending"], [t('.filter.refunded'), "refunded"]],
           { selected: params[:status] },
           class: "form-select mt-1",
           data: { action: "change->filter#submit" } %>
   </div>
   <% if params[:status].present? %>
-    <%= link_to "Clear", payments_path, class: "btn-secondary self-end" %>
+    <%= link_to t('.filter.clear'), payments_path, class: "btn-secondary self-end" %>
   <% end %>
 <% end %>
 
@@ -33,14 +33,14 @@
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">ID</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.id') %></th>
             <% if current_user.psp_role? %>
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Shop</th>
+              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.shop') %></th>
             <% end %>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Amount</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Status</th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Created</th>
-            <th class="relative px-4 py-3"><span class="sr-only">View</span></th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.amount') %></th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.status') %></th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.created') %></th>
+            <th class="relative px-4 py-3"><span class="sr-only"><%= t('.table.view') %></span></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200 bg-white">
@@ -62,7 +62,7 @@
                 <%= payment.inserted_at&.strftime("%d %b %Y %H:%M") %>
               </td>
               <td class="px-4 py-3 text-right">
-                <%= link_to "View", payment_path(payment.id), class: "table-action", data: { turbo_frame: "payment-modal" } %>
+                <%= link_to t('.table.view'), payment_path(payment.id), class: "table-action", data: { turbo_frame: "payment-modal" } %>
               </td>
             </tr>
           <% end %>
@@ -70,7 +70,7 @@
             <tr>
               <td colspan="<%= current_user.psp_role? ? 6 : 5 %>"
                   class="px-4 py-10 text-center text-theme-sm text-gray-500">
-                No payments found.
+                <%= t('.table.empty') %>
               </td>
             </tr>
           <% end %>
@@ -84,7 +84,7 @@
     <div class="border-t border-gray-100 py-4 px-4">
       <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
         <p class="text-center text-theme-sm font-medium text-gray-500 xl:text-left">
-          Showing <%= @pagy.from %> to <%= @pagy.to %> of <%= @pagy.count %> payments
+          <%= t('.pagination.showing', from: @pagy.from, to: @pagy.to, count: @pagy.count) %>
         </p>
         <%== @pagy.series_nav %>
       </div>

@@ -39,6 +39,10 @@ module TesseraMerchantHub
     # Don't generate system test files.
     config.generators.system_tests = nil
 
+    # i18n — English only for now; locale files in config/locales/
+    config.i18n.default_locale = :en
+    config.i18n.available_locales = [ :en ]
+
     # Exclude tessera-core stub tables from db/schema.rb.
     # These tables are owned by tessera-core (Elixir/Phoenix) in production.
     # The stub migration creates them in dev/test only so the app can run locally.
