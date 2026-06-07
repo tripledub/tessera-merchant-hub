@@ -2,20 +2,19 @@
 
 require "rails_helper"
 
+# Tessera::Shop is now an alias for the MH-owned Shop model (ADR-007).
 RSpec.describe Tessera::Shop, type: :model do
-  subject(:shop) { build(:tessera_shop) }
-
-  describe "table" do
-    it "uses the shops table" do
-      expect(described_class.table_name).to eq("shops")
-    end
+  it "is the MerchantHub-owned Shop model" do
+    expect(described_class).to eq(Shop)
   end
 
-  describe "associations" do
-    it "belongs to merchant keyed by merchant_id" do
-      expect(shop).to belong_to(:merchant).optional
-        .class_name("Tessera::Merchant").with_foreign_key(:merchant_id).with_primary_key(:merchant_id)
-    end
+  it "uses the shops table" do
+    expect(described_class.table_name).to eq("shops")
+  end
+
+  it "is writable" do
+    s = create(:tessera_shop)
+    expect { s.update!(name: "Updated") }.not_to raise_error
   end
 
   describe "#to_param" do
@@ -30,18 +29,6 @@ RSpec.describe Tessera::Shop, type: :model do
       create(:tessera_shop, merchant_id: "m_b", shop_id: "shop_b")
 
       expect(described_class.for_merchant("m_a").pluck(:shop_id)).to contain_exactly("shop_a")
-    end
-  end
-
-  describe "read-only behaviour" do
-    let(:persisted) { create(:tessera_shop) }
-
-    it "raises on save" do
-      expect { persisted.save }.to raise_error(ActiveRecord::ReadOnlyRecord)
-    end
-
-    it "raises on destroy" do
-      expect { persisted.destroy }.to raise_error(ActiveRecord::ReadOnlyRecord)
     end
   end
 end

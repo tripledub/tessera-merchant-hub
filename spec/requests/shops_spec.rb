@@ -167,7 +167,7 @@ RSpec.describe "Shops", type: :request do
           post shops_path, params: shop_params
         end.to change(Tessera::Shop, :count).by(1)
 
-        created = Tessera::Shop.order(inserted_at: :desc).first
+        created = Tessera::Shop.order(created_at: :desc).first
         expect(response).to redirect_to(shop_path(created.shop_id))
         expect(a_request(:post, %r{/internal/integration_accounts})).to have_been_made
       end
@@ -212,7 +212,7 @@ RSpec.describe "Shops", type: :request do
           post shops_path, params: shop_params.merge(shop: shop_params[:shop].merge(merchant_id: "merch_xyz"))
         end.to change { Tessera::Shop.where(merchant_id: "merch_xyz").count }.by(1)
 
-        created = Tessera::Shop.where(merchant_id: "merch_xyz").order(inserted_at: :desc).first
+        created = Tessera::Shop.where(merchant_id: "merch_xyz").order(created_at: :desc).first
         expect(response).to redirect_to(shop_path(created.shop_id))
       end
     end

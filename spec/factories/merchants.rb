@@ -7,5 +7,4 @@ FactoryBot.define do
     company_name { "Co #{SecureRandom.hex(3)} Ltd" }
     country { "GB" }
   end
-
 end

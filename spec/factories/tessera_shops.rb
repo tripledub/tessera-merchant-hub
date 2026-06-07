@@ -1,8 +1,9 @@
 # frozen_string_literal: true
 
+# Factory for the MerchantHub-owned Shop model (ADR-007).
+# The :tessera_shop alias is kept for backward compatibility with existing specs.
 FactoryBot.define do
-  factory :tessera_shop, class: "Tessera::Shop" do
-    id { SecureRandom.uuid }
+  factory :tessera_shop, class: "Shop" do
     sequence(:shop_id) { |n| "shop_#{n}" }
     integration_account_id { shop_id }
     merchant_id { "merch_#{SecureRandom.hex(3)}" }
@@ -10,17 +11,5 @@ FactoryBot.define do
     notification_url { "https://example.com/webhooks" }
     test_mode { false }
     country { "GB" }
-    inserted_at { Time.current }
-    updated_at { Time.current }
-
-    # Bypass readonly? guard — test data only; tessera-core owns this table.
-    to_create do |instance|
-      attrs = instance.attributes.compact
-      cols = attrs.keys.map { |k| %("#{k}") }.join(", ")
-      vals = attrs.values.map { |v| ActiveRecord::Base.connection.quote(v) }.join(", ")
-      ActiveRecord::Base.connection.execute("INSERT INTO shops (#{cols}) VALUES (#{vals})")
-      instance.instance_variable_set(:@new_record, false)
-      instance
-    end
   end
 end
