@@ -21,6 +21,10 @@ en:
 
   # ── Errors ────────────────────────────────────────────────────────────────
   errors:
+    messages:
+      not_saved:
+        one: "1 error prohibited this %{resource} from being saved:"
+        other: "%{count} errors prohibited this %{resource} from being saved:"
     forbidden:
       code: "403"
       title: "Access denied"
@@ -50,8 +54,6 @@ en:
         empty: "No payments found."
       pagination:
         showing: "Showing %{from} to %{to} of %{count} payments"
-        previous: "Previous"
-        next: "Next"
     show:
       title: "Payment"
       page_title: "Payment"
