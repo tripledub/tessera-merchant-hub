@@ -1,0 +1,38 @@
+<%# Sticky top header — sits above the main content column.
+    Light background that contrasts with the always-dark sidebar. %>
+<header class="sticky top-0 z-[999] flex h-16 items-center border-b border-gray-200 bg-white
+               px-4 sm:px-6 shadow-theme-xs">
+
+  <%# Hamburger / collapse toggle %>
+  <button type="button"
+          data-action="click->sidebar#toggle"
+          class="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-500
+                 hover:bg-gray-100 hover:text-gray-700 dark:border-gray-800 dark:text-gray-400
+                 dark:hover:bg-gray-800"
+          aria-label="Toggle sidebar">
+    <%# Three-line menu icon %>
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-5 w-5" aria-hidden="true">
+      <line x1="3" y1="6"  x2="21" y2="6"/>
+      <line x1="3" y1="12" x2="15" y2="12"/>
+      <line x1="3" y1="18" x2="21" y2="18"/>
+    </svg>
+  </button>
+
+  <%# Page title (set via content_for :page_title in views) %>
+  <div class="ml-4 flex-1">
+    <% if content_for?(:page_title) %>
+      <h1 class="text-theme-sm font-semibold text-gray-800 dark:text-white">
+        <%= yield :page_title %>
+      </h1>
+    <% end %>
+  </div>
+
+  <%# Right-side user info (desktop) %>
+  <div class="hidden items-center gap-3 sm:flex">
+    <span class="text-theme-sm text-gray-500 dark:text-gray-400"><%= current_user.email %></span>
+    <span class="h-5 w-px bg-gray-200 dark:bg-gray-700"></span>
+    <span class="badge badge-gray capitalize"><%= current_user.role.to_s.humanize %></span>
+  </div>
+
+</header>

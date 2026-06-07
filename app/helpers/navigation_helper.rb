@@ -5,7 +5,7 @@ module NavigationHelper
     active = controller_name == controller
     state  = active ? "menu-item-active" : "menu-item-inactive"
 
-    link_to path, class: "menu-item #{state} group min-h-11", aria: { current: active ? "page" : nil } do
+    link_to path, class: "menu-item #{state} group", aria: { current: active ? "page" : nil } do
       concat icon_tag(icon, active: active) if icon
       concat content_tag(:span, label, class: "menu-item-text")
     end
@@ -15,11 +15,12 @@ module NavigationHelper
 
   def icon_tag(name, active:)
     state = active ? "menu-item-icon-active" : "menu-item-icon-inactive"
-    content_tag(:span, class: "h-5 w-5 flex-shrink-0 #{state}") do
+    # SVGs use fill="currentColor", so colour is inherited via `color`.
+    content_tag(:span, class: "h-5 w-5 shrink-0 #{state}") do
       render "shared/icons/#{name}"
     end
   rescue ActionView::MissingTemplate
-    # Icon partial not yet created — renders nothing rather than erroring
+    # Icon partial not yet created — renders nothing rather than erroring.
     "".html_safe
   end
 end

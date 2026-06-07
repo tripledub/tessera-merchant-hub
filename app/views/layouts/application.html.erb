@@ -11,30 +11,54 @@
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="min-h-screen bg-gray-50 text-gray-900 antialiased">
+  <body class="bg-gray-50 font-outfit antialiased dark:bg-gray-950">
+
     <% if user_signed_in? %>
-      <%= render "layouts/navigation" %>
+      <%# ── Authenticated shell: sidebar + header + content ──────────────── %>
+      <div data-controller="sidebar" class="flex h-screen overflow-hidden">
+
+        <%= render "layouts/sidebar" %>
+
+        <%# Mobile overlay scrim %>
+        <div data-sidebar-target="overlay"
+             data-action="click->sidebar#close"
+             class="fixed inset-0 z-[9998] bg-gray-900/50 hidden lg:hidden"></div>
+
+        <%# Main content column %>
+        <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+          <%= render "layouts/header" %>
+
+          <main class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+            <% if flash.any? %>
+              <div class="mb-6 space-y-3">
+                <%= render "layouts/flash" %>
+              </div>
+            <% end %>
+            <%= yield %>
+          </main>
+        </div>
+
+      </div>
+
+    <% else %>
+      <%# ── Unauthenticated: full-page (sign in, password reset, etc.) ───── %>
+      <main class="min-h-screen">
+        <% if flash.any? %>
+          <div class="mx-auto max-w-md px-4 pt-6 space-y-3">
+            <%= render "layouts/flash" %>
+          </div>
+        <% end %>
+        <%= yield %>
+      </main>
     <% end %>
 
-    <main class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-      <% if flash.any? %>
-        <div class="mb-6 space-y-3">
-          <%= render "layouts/flash" %>
-        </div>
-      <% end %>
-      <%= yield %>
-    </main>
   </body>
 </html>
