@@ -22,7 +22,7 @@
       </div>
       <%# Wordmark — hidden in collapsed mode %>
       <span class="sidebar-label text-base font-semibold text-white truncate">
-        MerchantHub
+        <%= t('layouts.navigation.app_name') %>
       </span>
     <% end %>
 
@@ -47,18 +47,18 @@
       <p class="sidebar-group-title mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
         Menu
       </p>
-      <%= nav_link_to "Payments",  payments_path,     controller: "payments",  icon: :payments %>
-      <%= nav_link_to "Shops",     shops_path,        controller: "shops",     icon: :shops %>
+      <%= nav_link_to t('layouts.navigation.payments'),  payments_path,     controller: "payments",  icon: :payments %>
+      <%= nav_link_to t('layouts.navigation.shops'),     shops_path,        controller: "shops",     icon: :shops %>
       <% if current_user.psp_admin? %>
-        <%= nav_link_to "Onboard Merchant", new_merchant_path, controller: "merchants", icon: :onboard %>
+        <%= nav_link_to t('layouts.navigation.onboard'), new_merchant_path, controller: "merchants", icon: :onboard %>
       <% end %>
 
     <% elsif current_user.merchant_role? %>
       <p class="sidebar-group-title mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
         My Account
       </p>
-      <%= nav_link_to "Payments", payments_path, controller: "payments", icon: :payments %>
-      <%= nav_link_to "Shops",    shops_path,    controller: "shops",    icon: :shops %>
+      <%= nav_link_to t('layouts.navigation.payments'), payments_path, controller: "payments", icon: :payments %>
+      <%= nav_link_to t('layouts.navigation.shops'),    shops_path,    controller: "shops",    icon: :shops %>
     <% end %>
 
   </nav>
@@ -85,14 +85,14 @@
             method: :delete,
             class: "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg
                     text-gray-400 hover:bg-white/[0.07] hover:text-white",
-            title: "Sign out",
+            title: t('layouts.navigation.sign_out'),
             form: { "data-turbo": "false" } do %>
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
              class="h-4 w-4" aria-hidden="true">
           <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/>
         </svg>
-        <span class="sr-only">Sign out</span>
+        <span class="sr-only"><%= t('layouts.navigation.sign_out') %></span>
       <% end %>
     </div>
   </div>
