@@ -15,6 +15,7 @@
   <div class="card overflow-hidden p-0">
 
     <%# ── TailAdmin-style toolbar ──────────────────────────────────────────── %>
+    <% active_panel_count = %i[status date_from date_to amount_min amount_max].count { |k| params[k].present? } %>
     <div class="flex flex-col gap-3 border-b border-gray-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
 
       <%# Left: "Show N entries" select %>
@@ -53,7 +54,6 @@
         </div>
 
         <%# Filters toggle button — shows count badge when panel-level filters are active %>
-        <% active_panel_count = %i[status date_from date_to amount_min amount_max].count { |k| params[k].present? } %>
         <button type="button"
                 class="flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-[9px] text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 sm:w-auto"
                 data-action="click->filter#togglePanel"
@@ -78,7 +78,7 @@
     <%# ── Collapsible filter panel ──────────────────────────────────────────── %>
     <%# Open by default when any panel-level filter is active (server-rendered). %>
     <%# Stimulus togglePanel() manages subsequent open/close without full page reload. %>
-    <% panel_open = %i[status date_from date_to amount_min amount_max].any? { |k| params[k].present? } %>
+    <% panel_open = active_panel_count > 0 %>
     <div id="filter-panel"
          data-filter-target="panel"
          class="<%= panel_open ? "" : "hidden" %> border-b border-gray-100 px-4 py-4">
@@ -142,7 +142,7 @@
 
         <%# Clear all filters %>
         <div class="flex items-end">
-          <%= link_to t('.filter.clear_all'), payments_path,
+          <%= link_to t('.filter.clear_all'), payments_path(per_page: params[:per_page]),
                 class: "btn btn-secondary text-sm",
                 data: { turbo_frame: "payments-table", turbo_action: "advance" } %>
         </div>

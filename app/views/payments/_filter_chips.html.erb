@@ -23,7 +23,7 @@
         <% end %>
       <% end %>
     <% end %>
-    <%= link_to t("payments.index.filter.clear_all", default: "Clear all"), payments_path,
+    <%= link_to t("payments.index.filter.clear_all", default: "Clear all"), payments_path(per_page: params[:per_page]),
           class: "ml-1 text-xs font-medium text-gray-500 underline hover:text-gray-700",
           data: { turbo_frame: "payments-table", turbo_action: "advance" } %>
   </div>
