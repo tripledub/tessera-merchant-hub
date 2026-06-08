@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "uri"
+
 # MerchantHub-owned merchant (company) record. ADR-007.
 class Merchant < ApplicationRecord
   has_many :shops,

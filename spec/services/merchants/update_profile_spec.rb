@@ -16,9 +16,10 @@ RSpec.describe Merchants::UpdateProfile do
       })
 
       expect(result.errors).to be_empty
-      expect(merchant.reload.contact_email).to eq("billing@acme.com")
-      expect(merchant.reload.city).to eq("London")
-      expect(merchant.reload.country_code).to eq("GB")
+      reloaded = merchant.reload
+      expect(reloaded.contact_email).to eq("billing@acme.com")
+      expect(reloaded.city).to eq("London")
+      expect(reloaded.country_code).to eq("GB")
     end
 
     it "returns the merchant with errors when invalid" do

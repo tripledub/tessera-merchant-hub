@@ -74,4 +74,11 @@ RSpec.describe Merchant, type: :model do
       expect(merchant.shops.pluck(:shop_id)).to eq([ "shop_z1" ])
     end
   end
+
+  describe "#to_param" do
+    it "returns merchant_id for URL generation" do
+      merchant = build(:merchant, merchant_id: "merch_abc")
+      expect(merchant.to_param).to eq("merch_abc")
+    end
+  end
 end
