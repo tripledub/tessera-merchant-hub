@@ -1,0 +1,13 @@
+pre-commit:
+  parallel: false
+  commands:
+    rubocop:
+      glob: "*.rb"
+      run: bundle exec rubocop --autocorrect-all {staged_files}
+      stage_fixed: true
+
+    i18n-tasks:
+      run: bundle exec i18n-tasks health
+
+    rspec:
+      run: bundle exec rspec --format progress
