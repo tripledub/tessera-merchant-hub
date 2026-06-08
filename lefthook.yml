@@ -6,6 +6,9 @@ pre-commit:
       run: bundle exec rubocop --autocorrect-all {staged_files}
       stage_fixed: true
 
+    brakeman:
+      run: bundle exec brakeman --no-pager --quiet
+
     i18n-tasks:
       run: bundle exec i18n-tasks health
 
