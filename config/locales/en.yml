@@ -247,6 +247,8 @@ en:
         live: "Live"
         active: "Active"
         locked: "Locked"
+        no_shops: "No shops found."
+        no_users: "No team members found."
       edit_profile: "Edit profile"
       back: "← Back to merchants"
     edit:

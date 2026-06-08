@@ -64,30 +64,38 @@
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-100">
-      <% @shops.each do |shop| %>
-        <tr class="hover:bg-gray-50">
-          <td class="py-2 pr-4 font-medium text-gray-900 border-r border-gray-100">
-            <%= link_to shop.display_name.presence || shop.name, shop_path(shop),
-                  class: "text-brand-600 hover:underline" %>
-          </td>
-          <td class="px-4 py-2 font-mono text-xs text-gray-600 border-r border-gray-100">
-            <%= shop.shop_id %>
-          </td>
-          <td class="px-4 py-2 border-r border-gray-100">
-            <% if shop.test_mode? %>
-              <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
-                <%= t('.table.test') %>
-              </span>
-            <% else %>
-              <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                <%= t('.table.live') %>
-              </span>
-            <% end %>
-          </td>
-          <td class="px-4 py-2 text-gray-500 text-xs truncate max-w-xs">
-            <%= shop.notification_url.presence || "—" %>
+      <% if @shops.empty? %>
+        <tr>
+          <td colspan="4" class="py-6 text-center text-theme-sm text-gray-500">
+            <%= t('.table.no_shops') %>
           </td>
         </tr>
+      <% else %>
+        <% @shops.each do |shop| %>
+          <tr class="hover:bg-gray-50">
+            <td class="py-2 pr-4 font-medium text-gray-900 border-r border-gray-100">
+              <%= link_to shop.display_name.presence || shop.name, shop_path(shop),
+                    class: "text-brand-600 hover:underline" %>
+            </td>
+            <td class="px-4 py-2 font-mono text-xs text-gray-600 border-r border-gray-100">
+              <%= shop.shop_id %>
+            </td>
+            <td class="px-4 py-2 border-r border-gray-100">
+              <% if shop.test_mode? %>
+                <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+                  <%= t('.table.test') %>
+                </span>
+              <% else %>
+                <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                  <%= t('.table.live') %>
+                </span>
+              <% end %>
+            </td>
+            <td class="px-4 py-2 text-gray-500 text-xs truncate max-w-xs">
+              <%= shop.notification_url.presence || "—" %>
+            </td>
+          </tr>
+        <% end %>
       <% end %>
     </tbody>
   </table>
@@ -108,25 +116,33 @@
       </tr>
     </thead>
     <tbody class="divide-y divide-gray-100">
-      <% @users.each do |u| %>
+      <% if @users.empty? %>
         <tr>
-          <td class="py-2 pr-4 text-gray-900 border-r border-gray-100"><%= u.email %></td>
-          <td class="px-4 py-2 text-gray-600 border-r border-gray-100"><%= u.role.humanize %></td>
-          <td class="px-4 py-2 border-r border-gray-100">
-            <% if u.access_locked? %>
-              <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-                <%= t('.table.locked') %>
-              </span>
-            <% else %>
-              <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                <%= t('.table.active') %>
-              </span>
-            <% end %>
-          </td>
-          <td class="px-4 py-2 text-gray-500">
-            <%= u.last_sign_in_at&.strftime("%d %b %Y") || t('.table.never') %>
+          <td colspan="4" class="py-6 text-center text-theme-sm text-gray-500">
+            <%= t('.table.no_users') %>
           </td>
         </tr>
+      <% else %>
+        <% @users.each do |u| %>
+          <tr>
+            <td class="py-2 pr-4 text-gray-900 border-r border-gray-100"><%= u.email %></td>
+            <td class="px-4 py-2 text-gray-600 border-r border-gray-100"><%= u.role.humanize %></td>
+            <td class="px-4 py-2 border-r border-gray-100">
+              <% if u.access_locked? %>
+                <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                  <%= t('.table.locked') %>
+                </span>
+              <% else %>
+                <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                  <%= t('.table.active') %>
+                </span>
+              <% end %>
+            </td>
+            <td class="px-4 py-2 text-gray-500">
+              <%= u.last_sign_in_at&.strftime("%d %b %Y") || t('.table.never') %>
+            </td>
+          </tr>
+        <% end %>
       <% end %>
     </tbody>
   </table>

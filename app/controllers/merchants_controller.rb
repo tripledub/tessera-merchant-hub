@@ -5,7 +5,7 @@ class MerchantsController < ApplicationController
       q = "%#{ActiveRecord::Base.sanitize_sql_like(params[:q])}%"
       scope = scope.where("name ILIKE :q OR merchant_id ILIKE :q", q: q)
     end
-    scope.order(:name)
+    scope.order(:name).includes(:shops)
   }
 
   expose(:merchant) { Merchant.find_by!(merchant_id: params[:id]) }

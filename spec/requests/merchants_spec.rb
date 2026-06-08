@@ -135,6 +135,7 @@ RSpec.describe "Merchants", type: :request do
       it "returns 200" do
         get merchant_path(merchant_abc)
         expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Acme Corp")
       end
     end
 
