@@ -8,86 +8,227 @@
   </div>
 </div>
 
-<%# Filter bar %>
+<%# Filter form — wraps the whole card. GET submission; Turbo Frame updates table only. %>
 <%= form_with url: payments_path, method: :get,
-      data: { controller: "filter", turbo_action: "advance" },
-      class: "mb-6 flex flex-col gap-3 sm:flex-row sm:items-end" do |f| %>
-  <div class="sm:w-48">
-    <%= f.label :status, t('.filter.status_label'), class: "form-label" %>
-    <%= f.select :status,
-          [[t('.filter.all_statuses'), ""], [t('.filter.succeeded'), "succeeded"], [t('.filter.failed'), "failed"],
-           [t('.filter.pending'), "pending"], [t('.filter.refunded'), "refunded"]],
-          { selected: params[:status] },
-          class: "form-select mt-1",
-          data: { action: "change->filter#submit" } %>
-  </div>
-  <% if params[:status].present? %>
-    <%= link_to t('.filter.clear'), payments_path, class: "btn-secondary self-end" %>
-  <% end %>
-<% end %>
+      data: { controller: "filter", turbo_action: "advance" } do |f| %>
 
-<turbo-frame id="payments-table">
-  <%# Table %>
   <div class="card overflow-hidden p-0">
-    <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-gray-50">
-          <tr>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.id') %></th>
-            <% if current_user.psp_role? %>
-              <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.shop') %></th>
-            <% end %>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.amount') %></th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.status') %></th>
-            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.created') %></th>
-            <th class="relative px-4 py-3"><span class="sr-only"><%= t('.table.view') %></span></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-200 bg-white">
-          <% @payments.each do |payment| %>
-            <tr class="hover:bg-gray-50">
-              <td class="px-4 py-3 text-theme-sm font-mono text-gray-900 truncate max-w-[12rem]">
-                <%= payment.id %>
-              </td>
-              <% if current_user.psp_role? %>
-                <td class="px-4 py-3 text-theme-sm text-gray-500"><%= payment.shop_id %></td>
-              <% end %>
-              <td class="px-4 py-3 text-theme-sm text-gray-900 whitespace-nowrap">
-                <%= number_to_currency(payment.amount / 100.0, unit: payment.currency + " ") %>
-              </td>
-              <td class="px-4 py-3">
-                <%= render partial: "payments/status_badge", locals: { status: payment.status } %>
-              </td>
-              <td class="px-4 py-3 text-theme-sm text-gray-500 whitespace-nowrap">
-                <%= payment.inserted_at&.strftime("%d %b %Y %H:%M") %>
-              </td>
-              <td class="px-4 py-3 text-right">
-                <%= link_to t('.table.view'), payment_path(payment.id), class: "table-action", data: { turbo_frame: "payment-modal" } %>
-              </td>
-            </tr>
-          <% end %>
-          <% if @payments.empty? %>
-            <tr>
-              <td colspan="<%= current_user.psp_role? ? 6 : 5 %>"
-                  class="px-4 py-10 text-center text-theme-sm text-gray-500">
-                <%= t('.table.empty') %>
-              </td>
-            </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
-  </div>
 
-  <%# Pagination footer — TailAdmin style %>
-  <% if @pagy.pages > 1 %>
-    <div class="border-t border-gray-100 py-4 px-4">
-      <div class="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-3">
-        <p class="text-center text-theme-sm font-medium text-gray-500 xl:text-left">
-          <%= t('.pagination.showing', from: @pagy.from, to: @pagy.to, count: @pagy.count) %>
-        </p>
-        <%== @pagy.series_nav %>
+    <%# ── TailAdmin-style toolbar ──────────────────────────────────────────── %>
+    <% active_panel_count = %i[status date_from date_to amount_min amount_max].count { |k| params[k].present? } %>
+    <div class="flex flex-col gap-3 border-b border-gray-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+
+      <%# Left: "Show N entries" select %>
+      <div class="flex items-center gap-3">
+        <span class="text-theme-sm text-gray-500"><%= t('.toolbar.show') %></span>
+        <div class="relative">
+          <%= f.select :per_page,
+                options_for_select([[10, 10], [25, 25], [50, 50]], params.fetch(:per_page, 25).to_i),
+                {},
+                class: "h-9 appearance-none rounded-lg border border-gray-300 bg-white py-1.5 pr-8 pl-3 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 focus:outline-hidden",
+                data: { action: "change->filter#submit" } %>
+          <span class="pointer-events-none absolute top-1/2 right-2 -translate-y-1/2 text-gray-500">
+            <svg class="stroke-current" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3.8335 5.9165L8.00016 10.0832L12.1668 5.9165" stroke="" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <span class="text-theme-sm text-gray-500"><%= t('.toolbar.entries') %></span>
+      </div>
+
+      <%# Right: reference search input + Filters toggle button %>
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+
+        <%# Reference search with magnifying-glass icon (TailAdmin data-table-03 style) %>
+        <div class="relative">
+          <span class="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-gray-400">
+            <svg class="fill-current" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M3.04199 9.37363C3.04199 5.87693 5.87735 3.04199 9.37533 3.04199C12.8733 3.04199 15.7087 5.87693 15.7087 9.37363C15.7087 12.8703 12.8733 15.7053 9.37533 15.7053C5.87735 15.7053 3.04199 12.8703 3.04199 9.37363ZM9.37533 1.54199C5.04926 1.54199 1.54199 5.04817 1.54199 9.37363C1.54199 13.6991 5.04926 17.2053 9.37533 17.2053C11.2676 17.2053 13.0032 16.5344 14.3572 15.4176L17.1773 18.238C17.4702 18.5309 17.945 18.5309 18.2379 18.238C18.5308 17.9451 18.5309 17.4703 18.238 17.1773L15.4182 14.3573C16.5367 13.0033 17.2087 11.2669 17.2087 9.37363C17.2087 5.04817 13.7014 1.54199 9.37533 1.54199Z" fill=""/>
+            </svg>
+          </span>
+          <%= f.text_field :reference,
+                value: params[:reference],
+                placeholder: t('.toolbar.search_placeholder'),
+                class: "h-11 rounded-lg border border-gray-300 bg-white py-2.5 pr-4 pl-11 text-sm text-gray-800 placeholder:text-gray-400 shadow-theme-xs focus:border-brand-300 focus:ring-3 focus:ring-brand-500/10 focus:outline-hidden xl:w-[300px]",
+                data: { action: "input->filter#submitDebounced" } %>
+        </div>
+
+        <%# Filters toggle button — shows count badge when panel-level filters are active %>
+        <button type="button"
+                class="flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-[9px] text-sm font-medium text-gray-700 shadow-theme-xs hover:bg-gray-50 sm:w-auto"
+                data-action="click->filter#togglePanel"
+                data-filter-target="panelToggle"
+                aria-controls="filter-panel"
+                aria-expanded="<%= active_panel_count > 0 ? 'true' : 'false' %>">
+          <svg class="fill-current" width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M2.5 5.5C2.5 5.22386 2.72386 5 3 5H17C17.2761 5 17.5 5.22386 17.5 5.5C17.5 5.77614 17.2761 6 17 6H3C2.72386 6 2.5 5.77614 2.5 5.5ZM4.5 10C4.5 9.72386 4.72386 9.5 5 9.5H15C15.2761 9.5 15.5 9.72386 15.5 10C15.5 10.2761 15.2761 10.5 15 10.5H5C4.72386 10.5 4.5 10.2761 4.5 10ZM7 14.5C6.72386 14.5 6.5 14.7239 6.5 15C6.5 15.2761 6.72386 15.5 7 15.5H13C13.2761 15.5 13.5 15.2761 13.5 15C13.5 14.7239 13.2761 14.5 13 14.5H7Z" fill=""/>
+          </svg>
+          <%= t('.toolbar.filters') %>
+          <% if active_panel_count > 0 %>
+            <span class="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-brand-500 px-1 text-xs font-semibold text-white">
+              <%= active_panel_count %>
+            </span>
+          <% end %>
+        </button>
+
       </div>
     </div>
-  <% end %>
-</turbo-frame>
+    <%# ── End toolbar ── %>
+
+    <%# ── Collapsible filter panel ──────────────────────────────────────────── %>
+    <%# Open by default when any panel-level filter is active (server-rendered). %>
+    <%# Stimulus togglePanel() manages subsequent open/close without full page reload. %>
+    <% panel_open = active_panel_count > 0 %>
+    <div id="filter-panel"
+         data-filter-target="panel"
+         class="<%= panel_open ? "" : "hidden" %> border-b border-gray-100 px-4 py-4">
+      <div class="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
+
+        <%# Status multi-select checkboxes %>
+        <fieldset>
+          <legend class="form-label"><%= t('.filter.status_label') %></legend>
+          <div class="mt-2 flex flex-wrap gap-x-4 gap-y-2">
+            <% [["succeeded",  t('.filter.succeeded')],
+                ["failed",     t('.filter.failed')],
+                ["pending",    t('.filter.pending')],
+                ["refunded",   t('.filter.refunded')],
+                ["authorized", t('.filter.authorized')],
+                ["voided",     t('.filter.voided')]].each do |value, label| %>
+              <label class="inline-flex cursor-pointer items-center gap-1.5">
+                <%= check_box_tag "status[]", value, Array(params[:status]).include?(value),
+                      class: "h-4 w-4 rounded border-gray-300 accent-brand-500",
+                      data: { action: "change->filter#submit" } %>
+                <span class="text-theme-xs text-gray-700"><%= label %></span>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+
+        <%# Date range %>
+        <div>
+          <span class="form-label block"><%= t('.filter.date_range_label') %></span>
+          <div class="mt-2 flex items-center gap-2">
+            <%= f.date_field :date_from,
+                  value: params[:date_from],
+                  class: "form-input min-w-0 flex-1 py-2 text-sm",
+                  data: { action: "change->filter#submit" } %>
+            <span class="shrink-0 text-xs text-gray-400">–</span>
+            <%= f.date_field :date_to,
+                  value: params[:date_to],
+                  class: "form-input min-w-0 flex-1 py-2 text-sm",
+                  data: { action: "change->filter#submit" } %>
+          </div>
+        </div>
+
+        <%# Amount range (inputs in currency units, e.g. 10.50 = £10.50) %>
+        <div>
+          <span class="form-label block"><%= t('.filter.amount_range_label') %></span>
+          <div class="mt-2 flex items-center gap-2">
+            <%= f.number_field :amount_min,
+                  value: params[:amount_min],
+                  step: "0.01", min: 0,
+                  placeholder: t('.filter.amount_min_placeholder'),
+                  class: "form-input min-w-0 flex-1 py-2 text-sm",
+                  data: { action: "input->filter#submitDebounced" } %>
+            <span class="shrink-0 text-xs text-gray-400">–</span>
+            <%= f.number_field :amount_max,
+                  value: params[:amount_max],
+                  step: "0.01", min: 0,
+                  placeholder: t('.filter.amount_max_placeholder'),
+                  class: "form-input min-w-0 flex-1 py-2 text-sm",
+                  data: { action: "input->filter#submitDebounced" } %>
+          </div>
+        </div>
+
+        <%# Clear all filters %>
+        <div class="flex items-end">
+          <%= link_to t('.filter.clear_all'), payments_path(per_page: params[:per_page]),
+                class: "btn btn-secondary text-sm",
+                data: { turbo_frame: "payments-table", turbo_action: "advance" } %>
+        </div>
+
+      </div>
+    </div>
+    <%# ── End filter panel ── %>
+
+    <%# ── Turbo Frame: chips + table + pagination ──────────────────────────── %>
+    <turbo-frame id="payments-table">
+
+      <%# Active filter chips (dismissible — each chip removes one filter from the URL) %>
+      <%= render partial: "payments/filter_chips" %>
+
+      <%# Table (TailAdmin column dividers: border-r on all cells except the last) %>
+      <div class="overflow-x-auto">
+        <table class="min-w-full">
+          <thead>
+            <tr class="border-b border-gray-200 bg-gray-50">
+              <th class="border-r border-gray-200 px-4 py-3 text-left text-theme-xs font-medium text-gray-700"><%= t('.table.id') %></th>
+              <% if current_user.psp_role? %>
+                <th class="border-r border-gray-200 px-4 py-3 text-left text-theme-xs font-medium text-gray-700"><%= t('.table.shop') %></th>
+              <% end %>
+              <th class="border-r border-gray-200 px-4 py-3 text-left text-theme-xs font-medium text-gray-700"><%= t('.table.reference') %></th>
+              <th class="border-r border-gray-200 px-4 py-3 text-left text-theme-xs font-medium text-gray-700"><%= t('.table.amount') %></th>
+              <th class="border-r border-gray-200 px-4 py-3 text-left text-theme-xs font-medium text-gray-700"><%= t('.table.status') %></th>
+              <th class="border-r border-gray-200 px-4 py-3 text-left text-theme-xs font-medium text-gray-700"><%= t('.table.created') %></th>
+              <th class="px-4 py-3"><span class="sr-only"><%= t('.table.view') %></span></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 bg-white">
+            <% @payments.each do |payment| %>
+              <tr class="hover:bg-gray-50">
+                <td class="border-r border-gray-100 px-4 py-3 font-mono text-theme-sm text-gray-900">
+                  <span class="block max-w-[10rem] truncate"><%= payment.id %></span>
+                </td>
+                <% if current_user.psp_role? %>
+                  <td class="border-r border-gray-100 px-4 py-3 text-theme-sm text-gray-500">
+                    <%= payment.shop_id %>
+                  </td>
+                <% end %>
+                <td class="border-r border-gray-100 px-4 py-3 font-mono text-theme-sm text-gray-700">
+                  <%= payment.merchant_reference.presence || "—" %>
+                </td>
+                <td class="border-r border-gray-100 px-4 py-3 text-theme-sm text-gray-900 whitespace-nowrap">
+                  <%= number_to_currency(payment.amount / 100.0, unit: payment.currency + " ") %>
+                </td>
+                <td class="border-r border-gray-100 px-4 py-3">
+                  <%= render partial: "payments/status_badge", locals: { status: payment.status } %>
+                </td>
+                <td class="border-r border-gray-100 px-4 py-3 text-theme-sm text-gray-500 whitespace-nowrap">
+                  <%= payment.inserted_at&.strftime("%d %b %Y %H:%M") %>
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <%= link_to t('.table.view'), payment_path(payment.id),
+                        class: "table-action",
+                        data: { turbo_frame: "payment-modal" } %>
+                </td>
+              </tr>
+            <% end %>
+            <% if @payments.empty? %>
+              <tr>
+                <td colspan="<%= current_user.psp_role? ? 7 : 6 %>"
+                    class="px-4 py-10 text-center text-theme-sm text-gray-500">
+                  <%= t('.table.empty') %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+
+      <%# Pagination footer — TailAdmin style %>
+      <% if @pagy.pages > 1 %>
+        <div class="border-t border-gray-100 px-4 py-4">
+          <div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+            <p class="text-center text-theme-sm font-medium text-gray-500 xl:text-left">
+              <%= t('.pagination.showing', from: @pagy.from, to: @pagy.to, count: @pagy.count) %>
+            </p>
+            <%== @pagy.series_nav %>
+          </div>
+        </div>
+      <% end %>
+
+    </turbo-frame>
+    <%# ── End Turbo Frame ── %>
+
+  </div>
+<% end %>
