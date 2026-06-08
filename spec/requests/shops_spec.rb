@@ -188,7 +188,7 @@ RSpec.describe "Shops", type: :request do
 
       it "re-renders without calling core" do
         post shops_path, params: { shop: { name: "", country: "" } }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(a_request(:post, %r{/internal/integration_accounts})).not_to have_been_made
       end
     end
@@ -304,7 +304,7 @@ RSpec.describe "Shops", type: :request do
         patch shop_path(own_shop), params: {
           shop: { notification_url: "http://insecure.com/hook" }
         }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
   end

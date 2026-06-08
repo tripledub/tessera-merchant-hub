@@ -98,7 +98,7 @@ RSpec.describe "Merchant onboarding", type: :request do
         expect do
           post merchants_path, params: valid_params
         end.not_to change(User, :count)
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
 
@@ -107,7 +107,7 @@ RSpec.describe "Merchant onboarding", type: :request do
 
       it "re-renders without calling core" do
         post merchants_path, params: valid_params.merge(admin: { email: "" })
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(a_request(:post, %r{/internal/integration_accounts})).not_to have_been_made
       end
     end

@@ -183,7 +183,7 @@ RSpec.describe "Merchants", type: :request do
         patch merchant_path(merchant_abc), params: {
           merchant: { contact_email: "not-an-email" }
         }
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
       end
     end
 

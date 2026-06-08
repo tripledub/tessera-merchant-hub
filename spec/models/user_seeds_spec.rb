@@ -2,7 +2,16 @@ require "rails_helper"
 
 RSpec.describe User do
   def load_seeds
-    load Rails.root.join("db/seeds.rb")
+    silence_stream($stdout) { load Rails.root.join("db/seeds.rb") }
+  end
+
+  def silence_stream(stream)
+    old = stream.dup
+    stream.reopen(IO::NULL)
+    yield
+  ensure
+    stream.reopen(old)
+    old.close
   end
 
   describe "db/seeds.rb" do
