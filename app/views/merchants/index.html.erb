@@ -1,0 +1,74 @@
+<% content_for :title, t('.page_title') %>
+
+<div class="mb-6 flex items-center justify-between">
+  <h1 class="text-xl font-semibold text-gray-900"><%= t('.title') %></h1>
+</div>
+
+<div class="card">
+  <%# Toolbar: search %>
+  <%= form_with url: merchants_path, method: :get,
+        data: { controller: "filter", turbo_frame: "merchants-table" },
+        class: "mb-4" do %>
+    <div class="flex items-center gap-3">
+      <div class="relative flex-1 max-w-sm">
+        <input type="search" name="q" value="<%= params[:q] %>"
+               placeholder="<%= t('.search_placeholder') %>"
+               class="form-input pl-9"
+               data-action="input->filter#submitDebounced" />
+        <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+          </svg>
+        </span>
+      </div>
+    </div>
+  <% end %>
+
+  <%= turbo_frame_tag "merchants-table" do %>
+    <table class="w-full text-left text-theme-sm">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="py-3 pr-4 font-medium text-gray-500 border-r border-gray-100"><%= t('.table.name') %></th>
+          <th class="px-4 py-3 font-medium text-gray-500 border-r border-gray-100"><%= t('.table.merchant_id') %></th>
+          <th class="px-4 py-3 font-medium text-gray-500 border-r border-gray-100"><%= t('.table.shops') %></th>
+          <th class="px-4 py-3 font-medium text-gray-500"><%= t('.table.created') %></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        <% if @merchants.empty? %>
+          <tr>
+            <td colspan="4" class="py-10 text-center text-theme-sm text-gray-500">
+              <%= t('.table.empty') %>
+            </td>
+          </tr>
+        <% else %>
+          <% @merchants.each do |m| %>
+            <tr class="hover:bg-gray-50">
+              <td class="py-3 pr-4 font-medium text-gray-900 border-r border-gray-100">
+                <%= link_to m.name, merchant_path(m),
+                      class: "text-brand-600 hover:text-brand-700 hover:underline" %>
+              </td>
+              <td class="px-4 py-3 font-mono text-xs text-gray-600 border-r border-gray-100">
+                <%= m.merchant_id %>
+              </td>
+              <td class="px-4 py-3 text-gray-600 border-r border-gray-100">
+                <%= m.shops.size %>
+              </td>
+              <td class="px-4 py-3 text-gray-500">
+                <%= m.created_at.strftime("%d %b %Y") %>
+              </td>
+            </tr>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+
+    <%# Pagy footer %>
+    <% if @pagy.pages > 1 %>
+      <div class="mt-4 border-t border-gray-200 pt-4">
+        <%== pagy_nav(@pagy) %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

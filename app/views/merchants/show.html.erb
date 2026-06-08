@@ -1,0 +1,133 @@
+<% content_for :title, merchant.name %>
+
+<div class="mb-4">
+  <%= link_to t('.back'), merchants_path,
+        class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<div class="mb-6 flex items-start justify-between">
+  <div>
+    <h1 class="text-xl font-semibold text-gray-900"><%= merchant.name %></h1>
+    <p class="mt-0.5 text-theme-sm font-mono text-gray-400"><%= merchant.merchant_id %></p>
+  </div>
+  <% if policy(merchant).edit? %>
+    <%= link_to t('.edit_profile'), edit_merchant_path(merchant),
+          class: "btn-secondary text-theme-sm" %>
+  <% end %>
+</div>
+
+<%# Profile card %>
+<div class="card mb-6">
+  <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+    <%= t('.sections.profile') %>
+  </h2>
+  <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-theme-sm">
+    <% if merchant.contact_email.present? %>
+      <div>
+        <dt class="font-medium text-gray-500"><%= t('.fields.contact_email') %></dt>
+        <dd class="text-gray-900"><%= merchant.contact_email %></dd>
+      </div>
+    <% end %>
+    <% if merchant.support_url.present? %>
+      <div>
+        <dt class="font-medium text-gray-500"><%= t('.fields.support_url') %></dt>
+        <dd class="text-gray-900">
+          <%= link_to merchant.support_url, merchant.support_url,
+                target: "_blank", rel: "noopener",
+                class: "text-brand-600 hover:underline" %>
+        </dd>
+      </div>
+    <% end %>
+    <% if merchant.address_line1.present? || merchant.city.present? %>
+      <div>
+        <dt class="font-medium text-gray-500"><%= t('.fields.address') %></dt>
+        <dd class="text-gray-900">
+          <%= [ merchant.address_line1, merchant.city, merchant.country_code ].compact_blank.join(", ") %>
+        </dd>
+      </div>
+    <% end %>
+  </dl>
+</div>
+
+<%# Shops table %>
+<div class="card mb-6">
+  <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+    <%= t('.sections.shops') %>
+  </h2>
+  <table class="w-full text-left text-theme-sm">
+    <thead>
+      <tr class="border-b border-gray-200">
+        <th class="py-2 pr-4 font-medium text-gray-500 border-r border-gray-100"><%= t('.table.shop_name') %></th>
+        <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100"><%= t('.table.shop_id') %></th>
+        <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100"><%= t('.table.test_mode') %></th>
+        <th class="px-4 py-2 font-medium text-gray-500"><%= t('.table.notification_url') %></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      <% @shops.each do |shop| %>
+        <tr class="hover:bg-gray-50">
+          <td class="py-2 pr-4 font-medium text-gray-900 border-r border-gray-100">
+            <%= link_to shop.display_name.presence || shop.name, shop_path(shop),
+                  class: "text-brand-600 hover:underline" %>
+          </td>
+          <td class="px-4 py-2 font-mono text-xs text-gray-600 border-r border-gray-100">
+            <%= shop.shop_id %>
+          </td>
+          <td class="px-4 py-2 border-r border-gray-100">
+            <% if shop.test_mode? %>
+              <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+                <%= t('.table.test') %>
+              </span>
+            <% else %>
+              <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                <%= t('.table.live') %>
+              </span>
+            <% end %>
+          </td>
+          <td class="px-4 py-2 text-gray-500 text-xs truncate max-w-xs">
+            <%= shop.notification_url.presence || "—" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+<%# Team table %>
+<div class="card">
+  <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+    <%= t('.sections.team') %>
+  </h2>
+  <table class="w-full text-left text-theme-sm">
+    <thead>
+      <tr class="border-b border-gray-200">
+        <th class="py-2 pr-4 font-medium text-gray-500 border-r border-gray-100"><%= t('.table.email') %></th>
+        <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100"><%= t('.table.role') %></th>
+        <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100"><%= t('.table.status') %></th>
+        <th class="px-4 py-2 font-medium text-gray-500"><%= t('.table.last_sign_in') %></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100">
+      <% @users.each do |u| %>
+        <tr>
+          <td class="py-2 pr-4 text-gray-900 border-r border-gray-100"><%= u.email %></td>
+          <td class="px-4 py-2 text-gray-600 border-r border-gray-100"><%= u.role.humanize %></td>
+          <td class="px-4 py-2 border-r border-gray-100">
+            <% if u.access_locked? %>
+              <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
+                <%= t('.table.locked') %>
+              </span>
+            <% else %>
+              <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+                <%= t('.table.active') %>
+              </span>
+            <% end %>
+          </td>
+          <td class="px-4 py-2 text-gray-500">
+            <%= u.last_sign_in_at&.strftime("%d %b %Y") || t('.table.never') %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

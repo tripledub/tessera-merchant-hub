@@ -211,6 +211,44 @@ en:
 
   # ── Merchants ─────────────────────────────────────────────────────────────
   merchants:
+    index:
+      page_title: "Merchants"
+      title: "Merchants"
+      search_placeholder: "Search by name or ID…"
+      table:
+        name: "Name"
+        merchant_id: "Merchant ID"
+        shops: "Shops"
+        created: "Created"
+        empty: "No merchants found."
+    show:
+      sections:
+        profile: "Profile"
+        shops: "Shops"
+        team: "Team"
+      fields:
+        merchant_id: "Merchant ID"
+        contact_email: "Contact email"
+        support_url: "Support URL"
+        address: "Address"
+        country_code: "Country"
+        name: "Name"
+      table:
+        shop_name: "Shop"
+        shop_id: "Shop ID"
+        test_mode: "Mode"
+        notification_url: "Webhook URL"
+        email: "Email"
+        role: "Role"
+        status: "Status"
+        last_sign_in: "Last sign-in"
+        never: "Never"
+        test: "Test"
+        live: "Live"
+        active: "Active"
+        locked: "Locked"
+      edit_profile: "Edit profile"
+      back: "← Back to merchants"
     edit:
       page_title: "Edit merchant profile"
       title: "Edit merchant profile"

@@ -1,5 +1,25 @@
 class MerchantsController < ApplicationController
+  expose(:merchants) {
+    scope = policy_scope(Merchant, policy_scope_class: MerchantPolicy::Scope)
+    if params[:q].present?
+      q = "%#{ActiveRecord::Base.sanitize_sql_like(params[:q])}%"
+      scope = scope.where("name ILIKE :q OR merchant_id ILIKE :q", q: q)
+    end
+    scope.order(:name)
+  }
+
   expose(:merchant) { Merchant.find_by!(merchant_id: params[:id]) }
+
+  def index
+    authorize Merchant, :index?, policy_class: MerchantPolicy
+    @pagy, @merchants = pagy(:offset, merchants)
+  end
+
+  def show
+    authorize merchant, :show?, policy_class: MerchantPolicy
+    @shops = Shop.for_merchant(merchant.merchant_id).order(:name)
+    @users = User.where(merchant_id: merchant.merchant_id).order(:email)
+  end
 
   # PSP-admin onboarding: provision a merchant + first shop in tessera-core
   # (ADR-007) and create the merchant's first merchant_admin portal user.
