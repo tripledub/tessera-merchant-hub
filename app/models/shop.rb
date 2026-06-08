@@ -2,6 +2,9 @@
 
 # MerchantHub-owned shop / storefront. Links to tessera-core via integration_account_id.
 class Shop < ApplicationRecord
+  HTTPS_REGEXP = /\Ahttps:\/\//i
+  private_constant :HTTPS_REGEXP
+
   belongs_to :merchant,
     foreign_key: :merchant_id,
     primary_key: :merchant_id,
@@ -14,6 +17,9 @@ class Shop < ApplicationRecord
   validates :merchant_id, presence: true
   validates :integration_account_id, presence: true
   validates :name, presence: true
+  validates :notification_url,
+    format: { with: HTTPS_REGEXP, message: "must be an HTTPS URL" },
+    allow_blank: true
 
   def to_param
     shop_id

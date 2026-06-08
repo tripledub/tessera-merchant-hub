@@ -139,6 +139,8 @@ en:
     edit:
       subtitle: "Changes are saved in tessera-core via the internal API."
       fields:
+        display_name: "Display name"
+        display_name_hint: "Optional friendly name shown in the portal. Defaults to the shop name when blank."
         notification_url: "Notification URL"
         notification_url_hint: "Must be an HTTPS URL. Leave blank to disable webhooks."
         test_mode: "Test mode"

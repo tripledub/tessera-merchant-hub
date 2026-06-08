@@ -43,11 +43,13 @@ class ShopsController < ApplicationController
     @shop = Tessera::Shop.find_by!(shop_id: params[:id])
     authorize @shop, :update?, policy_class: ShopPolicy
 
-    ControlPlane::ShopConfigStore.update!(shop_id: @shop.shop_id, **shop_update_params)
-    redirect_to shop_path(@shop), notice: I18n.t("flash.shops.update_success")
-  rescue TesseraCoreClient::Error => e
-    flash.now[:alert] = I18n.t("flash.shops.update_failed", message: e.message)
-    render :edit, status: :unprocessable_entity
+    result = Shops::UpdateSettings.call(@shop, shop_update_params)
+    if result.errors.none?
+      redirect_to shop_path(@shop), notice: I18n.t("flash.shops.update_success")
+    else
+      flash.now[:alert] = result.errors.full_messages.to_sentence
+      render :edit, status: :unprocessable_entity
+    end
   end
 
   private
@@ -81,10 +83,7 @@ class ShopsController < ApplicationController
   end
 
   def shop_update_params
-    permitted = params.fetch(:shop, {}).permit(:notification_url, :test_mode)
-    attrs = permitted.to_h.symbolize_keys
-    attrs[:test_mode] = ActiveModel::Type::Boolean.new.cast(attrs[:test_mode]) if attrs.key?(:test_mode)
-    attrs
+    params.fetch(:shop, {}).permit(:display_name, :notification_url, :test_mode)
   end
 
   def load_credentials_metadata

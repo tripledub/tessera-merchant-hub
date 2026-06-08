@@ -266,6 +266,14 @@ RSpec.describe "Shops", type: :request do
         expect(a_request(:patch, %r{/internal/})).not_to have_been_made
       end
 
+      it "updates display_name and redirects" do
+        patch shop_path(own_shop), params: {
+          shop: { display_name: "Flagship Store" }
+        }
+        expect(response).to redirect_to(shop_path(own_shop))
+        expect(own_shop.reload.display_name).to eq("Flagship Store")
+      end
+
       it "shows updated config on the shop page" do
         patch shop_path(own_shop), params: {
           shop: { notification_url: "https://new.test/hook", test_mode: "1" }
@@ -289,15 +297,13 @@ RSpec.describe "Shops", type: :request do
       end
     end
 
-    context "when core returns an error" do
+    context "when notification_url is not HTTPS" do
       before { sign_in merchant_admin }
 
-      it "re-renders edit when local update raises" do
-        allow(ControlPlane::ShopConfigStore).to receive(:update!).and_raise(
-          TesseraCoreClient::Error, "update failed"
-        )
-
-        patch shop_path(own_shop), params: { shop: { notification_url: "https://new.test/hook" } }
+      it "re-renders edit with 422" do
+        patch shop_path(own_shop), params: {
+          shop: { notification_url: "http://insecure.com/hook" }
+        }
         expect(response).to have_http_status(:unprocessable_entity)
       end
     end
