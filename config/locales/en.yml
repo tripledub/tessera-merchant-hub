@@ -256,6 +256,6 @@ en:
     shops:
       missing_fields: "Shop name and territory (country) are required."
       create_failed: "Could not create shop: %{message}"
-      update_failed: "Could not update shop: %{message}"
+      update_failed: "Could not save changes: %{errors}"
       create_success: "Shop %{name} created."
       update_success: "Shop configuration updated."

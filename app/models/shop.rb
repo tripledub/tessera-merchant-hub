@@ -2,7 +2,7 @@
 
 # MerchantHub-owned shop / storefront. Links to tessera-core via integration_account_id.
 class Shop < ApplicationRecord
-  HTTPS_REGEXP = /\Ahttps:\/\//i
+  HTTPS_REGEXP = /\Ahttps:\/\//
   private_constant :HTTPS_REGEXP
 
   belongs_to :merchant,

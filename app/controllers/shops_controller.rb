@@ -47,7 +47,7 @@ class ShopsController < ApplicationController
     if result.errors.none?
       redirect_to shop_path(@shop), notice: I18n.t("flash.shops.update_success")
     else
-      flash.now[:alert] = result.errors.full_messages.to_sentence
+      flash.now[:alert] = I18n.t("flash.shops.update_failed", errors: result.errors.full_messages.to_sentence)
       render :edit, status: :unprocessable_entity
     end
   end
