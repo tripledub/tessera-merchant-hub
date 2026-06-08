@@ -6,7 +6,7 @@ RSpec.describe "Merchants", type: :request do
   let_it_be(:psp_admin)      { create(:user, :psp_admin) }
   let_it_be(:psp_support)    { create(:user, :psp_support) }
   let_it_be(:merchant_admin) { create(:user, :merchant_admin, merchant_id: "merch_abc") }
-  let_it_be(:merchant_viewer){ create(:user, :merchant_viewer, merchant_id: "merch_abc") }
+  let_it_be(:merchant_viewer) { create(:user, :merchant_viewer, merchant_id: "merch_abc") }
   let_it_be(:other_admin)    { create(:user, :merchant_admin, merchant_id: "merch_xyz") }
 
   let_it_be(:merchant_abc) { create(:merchant, merchant_id: "merch_abc", name: "Acme Corp") }
