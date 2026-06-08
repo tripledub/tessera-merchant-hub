@@ -2,12 +2,23 @@ pre-commit:
   parallel: false
   commands:
     rubocop:
-      glob: "*.rb"
-      run: bundle exec rubocop --autocorrect-all {staged_files}
+      run: bundle exec rubocop --autocorrect-all
       stage_fixed: true
 
     brakeman:
       run: bundle exec brakeman --no-pager --quiet
+
+    bundler-audit:
+      run: bundle exec bundler-audit check --update
+
+    importmap-audit:
+      run: bin/importmap audit
+      skip:
+        - merge
+        - rebase
+
+    zeitwerk:
+      run: bundle exec rails zeitwerk:check
 
     i18n-tasks:
       run: bundle exec i18n-tasks health
