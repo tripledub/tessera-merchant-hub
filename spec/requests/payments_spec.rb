@@ -113,10 +113,10 @@ RSpec.describe "Payments", type: :request do
 
       before { sign_in psp_admin }
 
-      it "respects per_page=10" do
+      it "respects per_page=10 and shows 10 entries" do
         get payments_path, params: { per_page: 10 }
         expect(response).to have_http_status(:ok)
-        expect(response.body).to include("10")
+        expect(response.body).to include("Showing 1 to 10")
       end
 
       it "defaults to 25 for unknown per_page values" do

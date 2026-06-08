@@ -41,8 +41,12 @@ class PaymentsController < ApplicationController
 
   def apply_filters(scope)
     scope = scope.with_statuses(params[:status])        if params[:status].present?
-    scope = scope.from_date(params[:date_from])         if params[:date_from].present?
-    scope = scope.to_date(params[:date_to])             if params[:date_to].present?
+    if params[:date_from].present?
+      scope = scope.from_date(params[:date_from]) rescue scope
+    end
+    if params[:date_to].present?
+      scope = scope.to_date(params[:date_to]) rescue scope
+    end
     scope = scope.with_reference(params[:reference])    if params[:reference].present?
     if params[:amount_min].present?
       scope = scope.amount_at_least((params[:amount_min].to_f * 100).round)
