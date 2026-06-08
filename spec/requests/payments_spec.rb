@@ -106,6 +106,25 @@ RSpec.describe "Payments", type: :request do
       end
     end
 
+    context "when requesting per_page" do
+      let_it_be(:extra_payments) do
+        12.times.map { create(:tessera_payment, shop_id: "shop_abc", status: "succeeded") }
+      end
+
+      before { sign_in psp_admin }
+
+      it "respects per_page=10" do
+        get payments_path, params: { per_page: 10 }
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("10")
+      end
+
+      it "defaults to 25 for unknown per_page values" do
+        get payments_path, params: { per_page: 999 }
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
     context "when unauthenticated" do
       it "redirects to sign in" do
         get payments_path

@@ -1,11 +1,14 @@
 class PaymentsController < ApplicationController
   before_action :set_payment, only: %i[show refund void]
 
+  ALLOWED_PER_PAGE = [10, 25, 50].freeze
+  private_constant :ALLOWED_PER_PAGE
+
   def index
     scope = policy_scope(Tessera::Payment, policy_scope_class: PaymentPolicy::Scope)
-    scope = scope.where(status: params[:status]) if params[:status].present?
+    scope = apply_filters(scope)
     scope = scope.order(inserted_at: :desc)
-    @pagy, @payments = pagy(:offset, scope, limit: 25)
+    @pagy, @payments = pagy(:offset, scope, limit: per_page_value)
     authorize Tessera::Payment, :index?, policy_class: PaymentPolicy
   end
 
@@ -35,6 +38,25 @@ class PaymentsController < ApplicationController
   end
 
   private
+
+  def apply_filters(scope)
+    scope = scope.with_statuses(params[:status])        if params[:status].present?
+    scope = scope.from_date(params[:date_from])         if params[:date_from].present?
+    scope = scope.to_date(params[:date_to])             if params[:date_to].present?
+    scope = scope.with_reference(params[:reference])    if params[:reference].present?
+    if params[:amount_min].present?
+      scope = scope.amount_at_least((params[:amount_min].to_f * 100).round)
+    end
+    if params[:amount_max].present?
+      scope = scope.amount_at_most((params[:amount_max].to_f * 100).round)
+    end
+    scope
+  end
+
+  def per_page_value
+    requested = params[:per_page].to_i
+    ALLOWED_PER_PAGE.include?(requested) ? requested : 25
+  end
 
   def set_payment
     @payment = Tessera::Payment.find(params[:id])
