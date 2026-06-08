@@ -55,11 +55,11 @@ RSpec.describe PaymentsHelper, type: :helper do
 
       it "removes one status value and keeps the other" do
         result = helper.filter_chip_remove_path(:status, "succeeded")
-        expect(result).to eq(payments_path("status" => ["failed"]))
+        expect(result).to eq(payments_path("status" => [ "failed" ]))
       end
 
       it "removes the key entirely when removing the last status" do
-        base_params["status"] = ["succeeded"]
+        base_params["status"] = [ "succeeded" ]
         result = helper.filter_chip_remove_path(:status, "succeeded")
         expect(result).to eq(payments_path({}))
       end
