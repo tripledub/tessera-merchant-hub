@@ -45,6 +45,7 @@ gem "devise"
 
 # Authorization
 gem "pundit"
+gem "decent_exposure"
 
 # CSS
 gem "tailwindcss-rails"
