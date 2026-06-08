@@ -40,6 +40,11 @@ en:
     index:
       title: "Payments"
       subtitle: "All payment transactions across your shops"
+      toolbar:
+        show: "Show"
+        entries: "entries"
+        search_placeholder: "Search by reference..."
+        filters: "Filters"
       filter:
         status_label: "Status"
         all_statuses: "All statuses"
@@ -47,10 +52,18 @@ en:
         failed: "Failed"
         pending: "Pending"
         refunded: "Refunded"
+        authorized: "Authorized"
+        voided: "Voided"
         clear: "Clear"
+        date_range_label: "Date range"
+        amount_range_label: "Amount"
+        amount_min_placeholder: "Min"
+        amount_max_placeholder: "Max"
+        clear_all: "Clear all"
       table:
         id: "ID"
         shop: "Shop"
+        reference: "Reference"
         amount: "Amount"
         status: "Status"
         created: "Created"
