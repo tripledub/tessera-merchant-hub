@@ -1,4 +1,6 @@
 class MerchantsController < ApplicationController
+  expose(:merchant) { Merchant.find_by!(merchant_id: params[:id]) }
+
   # PSP-admin onboarding: provision a merchant + first shop in tessera-core
   # (ADR-007) and create the merchant's first merchant_admin portal user.
   def new
@@ -27,6 +29,22 @@ class MerchantsController < ApplicationController
     render :new, status: :unprocessable_entity
   end
 
+  def edit
+    authorize merchant, policy_class: MerchantPolicy
+  end
+
+  def update
+    authorize merchant, policy_class: MerchantPolicy
+    result = Merchants::UpdateProfile.call(merchant, merchant_profile_params)
+    if result.errors.none?
+      redirect_to merchant_path(merchant),
+                  notice: t("flash.merchants.update_success")
+    else
+      flash.now[:alert] = result.errors.full_messages.to_sentence
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
   private
 
   def create_first_admin(merchant_id)
@@ -53,5 +71,11 @@ class MerchantsController < ApplicationController
 
   def shop_params
     params.fetch(:shop, {}).permit(:name, :country).to_h.symbolize_keys
+  end
+
+  def merchant_profile_params
+    params.fetch(:merchant, {}).permit(
+      :contact_email, :support_url, :address_line1, :city, :country_code
+    )
   end
 end

@@ -209,6 +209,21 @@ en:
 
   # ── Merchants ─────────────────────────────────────────────────────────────
   merchants:
+    edit:
+      page_title: "Edit merchant profile"
+      title: "Edit merchant profile"
+      subtitle: "Update contact and address details for this merchant."
+      sections:
+        contact: "Contact details"
+        address: "Address"
+      fields:
+        contact_email: "Contact email"
+        support_url: "Support URL"
+        address_line1: "Address"
+        city: "City"
+        country_code: "Country code (ISO 3166-1 alpha-2, e.g. GB)"
+      submit: "Save changes"
+      cancel: "Cancel"
     new:
       title: "Onboard a merchant"
       page_title: "Onboard a merchant"
@@ -231,6 +246,7 @@ en:
   # ── Flash messages (set by controllers) ───────────────────────────────────
   flash:
     merchants:
+      update_success: "Merchant profile updated."
       missing_fields: "Merchant name, shop name and admin email are all required."
       onboard_failed: "Onboarding failed: %{message}"
       admin_create_failed: "Could not create the admin user: %{errors}"
