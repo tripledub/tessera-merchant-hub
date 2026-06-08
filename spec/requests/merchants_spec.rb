@@ -31,6 +31,15 @@ RSpec.describe "Merchants", type: :request do
       end
     end
 
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "returns 403 (cannot edit, only view)" do
+        get edit_merchant_path(merchant_abc)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
     context "when signed in as merchant_admin (other merchant)" do
       before { sign_in merchant_admin }
 
