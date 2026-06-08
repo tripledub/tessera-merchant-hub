@@ -23,6 +23,48 @@ RSpec.describe Merchant, type: :model do
     end
   end
 
+  describe "validations — contact_email" do
+    it "is valid when blank" do
+      merchant = build(:merchant, contact_email: "")
+      expect(merchant).to be_valid
+    end
+
+    it "is valid with a well-formed email" do
+      merchant = build(:merchant, contact_email: "billing@acme.com")
+      expect(merchant).to be_valid
+    end
+
+    it "is invalid with a malformed email" do
+      merchant = build(:merchant, contact_email: "not-an-email")
+      expect(merchant).not_to be_valid
+      expect(merchant.errors[:contact_email]).to be_present
+    end
+  end
+
+  describe "validations — country_code" do
+    it "is valid when blank" do
+      merchant = build(:merchant, country_code: nil)
+      expect(merchant).to be_valid
+    end
+
+    it "upcases the value before validation" do
+      merchant = build(:merchant, country_code: "gb")
+      merchant.valid?
+      expect(merchant.country_code).to eq("GB")
+    end
+
+    it "is valid with a 2-letter uppercase code" do
+      merchant = build(:merchant, country_code: "GB")
+      expect(merchant).to be_valid
+    end
+
+    it "is invalid with a 3-letter code" do
+      merchant = build(:merchant, country_code: "GBR")
+      expect(merchant).not_to be_valid
+      expect(merchant.errors[:country_code]).to be_present
+    end
+  end
+
   describe "associations" do
     it "groups shops by merchant_id" do
       merchant = create(:merchant, merchant_id: "merch_z")
