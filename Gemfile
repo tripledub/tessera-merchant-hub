@@ -45,6 +45,7 @@ gem "devise"
 
 # Authorization
 gem "pundit"
+gem "decent_exposure"
 
 # CSS
 gem "tailwindcss-rails"
@@ -87,4 +88,7 @@ group :development do
   gem "web-console"
 
   gem "i18n-tasks", "~> 1.0"
+
+  # Git hooks (pre-commit: rubocop, rspec, i18n-tasks)
+  gem "lefthook", require: false
 end

@@ -1,243 +1,289 @@
+---
 en:
   app:
-    title: "Tessera Merchant Hub"
-
-  # ── Shared ────────────────────────────────────────────────────────────────
+    title: Tessera Merchant Hub
+  errors:
+    forbidden:
+      code: '403'
+      go_back: Go back
+      message: You don't have permission to view this page.
+      title: Access denied
+    messages:
+      not_saved:
+        one: '1 error prohibited this %{resource} from being saved:'
+        other: "%{count} errors prohibited this %{resource} from being saved:"
+  flash:
+    merchants:
+      admin_create_failed: 'Could not create the admin user: %{errors}'
+      missing_fields: Merchant name, shop name and admin email are all required.
+      onboard_failed: 'Onboarding failed: %{message}'
+      onboard_success: Merchant onboarded. An invite has been sent to %{email}.
+      update_success: Merchant profile updated.
+    shops:
+      create_failed: 'Could not create shop: %{message}'
+      create_success: Shop %{name} created.
+      missing_fields: Shop name and territory (country) are required.
+      update_failed: 'Could not save changes: %{errors}'
+      update_success: Shop configuration updated.
+  layouts:
+    navigation:
+      app_name: MerchantHub
+      close_sidebar: Close sidebar
+      menu: Menu
+      my_account: My Account
+      onboard: Onboard
+      payments: Payments
+      shops: Shops
+      sign_out: Sign out
+      toggle_nav: Toggle navigation menu
+      toggle_sidebar: Toggle sidebar
+  merchants:
+    edit:
+      cancel: Cancel
+      fields:
+        address_line1: Address
+        city: City
+        contact_email: Contact email
+        country_code: Country code (ISO 3166-1 alpha-2, e.g. GB)
+        support_url: Support URL
+      page_title: Edit merchant profile
+      sections:
+        address: Address
+        contact: Contact details
+      submit: Save changes
+      subtitle: Update contact and address details for this merchant.
+      title: Edit merchant profile
+    index:
+      page_title: Merchants
+      search_placeholder: Search by name or ID…
+      table:
+        created: Created
+        empty: No merchants found.
+        merchant_id: Merchant ID
+        name: Name
+        shops: Shops
+      title: Merchants
+    new:
+      cancel: Cancel
+      fields:
+        admin_email: Admin email
+        admin_email_hint: They'll receive an email to set their password.
+        company_name: Company name
+        country: Country (ISO-2)
+        name: Name
+        shop_name: Shop name
+        shop_territory: Territory (ISO-2)
+      page_title: Onboard a merchant
+      sections:
+        first_admin: First admin
+        first_shop: First shop
+        merchant: Merchant
+      submit: Onboard merchant
+      subtitle: Creates the merchant and its first shop in tessera-core, and invites
+        the first admin.
+      title: Onboard a merchant
+    show:
+      back: "← Back to merchants"
+      edit_profile: Edit profile
+      fields:
+        address: Address
+        contact_email: Contact email
+        support_url: Support URL
+      sections:
+        profile: Profile
+        shops: Shops
+        team: Team
+      table:
+        active: Active
+        email: Email
+        last_sign_in: Last sign-in
+        live: Live
+        locked: Locked
+        never: Never
+        no_shops: No shops found.
+        no_users: No team members found.
+        notification_url: Webhook URL
+        role: Role
+        shop_id: Shop ID
+        shop_name: Shop
+        status: Status
+        test: Test
+        test_mode: Mode
+  payment_timelines:
+    show:
+      back: "← Back to payment"
+      events:
+        empty: No events recorded for this payment.
+        metadata: Metadata
+        title: Events
+      tabs:
+        details: Details
+        timeline: Timeline
+      title: Payment Timeline
+      webhooks:
+        empty: No webhook deliveries recorded.
+        table:
+          attempts: Attempts
+          delivered_at: Delivered at
+          last_attempt: Last attempt
+          status: Status
+        title: Webhook Deliveries
+  payments:
+    index:
+      filter:
+        amount_max_placeholder: Max
+        amount_min_placeholder: Min
+        amount_range_label: Amount
+        authorized: Authorized
+        clear_all: Clear all
+        date_range_label: Date range
+        failed: Failed
+        pending: Pending
+        refunded: Refunded
+        status_label: Status
+        succeeded: Succeeded
+        voided: Voided
+      pagination:
+        showing: Showing %{from} to %{to} of %{count} payments
+      subtitle: All payment transactions across your shops
+      table:
+        amount: Amount
+        created: Created
+        empty: No payments found.
+        id: ID
+        reference: Reference
+        shop: Shop
+        status: Status
+        view: View
+      title: Payments
+      toolbar:
+        entries: entries
+        filters: Filters
+        search_placeholder: Search by reference...
+        show: Show
+    modal_detail:
+      close: Close
+      fields:
+        amount: Amount
+        created: Created
+        idempotency_key: Idempotency Key
+        reference: Reference
+        shop: Shop
+      label: Payment
+    show:
+      actions:
+        refund: Refund
+        refund_confirm: Submit a full refund of %{amount}?
+        void: Void
+        void_confirm: Void this authorisation?
+      back: "← Back to payments"
+      fields:
+        amount: Amount
+        created: Created
+        idempotency_key: Idempotency Key
+        merchant_reference: Merchant Reference
+        shop: Shop
+      page_title: Payment
+      tabs:
+        details: Details
+        timeline: Timeline
+      title: Payment
   shared:
     error_messages:
       header:
-        one: "1 error prevented this from being saved:"
+        one: '1 error prevented this from being saved:'
         other: "%{count} errors prevented this from being saved:"
-
-  # ── Layouts ───────────────────────────────────────────────────────────────
-  layouts:
-    navigation:
-      app_name: "MerchantHub"
-      payments: "Payments"
-      shops: "Shops"
-      onboard: "Onboard"
-      sign_out: "Sign out"
-      toggle_nav: "Toggle navigation menu"
-      menu: "Menu"
-      my_account: "My Account"
-      close_sidebar: "Close sidebar"
-      toggle_sidebar: "Toggle sidebar"
-
-  # ── Errors ────────────────────────────────────────────────────────────────
-  errors:
-    messages:
-      not_saved:
-        one: "1 error prohibited this %{resource} from being saved:"
-        other: "%{count} errors prohibited this %{resource} from being saved:"
-    forbidden:
-      code: "403"
-      title: "Access denied"
-      message: "You don't have permission to view this page."
-      go_back: "Go back"
-
-  # ── Payments ──────────────────────────────────────────────────────────────
-  payments:
-    index:
-      title: "Payments"
-      subtitle: "All payment transactions across your shops"
-      toolbar:
-        show: "Show"
-        entries: "entries"
-        search_placeholder: "Search by reference..."
-        filters: "Filters"
-      filter:
-        status_label: "Status"
-        succeeded: "Succeeded"
-        failed: "Failed"
-        pending: "Pending"
-        refunded: "Refunded"
-        authorized: "Authorized"
-        voided: "Voided"
-        date_range_label: "Date range"
-        amount_range_label: "Amount"
-        amount_min_placeholder: "Min"
-        amount_max_placeholder: "Max"
-        clear_all: "Clear all"
-      table:
-        id: "ID"
-        shop: "Shop"
-        reference: "Reference"
-        amount: "Amount"
-        status: "Status"
-        created: "Created"
-        view: "View"
-        empty: "No payments found."
-      pagination:
-        showing: "Showing %{from} to %{to} of %{count} payments"
-    show:
-      title: "Payment"
-      page_title: "Payment"
-      back: "← Back to payments"
-      fields:
-        amount: "Amount"
-        shop: "Shop"
-        merchant_reference: "Merchant Reference"
-        created: "Created"
-        idempotency_key: "Idempotency Key"
-      tabs:
-        details: "Details"
-        timeline: "Timeline"
-      actions:
-        refund: "Refund"
-        void: "Void"
-        refund_confirm: "Submit a full refund of %{amount}?"
-        void_confirm: "Void this authorisation?"
-    modal_detail:
-      label: "Payment"
-      close: "Close"
-      fields:
-        amount: "Amount"
-        shop: "Shop"
-        reference: "Reference"
-        created: "Created"
-        idempotency_key: "Idempotency Key"
-
-  # ── Shops ─────────────────────────────────────────────────────────────────
-  shops:
-    index:
-      title: "Shops"
-      subtitle: "Manage your payment shops and API credentials"
-      add: "Add shop"
-      table:
-        shop_id: "Shop ID"
-        name: "Name"
-        territory: "Territory"
-        mode: "Mode"
-        notification_url: "Notification URL"
-        view: "View"
-        empty: "No shops found."
-        test: "Test"
-        live: "Live"
-    show:
-      back: "← Back to shops"
-      edit: "Edit configuration"
-      fields:
-        shop_id: "Shop ID"
-        territory: "Territory"
-        mode: "Mode"
-        notification_url: "Notification URL"
-        not_set: "Not set"
-    new:
-      title: "Add shop"
-      page_title: "Add shop"
-      back: "← Back to shops"
-      subtitle_psp: "Provisions a new shop in tessera-core under the selected merchant."
-      subtitle_merchant: "Provisions a new shop in tessera-core under your merchant."
-      fields:
-        merchant_id: "Merchant ID"
-        name: "Shop name"
-        territory: "Territory (ISO-2)"
-        notification_url: "Notification URL"
-        notification_url_hint: "Optional. HTTPS URL for payment webhooks."
-      submit: "Create shop"
-      cancel: "Cancel"
-    edit:
-      subtitle: "Changes are saved in tessera-core via the internal API."
-      fields:
-        notification_url: "Notification URL"
-        notification_url_hint: "Must be an HTTPS URL. Leave blank to disable webhooks."
-        test_mode: "Test mode"
-      submit: "Save changes"
-      cancel: "Cancel"
-    credentials:
-      title: "API credentials"
-      subtitle: "Per-shop keys for integrating with tessera-core. Secret keys are shown only once at generation."
-      generate: "Generate credentials"
-      generate_confirm: "Generate new API credentials? Any existing active key may need to be rotated in your integration."
-      no_credentials: "No credentials yet. Generate a pair to start integrating."
-      load_error: "Could not load credentials: %{message}"
-      table:
-        public_key: "Public key"
-        status: "Status"
-        signing: "Signing"
-        created: "Created"
-        last_used: "Last used"
-        actions: "Actions"
-        signing_required: "Required"
-        signing_optional: "Optional"
-        unknown_status: "Unknown"
-      revoke: "Revoke"
-      revoke_confirm: "Revoke credential %{pk}? This cannot be undone."
-
-  # ── Shop credentials (show-once page) ────────────────────────────────────
   shop_credentials:
     show_once:
-      page_title: "Save your credentials"
-      title: "Your new API credentials"
       back: "← Back to %{name}"
-      warning: "Save these now."
-      warning_detail: "The secret key and signing secret are shown exactly once and cannot be retrieved again."
+      copy: Copy
+      done: Done — back to shop
       fields:
-        public_key: "Public key (pk_)"
-        secret_key: "Secret key (sk_)"
-        signing_secret: "Signing secret"
-      copy: "Copy"
-      done: "Done — back to shop"
+        public_key: Public key (pk_)
+        secret_key: Secret key (sk_)
+        signing_secret: Signing secret
       integration:
-        title: "How to integrate"
-        bearer: "Send the secret key as a Bearer token on every request to tessera-core."
-        bearer_code: "Authorization: Bearer <sk_…>"
-        public_key_usage: "Use the public key only where you need to identify the credential (logs, support, dashboards)."
-        signing: "If request signing is enabled for this shop, sign each request with the signing secret: HMAC over timestamp, HTTP method, path, and body."
-        security: "Store both secrets in your server-side configuration — never in a browser or mobile app."
-
-  # ── Payment timelines ─────────────────────────────────────────────────────
-  payment_timelines:
-    show:
-      title: "Payment Timeline"
-      back: "← Back to payment"
-      tabs:
-        details: "Details"
-        timeline: "Timeline"
-      events:
-        title: "Events"
-        empty: "No events recorded for this payment."
-        metadata: "Metadata"
-      webhooks:
-        title: "Webhook Deliveries"
-        empty: "No webhook deliveries recorded."
-        table:
-          status: "Status"
-          attempts: "Attempts"
-          last_attempt: "Last attempt"
-          delivered_at: "Delivered at"
-
-  # ── Merchants ─────────────────────────────────────────────────────────────
-  merchants:
-    new:
-      title: "Onboard a merchant"
-      page_title: "Onboard a merchant"
-      subtitle: "Creates the merchant and its first shop in tessera-core, and invites the first admin."
-      sections:
-        merchant: "Merchant"
-        first_shop: "First shop"
-        first_admin: "First admin"
+        bearer: Send the secret key as a Bearer token on every request to tessera-core.
+        bearer_code: 'Authorization: Bearer <sk_…>'
+        public_key_usage: Use the public key only where you need to identify the credential
+          (logs, support, dashboards).
+        security: Store both secrets in your server-side configuration — never in
+          a browser or mobile app.
+        signing: 'If request signing is enabled for this shop, sign each request with
+          the signing secret: HMAC over timestamp, HTTP method, path, and body.'
+        title: How to integrate
+      page_title: Save your credentials
+      title: Your new API credentials
+      warning: Save these now.
+      warning_detail: The secret key and signing secret are shown exactly once and
+        cannot be retrieved again.
+  shops:
+    credentials:
+      generate: Generate credentials
+      generate_confirm: Generate new API credentials? Any existing active key may
+        need to be rotated in your integration.
+      load_error: 'Could not load credentials: %{message}'
+      no_credentials: No credentials yet. Generate a pair to start integrating.
+      revoke: Revoke
+      revoke_confirm: Revoke credential %{pk}? This cannot be undone.
+      subtitle: Per-shop keys for integrating with tessera-core. Secret keys are shown
+        only once at generation.
+      table:
+        actions: Actions
+        created: Created
+        last_used: Last used
+        public_key: Public key
+        signing: Signing
+        signing_optional: Optional
+        signing_required: Required
+        status: Status
+        unknown_status: Unknown
+      title: API credentials
+    edit:
+      cancel: Cancel
       fields:
-        name: "Name"
-        company_name: "Company name"
-        country: "Country (ISO-2)"
-        shop_name: "Shop name"
-        shop_territory: "Territory (ISO-2)"
-        admin_email: "Admin email"
-        admin_email_hint: "They'll receive an email to set their password."
-      submit: "Onboard merchant"
-      cancel: "Cancel"
-
-  # ── Flash messages (set by controllers) ───────────────────────────────────
-  flash:
-    merchants:
-      missing_fields: "Merchant name, shop name and admin email are all required."
-      onboard_failed: "Onboarding failed: %{message}"
-      admin_create_failed: "Could not create the admin user: %{errors}"
-      onboard_success: "Merchant onboarded. An invite has been sent to %{email}."
-    shops:
-      missing_fields: "Shop name and territory (country) are required."
-      create_failed: "Could not create shop: %{message}"
-      update_failed: "Could not update shop: %{message}"
-      create_success: "Shop %{name} created."
-      update_success: "Shop configuration updated."
+        display_name: Display name
+        display_name_hint: Optional friendly name shown in the portal. Defaults to
+          the shop name when blank.
+        notification_url: Notification URL
+        notification_url_hint: Must be an HTTPS URL. Leave blank to disable webhooks.
+        test_mode: Test mode
+      submit: Save changes
+      subtitle: Changes are saved in tessera-core via the internal API.
+    index:
+      add: Add shop
+      subtitle: Manage your payment shops and API credentials
+      table:
+        empty: No shops found.
+        live: Live
+        mode: Mode
+        name: Name
+        notification_url: Notification URL
+        shop_id: Shop ID
+        territory: Territory
+        test: Test
+        view: View
+      title: Shops
+    new:
+      back: "← Back to shops"
+      cancel: Cancel
+      fields:
+        merchant_id: Merchant ID
+        name: Shop name
+        notification_url: Notification URL
+        notification_url_hint: Optional. HTTPS URL for payment webhooks.
+        territory: Territory (ISO-2)
+      page_title: Add shop
+      submit: Create shop
+      subtitle_merchant: Provisions a new shop in tessera-core under your merchant.
+      subtitle_psp: Provisions a new shop in tessera-core under the selected merchant.
+      title: Add shop
+    show:
+      back: "← Back to shops"
+      edit: Edit configuration
+      fields:
+        mode: Mode
+        not_set: Not set
+        notification_url: Notification URL
+        shop_id: Shop ID
+        territory: Territory

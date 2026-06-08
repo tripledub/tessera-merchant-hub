@@ -16,6 +16,15 @@
   <div class="card">
     <%= form_with url: shop_path(@shop), method: :patch, class: "space-y-5" do |f| %>
       <div>
+        <%= label_tag "shop[display_name]", t('.fields.display_name'), class: "form-label" %>
+        <p class="text-xs text-gray-500 mt-0.5"><%= t('.fields.display_name_hint') %></p>
+        <%= text_field_tag "shop[display_name]",
+              params.dig(:shop, :display_name) || @shop.display_name,
+              placeholder: @shop.name,
+              class: "form-input mt-1" %>
+      </div>
+
+      <div>
         <%= label_tag "shop[notification_url]", t('.fields.notification_url'), class: "form-label" %>
         <p class="text-xs text-gray-500 mt-0.5"><%= t('.fields.notification_url_hint') %></p>
         <%= url_field_tag "shop[notification_url]",

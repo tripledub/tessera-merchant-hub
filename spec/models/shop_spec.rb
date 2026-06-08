@@ -18,6 +18,30 @@ RSpec.describe Shop, type: :model do
       .optional
   end
 
+  describe "notification_url validation" do
+    it "is valid when blank" do
+      shop = build(:shop, notification_url: nil)
+      expect(shop).to be_valid
+    end
+
+    it "is valid with an HTTPS URL" do
+      shop = build(:shop, notification_url: "https://example.com/hook")
+      expect(shop).to be_valid
+    end
+
+    it "is invalid with an HTTP URL" do
+      shop = build(:shop, notification_url: "http://insecure.com/hook")
+      expect(shop).not_to be_valid
+      expect(shop.errors[:notification_url]).to be_present
+    end
+
+    it "is invalid with a case-variant HTTP URL (HTTP://)" do
+      shop = build(:shop, notification_url: "HTTP://insecure.com/hook")
+      expect(shop).not_to be_valid
+      expect(shop.errors[:notification_url]).to be_present
+    end
+  end
+
   describe "#to_param" do
     it "uses shop_id in URLs" do
       expect(build(:shop, shop_id: "shop_42").to_param).to eq("shop_42")

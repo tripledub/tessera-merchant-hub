@@ -13,7 +13,7 @@ Rails.application.routes.draw do
   end
   root to: redirect("/users/sign_in")
 
-  resources :merchants, only: %i[new create]
+  resources :merchants, only: %i[new create index show edit update]
   resources :shops, only: %i[index show new create edit update] do
     post :credential, to: "shop_credentials#create"
     delete "credentials/:id", to: "shop_credentials#destroy", as: :credential_revoke
