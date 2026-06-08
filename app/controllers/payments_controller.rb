@@ -1,7 +1,7 @@
 class PaymentsController < ApplicationController
   before_action :set_payment, only: %i[show refund void]
 
-  ALLOWED_PER_PAGE = [10, 25, 50].freeze
+  ALLOWED_PER_PAGE = [ 10, 25, 50 ].freeze
   private_constant :ALLOWED_PER_PAGE
 
   def index
@@ -42,10 +42,18 @@ class PaymentsController < ApplicationController
   def apply_filters(scope)
     scope = scope.with_statuses(params[:status])        if params[:status].present?
     if params[:date_from].present?
-      scope = scope.from_date(params[:date_from]) rescue scope
+      begin
+        scope = scope.from_date(params[:date_from])
+      rescue ArgumentError, Date::Error
+        # ignore malformed date — filter not applied
+      end
     end
     if params[:date_to].present?
-      scope = scope.to_date(params[:date_to]) rescue scope
+      begin
+        scope = scope.to_date(params[:date_to])
+      rescue ArgumentError, Date::Error
+        # ignore malformed date — filter not applied
+      end
     end
     scope = scope.with_reference(params[:reference])    if params[:reference].present?
     if params[:amount_min].present?

@@ -21,7 +21,7 @@ module PaymentsHelper
     q = request.query_parameters.deep_dup
     key_s = key.to_s
     if q[key_s].is_a?(Array)
-      remaining = Array(q[key_s]) - [value.to_s]
+      remaining = Array(q[key_s]) - [ value.to_s ]
       if remaining.any?
         q[key_s] = remaining
       else
