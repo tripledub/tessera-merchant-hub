@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+# Authorization policy for MerchantHub-owned Merchant records (ADR-007).
+# new?/create? are used with Tessera::Merchant (headless, for onboarding).
+# index?/show?/edit?/update? are used with Merchant AR instances.
 class MerchantPolicy < ApplicationPolicy
   def new?
     psp_admin?

@@ -10,6 +10,13 @@ RSpec.describe MerchantPolicy, type: :policy do
   let(:own_merchant)    { build(:merchant, merchant_id: "merch_abc") }
   let(:other_merchant)  { build(:merchant, merchant_id: "merch_xyz") }
 
+  describe "new? / create?" do
+    it("permits psp_admin")     { expect(described_class.new(psp_admin, Merchant).new?).to be true }
+    it("denies psp_support")    { expect(described_class.new(psp_support, Merchant).new?).to be false }
+    it("denies merchant_admin") { expect(described_class.new(merchant_admin, Merchant).new?).to be false }
+    it("create? matches new?")  { expect(described_class.new(psp_admin, Merchant).create?).to be true }
+  end
+
   describe "index?" do
     it("permits psp_admin")    { expect(described_class.new(psp_admin, Merchant).index?).to be true }
     it("permits psp_support")  { expect(described_class.new(psp_support, Merchant).index?).to be true }
