@@ -1,0 +1,30 @@
+<%# Dismissible chips for each active filter.
+    Rendered inside turbo-frame#payments-table so chips update with every filter change. %>
+<% active_filters = {
+     status:     Array(params[:status]).reject(&:blank?),
+     date_from:  Array(params[:date_from]).reject(&:blank?),
+     date_to:    Array(params[:date_to]).reject(&:blank?),
+     reference:  Array(params[:reference]).reject(&:blank?),
+     amount_min: Array(params[:amount_min]).reject(&:blank?),
+     amount_max: Array(params[:amount_max]).reject(&:blank?)
+   }.reject { |_k, v| v.empty? } %>
+
+<% if active_filters.any? %>
+  <div class="flex flex-wrap items-center gap-2 border-b border-gray-100 px-4 py-3">
+    <% active_filters.each do |key, values| %>
+      <% values.each do |value| %>
+        <%= link_to filter_chip_remove_path(key, value),
+              class: "inline-flex items-center gap-1.5 rounded-full bg-blue-500/[0.08] px-3 py-1 text-xs font-medium text-brand-600 transition-colors hover:bg-blue-500/[0.12]",
+              data: { turbo_frame: "payments-table", turbo_action: "advance" } do %>
+          <%= filter_chip_label(key, value) %>
+          <svg class="h-3 w-3 shrink-0" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path d="M6.28 5.22a.75.75 0 0 0-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 1 0 1.06 1.06L10 11.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L11.06 10l3.72-3.72a.75.75 0 0 0-1.06-1.06L10 8.94 6.28 5.22Z"/>
+          </svg>
+        <% end %>
+      <% end %>
+    <% end %>
+    <%= link_to t("payments.index.filter.clear_all", default: "Clear all"), payments_path,
+          class: "ml-1 text-xs font-medium text-gray-500 underline hover:text-gray-700",
+          data: { turbo_frame: "payments-table", turbo_action: "advance" } %>
+  </div>
+<% end %>
