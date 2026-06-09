@@ -1,0 +1,7 @@
+## i18n-tasks configuration
+# https://github.com/glebm/i18n-tasks
+
+# Keys that are used dynamically at runtime and cannot be statically detected.
+ignore_unused:
+  # Devise resolves this via User#inactive_message returning :deactivated
+  - devise.failure.deactivated

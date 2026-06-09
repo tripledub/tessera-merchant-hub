@@ -13,6 +13,12 @@
           <% if current_user.psp_admin? %>
             <%= nav_link_to "Onboard", new_merchant_path, controller: "merchants" %>
           <% end %>
+          <% if current_user.merchant_role? %>
+            <%= nav_link_to t("layouts.navigation.team"), team_index_path, controller: "team" %>
+          <% end %>
+          <% if current_user.psp_admin? %>
+            <%= nav_link_to t("layouts.navigation.users"), admin_users_path, controller: "users" %>
+          <% end %>
         </div>
       </div>
 
@@ -46,6 +52,12 @@
       <% end %>
       <% if current_user.psp_admin? %>
         <%= nav_link_to "Onboard", new_merchant_path, controller: "merchants" %>
+      <% end %>
+      <% if current_user.merchant_role? %>
+        <%= nav_link_to t("layouts.navigation.team"), team_index_path, controller: "team" %>
+      <% end %>
+      <% if current_user.psp_admin? %>
+        <%= nav_link_to t("layouts.navigation.users"), admin_users_path, controller: "users" %>
       <% end %>
     </div>
     <div class="border-t border-gray-200 px-4 py-3">

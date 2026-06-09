@@ -1,7 +1,43 @@
 ---
 en:
+  admin:
+    users:
+      index:
+        filter:
+          merchant_placeholder: Filter by merchant ID…
+          role_placeholder: All roles
+        invite: Invite PSP user
+        page_title: Users
+        subtitle: All portal users across all merchants.
+        table:
+          actions: Actions
+          email: Email
+          empty: No users found.
+          last_sign_in: Last sign-in
+          merchant: Merchant
+          never: Never
+          role: Role
+          status: Status
+        title: Users
+        unlock: Unlock
+        unlock_confirm: Unlock access for %{email}?
+      new:
+        cancel: Cancel
+        fields:
+          email: Email address
+          role: Role
+        page_title: Invite PSP user
+        roles:
+          psp_admin: PSP Admin
+          psp_support: PSP Support
+        submit: Send invite
+        subtitle: They will receive an email to set their password.
+        title: Invite a PSP user
   app:
     title: Tessera Merchant Hub
+  devise:
+    failure:
+      deactivated: Your account has been deactivated. Please contact your administrator.
   errors:
     forbidden:
       code: '403'
@@ -13,6 +49,11 @@ en:
         one: '1 error prohibited this %{resource} from being saved:'
         other: "%{count} errors prohibited this %{resource} from being saved:"
   flash:
+    admin:
+      users:
+        invite_success: Invitation sent to %{email}.
+        role_updated: Role updated for %{email}.
+        unlock_success: "%{email} has been unlocked."
     merchants:
       admin_create_failed: 'Could not create the admin user: %{errors}'
       missing_fields: Merchant name, shop name and admin email are all required.
@@ -25,6 +66,10 @@ en:
       missing_fields: Shop name and territory (country) are required.
       update_failed: 'Could not save changes: %{errors}'
       update_success: Shop configuration updated.
+    team:
+      deactivate_success: "%{email} has been deactivated."
+      invalid_role: Role is not permitted for merchant users.
+      invite_success: Invitation sent to %{email}.
   layouts:
     navigation:
       app_name: MerchantHub
@@ -35,8 +80,10 @@ en:
       payments: Payments
       shops: Shops
       sign_out: Sign out
+      team: Team
       toggle_nav: Toggle navigation menu
       toggle_sidebar: Toggle sidebar
+      users: Users
   merchants:
     edit:
       cancel: Cancel
@@ -287,3 +334,35 @@ en:
         notification_url: Notification URL
         shop_id: Shop ID
         territory: Territory
+  team:
+    index:
+      deactivate: Deactivate
+      deactivate_confirm: Deactivate %{email}? They will lose access immediately.
+      invite: Invite user
+      page_title: Team
+      status:
+        active: Active
+        deactivated: Deactivated
+        locked: Locked
+      subtitle: Manage your merchant portal users.
+      table:
+        actions: Actions
+        email: Email
+        empty: No team members yet.
+        last_sign_in: Last sign-in
+        never: Never
+        role: Role
+        status: Status
+      title: Team
+    new:
+      cancel: Cancel
+      fields:
+        email: Email address
+        role: Role
+      page_title: Invite user
+      roles:
+        merchant_admin: Admin
+        merchant_viewer: Viewer
+      submit: Send invite
+      subtitle: They will receive an email to set their password.
+      title: Invite a team member

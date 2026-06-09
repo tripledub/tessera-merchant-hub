@@ -1,0 +1,66 @@
+<% content_for :title, t('.page_title') %>
+
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <h1 class="text-xl font-semibold text-gray-900"><%= t('.title') %></h1>
+    <p class="mt-1 text-theme-sm text-gray-500"><%= t('.subtitle') %></p>
+  </div>
+  <%= link_to t('.invite'), new_team_path,
+        class: "inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-brand-600" %>
+</div>
+
+<div class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+  <table class="w-full text-left text-theme-sm">
+    <thead>
+      <tr class="border-b border-gray-100 dark:border-white/[0.05]">
+        <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.email') %></th>
+        <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.role') %></th>
+        <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.status') %></th>
+        <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.last_sign_in') %></th>
+        <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.actions') %></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+      <% if team_members.empty? %>
+        <tr>
+          <td colspan="5" class="px-5 py-10 text-center text-theme-sm text-gray-500">
+            <%= t('.table.empty') %>
+          </td>
+        </tr>
+      <% else %>
+        <% team_members.each do |member| %>
+          <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+            <td class="px-5 py-4 text-gray-800 dark:text-white/90"><%= member.email %></td>
+            <td class="px-5 py-4 text-gray-500 dark:text-gray-400"><%= member.role.humanize %></td>
+            <td class="px-5 py-4">
+              <% if member.deactivated? %>
+                <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-400">
+                  <%= t('.status.deactivated') %>
+                </span>
+              <% elsif member.access_locked? %>
+                <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
+                  <%= t('.status.locked') %>
+                </span>
+              <% else %>
+                <span class="inline-flex items-center rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-700 dark:bg-success-500/15 dark:text-success-400">
+                  <%= t('.status.active') %>
+                </span>
+              <% end %>
+            </td>
+            <td class="px-5 py-4 text-gray-500 dark:text-gray-400">
+              <%= member.last_sign_in_at&.strftime("%d %b %Y") || t('.table.never') %>
+            </td>
+            <td class="px-5 py-4">
+              <% if member != current_user && !member.deactivated? %>
+                <%= button_to t('.deactivate'), team_path(member),
+                      method: :delete,
+                      data: { turbo_confirm: t('.deactivate_confirm', email: member.email) },
+                      class: "text-sm text-red-600 hover:text-red-800 font-medium dark:text-red-400" %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      <% end %>
+    </tbody>
+  </table>
+</div>

@@ -111,6 +111,41 @@ if Rails.env.development?
 
   puts "Seeded #{users_created} fake merchant users. Password: #{demo_password}"
 
+  # ----- Demo status users for QA (Evergreen Retail Ltd / merch_fake_01) -----
+  # These users are on merchant-1 so you can see all three status badges on
+  # the Team page when signed in as admin@merchant-1.example.com
+  demo_merchant = merchants.first
+
+  [
+    { email: "locked@merchant-1.example.com",      role: :merchant_viewer, state: :locked },
+    { email: "deactivated@merchant-1.example.com", role: :merchant_viewer, state: :deactivated },
+    { email: "viewer2@merchant-1.example.com",     role: :merchant_viewer, state: :active }
+  ].each do |attrs|
+    user = User.find_or_initialize_by(email: attrs[:email])
+    user.assign_attributes(
+      password:    demo_password,
+      role:        attrs[:role],
+      merchant_id: demo_merchant.merchant_id,
+      deactivated_at: nil,
+      locked_at:      nil,
+      unlock_token:   nil
+    )
+    user.save!
+
+    case attrs[:state]
+    when :locked
+      user.lock_access!(send_instructions: false) unless user.access_locked?
+    when :deactivated
+      unless user.deactivated?
+        user.update_columns(deactivated_at: 2.days.ago)
+        user.lock_access!(send_instructions: false) unless user.access_locked?
+      end
+    end
+  end
+
+  puts "Seeded 3 QA demo users on #{demo_merchant.name} (active, locked, deactivated)."
+  puts "  Sign in as admin@merchant-1.example.com to see all three status badges on /team"
+
   # ----- Payments ------------------------------------------------------------
   Seeds::Payment.delete_all
 

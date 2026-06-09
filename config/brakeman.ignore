@@ -1,0 +1,16 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "0b7a7709284620bc7430cfbc62952425e5df402917b7565be2179cc206272f16",
+      "note": "role is validated against an explicit merchant-roles allowlist before use; psp roles are rejected with 422"
+    },
+    {
+      "fingerprint": "9fb3753f66f06494a3a40986b536d9bf2321bb110e98809af20fe98f8f6d5170",
+      "note": "invite_params permits email+role for Users::Invite service which validates role against an allowlist; psp-admin only action guarded by Pundit"
+    },
+    {
+      "fingerprint": "f1f0c14cfb7b5a57a36ebbb5d0b917c2b98a3bee027fdcca5ff3aa002805be36",
+      "note": "role_params permits only :role which is validated by User model enum; psp-admin only action guarded by Pundit"
+    }
+  ]
+}
