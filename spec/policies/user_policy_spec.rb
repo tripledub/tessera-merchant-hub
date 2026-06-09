@@ -55,6 +55,13 @@ RSpec.describe UserPolicy, type: :policy do
     end
   end
 
+  describe "deactivate_role?" do
+    it("permits psp_admin")      { expect(described_class.new(psp_admin, User)).to permit_action(:deactivate_role) }
+    it("permits merchant_admin") { expect(described_class.new(merchant_admin, User)).to permit_action(:deactivate_role) }
+    it("denies psp_support")     { expect(described_class.new(psp_support, User)).to forbid_action(:deactivate_role) }
+    it("denies merchant_viewer") { expect(described_class.new(merchant_viewer, User)).to forbid_action(:deactivate_role) }
+  end
+
   describe "unlock?" do
     it("permits psp_admin")      { expect(described_class.new(psp_admin, same_merchant_user)).to permit_action(:unlock) }
     it("denies merchant_admin")  { expect(described_class.new(merchant_admin, same_merchant_user)).to forbid_action(:unlock) }

@@ -16,6 +16,8 @@ class TeamController < ApplicationController
   def create
     authorize User, :invite?, policy_class: UserPolicy
     permitted = invite_params
+    # Guard against role injection: this UI is merchant-only; the service also
+    # accepts psp_* roles for the admin controller, so we validate here too.
     unless %w[merchant_admin merchant_viewer].include?(permitted[:role])
       flash.now[:alert] = t("flash.team.invalid_role")
       return render :new, status: :unprocessable_content
