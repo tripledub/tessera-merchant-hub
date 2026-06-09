@@ -19,11 +19,16 @@
     <%= javascript_importmap_tags %>
 
     <%# Dark mode: apply before paint to prevent flash of wrong theme.
-        Defaults to dark if no preference stored yet. %>
+        Defaults to dark if no preference stored yet.
+        Sets window.__darkMode so Alpine x-data doesn't double-read localStorage. %>
     <script>
       (function () {
-        var stored = localStorage.getItem("darkMode");
-        var isDark = stored !== null ? JSON.parse(stored) : true;
+        var isDark = true;
+        try {
+          var stored = localStorage.getItem("darkMode");
+          if (stored !== null) { isDark = JSON.parse(stored); }
+        } catch (e) { /* malformed value — keep default */ }
+        window.__darkMode = isDark;
         if (isDark) {
           document.documentElement.classList.add("dark");
         } else {
@@ -34,7 +39,7 @@
   </head>
 
   <body class="bg-gray-50 font-outfit antialiased dark:bg-gray-950"
-        x-data="{ darkMode: JSON.parse(localStorage.getItem('darkMode') ?? 'true') }">
+        x-data="{ darkMode: window.__darkMode }">
 
     <% if user_signed_in? %>
       <%# ── Authenticated shell: sidebar + header + content ──────────────── %>
