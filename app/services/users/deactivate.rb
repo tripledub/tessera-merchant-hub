@@ -15,8 +15,14 @@ module Users
         return @user
       end
 
-      @user.update!(deactivated_at: Time.current)
-      @user.lock_access!(send_instructions: false)
+      ApplicationRecord.transaction do
+        @user.update!(deactivated_at: Time.current)
+        @user.lock_access!(send_instructions: false)
+      end
+
+      @user
+    rescue ActiveRecord::RecordInvalid => e
+      @user.errors.add(:base, e.message)
       @user
     end
   end

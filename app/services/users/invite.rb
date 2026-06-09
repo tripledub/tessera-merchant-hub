@@ -23,6 +23,11 @@ module Users
         password:    SecureRandom.hex(24)
       )
 
+      # send_reset_password_instructions generates a reset token and enqueues
+      # the invitation email. In production, ActionMailer delivers asynchronously
+      # so mailer failures don't affect the user record. In development,
+      # letter_opener_web delivers synchronously — mailer errors would propagate,
+      # but this is acceptable in a dev environment.
       user.send_reset_password_instructions if user.save
 
       user

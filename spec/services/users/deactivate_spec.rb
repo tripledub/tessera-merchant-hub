@@ -37,5 +37,15 @@ RSpec.describe Users::Deactivate do
       call(actor, actor)
       expect(actor.reload.deactivated_at).to be_nil
     end
+
+    context "when lock_access! raises after update!" do
+      it "rolls back deactivated_at so the user record is not in a partial state" do
+        allow(target).to receive(:lock_access!).and_raise(ActiveRecord::RecordInvalid.new(target))
+
+        result = call
+        expect(target.reload.deactivated_at).to be_nil
+        expect(result.errors[:base]).not_to be_empty
+      end
+    end
   end
 end
