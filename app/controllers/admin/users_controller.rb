@@ -32,13 +32,15 @@ class Admin::UsersController < ApplicationController
     member = User.find(params[:id])
     authorize member, :unlock?, policy_class: UserPolicy
     member.unlock_access!
-    member.update!(deactivated_at: nil)
+    member.update!(deactivated_at: nil) if member.reload.deactivated?
     redirect_to admin_users_path, notice: t("flash.admin.users.unlock_success", email: member.email)
   end
 
   def update_role
     member = User.find(params[:id])
     authorize member, :update_role?, policy_class: UserPolicy
+    # psp_admin can assign any valid role, including cross-tier promotions.
+    # The policy gate (update_role? → psp_admin? only) is the sole constraint by design.
     if member.update(role_params)
       redirect_to admin_users_path, notice: t("flash.admin.users.role_updated", email: member.email)
     else
