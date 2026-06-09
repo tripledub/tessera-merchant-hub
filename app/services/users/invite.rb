@@ -23,11 +23,13 @@ module Users
         password:    SecureRandom.hex(24)
       )
 
-      # send_reset_password_instructions generates a reset token and enqueues
-      # the invitation email. In production, ActionMailer delivers asynchronously
-      # so mailer failures don't affect the user record. In development,
-      # letter_opener_web delivers synchronously — mailer errors would propagate,
-      # but this is acceptable in a dev environment.
+      # Architectural note: email delivery failures are out-of-band and intentionally
+      # not surfaced here. If the background job fails, the user record exists but
+      # received no invitation email. Recovery path: an admin can trigger a fresh
+      # invitation by using Devise's "forgot password" flow on behalf of the user,
+      # or by deleting and re-inviting. This is an accepted trade-off — guaranteeing
+      # email delivery at the service layer would require synchronous delivery + rollback
+      # on failure, which is worse UX (slow, brittle) than silent retry via the queue.
       user.send_reset_password_instructions if user.save
 
       user
