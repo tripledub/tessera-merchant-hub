@@ -334,39 +334,43 @@ aside[data-collapsed] .menu-item {
 /* Previous / Next — pill buttons (first & last child) */
 .pagy.series-nav > a:first-child,
 .pagy.series-nav > a:last-child {
-  @apply shadow-theme-xs flex items-center justify-center rounded-lg border border-gray-300
-         bg-white px-3.5 py-2 text-theme-sm font-medium text-gray-700;
+  @apply shadow-theme-xs flex items-center justify-center rounded-lg border border-gray-300 bg-white
+         px-3.5 py-2 text-theme-sm font-medium text-gray-700
+         dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300;
 }
 .pagy.series-nav > a:first-child { @apply mr-2; }
 .pagy.series-nav > a:last-child  { @apply ml-2; }
 
 .pagy.series-nav > a[href]:first-child:hover,
-.pagy.series-nav > a[href]:last-child:hover  { @apply bg-gray-50; }
+.pagy.series-nav > a[href]:last-child:hover  {
+  @apply bg-gray-50 dark:bg-gray-800;
+}
 
 /* Disabled prev / next */
 .pagy.series-nav > a[role="link"]:first-child,
 .pagy.series-nav > a[role="link"]:last-child {
-  @apply opacity-50 cursor-not-allowed text-gray-400;
+  @apply opacity-50 cursor-not-allowed text-gray-400 dark:text-gray-600;
 }
 
 /* Page number items */
 .pagy.series-nav > a:not(:first-child):not(:last-child) {
-  @apply flex h-9 w-9 items-center justify-center rounded-lg text-theme-sm font-medium text-gray-700;
+  @apply flex h-9 w-9 items-center justify-center rounded-lg text-theme-sm font-medium text-gray-700
+         dark:text-gray-300;
 }
 
 /* Inactive page hover */
 .pagy.series-nav > a[href]:not(:first-child):not(:last-child):hover {
-  @apply bg-blue-500/[0.08] text-brand-500;
+  @apply bg-blue-500/[0.08] text-brand-500 dark:bg-blue-500/[0.15] dark:text-brand-400;
 }
 
 /* Current page */
 .pagy.series-nav > a[aria-current] {
-  @apply bg-blue-500/[0.08] text-brand-500 cursor-default;
+  @apply bg-blue-500/[0.08] text-brand-500 cursor-default dark:bg-blue-500/[0.15] dark:text-brand-400;
 }
 
 /* Gap */
 .pagy.series-nav > a[role="separator"] {
-  @apply text-gray-400 cursor-default;
+  @apply text-gray-400 cursor-default dark:text-gray-600;
 }
 
 /* ─── Flash messages ─────────────────────────────────────────────────────── */
