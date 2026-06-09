@@ -27,7 +27,10 @@ export default class extends Controller {
   // On desktop: toggles icon-only collapse. On mobile: opens/closes the drawer.
   toggle() {
     if (this.#isDesktop) {
-      const collapsed = !this.panelTarget.dataset.collapsed
+      // Use hasAttribute — dataset.collapsed returns "" (falsy) even when the
+      // attribute is present, so `!dataset.collapsed` always evaluates true
+      // and the sidebar could never be un-collapsed.
+      const collapsed = !this.panelTarget.hasAttribute("data-collapsed")
       this.#applyCollapsed(collapsed)
       localStorage.setItem(STORAGE_KEY, String(collapsed))
     } else {
@@ -56,10 +59,10 @@ export default class extends Controller {
 
   #applyCollapsed(collapsed) {
     if (collapsed) {
-      this.panelTarget.dataset.collapsed = ""
+      this.panelTarget.setAttribute("data-collapsed", "")
       this.panelTarget.classList.add("!w-[90px]")
     } else {
-      delete this.panelTarget.dataset.collapsed
+      this.panelTarget.removeAttribute("data-collapsed")
       this.panelTarget.classList.remove("!w-[90px]")
     }
   }

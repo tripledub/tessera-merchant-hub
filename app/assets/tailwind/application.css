@@ -183,7 +183,8 @@
    Icon-only items are centred. Applied by SidebarController via !w-[90px] +
    data-collapsed attribute on the <aside>. */
 aside[data-collapsed] .sidebar-label,
-aside[data-collapsed] .sidebar-group-title {
+aside[data-collapsed] .sidebar-group-title,
+aside[data-collapsed] .menu-item-text {
   display: none;
 }
 
