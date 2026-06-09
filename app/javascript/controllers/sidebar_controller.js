@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
+const STORAGE_KEY = "mh_sidebar_collapsed"
+
 // Manages the sidebar panel: mobile slide-in/out and desktop icon-only collapse.
 //
 // HTML contract:
@@ -10,20 +12,27 @@ import { Controller } from "@hotwired/stimulus"
 //
 // Toggle button (works for both mobile and desktop):
 //   <button data-action="click->sidebar#toggle">
+//
+// Collapsed state persists across page loads via localStorage.
 export default class extends Controller {
   static targets = ["panel", "overlay"]
 
   connect() {
-    // Clear any stale collapsed state from older versions that persisted to localStorage
-    localStorage.removeItem("mh_sidebar_collapsed")
+    if (this.#isDesktop && localStorage.getItem(STORAGE_KEY) === "true") {
+      this.#applyCollapsed(true)
+    }
   }
 
   // Single entry-point for the hamburger button.
   // On desktop: toggles icon-only collapse. On mobile: opens/closes the drawer.
   toggle() {
     if (this.#isDesktop) {
-      const collapsed = !this.panelTarget.dataset.collapsed
+      // Use hasAttribute — dataset.collapsed returns "" (falsy) even when the
+      // attribute is present, so `!dataset.collapsed` always evaluates true
+      // and the sidebar could never be un-collapsed.
+      const collapsed = !this.panelTarget.hasAttribute("data-collapsed")
       this.#applyCollapsed(collapsed)
+      localStorage.setItem(STORAGE_KEY, String(collapsed))
     } else {
       this.panelTarget.classList.contains("translate-x-0")
         ? this.close()
@@ -50,10 +59,10 @@ export default class extends Controller {
 
   #applyCollapsed(collapsed) {
     if (collapsed) {
-      this.panelTarget.dataset.collapsed = ""
+      this.panelTarget.setAttribute("data-collapsed", "")
       this.panelTarget.classList.add("!w-[90px]")
     } else {
-      delete this.panelTarget.dataset.collapsed
+      this.panelTarget.removeAttribute("data-collapsed")
       this.panelTarget.classList.remove("!w-[90px]")
     }
   }
