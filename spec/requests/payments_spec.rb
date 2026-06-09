@@ -238,6 +238,37 @@ RSpec.describe "Payments", type: :request do
       end
     end
 
+    describe "sort" do
+      let_it_be(:cheap)     { create(:tessera_payment, shop_id: "shop_abc", amount: 100,    inserted_at: 3.days.ago, updated_at: 3.days.ago) }
+      let_it_be(:expensive) { create(:tessera_payment, shop_id: "shop_abc", amount: 99_900, inserted_at: 1.day.ago,  updated_at: 1.day.ago) }
+
+      before { sign_in merchant_admin }
+
+      it "sorts by amount ascending" do
+        get payments_path(sort: "amount", direction: "asc")
+        expect(response).to have_http_status(:ok)
+        expect(response.body.index(cheap.id)).to be < response.body.index(expensive.id)
+      end
+
+      it "sorts by amount descending" do
+        get payments_path(sort: "amount", direction: "desc")
+        expect(response).to have_http_status(:ok)
+        expect(response.body.index(expensive.id)).to be < response.body.index(cheap.id)
+      end
+
+      it "ignores unknown sort columns and falls back to inserted_at desc" do
+        get payments_path(sort: "DROP TABLE users;", direction: "asc")
+        expect(response).to have_http_status(:ok)
+        # recent payment appears before older one (default inserted_at desc)
+        expect(response.body.index(expensive.id)).to be < response.body.index(cheap.id)
+      end
+
+      it "ignores unknown direction and falls back to desc" do
+        get payments_path(sort: "amount", direction: "INVALID")
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
     context "when unauthenticated" do
       it "redirects to sign in" do
         get payments_path
