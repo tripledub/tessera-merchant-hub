@@ -1,7 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
 
-const STORAGE_KEY = "mh_sidebar_collapsed"
-
 // Manages the sidebar panel: mobile slide-in/out and desktop icon-only collapse.
 //
 // HTML contract:
@@ -12,15 +10,12 @@ const STORAGE_KEY = "mh_sidebar_collapsed"
 //
 // Toggle button (works for both mobile and desktop):
 //   <button data-action="click->sidebar#toggle">
-//
-// Collapsed state persists across page loads via localStorage.
 export default class extends Controller {
   static targets = ["panel", "overlay"]
 
   connect() {
-    if (this.#isDesktop && localStorage.getItem(STORAGE_KEY) === "true") {
-      this.#applyCollapsed(true)
-    }
+    // Clear any stale collapsed state from older versions that persisted to localStorage
+    localStorage.removeItem("mh_sidebar_collapsed")
   }
 
   // Single entry-point for the hamburger button.
@@ -29,7 +24,6 @@ export default class extends Controller {
     if (this.#isDesktop) {
       const collapsed = !this.panelTarget.dataset.collapsed
       this.#applyCollapsed(collapsed)
-      localStorage.setItem(STORAGE_KEY, String(collapsed))
     } else {
       this.panelTarget.classList.contains("translate-x-0")
         ? this.close()
