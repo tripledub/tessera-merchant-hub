@@ -1,30 +1,24 @@
 # frozen_string_literal: true
 
 class UserPolicy < ApplicationPolicy
-  def index?
-    psp_admin? || merchant_admin?
-  end
-
-  def create?
-    psp_admin? || merchant_admin?
-  end
-
-  def update?
-    return true if psp_admin?
-    return false unless merchant_admin?
-
-    user.merchant_id == record.merchant_id
-  end
-
-  def destroy?
-    psp_admin?
-  end
+  def index?       = psp_admin? || merchant_admin?
+  def invite?      = psp_admin? || merchant_admin?
+  def deactivate?  = (psp_admin? || (merchant_admin? && own_merchant?)) && record != user
+  def unlock?      = psp_admin?
+  def update_role? = psp_admin?
 
   class Scope < ApplicationPolicy::Scope
     def resolve
       return scope.all if user.psp_admin?
+      return scope.where(merchant_id: user.merchant_id) if user.merchant_admin?
 
-      scope.where(merchant_id: user.merchant_id)
+      scope.none
     end
+  end
+
+  private
+
+  def own_merchant?
+    user.merchant_id.present? && user.merchant_id == record.merchant_id
   end
 end
