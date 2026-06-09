@@ -49,6 +49,10 @@ RSpec.describe UserPolicy, type: :policy do
     it "denies merchant_viewer" do
       expect(described_class.new(merchant_viewer, same_merchant_user)).to forbid_action(:deactivate)
     end
+
+    it "denies psp_support" do
+      expect(described_class.new(psp_support, other_merchant_user)).to forbid_action(:deactivate)
+    end
   end
 
   describe "unlock?" do
@@ -60,9 +64,12 @@ RSpec.describe UserPolicy, type: :policy do
   describe "update_role?" do
     it("permits psp_admin")      { expect(described_class.new(psp_admin, same_merchant_user)).to permit_action(:update_role) }
     it("denies merchant_admin")  { expect(described_class.new(merchant_admin, same_merchant_user)).to forbid_action(:update_role) }
+    it("denies psp_support") { expect(described_class.new(psp_support, same_merchant_user)).to forbid_action(:update_role) }
   end
 
   describe "Scope" do
+    # The `merchant_admin` let subject has merchant_id: "m1" (defined above).
+    # The records created here deliberately use "m1" and "m2" to test isolation.
     before do
       create(:user, :merchant_admin, merchant_id: "m1")
       create(:user, :merchant_viewer, merchant_id: "m1")
