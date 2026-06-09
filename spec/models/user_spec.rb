@@ -85,6 +85,13 @@ RSpec.describe User, type: :model do
       user = build(:user, deactivated_at: 1.hour.ago)
       expect(user.active_for_authentication?).to be false
     end
+
+    it "returns false when both deactivated and locked (deactivated takes precedence)" do
+      user = create(:user, deactivated_at: 1.hour.ago)
+      user.lock_access!(send_instructions: false)
+      expect(user.active_for_authentication?).to be false
+      expect(user.inactive_message).to eq(:deactivated)
+    end
   end
 
   describe "#inactive_message" do
@@ -93,9 +100,9 @@ RSpec.describe User, type: :model do
       expect(user.inactive_message).to eq(:deactivated)
     end
 
-    it "returns default Devise message when not deactivated" do
+    it "returns :inactive when not deactivated" do
       user = build(:user, deactivated_at: nil)
-      expect(user.inactive_message).not_to eq(:deactivated)
+      expect(user.inactive_message).to eq(:inactive)
     end
   end
 
