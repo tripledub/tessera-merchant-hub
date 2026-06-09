@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["panel", "panelToggle"]
+  static targets = ["panel", "panelToggle", "badge"]
 
   connect() {
     // When a chip or "Clear all" updates only the turbo-frame, the URL changes
@@ -55,5 +55,17 @@ export default class extends Controller {
       const input = this.element.querySelector(`[name="${name}"]`)
       if (input) input.value = params.get(name) ?? ""
     })
+
+    // Update the active-filter count badge on the Filters button
+    const count = ["status[]", "date_from", "date_to", "amount_min", "amount_max"]
+      .reduce((n, key) => {
+        const vals = key === "status[]" ? params.getAll(key) : [params.get(key)].filter(Boolean)
+        return n + (vals.length > 0 ? 1 : 0)
+      }, 0)
+
+    if (this.hasBadgeTarget) {
+      this.badgeTarget.textContent = count
+      this.badgeTarget.classList.toggle("hidden", count === 0)
+    }
   }
 }
