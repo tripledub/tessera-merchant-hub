@@ -14,6 +14,13 @@ module PaymentsHelper
     end
   end
 
+  # Temporary stub — replaced with full sort implementation in Task 6.
+  # Renders a sortable <th> cell. column is nil for unsortable columns.
+  def sort_th(label, _column, _params)
+    content_tag(:th, label,
+      class: "border-r border-gray-200 px-4 py-3 text-left text-theme-xs font-medium text-gray-700 dark:border-gray-800 dark:text-gray-400 last:border-r-0")
+  end
+
   # Returns the payments_path with the given filter param (key+value) removed.
   # Handles multi-value params (e.g. status[]=succeeded&status[]=failed).
   # Always resets page to 1 by removing the page param.
