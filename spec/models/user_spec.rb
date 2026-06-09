@@ -63,6 +63,57 @@ RSpec.describe User, type: :model do
     end
   end
 
+  describe "#deactivated?" do
+    it "returns false when deactivated_at is nil" do
+      user = build(:user, deactivated_at: nil)
+      expect(user.deactivated?).to be false
+    end
+
+    it "returns true when deactivated_at is set" do
+      user = build(:user, deactivated_at: 1.hour.ago)
+      expect(user.deactivated?).to be true
+    end
+  end
+
+  describe "#active_for_authentication?" do
+    it "returns true for a normal active user" do
+      user = build(:user, deactivated_at: nil)
+      expect(user.active_for_authentication?).to be true
+    end
+
+    it "returns false when deactivated" do
+      user = build(:user, deactivated_at: 1.hour.ago)
+      expect(user.active_for_authentication?).to be false
+    end
+  end
+
+  describe "#inactive_message" do
+    it "returns :deactivated when deactivated" do
+      user = build(:user, deactivated_at: 1.hour.ago)
+      expect(user.inactive_message).to eq(:deactivated)
+    end
+
+    it "returns default Devise message when not deactivated" do
+      user = build(:user, deactivated_at: nil)
+      expect(user.inactive_message).not_to eq(:deactivated)
+    end
+  end
+
+  describe "scopes" do
+    let!(:active_user)      { create(:user, deactivated_at: nil) }
+    let!(:deactivated_user) { create(:user, deactivated_at: 1.hour.ago) }
+
+    it ".active returns only non-deactivated users" do
+      expect(described_class.active).to include(active_user)
+      expect(described_class.active).not_to include(deactivated_user)
+    end
+
+    it ".deactivated returns only deactivated users" do
+      expect(described_class.deactivated).to include(deactivated_user)
+      expect(described_class.deactivated).not_to include(active_user)
+    end
+  end
+
   describe "lockable" do
     it "locks the account after too many failed sign-in attempts" do
       user = create(:user)

@@ -2,6 +2,9 @@
 en:
   app:
     title: Tessera Merchant Hub
+  devise:
+    failure:
+      deactivated: Your account has been deactivated. Please contact your administrator.
   errors:
     forbidden:
       code: '403'
