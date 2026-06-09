@@ -17,9 +17,24 @@
 
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+
+    <%# Dark mode: apply before paint to prevent flash of wrong theme.
+        Defaults to dark if no preference stored yet. %>
+    <script>
+      (function () {
+        var stored = localStorage.getItem("darkMode");
+        var isDark = stored !== null ? JSON.parse(stored) : true;
+        if (isDark) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      })();
+    </script>
   </head>
 
-  <body class="bg-gray-50 font-outfit antialiased dark:bg-gray-950">
+  <body class="bg-gray-50 font-outfit antialiased dark:bg-gray-950"
+        x-data="{ darkMode: JSON.parse(localStorage.getItem('darkMode') ?? 'true') }">
 
     <% if user_signed_in? %>
       <%# ── Authenticated shell: sidebar + header + content ──────────────── %>
