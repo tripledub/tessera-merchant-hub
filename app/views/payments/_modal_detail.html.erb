@@ -17,13 +17,13 @@
       <%# Header %>
       <div class="mb-4 flex items-start justify-between gap-4">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.label') %></p>
-          <p class="mt-0.5 font-mono text-theme-sm text-gray-900 break-all"><%= payment.id %></p>
+          <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.label') %></p>
+          <p class="mt-0.5 font-mono text-theme-sm text-gray-900 break-all dark:text-white/90"><%= payment.id %></p>
         </div>
         <div class="flex items-center gap-3 shrink-0">
           <%= render partial: "payments/status_badge", locals: { status: payment.status } %>
           <button type="button"
-                  class="text-gray-400 hover:text-gray-600"
+                  class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   data-action="click->modal#close"
                   aria-label="<%= t('.close') %>">
             <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -36,35 +36,35 @@
       <%# Detail fields %>
       <dl class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.fields.amount') %></dt>
-          <dd class="mt-1 text-lg font-semibold text-gray-900">
+          <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.fields.amount') %></dt>
+          <dd class="mt-1 text-lg font-semibold text-gray-900 dark:text-white/90">
             <%= number_to_currency(payment.amount / 100.0, unit: payment.currency + " ") %>
           </dd>
         </div>
 
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.fields.shop') %></dt>
-          <dd class="mt-1 text-theme-sm font-mono text-gray-900"><%= payment.shop_id %></dd>
+          <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.fields.shop') %></dt>
+          <dd class="mt-1 text-theme-sm font-mono text-gray-900 dark:text-white/90"><%= payment.shop_id %></dd>
         </div>
 
         <% if payment.merchant_reference.present? %>
           <div>
-            <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.fields.reference') %></dt>
-            <dd class="mt-1 text-theme-sm font-mono text-gray-900"><%= payment.merchant_reference %></dd>
+            <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.fields.reference') %></dt>
+            <dd class="mt-1 text-theme-sm font-mono text-gray-900 dark:text-white/90"><%= payment.merchant_reference %></dd>
           </div>
         <% end %>
 
         <div>
-          <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.fields.created') %></dt>
-          <dd class="mt-1 text-theme-sm text-gray-900">
+          <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.fields.created') %></dt>
+          <dd class="mt-1 text-theme-sm text-gray-900 dark:text-white/90">
             <%= payment.inserted_at&.strftime("%d %b %Y at %H:%M UTC") %>
           </dd>
         </div>
 
         <% if payment.idempotency_key.present? %>
           <div class="sm:col-span-2">
-            <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.fields.idempotency_key') %></dt>
-            <dd class="mt-1 text-theme-sm font-mono text-gray-900 break-all"><%= payment.idempotency_key %></dd>
+            <dt class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.fields.idempotency_key') %></dt>
+            <dd class="mt-1 text-theme-sm font-mono text-gray-900 break-all dark:text-white/90"><%= payment.idempotency_key %></dd>
           </div>
         <% end %>
       </dl>

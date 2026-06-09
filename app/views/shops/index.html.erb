@@ -3,8 +3,8 @@
 <%# Page header %>
 <div class="mb-6 flex items-center justify-between">
   <div>
-    <h1 class="text-xl font-semibold text-gray-900"><%= t('.title') %></h1>
-    <p class="mt-0.5 text-theme-sm text-gray-500"><%= t('.subtitle') %></p>
+    <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= t('.title') %></h1>
+    <p class="mt-0.5 text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.subtitle') %></p>
   </div>
   <% if ShopPolicy.new(current_user, Tessera::Shop).create? %>
     <%= link_to t('.add'), new_shop_path, class: "btn-primary" %>
@@ -14,39 +14,45 @@
 <%# Table %>
 <div class="card overflow-hidden p-0">
   <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.shop_id') %></th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.name') %></th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.territory') %></th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.mode') %></th>
-          <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.table.notification_url') %></th>
-          <th class="relative px-4 py-3"><span class="sr-only"><%= t('.table.view') %></span></th>
+    <table class="min-w-full">
+      <thead>
+        <tr class="border-b border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-white/[0.03]">
+          <th class="px-4 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400"><%= t('.table.shop_id') %></th>
+          <th class="px-4 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400"><%= t('.table.name') %></th>
+          <th class="px-4 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400"><%= t('.table.territory') %></th>
+          <th class="px-4 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400"><%= t('.table.mode') %></th>
+          <th class="px-4 py-3 text-left text-theme-xs font-medium text-gray-500 dark:text-gray-400"><%= t('.table.notification_url') %></th>
+          <th class="px-4 py-3"><span class="sr-only"><%= t('.table.view') %></span></th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-200 bg-white">
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
         <% @shops.each do |shop| %>
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-3 text-theme-sm font-mono text-gray-900"><%= shop.shop_id %></td>
-            <td class="px-4 py-3 text-theme-sm text-gray-900"><%= shop.name %></td>
-            <td class="px-4 py-3 text-theme-sm text-gray-500"><%= shop.country.presence || "—" %></td>
+          <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.03]">
+            <td class="px-4 py-3 font-mono text-theme-sm text-gray-900 dark:text-white/90"><%= shop.shop_id %></td>
+            <td class="px-4 py-3 text-theme-sm text-gray-900 dark:text-white/90"><%= shop.name %></td>
+            <td class="px-4 py-3 text-theme-sm text-gray-500 dark:text-gray-400"><%= shop.country.presence || "—" %></td>
             <td class="px-4 py-3">
               <span class="<%= shop.test_mode? ? 'badge badge-warning' : 'badge badge-success' %>">
                 <%= shop.test_mode? ? t('.table.test') : t('.table.live') %>
               </span>
             </td>
-            <td class="px-4 py-3 text-theme-sm text-gray-500 truncate max-w-xs">
+            <td class="px-4 py-3 text-theme-sm text-gray-500 truncate max-w-xs dark:text-gray-400">
               <%= shop.notification_url.presence || "—" %>
             </td>
-            <td class="px-4 py-3 text-right">
-              <%= link_to t('.table.view'), shop_path(shop), class: "table-action" %>
+            <td class="px-4 py-3 text-center">
+              <%= link_to shop_path(shop),
+                    class: "table-action",
+                    aria: { label: t('.table.view') } do %>
+                <svg class="fill-current" width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M10.8749 13.8619C8.10837 13.8619 5.74279 12.1372 4.79804 9.70241C5.74279 7.26761 8.10837 5.54297 10.8749 5.54297C13.6415 5.54297 16.0071 7.26762 16.9518 9.70243C16.0071 12.1372 13.6415 13.8619 10.8749 13.8619ZM10.8749 4.04297C7.35666 4.04297 4.36964 6.30917 3.29025 9.4593C3.23626 9.61687 3.23626 9.78794 3.29025 9.94552C4.36964 13.0957 7.35666 15.3619 10.8749 15.3619C14.3932 15.3619 17.3802 13.0957 18.4596 9.94555C18.5136 9.78797 18.5136 9.6169 18.4596 9.45932C17.3802 6.30919 14.3932 4.04297 10.8749 4.04297ZM10.8663 7.84413C9.84002 7.84413 9.00808 8.67606 9.00808 9.70231C9.00808 10.7286 9.84002 11.5605 10.8663 11.5605H10.8811C11.9074 11.5605 12.7393 10.7286 12.7393 9.70231C12.7393 8.67606 11.9074 7.84413 10.8811 7.84413H10.8663Z" fill=""/>
+                </svg>
+              <% end %>
             </td>
           </tr>
         <% end %>
         <% if @shops.empty? %>
           <tr>
-            <td colspan="6" class="px-4 py-10 text-center text-theme-sm text-gray-500">
+            <td colspan="6" class="px-4 py-10 text-center text-theme-sm text-gray-500 dark:text-gray-400">
               <%= t('.table.empty') %>
             </td>
           </tr>

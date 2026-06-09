@@ -17,6 +17,25 @@
 
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+
+    <%# Dark mode: apply before paint to prevent flash of wrong theme.
+        Defaults to dark if no preference stored yet.
+        Sets window.__darkMode for reference by other scripts. %>
+    <script>
+      (function () {
+        var isDark = true;
+        try {
+          var stored = localStorage.getItem("darkMode");
+          if (stored !== null) { isDark = JSON.parse(stored); }
+        } catch (e) { /* malformed value — keep default */ }
+        window.__darkMode = isDark;
+        if (isDark) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      })();
+    </script>
   </head>
 
   <body class="bg-gray-50 font-outfit antialiased dark:bg-gray-950">

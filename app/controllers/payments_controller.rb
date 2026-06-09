@@ -2,12 +2,14 @@ class PaymentsController < ApplicationController
   before_action :set_payment, only: %i[show refund void]
 
   ALLOWED_PER_PAGE = [ 10, 25, 50 ].freeze
-  private_constant :ALLOWED_PER_PAGE
+  SORTABLE_COLUMNS = %w[amount inserted_at status].freeze
+  SORT_DIRECTIONS  = %w[asc desc].freeze
+  private_constant :ALLOWED_PER_PAGE, :SORTABLE_COLUMNS, :SORT_DIRECTIONS
 
   def index
     scope = policy_scope(Tessera::Payment, policy_scope_class: PaymentPolicy::Scope)
     scope = apply_filters(scope)
-    scope = scope.order(inserted_at: :desc)
+    scope = apply_sort(scope)
     @pagy, @payments = pagy(:offset, scope, limit: per_page_value)
     authorize Tessera::Payment, :index?, policy_class: PaymentPolicy
   end
@@ -63,6 +65,18 @@ class PaymentsController < ApplicationController
       scope = scope.amount_at_most((params[:amount_max].to_f * 100).round)
     end
     scope
+  end
+
+  # Applies URL-param-driven sort. Falls back to inserted_at desc for unknown/missing params.
+  # SORTABLE_COLUMNS allowlist prevents SQL injection via column name.
+  def apply_sort(scope)
+    valid_col = SORTABLE_COLUMNS.include?(params[:sort])
+    valid_dir = SORT_DIRECTIONS.include?(params[:direction])
+    # Both column and direction must be valid; otherwise fall back to inserted_at desc.
+    return scope.order(inserted_at: :desc) unless valid_col
+
+    dir = valid_dir ? params[:direction].to_sym : :desc
+    scope.order(params[:sort] => dir)
   end
 
   def per_page_value
