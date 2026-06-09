@@ -1,0 +1,103 @@
+<% content_for :title, t('.page_title') %>
+
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= t('.title') %></h1>
+    <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.subtitle') %></p>
+  </div>
+  <%= link_to t('.invite'), new_admin_user_path,
+        class: "inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-theme-sm font-medium text-white shadow-theme-xs hover:bg-brand-600" %>
+</div>
+
+<div class="card mb-4">
+  <%= form_with url: admin_users_path, method: :get, data: { turbo_frame: "users-table" }, class: "flex flex-wrap gap-3" do %>
+    <%= select_tag :role,
+          options_for_select([
+            [t('.filter.role_placeholder'), ""],
+            *User.roles.keys.map { |r| [r.humanize, r] }
+          ], params[:role]),
+          class: "h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 shadow-theme-xs dark:border-white/[0.15] dark:bg-white/[0.03] dark:text-gray-400",
+          onchange: "this.form.requestSubmit()" %>
+    <input type="text" name="merchant_id" value="<%= params[:merchant_id] %>"
+           placeholder="<%= t('.filter.merchant_placeholder') %>"
+           class="h-9 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-700 shadow-theme-xs dark:border-white/[0.15] dark:bg-white/[0.03] dark:text-gray-400"
+           oninput="clearTimeout(this._t); this._t = setTimeout(() => this.form.requestSubmit(), 300)" />
+  <% end %>
+</div>
+
+<%= turbo_frame_tag "users-table" do %>
+  <div class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+    <table class="w-full text-left text-theme-sm">
+      <thead>
+        <tr class="border-b border-gray-100 dark:border-white/[0.05]">
+          <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.email') %></th>
+          <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.merchant') %></th>
+          <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.role') %></th>
+          <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.status') %></th>
+          <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.last_sign_in') %></th>
+          <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.actions') %></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+        <% if @users.empty? %>
+          <tr>
+            <td colspan="6" class="px-5 py-10 text-center text-theme-sm text-gray-500">
+              <%= t('.table.empty') %>
+            </td>
+          </tr>
+        <% else %>
+          <% @users.each do |member| %>
+            <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+              <td class="px-5 py-4 text-gray-800 dark:text-white/90"><%= member.email %></td>
+              <td class="px-5 py-4 font-mono text-xs text-gray-500 dark:text-gray-400">
+                <%= member.merchant_id.presence || "—" %>
+              </td>
+              <td class="px-5 py-4 text-gray-500 dark:text-gray-400"><%= member.role.humanize %></td>
+              <td class="px-5 py-4">
+                <% if member.deactivated? %>
+                  <span class="inline-flex items-center rounded-full bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-400">
+                    Deactivated
+                  </span>
+                <% elsif member.access_locked? %>
+                  <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">
+                    Locked
+                  </span>
+                <% else %>
+                  <span class="inline-flex items-center rounded-full bg-success-50 px-2 py-0.5 text-xs font-medium text-success-700 dark:bg-success-500/15 dark:text-success-400">
+                    Active
+                  </span>
+                <% end %>
+              </td>
+              <td class="px-5 py-4 text-gray-500 dark:text-gray-400">
+                <%= member.last_sign_in_at&.strftime("%d %b %Y") || t('.table.never') %>
+              </td>
+              <td class="px-5 py-4">
+                <div class="flex items-center gap-3">
+                  <% if member.deactivated? || member.access_locked? %>
+                    <%= button_to t('.unlock'), unlock_admin_user_path(member),
+                          method: :patch,
+                          data: { turbo_confirm: t('.unlock_confirm', email: member.email) },
+                          class: "text-sm text-brand-600 hover:text-brand-700 font-medium dark:text-brand-400" %>
+                  <% end %>
+                  <%= form_with url: update_role_admin_user_path(member), method: :patch, class: "inline" do |f| %>
+                    <%= f.select :role,
+                          options_for_select(User.roles.keys.map { |r| [r.humanize, r] }, member.role),
+                          {},
+                          name: "user[role]",
+                          class: "h-8 rounded-lg border border-gray-300 bg-white px-2 text-xs text-gray-700 dark:border-white/[0.15] dark:bg-white/[0.03] dark:text-gray-400",
+                          onchange: "this.form.requestSubmit()" %>
+                  <% end %>
+                </div>
+              </td>
+            </tr>
+          <% end %>
+        <% end %>
+      </tbody>
+    </table>
+    <% if @pagy.pages > 1 %>
+      <div class="mt-4 border-t border-gray-200 px-5 py-4 dark:border-white/[0.05]">
+        <%== pagy_nav(@pagy) %>
+      </div>
+    <% end %>
+  </div>
+<% end %>

@@ -1,5 +1,38 @@
 ---
 en:
+  admin:
+    users:
+      index:
+        filter:
+          merchant_placeholder: Filter by merchant ID…
+          role_placeholder: All roles
+        invite: Invite PSP user
+        page_title: Users
+        subtitle: All portal users across all merchants.
+        table:
+          actions: Actions
+          email: Email
+          empty: No users found.
+          last_sign_in: Last sign-in
+          merchant: Merchant
+          never: Never
+          role: Role
+          status: Status
+        title: Users
+        unlock: Unlock
+        unlock_confirm: Unlock access for %{email}?
+      new:
+        cancel: Cancel
+        fields:
+          email: Email address
+          role: Role
+        page_title: Invite PSP user
+        roles:
+          psp_admin: PSP Admin
+          psp_support: PSP Support
+        submit: Send invite
+        subtitle: They will receive an email to set their password.
+        title: Invite a PSP user
   app:
     title: Tessera Merchant Hub
   devise:
@@ -16,6 +49,11 @@ en:
         one: '1 error prohibited this %{resource} from being saved:'
         other: "%{count} errors prohibited this %{resource} from being saved:"
   flash:
+    admin:
+      users:
+        invite_success: Invitation sent to %{email}.
+        role_updated: Role updated for %{email}.
+        unlock_success: "%{email} has been unlocked."
     merchants:
       admin_create_failed: 'Could not create the admin user: %{errors}'
       missing_fields: Merchant name, shop name and admin email are all required.

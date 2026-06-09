@@ -2,6 +2,8 @@
 
 class UserPolicy < ApplicationPolicy
   def index?             = psp_admin? || merchant_admin?
+  def admin_index?       = psp_admin?
+  def admin_invite?      = psp_admin?
   def invite?            = psp_admin? || merchant_admin?
   # Role-level gate (no record needed): can this user type deactivate anyone?
   def deactivate_role?   = psp_admin? || merchant_admin?
