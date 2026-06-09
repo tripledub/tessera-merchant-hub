@@ -28,6 +28,10 @@ en:
       missing_fields: Shop name and territory (country) are required.
       update_failed: 'Could not save changes: %{errors}'
       update_success: Shop configuration updated.
+    team:
+      deactivate_success: "%{email} has been deactivated."
+      invalid_role: Role is not permitted for merchant users.
+      invite_success: Invitation sent to %{email}.
   layouts:
     navigation:
       app_name: MerchantHub
@@ -292,3 +296,35 @@ en:
         notification_url: Notification URL
         shop_id: Shop ID
         territory: Territory
+  team:
+    index:
+      deactivate: Deactivate
+      deactivate_confirm: Deactivate %{email}? They will lose access immediately.
+      invite: Invite user
+      page_title: Team
+      status:
+        active: Active
+        deactivated: Deactivated
+        locked: Locked
+      subtitle: Manage your merchant portal users.
+      table:
+        actions: Actions
+        email: Email
+        empty: No team members yet.
+        last_sign_in: Last sign-in
+        never: Never
+        role: Role
+        status: Status
+      title: Team
+    new:
+      cancel: Cancel
+      fields:
+        email: Email address
+        role: Role
+      page_title: Invite user
+      roles:
+        merchant_admin: Admin
+        merchant_viewer: Viewer
+      submit: Send invite
+      subtitle: They will receive an email to set their password.
+      title: Invite a team member

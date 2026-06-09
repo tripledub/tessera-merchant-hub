@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 class UserPolicy < ApplicationPolicy
-  def index?       = psp_admin? || merchant_admin?
-  def invite?      = psp_admin? || merchant_admin?
-  def deactivate?  = (psp_admin? || (merchant_admin? && own_merchant?)) && record != user
+  def index?             = psp_admin? || merchant_admin?
+  def invite?            = psp_admin? || merchant_admin?
+  # Role-level gate (no record needed): can this user type deactivate anyone?
+  def deactivate_role?   = psp_admin? || merchant_admin?
+  def deactivate?        = (psp_admin? || (merchant_admin? && own_merchant?)) && record != user
   def unlock?      = psp_admin?
   def update_role? = psp_admin?
 

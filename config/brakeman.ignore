@@ -1,0 +1,8 @@
+{
+  "ignored_warnings": [
+    {
+      "fingerprint": "0b7a7709284620bc7430cfbc62952425e5df402917b7565be2179cc206272f16",
+      "note": "role is validated against an explicit merchant-roles allowlist before use; psp roles are rejected with 422"
+    }
+  ]
+}
