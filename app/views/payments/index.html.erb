@@ -193,10 +193,15 @@
                 <td class="border-r border-gray-100 px-4 py-3 text-theme-sm text-gray-500 whitespace-nowrap dark:border-gray-800 dark:text-gray-400">
                   <%= payment.inserted_at&.strftime("%d %b %Y %H:%M") %>
                 </td>
-                <td class="px-4 py-3 text-right">
-                  <%= link_to t('.table.view'), payment_path(payment.id),
+                <td class="px-4 py-3 text-center">
+                  <%= link_to payment_path(payment.id),
                         class: "table-action",
-                        data: { turbo_frame: "payment-modal" } %>
+                        aria: { label: t('.table.view') },
+                        data: { turbo_frame: "payment-modal" } do %>
+                    <svg class="fill-current" width="18" height="18" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                      <path fill-rule="evenodd" clip-rule="evenodd" d="M10.8749 13.8619C8.10837 13.8619 5.74279 12.1372 4.79804 9.70241C5.74279 7.26761 8.10837 5.54297 10.8749 5.54297C13.6415 5.54297 16.0071 7.26762 16.9518 9.70243C16.0071 12.1372 13.6415 13.8619 10.8749 13.8619ZM10.8749 4.04297C7.35666 4.04297 4.36964 6.30917 3.29025 9.4593C3.23626 9.61687 3.23626 9.78794 3.29025 9.94552C4.36964 13.0957 7.35666 15.3619 10.8749 15.3619C14.3932 15.3619 17.3802 13.0957 18.4596 9.94555C18.5136 9.78797 18.5136 9.6169 18.4596 9.45932C17.3802 6.30919 14.3932 4.04297 10.8749 4.04297ZM10.8663 7.84413C9.84002 7.84413 9.00808 8.67606 9.00808 9.70231C9.00808 10.7286 9.84002 11.5605 10.8663 11.5605H10.8811C11.9074 11.5605 12.7393 10.7286 12.7393 9.70231C12.7393 8.67606 11.9074 7.84413 10.8811 7.84413H10.8663Z" fill=""/>
+                    </svg>
+                  <% end %>
                 </td>
               </tr>
             <% end %>
