@@ -76,6 +76,7 @@ en:
       invite_success: Invitation sent to %{email}.
   layouts:
     navigation:
+      admin: Admin
       app_name: MerchantHub
       close_sidebar: Close sidebar
       menu: Menu
