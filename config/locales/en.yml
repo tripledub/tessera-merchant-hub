@@ -38,8 +38,10 @@ en:
       payments: Payments
       shops: Shops
       sign_out: Sign out
+      team: Team
       toggle_nav: Toggle navigation menu
       toggle_sidebar: Toggle sidebar
+      users: Users
   merchants:
     edit:
       cancel: Cancel

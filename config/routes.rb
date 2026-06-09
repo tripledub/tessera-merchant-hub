@@ -28,6 +28,19 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :team, only: %i[index new create destroy]
+
+  namespace :admin do
+    resources :users, only: %i[index new create] do
+      member do
+        patch :unlock
+        patch :update_role
+      end
+    end
+  end
+
+  mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
+
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
