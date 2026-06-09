@@ -20,7 +20,7 @@
 
     <%# Dark mode: apply before paint to prevent flash of wrong theme.
         Defaults to dark if no preference stored yet.
-        Sets window.__darkMode so Alpine x-data doesn't double-read localStorage. %>
+        Sets window.__darkMode for reference by other scripts. %>
     <script>
       (function () {
         var isDark = true;
@@ -38,8 +38,7 @@
     </script>
   </head>
 
-  <body class="bg-gray-50 font-outfit antialiased dark:bg-gray-950"
-        x-data="{ darkMode: window.__darkMode }">
+  <body class="bg-gray-50 font-outfit antialiased dark:bg-gray-950">
 
     <% if user_signed_in? %>
       <%# ── Authenticated shell: sidebar + header + content ──────────────── %>

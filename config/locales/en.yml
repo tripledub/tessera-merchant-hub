@@ -8,6 +8,10 @@ en:
           role_placeholder: All roles
         invite: Invite PSP user
         page_title: Users
+        status:
+          active: Active
+          deactivated: Deactivated
+          locked: Locked
         subtitle: All portal users across all merchants.
         table:
           actions: Actions
