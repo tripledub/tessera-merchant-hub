@@ -1,0 +1,13 @@
+<% content_for :title, t('.page_title') %>
+
+<div class="mb-4">
+  <%= link_to t('.back'), applicant_path(applicant), class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<div class="mb-6">
+  <h1 class="text-xl font-semibold text-gray-900"><%= t('.title') %></h1>
+</div>
+
+<div class="card max-w-xl">
+  <%= render "form", applicant: applicant %>
+</div>
