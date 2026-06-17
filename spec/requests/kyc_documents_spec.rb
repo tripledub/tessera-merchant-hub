@@ -1,0 +1,58 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe "KycDocuments", type: :request do
+  let_it_be(:psp_admin)   { create(:user, :psp_admin) }
+  let_it_be(:psp_support) { create(:user, :psp_support) }
+  let_it_be(:applicant)   { create(:applicant) }
+
+  describe "POST /applicants/:applicant_id/kyc_documents" do
+    let(:file) { fixture_file_upload(Rails.root.join("spec/fixtures/files/sample.pdf"), "application/pdf") }
+
+    before { create_fixture_file }
+
+    def create_fixture_file
+      dir = Rails.root.join("spec/fixtures/files")
+      FileUtils.mkdir_p(dir)
+      File.write(dir.join("sample.pdf"), "%PDF-1.4 fake content")
+    end
+
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "enqueues a ProcessKycDocumentJob and redirects to applicant" do
+        expect {
+          post applicant_kyc_documents_path(applicant), params: {
+            kyc_document: { files: [ file ] }
+          }
+        }.to have_enqueued_job(ProcessKycDocumentJob)
+        expect(response).to redirect_to(applicant_path(applicant))
+      end
+
+      it "redirects with alert when no files provided" do
+        post applicant_kyc_documents_path(applicant), params: { kyc_document: { files: [] } }
+        expect(response).to redirect_to(applicant_path(applicant))
+        expect(flash[:alert]).to be_present
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "returns 403" do
+        post applicant_kyc_documents_path(applicant), params: {
+          kyc_document: { files: [ file ] }
+        }
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context "when unauthenticated" do
+      it "redirects to sign in" do
+        post applicant_kyc_documents_path(applicant), params: { kyc_document: { files: [] } }
+        expect(response).to redirect_to(new_user_session_path)
+      end
+    end
+  end
+end

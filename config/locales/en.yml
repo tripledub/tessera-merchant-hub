@@ -79,7 +79,9 @@ en:
       add_principal: Add principal
       back: "← Back to applicants"
       documents:
+        drag_or_click: Drag and drop files here, or click to browse
         empty: No documents uploaded yet.
+        upload_button: Upload
       edit: Edit
       principals:
         delete: Delete
@@ -98,7 +100,6 @@ en:
       sections:
         documents: KYC Documents
         principals: Principals
-      upload_documents: Upload documents
   devise:
     failure:
       deactivated: Your account has been deactivated. Please contact your administrator.
@@ -121,6 +122,11 @@ en:
     applicants:
       create_success: Applicant created.
       update_success: Applicant updated.
+    kyc_documents:
+      no_files: Please select at least one file to upload.
+      upload_success:
+        one: 1 document uploaded and queued for processing.
+        other: "%{count} documents uploaded and queued for processing."
     kyc_principals:
       create_success: Principal added.
       destroy_success: Principal removed.
