@@ -8,5 +8,5 @@ class KycDocument < ApplicationRecord
 
   enum :status, { pending: 0, processing: 1, complete: 2, error: 3 }, default: :pending
 
-  validates :file, presence: true
+  validates :file, presence: true, on: :create
 end

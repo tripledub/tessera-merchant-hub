@@ -17,7 +17,6 @@ class KyneticOcrClient
   def self.connection
     Faraday.new(BASE_URL) do |f|
       f.headers["Content-Type"] = "application/json"
-      f.request :retry, max: 3, interval: 0.5, exceptions: [ Faraday::ServerError, Faraday::ConnectionFailed ]
     end
   end
 end
