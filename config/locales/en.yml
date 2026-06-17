@@ -172,6 +172,7 @@ en:
     navigation:
       admin: Admin
       app_name: MerchantHub
+      applicants: Applicants
       close_sidebar: Close sidebar
       menu: Menu
       my_account: My Account

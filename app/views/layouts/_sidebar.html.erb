@@ -49,6 +49,7 @@
       </p>
       <%= nav_link_to t('layouts.navigation.payments'),  payments_path,     controller: "payments",  icon: :payments %>
       <%= nav_link_to t('layouts.navigation.shops'),     shops_path,        controller: "shops",     icon: :shops %>
+      <%= nav_link_to t('layouts.navigation.applicants'), applicants_path,  controller: "applicants", icon: :applicants %>
       <% if current_user.psp_admin? %>
         <%= nav_link_to t('layouts.navigation.onboard'), new_merchant_path, controller: "merchants", icon: :onboard %>
       <% end %>
