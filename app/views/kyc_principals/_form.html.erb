@@ -1,0 +1,21 @@
+<%= form_with model: kyc_principal.persisted? ? kyc_principal : [kyc_principal.applicant, kyc_principal], class: "space-y-4" do |f| %>
+  <%= render "shared/error_messages", object: kyc_principal %>
+
+  <div>
+    <%= f.label :name, t("kyc_principals.form.fields.name"), class: "form-label" %>
+    <%= f.text_field :name, class: "form-input", required: true %>
+  </div>
+
+  <div>
+    <%= f.label :role, t("kyc_principals.form.fields.role"), class: "form-label" %>
+    <%= f.select :role,
+          KycPrincipal.roles.keys.map { |r| [t("applicants.show.principals.roles.#{r}"), r] },
+          {},
+          class: "form-input" %>
+  </div>
+
+  <div class="flex gap-3 pt-2">
+    <%= f.submit t("kyc_principals.form.submit"), class: "btn-primary" %>
+    <%= link_to t("kyc_principals.form.cancel"), applicant_path(kyc_principal.applicant), class: "btn-secondary" %>
+  </div>
+<% end %>
