@@ -49,9 +49,6 @@
       </p>
       <%= nav_link_to t('layouts.navigation.payments'),  payments_path,     controller: "payments",  icon: :payments %>
       <%= nav_link_to t('layouts.navigation.shops'),     shops_path,        controller: "shops",     icon: :shops %>
-      <% if current_user.psp_admin? %>
-        <%= nav_link_to t('layouts.navigation.onboard'), new_merchant_path, controller: "merchants", icon: :onboard %>
-      <% end %>
 
       <p class="sidebar-group-title mt-4 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
         <%= t('layouts.navigation.kyc') %>
