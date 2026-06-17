@@ -10,9 +10,6 @@
           <% if current_user.psp_role? || current_user.merchant_admin? %>
             <%= nav_link_to "Shops", shops_path, controller: "shops" %>
           <% end %>
-          <% if current_user.psp_admin? %>
-            <%= nav_link_to "Onboard", new_merchant_path, controller: "merchants" %>
-          <% end %>
           <% if current_user.merchant_role? %>
             <%= nav_link_to t("layouts.navigation.team"), team_index_path, controller: "team" %>
           <% end %>
@@ -49,9 +46,6 @@
       <%= nav_link_to "Payments", payments_path, controller: "payments" %>
       <% if current_user.psp_role? || current_user.merchant_admin? %>
         <%= nav_link_to "Shops", shops_path, controller: "shops" %>
-      <% end %>
-      <% if current_user.psp_admin? %>
-        <%= nav_link_to "Onboard", new_merchant_path, controller: "merchants" %>
       <% end %>
       <% if current_user.merchant_role? %>
         <%= nav_link_to t("layouts.navigation.team"), team_index_path, controller: "team" %>
