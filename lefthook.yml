@@ -9,7 +9,7 @@ pre-commit:
       run: bundle exec brakeman --no-pager --quiet
 
     bundler-audit:
-      run: bundle exec bundler-audit check --update
+      run: env -u GIT_DIR -u GIT_WORK_TREE bundle exec bundler-audit check --update
 
     importmap-audit:
       run: bin/importmap audit

@@ -10,9 +10,29 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_09_080521) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_17_090003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
+
+  create_table "kyc_documents", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.datetime "created_at", null: false
+    t.uuid "kyc_principal_id"
+    t.jsonb "result"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id"], name: "index_kyc_documents_on_applicant_id"
+    t.index ["kyc_principal_id"], name: "index_kyc_documents_on_kyc_principal_id"
+  end
+
+  create_table "kyc_principals", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.integer "role", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id"], name: "index_kyc_principals_on_applicant_id"
+  end
 
   create_table "merchants", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "address_line1"
@@ -22,11 +42,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_080521) do
     t.string "country"
     t.string "country_code"
     t.datetime "created_at", null: false
-    t.string "merchant_id", null: false
+    t.string "merchant_id"
     t.string "name", null: false
+    t.string "status", default: "pending", null: false
     t.string "support_url"
+    t.string "type"
     t.datetime "updated_at", null: false
-    t.index ["merchant_id"], name: "index_merchants_on_merchant_id", unique: true
+    t.index ["merchant_id"], name: "index_merchants_on_merchant_id", unique: true, where: "(merchant_id IS NOT NULL)"
+    t.index ["type"], name: "index_merchants_on_type"
   end
 
   create_table "shops", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -70,4 +93,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_09_080521) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
+
+  add_foreign_key "kyc_documents", "kyc_principals"
+  add_foreign_key "kyc_documents", "merchants", column: "applicant_id"
+  add_foreign_key "kyc_principals", "merchants", column: "applicant_id"
 end
