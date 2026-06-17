@@ -12,6 +12,10 @@ export default class extends Controller {
     this.zoneTarget.addEventListener("drop",      (e) => { e.preventDefault(); this.zoneTarget.classList.remove("border-brand-400"); this.handleFiles(e.dataTransfer.files) })
   }
 
+  browse() {
+    this.inputTarget.click()
+  }
+
   pick(event) {
     this.handleFiles(event.target.files)
     event.target.value = ""
