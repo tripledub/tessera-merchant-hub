@@ -174,8 +174,10 @@ en:
       app_name: MerchantHub
       applicants: Applicants
       close_sidebar: Close sidebar
+      kyc: KYC
       menu: Menu
       my_account: My Account
+      new_application: New Application
       onboard: Onboard
       payments: Payments
       shops: Shops
