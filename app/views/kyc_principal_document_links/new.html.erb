@@ -1,0 +1,28 @@
+<turbo-frame id="link-documents-modal">
+  <div data-controller="modal" data-modal-frame-value="link-documents-modal"
+       data-action="keydown.esc@window->modal#close"
+       class="fixed inset-0 z-50 flex items-center justify-center">
+    <div data-action="click->modal#close" class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"></div>
+    <div class="relative z-10 w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-xl">
+      <div class="mb-5 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-gray-900"><%= t('.title') %></h2>
+        <button type="button" data-action="click->modal#close"
+                class="text-gray-400 hover:text-gray-600 transition">
+          <svg class="h-5 w-5 fill-current" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 5.293a1 1 0 0 1 1.414 0L12 10.586l5.293-5.293a1 1 0 1 1 1.414 1.414L13.414 12l5.293 5.293a1 1 0 0 1-1.414 1.414L12 13.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L10.586 12 5.293 6.707a1 1 0 0 1 0-1.414z"/>
+          </svg>
+        </button>
+      </div>
+
+      <% if @unlinked_documents.empty? %>
+        <p class="text-theme-sm text-gray-500 italic"><%= t('.empty') %></p>
+      <% else %>
+        <ul id="unlinked-documents-list" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+          <%= render partial: "kyc_principal_document_links/unlinked_document",
+                collection: @unlinked_documents, as: :document,
+                locals: { kyc_principal: kyc_principal } %>
+        </ul>
+      <% end %>
+    </div>
+  </div>
+</turbo-frame>

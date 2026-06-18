@@ -1,0 +1,10 @@
+<%# Append the newly linked doc to the principal's document table %>
+<%= turbo_stream.append "principal-documents-list",
+      partial: "kyc_principals/document_row",
+      locals: { document: @document } %>
+
+<%# Remove it from the modal list %>
+<%= turbo_stream.remove "unlinked_document_#{@document.id}" %>
+
+<%# Remove the empty state if it was showing %>
+<%= turbo_stream.remove "documents-empty" %>

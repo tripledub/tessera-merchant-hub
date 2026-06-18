@@ -1,0 +1,18 @@
+<li id="unlinked_document_<%= document.id %>" class="flex items-center justify-between py-3">
+  <div class="flex items-center gap-3 min-w-0">
+    <svg class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+    </svg>
+    <div class="min-w-0">
+      <p class="text-theme-sm font-medium text-gray-900 truncate"><%= document.file.filename %></p>
+      <p class="text-xs text-gray-400"><%= document.created_at.strftime("%-d %b %Y") %></p>
+    </div>
+  </div>
+  <%= button_to kyc_principal_document_links_path(kyc_principal),
+        params: { document_id: document.id },
+        method: :post,
+        class: "btn-secondary flex-shrink-0 py-1 px-3 text-xs" do %>
+    <%= t("kyc_principal_document_links.new.link") %>
+  <% end %>
+</li>
