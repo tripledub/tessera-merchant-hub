@@ -10,8 +10,14 @@ class ProcessKycDocumentJob < ApplicationJob
 
     response = ocr_client(document)
 
-    principal = match_principal(document.applicant, response["full_name"])
-    document.update!(status: :complete, result: response, kyc_principal: principal)
+    match = PrincipalMatcherService.call(applicant: document.applicant, result: response)
+    document.update!(
+      status:           :complete,
+      result:           response,
+      kyc_principal:    match.principal,
+      match_method:     match.match_method,
+      match_confidence: match.match_confidence
+    )
     broadcast_document(document)
   rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error => e
     document&.update!(status: :error, result: { "error" => e.message })
@@ -29,12 +35,6 @@ class ProcessKycDocumentJob < ApplicationJob
         document_key: document.file.key
       )
     end
-  end
-
-  def match_principal(applicant, full_name)
-    return nil if full_name.blank?
-
-    applicant.kyc_principals.find { |p| p.name.downcase == full_name.downcase }
   end
 
   def broadcast_document(document)

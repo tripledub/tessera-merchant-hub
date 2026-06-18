@@ -29,7 +29,19 @@ RSpec.describe ProcessKycDocumentJob, type: :job do
       expect(document.reload.kyc_principal).to eq(principal)
     end
 
-    it "leaves kyc_principal nil when name does not match" do
+    it "creates an unconfirmed principal from a passport when no match exists" do
+      expect { described_class.new.perform(document.id) }
+        .to change(KycPrincipal, :count).by(1)
+      principal = document.reload.kyc_principal
+      expect(principal).to be_present
+      expect(principal).to be_unconfirmed
+      expect(principal.name).to eq("Jane Smith")
+    end
+
+    it "leaves kyc_principal nil for non-passport documents with no match" do
+      stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")
+        .to_return(status: 200, body: { "full_name" => "Jane Smith", "document_type" => "utility_bill" }.to_json,
+                   headers: { "Content-Type" => "application/json" })
       described_class.new.perform(document.id)
       expect(document.reload.kyc_principal).to be_nil
     end
