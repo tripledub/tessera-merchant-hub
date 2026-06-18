@@ -7,29 +7,37 @@ export default class extends Controller {
 
   connect() {
     this.files = []
+    console.log("[dropzone] connected", this.element)
+    console.log("[dropzone] zoneTarget", this.zoneTarget)
+    console.log("[dropzone] inputTarget", this.inputTarget)
   }
 
   dragover(event) {
+    console.log("[dropzone] dragover")
     event.preventDefault()
     this.zoneTarget.classList.add("border-brand-400")
   }
 
   dragleave() {
+    console.log("[dropzone] dragleave")
     this.zoneTarget.classList.remove("border-brand-400")
   }
 
   drop(event) {
+    console.log("[dropzone] drop", event.dataTransfer.files)
     event.preventDefault()
     this.zoneTarget.classList.remove("border-brand-400")
     this.handleFiles(event.dataTransfer.files)
   }
 
   browse(event) {
+    console.log("[dropzone] browse, target:", event.target, "input:", this.inputTarget)
     if (event.target === this.inputTarget) return
     this.inputTarget.click()
   }
 
   pick(event) {
+    console.log("[dropzone] pick", event.target.files)
     this.handleFiles(event.target.files)
     event.target.value = ""
   }
