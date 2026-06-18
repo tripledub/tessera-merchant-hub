@@ -46,7 +46,7 @@
           <td colspan="3" class="py-4 text-theme-sm text-gray-500"><%= t('.principals.empty') %></td>
         </tr>
       <% else %>
-        <%= render @kyc_principals, partial: "kyc_principals/principal_row" %>
+        <%= render partial: "kyc_principals/principal_row", collection: @kyc_principals, as: :kyc_principal %>
       <% end %>
     </tbody>
   </table>
