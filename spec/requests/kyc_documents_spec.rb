@@ -55,4 +55,58 @@ RSpec.describe "KycDocuments", type: :request do
       end
     end
   end
+
+  describe "DELETE /kyc_documents/:id" do
+    let_it_be(:document) { create(:kyc_document, applicant: applicant) }
+
+    context "when signed in as psp_admin" do
+      before do
+        sign_in psp_admin
+        allow(Turbo::StreamsChannel).to receive(:broadcast_remove_to)
+      end
+
+      it "destroys the document and returns 200" do
+        delete kyc_document_path(document)
+        expect(response).to have_http_status(:ok)
+        expect(KycDocument.find_by(id: document.id)).to be_nil
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "returns 403" do
+        delete kyc_document_path(document)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe "POST /kyc_documents/:id/retry" do
+    let_it_be(:document) { create(:kyc_document, applicant: applicant, status: :error) }
+
+    context "when signed in as psp_admin" do
+      before do
+        sign_in psp_admin
+        allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
+      end
+
+      it "resets the document and enqueues ProcessKycDocumentJob" do
+        expect {
+          post retry_kyc_document_path(document)
+        }.to have_enqueued_job(ProcessKycDocumentJob).with(document.id)
+        expect(response).to have_http_status(:ok)
+        expect(document.reload.status).to eq("pending")
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "returns 403" do
+        post retry_kyc_document_path(document)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
 end

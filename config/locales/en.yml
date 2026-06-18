@@ -149,11 +149,13 @@ en:
       invite_success: Invitation sent to %{email}.
   kyc_documents:
     confirm: Confirm
+    delete: Delete document
     match_method:
       fuzzy: Fuzzy match
     principal_status:
       unconfirmed: Unconfirmed
     reject: Reject
+    retry: Retry
     status:
       complete: Complete
       error: Error
@@ -172,7 +174,6 @@ en:
         role: Role
       submit: Save
     new:
-      back: "← Back to applicant"
       page_title: Add principal
       title: Add a principal
   layouts:

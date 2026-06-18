@@ -299,20 +299,32 @@ aside[data-collapsed] .menu-item {
 
 @utility btn {
   @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-theme-sm font-medium
-         transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-50;
+         shadow-theme-xs transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-50;
 }
 
 @utility btn-primary {
-  @apply bg-brand-500 text-white hover:bg-brand-600 focus:ring-2 focus:ring-brand-500/30;
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-theme-sm font-medium
+         shadow-theme-xs transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-50
+         bg-brand-500 text-white hover:bg-brand-600 focus:ring-2 focus:ring-brand-500/30;
 }
 
 @utility btn-secondary {
-  @apply border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-gray-300/30
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-theme-sm font-medium
+         shadow-theme-xs transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-50
+         border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 focus:ring-2 focus:ring-gray-300/30
          dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800;
 }
 
 @utility btn-danger {
-  @apply bg-error-500 text-white hover:bg-error-600 focus:ring-2 focus:ring-error-500/30;
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-theme-sm font-medium
+         shadow-theme-xs transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-50
+         bg-error-500 text-white hover:bg-error-600 focus:ring-2 focus:ring-error-500/30;
+}
+
+@utility btn-warning {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-theme-sm font-medium
+         shadow-theme-xs transition focus:outline-none disabled:cursor-not-allowed disabled:opacity-50
+         bg-warning-500 text-white hover:bg-warning-600 focus:ring-2 focus:ring-warning-500/30;
 }
 
 @utility form-select {

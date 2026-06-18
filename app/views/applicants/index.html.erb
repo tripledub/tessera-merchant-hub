@@ -3,7 +3,7 @@
 <div class="mb-6 flex items-center justify-between">
   <h1 class="text-xl font-semibold text-gray-900"><%= t('.title') %></h1>
   <% if policy(Applicant).new? %>
-    <%= link_to t('.new_applicant'), new_applicant_path, class: "btn-primary text-theme-sm" %>
+    <%= link_to t('.new_applicant'), new_applicant_path, class: "btn-primary" %>
   <% end %>
 </div>
 
