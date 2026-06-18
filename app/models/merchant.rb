@@ -10,7 +10,8 @@ class Merchant < ApplicationRecord
     inverse_of: :merchant,
     dependent: :restrict_with_error
 
-  validates :merchant_id, presence: true, uniqueness: true
+  validates :merchant_id, presence: true, uniqueness: true, if: -> { type.nil? }
+  validates :merchant_id, uniqueness: true, if: :merchant_id?
   validates :name, presence: true
   validates :contact_email,
     format: { with: URI::MailTo::EMAIL_REGEXP },

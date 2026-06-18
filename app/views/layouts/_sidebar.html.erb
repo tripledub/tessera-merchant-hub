@@ -11,7 +11,7 @@
 
   <%# ── Logo header ──────────────────────────────────────────────────────── %>
   <div class="flex items-center justify-between px-6 pt-8 pb-6">
-    <%= link_to payments_path, class: "flex items-center gap-3 min-w-0" do %>
+    <%= link_to authenticated_root_path, class: "flex items-center gap-3 min-w-0" do %>
       <%# Brand mark — always visible, even in collapsed mode %>
       <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-brand-500">
         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"
@@ -47,10 +47,14 @@
       <p class="sidebar-group-title mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
         <%= t('layouts.navigation.menu') %>
       </p>
-      <%= nav_link_to t('layouts.navigation.payments'),  payments_path,     controller: "payments",  icon: :payments %>
-      <%= nav_link_to t('layouts.navigation.shops'),     shops_path,        controller: "shops",     icon: :shops %>
+      <%= nav_link_to t('layouts.navigation.shops'), shops_path, controller: "shops", icon: :shops %>
+
+      <p class="sidebar-group-title mt-4 mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+        <%= t('layouts.navigation.kyc') %>
+      </p>
+      <%= nav_link_to t('layouts.navigation.applicants'),     applicants_path,     controller: "applicants", icon: :applicants %>
       <% if current_user.psp_admin? %>
-        <%= nav_link_to t('layouts.navigation.onboard'), new_merchant_path, controller: "merchants", icon: :onboard %>
+        <%= nav_link_to t('layouts.navigation.new_application'), new_applicant_path, controller: "applicants" %>
       <% end %>
 
       <% if current_user.psp_admin? %>
@@ -64,8 +68,7 @@
       <p class="sidebar-group-title mb-2 px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
         <%= t('layouts.navigation.my_account') %>
       </p>
-      <%= nav_link_to t('layouts.navigation.payments'), payments_path,    controller: "payments", icon: :payments %>
-      <%= nav_link_to t('layouts.navigation.shops'),    shops_path,       controller: "shops",    icon: :shops %>
+      <%= nav_link_to t('layouts.navigation.shops'), shops_path, controller: "shops", icon: :shops %>
       <%= nav_link_to t('layouts.navigation.team'),     team_index_path, controller: "team",     icon: :team %>
     <% end %>
 

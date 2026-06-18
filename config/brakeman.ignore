@@ -11,6 +11,10 @@
     {
       "fingerprint": "f1f0c14cfb7b5a57a36ebbb5d0b917c2b98a3bee027fdcca5ff3aa002805be36",
       "note": "role_params permits only :role which is validated by User model enum; psp-admin only action guarded by Pundit"
+    },
+    {
+      "fingerprint": "f4fb0495c10d38dd49af693703055374c0cafd4cf861a593f23fbc81400bcf68",
+      "note": "role permitted for KycPrincipal which uses an enum with a fixed set of values; psp-admin only action guarded by Pundit"
     }
   ]
 }

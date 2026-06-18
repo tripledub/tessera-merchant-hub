@@ -39,6 +39,67 @@ en:
         title: Invite a PSP user
   app:
     title: Tessera Merchant Hub
+  applicants:
+    edit:
+      back: "← Back to applicant"
+      page_title: Edit applicant
+      title: Edit applicant
+    form:
+      cancel: Cancel
+      fields:
+        address_line1: Address
+        city: City
+        company_name: Company name
+        contact_email: Contact email
+        country: Country
+        country_code: Country code (ISO 3166-1 alpha-2, e.g. GB)
+        name: Name
+      submit: Save
+    index:
+      new_applicant: New applicant
+      page_title: Applicants
+      search_placeholder: Search by name or company…
+      table:
+        company: Company
+        created: Created
+        empty: No applicants found.
+        name: Name
+        status: Status
+        statuses:
+          approved: Approved
+          pending: Pending
+          rejected: Rejected
+      title: Applicants
+    new:
+      back: "← Back to applicants"
+      page_title: New applicant
+      subtitle: Start a KYC application for a new merchant.
+      title: New applicant
+    show:
+      add_principal: Add principal
+      back: "← Back to applicants"
+      documents:
+        drag_or_click: Drag and drop files here, or click to browse
+        empty: No documents uploaded yet.
+        upload_button: Upload
+      edit: Edit
+      principals:
+        delete: Delete
+        delete_confirm: Delete %{name}? This cannot be undone.
+        edit: Edit
+        empty: No principals added yet.
+        roles:
+          director: Director
+          director_and_psc: Director & PSC
+          psc: PSC
+          shareholder: Shareholder
+        table:
+          actions: Actions
+          name: Name
+          role: Role
+      sections:
+        documents: KYC Documents
+        principals: Principals
   devise:
     failure:
       deactivated: Your account has been deactivated. Please contact your administrator.
@@ -58,6 +119,18 @@ en:
         invite_success: Invitation sent to %{email}.
         role_updated: Role updated for %{email}.
         unlock_success: "%{email} has been unlocked."
+    applicants:
+      create_success: Applicant created.
+      update_success: Applicant updated.
+    kyc_documents:
+      no_files: Please select at least one file to upload.
+      upload_success:
+        one: 1 document uploaded and queued for processing.
+        other: "%{count} documents uploaded and queued for processing."
+    kyc_principals:
+      create_success: Principal added.
+      destroy_success: Principal removed.
+      update_success: Principal updated.
     merchants:
       admin_create_failed: 'Could not create the admin user: %{errors}'
       missing_fields: Merchant name, shop name and admin email are all required.
@@ -74,15 +147,37 @@ en:
       deactivate_success: "%{email} has been deactivated."
       invalid_role: Role is not permitted for merchant users.
       invite_success: Invitation sent to %{email}.
+  kyc_documents:
+    status:
+      complete: Complete
+      error: Error
+      pending: Pending
+      processing: Processing
+  kyc_principals:
+    edit:
+      back: "← Back to applicant"
+      page_title: Edit principal
+      title: Edit %{name}
+    form:
+      cancel: Cancel
+      fields:
+        name: Full name
+        role: Role
+      submit: Save
+    new:
+      back: "← Back to applicant"
+      page_title: Add principal
+      title: Add a principal
   layouts:
     navigation:
       admin: Admin
       app_name: MerchantHub
+      applicants: Applicants
       close_sidebar: Close sidebar
+      kyc: KYC
       menu: Menu
       my_account: My Account
-      onboard: Onboard
-      payments: Payments
+      new_application: New Application
       shops: Shops
       sign_out: Sign out
       team: Team

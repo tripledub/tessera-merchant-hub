@@ -147,37 +147,42 @@ if Rails.env.development?
   puts "  Sign in as admin@merchant-1.example.com to see all three status badges on /team"
 
   # ----- Payments ------------------------------------------------------------
-  Seeds::Payment.delete_all
+  # Payments table lives in tessera-core — skipped when not present locally.
+  if ActiveRecord::Base.connection.table_exists?(:payments)
+    Seeds::Payment.delete_all
 
-  total_payments = 0
-  now = Time.current
-  window = 90.days
+    total_payments = 0
+    now = Time.current
+    window = 90.days
 
-  Shop.where("shop_id LIKE 'shop_fake_%'").find_each do |shop|
-    rows = []
+    Shop.where("shop_id LIKE 'shop_fake_%'").find_each do |shop|
+      rows = []
 
-    PAYMENT_STATUSES.each do |status, count|
-      count.times do
-        inserted = now - rand(window)
-        rows << {
-          shop_id:            shop.shop_id,
-          status:             status,
-          amount:             rand(1_000..500_000),
-          currency:           SHOP_CURRENCIES.sample,
-          idempotency_key:    SecureRandom.uuid,
-          merchant_reference: rand < 0.7 ? "ORD-#{SecureRandom.hex(4).upcase}" : nil,
-          inserted_at:        inserted,
-          updated_at:         inserted
-        }
+      PAYMENT_STATUSES.each do |status, count|
+        count.times do
+          inserted = now - rand(window)
+          rows << {
+            shop_id:            shop.shop_id,
+            status:             status,
+            amount:             rand(1_000..500_000),
+            currency:           SHOP_CURRENCIES.sample,
+            idempotency_key:    SecureRandom.uuid,
+            merchant_reference: rand < 0.7 ? "ORD-#{SecureRandom.hex(4).upcase}" : nil,
+            inserted_at:        inserted,
+            updated_at:         inserted
+          }
+        end
       end
+
+      rows.sort_by! { |r| r[:inserted_at] }
+      Seeds::Payment.insert_all!(rows)
+      total_payments += rows.size
     end
 
-    rows.sort_by! { |r| r[:inserted_at] }
-    Seeds::Payment.insert_all!(rows)
-    total_payments += rows.size
+    puts "Seeded #{total_payments} fake payments across #{Shop.where("shop_id LIKE 'shop_fake_%'").count} shops."
+  else
+    puts "Skipping payments seed — payments table not present (tessera-core not running)."
   end
-
-  puts "Seeded #{total_payments} fake payments across #{Shop.where("shop_id LIKE 'shop_fake_%'").count} shops."
   puts ""
   puts "Sign in as any merchant user with password: #{demo_password}"
   puts "  admin@merchant-1.example.com  →  Evergreen Retail Ltd (merchant_admin)"
