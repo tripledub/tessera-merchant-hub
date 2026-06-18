@@ -17,7 +17,12 @@ Rails.application.routes.draw do
 
   resources :applicants, only: %i[new create index show edit update] do
     resources :kyc_principals, only: %i[new create edit update destroy], shallow: true
-    resources :kyc_documents,  only: %i[create], shallow: true
+    resources :kyc_documents, only: %i[create], shallow: true do
+        member do
+          patch :confirm_match
+          patch :reject_match
+        end
+      end
   end
   resources :shops, only: %i[index show new create edit update] do
     post :credential, to: "shop_credentials#create"

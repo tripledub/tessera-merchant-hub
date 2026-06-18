@@ -148,11 +148,18 @@ en:
       invalid_role: Role is not permitted for merchant users.
       invite_success: Invitation sent to %{email}.
   kyc_documents:
+    confirm: Confirm
+    match_method:
+      fuzzy: Fuzzy match
+    principal_status:
+      unconfirmed: Unconfirmed
+    reject: Reject
     status:
       complete: Complete
       error: Error
       pending: Pending
       processing: Processing
+    unlinked: Unlinked
   kyc_principals:
     edit:
       back: "← Back to applicant"
