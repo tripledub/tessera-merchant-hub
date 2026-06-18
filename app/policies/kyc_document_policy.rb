@@ -9,11 +9,11 @@ class KycDocumentPolicy < ApplicationPolicy
     psp_admin?
   end
 
-  def confirm_match?
+  def confirm_link?
     psp_admin?
   end
 
-  def reject_match?
+  def reject_link?
     psp_admin?
   end
 end
