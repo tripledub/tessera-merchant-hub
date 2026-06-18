@@ -2,6 +2,7 @@
 
 class KycDocumentsController < ApplicationController
   expose(:applicant) { Applicant.find(params[:applicant_id]) }
+  expose(:document) { KycDocument.find(params[:id]) }
 
   def create
     authorize KycDocument, :create?
@@ -42,5 +43,35 @@ class KycDocumentsController < ApplicationController
     else
       redirect_to applicant_path(applicant), notice: t("flash.kyc_documents.upload_success", count: saved)
     end
+  end
+
+  def destroy
+    authorize document
+    document.file.purge_later
+    document.destroy!
+    Turbo::StreamsChannel.broadcast_remove_to(
+      "applicant_#{document.applicant_id}_documents",
+      target: "kyc_document_#{document.id}"
+    )
+    head :ok
+  end
+
+  def retry
+    authorize document
+    document.update!(status: :pending, result: nil, kyc_principal: nil, match_method: nil, match_confidence: nil)
+    ProcessKycDocumentJob.perform_later(document.id)
+    broadcast_document(document)
+    head :ok
+  end
+
+  private
+
+  def broadcast_document(doc)
+    Turbo::StreamsChannel.broadcast_replace_to(
+      "applicant_#{doc.applicant_id}_documents",
+      target: "kyc_document_#{doc.id}",
+      partial: "kyc_documents/kyc_document",
+      locals: { document: doc }
+    )
   end
 end

@@ -9,6 +9,14 @@ class KycDocumentPolicy < ApplicationPolicy
     psp_admin?
   end
 
+  def destroy?
+    psp_admin?
+  end
+
+  def retry?
+    psp_admin?
+  end
+
   def confirm_link?
     psp_admin?
   end

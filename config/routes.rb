@@ -17,7 +17,9 @@ Rails.application.routes.draw do
 
   resources :applicants, only: %i[new create index show edit update] do
     resources :kyc_principals, only: %i[new create edit update destroy], shallow: true
-    resources :kyc_documents, only: %i[create], shallow: true
+    resources :kyc_documents, only: %i[create destroy], shallow: true do
+      member { post :retry }
+    end
   end
 
   # RESTful link management: PATCH to confirm a link, DELETE to reject/unlink
