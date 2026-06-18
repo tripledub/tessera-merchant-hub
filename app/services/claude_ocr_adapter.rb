@@ -62,7 +62,7 @@ class ClaudeOcrAdapter
     JSON.parse(text)
   rescue JSON::ParserError => e
     raise Error, "Claude returned invalid JSON: #{e.message}"
-  rescue Anthropic::Error => e
+  rescue Anthropic::Errors::APIError => e
     raise Error, "Claude API error: #{e.message}"
   end
 
