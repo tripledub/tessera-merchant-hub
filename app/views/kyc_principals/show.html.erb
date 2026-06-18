@@ -1,0 +1,117 @@
+<% content_for :title, kyc_principal.name %>
+
+<div class="mb-4">
+  <%= link_to t('.back'), applicant_path(kyc_principal.applicant), class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<div class="mb-6 flex items-start justify-between">
+  <h1 class="text-xl font-semibold text-gray-900"><%= kyc_principal.name %></h1>
+  <% if policy(kyc_principal).edit? %>
+    <%= link_to t('.edit'), edit_kyc_principal_path(kyc_principal), class: "btn-secondary" %>
+  <% end %>
+</div>
+
+<%# Detail cards %>
+<div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+  <%# Personal details %>
+  <div class="card">
+    <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <%= t('.sections.personal') %>
+    </h2>
+    <dl class="space-y-3 text-theme-sm">
+      <div class="flex justify-between">
+        <dt class="font-medium text-gray-500"><%= t('.fields.name') %></dt>
+        <dd class="text-gray-900"><%= kyc_principal.name %></dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="font-medium text-gray-500"><%= t('.fields.role') %></dt>
+        <dd class="text-gray-900"><%= t("applicants.show.principals.roles.#{kyc_principal.role}") %></dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="font-medium text-gray-500"><%= t('.fields.date_of_birth') %></dt>
+        <dd class="text-gray-900">
+          <% if kyc_principal.date_of_birth.present? %>
+            <%= kyc_principal.date_of_birth.strftime("%-d %B %Y") %>
+          <% else %>
+            <span class="text-gray-400 italic"><%= t('.not_provided') %></span>
+          <% end %>
+        </dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="font-medium text-gray-500"><%= t('.fields.email') %></dt>
+        <dd class="text-gray-900">
+          <% if kyc_principal.email.present? %>
+            <%= mail_to kyc_principal.email, kyc_principal.email, class: "text-brand-600 hover:text-brand-700" %>
+          <% else %>
+            <span class="text-gray-400 italic"><%= t('.not_provided') %></span>
+          <% end %>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <%# Address %>
+  <div class="card">
+    <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <%= t('.sections.address') %>
+    </h2>
+    <% if [ kyc_principal.address_line1, kyc_principal.city, kyc_principal.postcode, kyc_principal.country ].any?(&:present?) %>
+      <address class="not-italic text-theme-sm text-gray-900 space-y-0.5">
+        <p><%= kyc_principal.address_line1 %></p>
+        <% if kyc_principal.address_line2.present? %>
+          <p><%= kyc_principal.address_line2 %></p>
+        <% end %>
+        <p><%= [ kyc_principal.city, kyc_principal.postcode ].compact_blank.join(", ") %></p>
+        <p><%= kyc_principal.country %></p>
+      </address>
+    <% else %>
+      <p class="text-theme-sm text-gray-400 italic"><%= t('.not_provided') %></p>
+    <% end %>
+  </div>
+</div>
+
+<%# Linked documents %>
+<div class="card" data-controller="table-search">
+  <div class="mb-4 flex items-center justify-between gap-4">
+    <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500 flex-shrink-0">
+      <%= t('.sections.documents') %>
+    </h2>
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <svg class="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z"/>
+        </svg>
+        <input type="search" placeholder="<%= t('.search_placeholder') %>"
+               data-action="input->table-search#filter"
+               data-table-search-target="input"
+               class="form-input pl-8 py-1.5 text-theme-sm w-48" />
+      </div>
+      <% if policy(KycDocument).create? && @unlinked_documents.any? %>
+        <%= link_to t('.link_documents'), new_kyc_principal_document_link_path(kyc_principal),
+              class: "btn-secondary",
+              data: { turbo_frame: "link-documents-modal" } %>
+      <% end %>
+    </div>
+  </div>
+
+  <turbo-frame id="link-documents-modal"></turbo-frame>
+
+  <% if @kyc_documents.empty? %>
+    <p id="documents-empty" class="text-theme-sm text-gray-400 italic"><%= t('.documents.empty') %></p>
+  <% else %>
+    <table class="w-full text-left text-theme-sm" data-table-search-target="table">
+      <thead>
+        <tr class="border-b border-gray-200">
+          <th class="py-2 pr-4 font-medium text-gray-500"><%= t('.documents.table.filename') %></th>
+          <th class="px-4 py-2 font-medium text-gray-500"><%= t('.documents.table.status') %></th>
+          <th class="px-4 py-2 font-medium text-gray-500"><%= t('.documents.table.match') %></th>
+          <th class="px-4 py-2 font-medium text-gray-500"><%= t('.documents.table.uploaded') %></th>
+          <th class="py-2 pl-4 font-medium text-gray-500"><%= t('.documents.table.actions') %></th>
+        </tr>
+      </thead>
+      <tbody id="principal-documents-list" class="divide-y divide-gray-100">
+        <%= render partial: "kyc_principals/document_row", collection: @kyc_documents, as: :document %>
+      </tbody>
+    </table>
+  <% end %>
+</div>

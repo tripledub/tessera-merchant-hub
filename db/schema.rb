@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_18_123743) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_18_162155) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,10 +56,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_18_123743) do
   end
 
   create_table "kyc_principals", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "address_line1"
+    t.string "address_line2"
     t.uuid "applicant_id", null: false
+    t.string "city"
+    t.string "country"
     t.datetime "created_at", null: false
     t.date "date_of_birth"
+    t.string "email"
     t.string "name", null: false
+    t.string "postcode"
     t.integer "role", default: 0, null: false
     t.integer "status", default: 1, null: false
     t.datetime "updated_at", null: false

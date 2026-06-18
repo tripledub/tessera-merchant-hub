@@ -4,6 +4,12 @@ class KycPrincipalsController < ApplicationController
   expose(:applicant) { Applicant.find(params[:applicant_id]) if params[:applicant_id] }
   expose(:kyc_principal) { params[:id] ? KycPrincipal.find(params[:id]) : KycPrincipal.new(applicant: applicant) }
 
+  def show
+    authorize kyc_principal
+    @kyc_documents = kyc_principal.kyc_documents.order(created_at: :desc)
+    @unlinked_documents = kyc_principal.applicant.kyc_documents.where(kyc_principal_id: nil).order(created_at: :desc)
+  end
+
   def new
     authorize kyc_principal
   end
@@ -43,6 +49,7 @@ class KycPrincipalsController < ApplicationController
   private
 
   def kyc_principal_params
-    params.require(:kyc_principal).permit(:name, :role)
+    params.require(:kyc_principal).permit(:name, :role, :date_of_birth, :email,
+                                          :address_line1, :address_line2, :city, :postcode, :country)
   end
 end
