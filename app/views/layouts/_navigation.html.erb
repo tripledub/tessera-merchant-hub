@@ -4,7 +4,7 @@
     <div class="flex h-16 items-center justify-between">
       <%# Brand + desktop links %>
       <div class="flex items-center gap-6">
-        <%= link_to "MerchantHub", payments_path, class: "text-lg font-semibold text-gray-900" %>
+        <%= link_to "MerchantHub", authenticated_root_path, class: "text-lg font-semibold text-gray-900" %>
         <div class="hidden sm:flex sm:items-center sm:gap-1">
           <% if current_user.psp_role? || current_user.merchant_admin? %>
             <%= nav_link_to "Shops", shops_path, controller: "shops" %>
