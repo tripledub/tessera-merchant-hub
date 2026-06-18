@@ -7,9 +7,21 @@ export default class extends Controller {
 
   connect() {
     this.files = []
-    this.zoneTarget.addEventListener("dragover",  (e) => { e.preventDefault(); this.zoneTarget.classList.add("border-brand-400") })
-    this.zoneTarget.addEventListener("dragleave", ()  => { this.zoneTarget.classList.remove("border-brand-400") })
-    this.zoneTarget.addEventListener("drop",      (e) => { e.preventDefault(); this.zoneTarget.classList.remove("border-brand-400"); this.handleFiles(e.dataTransfer.files) })
+  }
+
+  dragover(event) {
+    event.preventDefault()
+    this.zoneTarget.classList.add("border-brand-400")
+  }
+
+  dragleave() {
+    this.zoneTarget.classList.remove("border-brand-400")
+  }
+
+  drop(event) {
+    event.preventDefault()
+    this.zoneTarget.classList.remove("border-brand-400")
+    this.handleFiles(event.dataTransfer.files)
   }
 
   browse(event) {
