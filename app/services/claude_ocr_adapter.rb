@@ -69,6 +69,7 @@ class ClaudeOcrAdapter
   private
 
   def api_key
-    ENV.fetch("ANTHROPIC_API_KEY") { raise Error, "ANTHROPIC_API_KEY is not set" }
+    Rails.application.credentials.anthropic_api_key ||
+      raise(Error, "anthropic_api_key not set in Rails credentials")
   end
 end
