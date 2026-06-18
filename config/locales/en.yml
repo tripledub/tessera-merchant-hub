@@ -174,7 +174,6 @@ en:
         role: Role
       submit: Save
     new:
-      back: "← Back to applicant"
       page_title: Add principal
       title: Add a principal
   layouts:

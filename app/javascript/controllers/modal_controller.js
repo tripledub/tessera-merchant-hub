@@ -1,13 +1,8 @@
-// app/javascript/controllers/modal_controller.js
-// Manages a Turbo Frame modal: scroll lock, Escape/backdrop close.
-// Usage:
-//   <div data-controller="modal" data-action="keydown.esc@window->modal#close">
-//     <div data-action="click->modal#close"><!-- backdrop --></div>
-//     <!-- modal card — stop propagation so clicks inside don't close -->
-//   </div>
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
+  static values = { frame: String }
+
   connect() {
     document.body.style.overflow = "hidden"
   }
@@ -17,7 +12,8 @@ export default class extends Controller {
   }
 
   close() {
-    const frame = document.getElementById("payment-modal")
+    const frameId = this.hasFrameValue ? this.frameValue : "payment-modal"
+    const frame = document.getElementById(frameId)
     if (frame) {
       frame.src = ""
       frame.innerHTML = ""

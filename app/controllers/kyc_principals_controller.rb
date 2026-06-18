@@ -11,7 +11,10 @@ class KycPrincipalsController < ApplicationController
   def create
     authorize kyc_principal
     if kyc_principal.update(kyc_principal_params)
-      redirect_to applicant_path(kyc_principal.applicant), notice: t("flash.kyc_principals.create_success")
+      respond_to do |format|
+        format.turbo_stream
+        format.html { redirect_to applicant_path(kyc_principal.applicant), notice: t("flash.kyc_principals.create_success") }
+      end
     else
       render :new, status: :unprocessable_entity
     end

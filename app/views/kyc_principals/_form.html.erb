@@ -16,6 +16,12 @@
 
   <div class="flex gap-3 pt-2">
     <%= f.submit t("kyc_principals.form.submit"), class: "btn-primary" %>
-    <%= link_to t("kyc_principals.form.cancel"), applicant_path(kyc_principal.applicant), class: "btn-secondary" %>
+    <% if local_assigns[:modal] %>
+      <button type="button" data-action="click->modal#close" class="btn-secondary">
+        <%= t("kyc_principals.form.cancel") %>
+      </button>
+    <% else %>
+      <%= link_to t("kyc_principals.form.cancel"), applicant_path(kyc_principal.applicant), class: "btn-secondary" %>
+    <% end %>
   </div>
 <% end %>
