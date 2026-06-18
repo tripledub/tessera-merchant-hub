@@ -12,14 +12,20 @@ class KycDocumentsController < ApplicationController
       return
     end
 
+    saved = 0
     files.each do |file|
       doc = KycDocument.new(applicant: applicant, status: :pending)
       doc.file.attach(file)
-      if doc.save
-        ProcessKycDocumentJob.perform_later(doc.id)
-      end
+      next unless doc.file.attached? && doc.save
+
+      ProcessKycDocumentJob.perform_later(doc.id)
+      saved += 1
     end
 
-    redirect_to applicant_path(applicant), notice: t("flash.kyc_documents.upload_success", count: files.size)
+    if saved.zero?
+      redirect_to applicant_path(applicant), alert: t("flash.kyc_documents.no_files")
+    else
+      redirect_to applicant_path(applicant), notice: t("flash.kyc_documents.upload_success", count: saved)
+    end
   end
 end
