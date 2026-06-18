@@ -151,6 +151,7 @@ en:
     confirm: Confirm
     delete: Delete document
     match_method:
+      exact: Exact match
       fuzzy: Fuzzy match
     principal_status:
       unconfirmed: Unconfirmed
@@ -162,6 +163,11 @@ en:
       pending: Pending
       processing: Processing
     unlinked: Unlinked
+  kyc_principal_document_links:
+    new:
+      empty: All documents for this applicant are already linked.
+      link: Link
+      title: Link a document
   kyc_principals:
     edit:
       back: "← Back to applicant"
@@ -170,12 +176,45 @@ en:
     form:
       cancel: Cancel
       fields:
+        address_line1: Address line 1
+        address_line2: Address line 2 (optional)
+        city: City
+        country: Country
+        date_of_birth: Date of birth
+        email: Email
         name: Full name
+        postcode: Postcode
         role: Role
+      sections:
+        address: Address
       submit: Save
     new:
       page_title: Add principal
       title: Add a principal
+    show:
+      back: "← Back to applicant"
+      documents:
+        empty: No documents linked to this principal.
+        table:
+          actions: Actions
+          filename: File
+          match: Match
+          status: Status
+          uploaded: Uploaded
+        unlink: Unlink document
+      edit: Edit
+      fields:
+        date_of_birth: Date of birth
+        email: Email
+        name: Full name
+        role: Role
+      link_documents: Link documents
+      not_provided: Not provided
+      search_placeholder: Search files…
+      sections:
+        address: Address
+        documents: Linked documents
+        personal: Personal details
   layouts:
     navigation:
       admin: Admin
