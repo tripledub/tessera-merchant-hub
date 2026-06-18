@@ -8,20 +8,28 @@ class ProcessKycDocumentJob < ApplicationJob
     document.processing!
     broadcast_document(document)
 
-    response = KyneticOcrClient.process(
-      customer_id: document.applicant_id,
-      document_key: document.file.key
-    )
+    response = ocr_client(document)
 
     principal = match_principal(document.applicant, response["full_name"])
     document.update!(status: :complete, result: response, kyc_principal: principal)
     broadcast_document(document)
-  rescue KyneticOcrClient::Error => e
+  rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error => e
     document&.update!(status: :error, result: { "error" => e.message })
     broadcast_document(document) if document
   end
 
   private
+
+  def ocr_client(document)
+    if !Rails.env.production? && ENV["CLAUDE_OCR"].present?
+      ClaudeOcrAdapter.process(document: document)
+    else
+      KyneticOcrClient.process(
+        customer_id: document.applicant_id,
+        document_key: document.file.key
+      )
+    end
+  end
 
   def match_principal(applicant, full_name)
     return nil if full_name.blank?
