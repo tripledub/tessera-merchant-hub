@@ -43,6 +43,12 @@ class ClaudeOcrAdapter
     base64    = Base64.strict_encode64(blob_data)
     mime_type = @document.file.content_type
 
+    content_block = if mime_type == "application/pdf"
+      { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
+    else
+      { type: "image", source: { type: "base64", media_type: mime_type, data: base64 } }
+    end
+
     client   = Anthropic::Client.new(api_key: api_key)
     response = client.messages.create(
       model:      "claude-opus-4-8",
@@ -50,10 +56,7 @@ class ClaudeOcrAdapter
       messages:   [
         {
           role:    "user",
-          content: [
-            { type: "image", source: { type: "base64", media_type: mime_type, data: base64 } },
-            { type: "text",  text: PROMPT }
-          ]
+          content: [ content_block, { type: "text", text: PROMPT } ]
         }
       ]
     )
