@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_17_090004) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_18_123743) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -18,7 +18,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_17_090004) do
     t.bigint "blob_id", null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
-    t.bigint "record_id", null: false
+    t.string "record_id", null: false
     t.string "record_type", null: false
     t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
     t.index ["record_type", "record_id", "name", "blob_id"], name: "index_active_storage_attachments_uniqueness", unique: true
@@ -46,6 +46,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_17_090004) do
     t.uuid "applicant_id", null: false
     t.datetime "created_at", null: false
     t.uuid "kyc_principal_id"
+    t.decimal "match_confidence", precision: 4, scale: 3
+    t.string "match_method"
     t.jsonb "result"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -56,8 +58,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_17_090004) do
   create_table "kyc_principals", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "applicant_id", null: false
     t.datetime "created_at", null: false
+    t.date "date_of_birth"
     t.string "name", null: false
     t.integer "role", default: 0, null: false
+    t.integer "status", default: 1, null: false
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_kyc_principals_on_applicant_id"
   end
