@@ -7,9 +7,9 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
   get "health" => "rails/health#show"
 
-  # Authenticated users land on payments; everyone else goes to sign-in.
+  # Authenticated users land on applicants; everyone else goes to sign-in.
   authenticated :user do
-    root to: "payments#index", as: :authenticated_root
+    root to: "applicants#index", as: :authenticated_root
   end
   root to: redirect("/users/sign_in")
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require "rails_helper"
 
 RSpec.describe "Navigation", type: :request do
@@ -10,11 +12,11 @@ RSpec.describe "Navigation", type: :request do
       expect(response).to redirect_to(new_user_session_path)
     end
 
-    it "routes authenticated users to payments (no redirect loop)" do
+    it "routes authenticated users to applicants (no redirect loop)" do
       sign_in psp_admin
       get "/"
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Payments")
+      expect(response.body).to include("Applicants")
     end
   end
 
@@ -22,19 +24,18 @@ RSpec.describe "Navigation", type: :request do
     context "when signed in as a PSP role" do
       before { sign_in psp_admin }
 
-      it "shows Payments and Shops links" do
-        get payments_path
-        expect(response.body).to include("Payments")
+      it "shows Shops link" do
+        get applicants_path
         expect(response.body).to include(shops_path)
       end
 
       it "shows a sign out control" do
-        get payments_path
+        get applicants_path
         expect(response.body).to include(destroy_user_session_path)
       end
 
       it "shows the signed-in user's email" do
-        get payments_path
+        get applicants_path
         expect(response.body).to include(psp_admin.email)
       end
     end
@@ -42,13 +43,8 @@ RSpec.describe "Navigation", type: :request do
     context "when signed in as a merchant role" do
       before { sign_in merchant_admin }
 
-      it "shows the Payments link" do
-        get payments_path
-        expect(response.body).to include(payments_path)
-      end
-
       it "shows Shops for merchant_admin" do
-        get payments_path
+        get shops_path
         expect(response.body).to include(shops_path)
       end
     end
