@@ -87,7 +87,7 @@
                class="form-input pl-8 py-1.5 text-theme-sm w-48" />
       </div>
       <% if policy(KycDocument).create? && @unlinked_documents.any? %>
-        <%= link_to t('.link_documents'), new_kyc_principal_document_link_path(kyc_principal),
+        <%= link_to t('.link_documents'), new_kyc_principal_document_links_path(kyc_principal),
               class: "btn-secondary",
               data: { turbo_frame: "link-documents-modal" } %>
       <% end %>
