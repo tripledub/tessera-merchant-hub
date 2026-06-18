@@ -20,8 +20,18 @@ class KycDocumentsController < ApplicationController
       # adapter processes the first job concurrently with subsequent iterations.
       next unless doc.save(validate: false)
 
-      doc.file.attach(file)
-      next unless doc.file.attached? && doc.valid?
+      begin
+        doc.file.attach(file)
+      rescue ArgumentError, ActiveRecord::RecordNotFound, ActiveSupport::MessageVerifier::InvalidSignature => e
+        doc.destroy
+        Rails.logger.warn("KycDocumentsController: skipping unattachable file — #{e.message}")
+        next
+      end
+
+      unless doc.file.attached? && doc.valid?
+        doc.destroy
+        next
+      end
 
       ProcessKycDocumentJob.perform_later(doc.id)
       saved += 1
