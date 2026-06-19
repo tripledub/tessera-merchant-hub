@@ -51,6 +51,87 @@ RSpec.describe ProcessKycDocumentJob, type: :job do
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).twice
     end
 
+    context "when address matching runs for a utility bill with a principal present" do
+      let(:principal_with_address) do
+        create(:kyc_principal,
+          applicant:     applicant,
+          name:          "Jane Smith",
+          address_line1: "12 High Street",
+          city:          "London",
+          postcode:      "SW1A 1AA",
+          country:       "United Kingdom")
+      end
+
+      before do
+        principal_with_address
+        stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")
+          .to_return(
+            status: 200,
+            body: {
+              "full_name"     => "Jane Smith",
+              "document_type" => "utility_bill",
+              "address"       => "12 High Street, London, SW1A 1AA, United Kingdom"
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+      end
+
+      it "stores address_match_method and address_match_confidence" do
+        described_class.new.perform(document.id)
+        document.reload
+        expect(document.address_match_method).to eq("exact")
+        expect(document.address_match_confidence).to be_present
+      end
+    end
+
+    context "when document is a passport (not a utility bill) and address matching is skipped" do
+      let(:principal_with_address) do
+        create(:kyc_principal,
+          applicant:     applicant,
+          name:          "Jane Smith",
+          address_line1: "12 High Street",
+          city:          "London",
+          postcode:      "SW1A 1AA",
+          country:       "United Kingdom")
+      end
+
+      before { principal_with_address }
+
+      it "does not set address match fields" do
+        described_class.new.perform(document.id)
+        document.reload
+        expect(document.address_match_method).to be_nil
+        expect(document.address_match_confidence).to be_nil
+      end
+    end
+
+    context "when OCR result for utility bill has no address field" do
+      let(:principal_with_address) do
+        create(:kyc_principal,
+          applicant:     applicant,
+          name:          "Jane Smith",
+          address_line1: "12 High Street",
+          city:          "London",
+          postcode:      "SW1A 1AA",
+          country:       "United Kingdom")
+      end
+
+      before do
+        principal_with_address
+        stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")
+          .to_return(
+            status: 200,
+            body: { "full_name" => "Jane Smith", "document_type" => "utility_bill" }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+      end
+
+      it "does not set address match fields" do
+        described_class.new.perform(document.id)
+        expect(document.reload.address_match_method).to be_nil
+      end
+    end
+
     context "when OCR service fails" do
       before do
         stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")

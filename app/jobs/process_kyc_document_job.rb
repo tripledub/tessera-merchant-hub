@@ -11,12 +11,21 @@ class ProcessKycDocumentJob < ApplicationJob
     response = ocr_client(document)
 
     match = PrincipalMatcherService.call(applicant: document.applicant, result: response)
+    address_match = if match.principal && response["document_type"] == "utility_bill"
+      AddressMatcherService.call(
+        principal:         match.principal,
+        extracted_address: response["address"]
+      )
+    end
+
     document.update!(
-      status:           :complete,
-      result:           response,
-      kyc_principal:    match.principal,
-      match_method:     match.match_method,
-      match_confidence: match.match_confidence
+      status:                   :complete,
+      result:                   response,
+      kyc_principal:            match.principal,
+      match_method:             match.match_method,
+      match_confidence:         match.match_confidence,
+      address_match_method:     address_match&.match_method,
+      address_match_confidence: address_match&.match_confidence
     )
     broadcast_document(document)
   rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error => e
