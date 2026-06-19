@@ -1,51 +1,51 @@
-<tr id="<%= dom_id(document) %>" class="hover:bg-gray-50">
-  <td class="py-3 pr-4 font-medium text-gray-900 max-w-xs truncate">
+<tr id="<%= dom_id(document) %>" class="hover:bg-gray-50 dark:hover:bg-white/[0.03]">
+  <td class="border-r border-gray-100 py-3 pr-4 font-medium text-gray-900 max-w-xs truncate dark:border-gray-800 dark:text-white/90">
     <%= document.file.filename %>
   </td>
-  <td class="px-4 py-3">
+  <td class="border-r border-gray-100 px-4 py-3 dark:border-gray-800">
     <% case document.status %>
     <% when "pending" %>
-      <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600"><%= t("kyc_documents.status.pending") %></span>
+      <span class="badge badge-gray"><%= t("kyc_documents.status.pending") %></span>
     <% when "processing" %>
-      <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700"><%= t("kyc_documents.status.processing") %></span>
+      <span class="badge badge-info"><%= t("kyc_documents.status.processing") %></span>
     <% when "complete" %>
-      <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700"><%= t("kyc_documents.status.complete") %></span>
+      <span class="badge badge-success"><%= t("kyc_documents.status.complete") %></span>
     <% when "error" %>
-      <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700"><%= t("kyc_documents.status.error") %></span>
+      <span class="badge badge-error"><%= t("kyc_documents.status.error") %></span>
     <% end %>
   </td>
-  <td class="px-4 py-3">
+  <td class="border-r border-gray-100 px-4 py-3 dark:border-gray-800">
     <% if document.match_method.present? %>
       <% if document.match_method == "fuzzy" %>
-        <span class="inline-flex items-center rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-medium text-yellow-700">
+        <span class="badge badge-warning">
           <%= t("kyc_documents.match_method.fuzzy") %>
           <% if document.match_confidence.present? %>
             &nbsp;(<%= (document.match_confidence * 100).round %>%)
           <% end %>
         </span>
       <% else %>
-        <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
+        <span class="badge badge-success">
           <%= t("kyc_documents.match_method.exact") %>
         </span>
       <% end %>
       <% if document.address_match_method.present? %>
         <div class="mt-1">
-          <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium <%= document.address_match_method == 'exact' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' %>">
+          <span class="badge <%= document.address_match_method == 'exact' ? 'badge-success' : 'badge-warning' %>">
             <%= t("kyc_documents.address_match_method.#{document.address_match_method}") %>
           </span>
         </div>
       <% end %>
     <% else %>
-      <span class="text-gray-400">—</span>
+      <span class="text-gray-400 dark:text-gray-600">—</span>
     <% end %>
   </td>
-  <td class="px-4 py-3 text-gray-500">
+  <td class="border-r border-gray-100 px-4 py-3 text-theme-sm text-gray-500 dark:border-gray-800 dark:text-gray-400">
     <%= document.created_at.strftime("%-d %b %Y") %>
   </td>
   <td class="py-3 pl-4">
     <%= button_to kyc_document_link_path(document), method: :delete,
           title: t("kyc_principals.show.documents.unlink"),
-          class: "text-gray-400 hover:text-error-500 dark:hover:text-error-400" do %>
+          class: "table-action text-gray-400 hover:text-error-500 dark:hover:text-error-400" do %>
       <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
         <path fill-rule="evenodd" clip-rule="evenodd" d="M17.293 6.293a1 1 0 0 1 1.414 1.414L13.414 12l5.293 5.293a1 1 0 0 1-1.414 1.414L12 13.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L10.586 12 5.293 6.707a1 1 0 0 1 1.414-1.414L12 10.586l5.293-5.293z"/>
       </svg>

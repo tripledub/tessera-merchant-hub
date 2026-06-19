@@ -9,7 +9,7 @@
 
 <div class="mb-6 flex items-start justify-between">
   <div>
-    <h1 class="text-xl font-semibold text-gray-900"><%= applicant.name %></h1>
+    <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= applicant.name %></h1>
     <% if applicant.company_name.present? %>
       <p class="mt-0.5 text-theme-sm text-gray-400"><%= applicant.company_name %></p>
     <% end %>
@@ -34,13 +34,13 @@
 
   <table class="w-full text-left text-theme-sm">
     <thead>
-      <tr class="border-b border-gray-200">
-        <th class="py-2 pr-4 font-medium text-gray-500 border-r border-gray-100"><%= t('.principals.table.name') %></th>
-        <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100"><%= t('.principals.table.role') %></th>
-        <th class="px-4 py-2 font-medium text-gray-500"><%= t('.principals.table.actions') %></th>
+      <tr class="border-b border-gray-200 dark:border-gray-800">
+        <th class="py-2 pr-4 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.principals.table.name') %></th>
+        <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.principals.table.role') %></th>
+        <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.principals.table.actions') %></th>
       </tr>
     </thead>
-    <tbody id="principals-list" class="divide-y divide-gray-100">
+    <tbody id="principals-list" class="divide-y divide-gray-100 dark:divide-gray-800">
       <% if @kyc_principals.empty? %>
         <tr id="principals-empty">
           <td colspan="3" class="py-4 text-theme-sm text-gray-500"><%= t('.principals.empty') %></td>
