@@ -58,6 +58,11 @@ RSpec.describe AddressMatcherService do
         expect(result.match_method).to eq("exact")
       end
 
+      it "normalises uk abbreviation" do
+        result = call("12 High Street, London, SW1A 1AA, UK")
+        expect(result.match_method).to eq("exact")
+      end
+
       it "normalises abbreviations — Rd → road" do
         principal2 = build(:kyc_principal,
           address_line1: "5 Oak Road", city: "Manchester", postcode: "M1 1AB", country: "United Kingdom")
