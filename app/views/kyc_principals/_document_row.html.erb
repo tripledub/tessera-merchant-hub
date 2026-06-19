@@ -28,6 +28,11 @@
           <%= t("kyc_documents.match_method.exact") %>
         </span>
       <% end %>
+      <% if document.address_match_method.present? %>
+        <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium mt-1 block <%= document.address_match_method == 'exact' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' %>">
+          <%= t("kyc_documents.address_match_method.#{document.address_match_method}") %>
+        </span>
+      <% end %>
     <% else %>
       <span class="text-gray-400">—</span>
     <% end %>

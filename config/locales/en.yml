@@ -148,6 +148,9 @@ en:
       invalid_role: Role is not permitted for merchant users.
       invite_success: Invitation sent to %{email}.
   kyc_documents:
+    address_match_method:
+      exact: Address verified
+      fuzzy: Address approx. match
     confirm: Confirm
     delete: Delete document
     match_method:
