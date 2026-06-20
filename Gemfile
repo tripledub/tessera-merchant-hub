@@ -100,3 +100,5 @@ group :development do
   # Git hooks (pre-commit: rubocop, rspec, i18n-tasks)
   gem "lefthook", require: false
 end
+
+gem "store_model", "~> 4.6"

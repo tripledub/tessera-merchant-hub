@@ -61,6 +61,16 @@ class KycDocument < ApplicationRecord
     text/csv
   ].freeze
 
+  def extraction_schema
+    ExtractionData::Base.for(document_type)
+  end
+
+  def typed_extracted_data
+    return nil if extracted_data.blank? || document_type.blank?
+
+    extraction_schema.new(extracted_data)
+  end
+
   validates :file, presence: true, on: :create
   validate :file_content_type_allowed, if: -> { file.attached? }
 
