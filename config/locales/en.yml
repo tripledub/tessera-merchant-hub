@@ -151,8 +151,43 @@ en:
     address_match_method:
       exact: Address verified
       fuzzy: Address approx. match
+    classification:
+      confirm_extraction: Confirm & extract
+      status:
+        ai_suggested: AI suggested
+        auto_classified: Auto-classified
+        confirmed: Confirmed
+        rejected: Rejected
+        unclassified: Unclassified
     confirm: Confirm
     delete: Delete document
+    document_types:
+      aml_ctf_policy: AML/CTF Policy
+      aml_ctf_questionnaire: AML/CTF Questionnaire
+      aml_kyc_requirements: AML/KYC Requirements
+      apm_summary: APM Summary
+      articles_of_association: Articles of Association
+      bank_account_statement: Bank Account Statement
+      business_plan: Business Plan
+      certificate_of_amendment: Certificate of Amendment
+      certificate_of_directors: Certificate of Directors
+      certificate_of_incorporation: Certificate of Incorporation
+      certificate_of_incumbency: Certificate of Incumbency
+      certificate_of_registered_address: Certificate of Registered Address
+      certificate_of_shareholders: Certificate of Shareholders
+      declaration_of_trust: Declaration of Trust
+      driving_licence: Driving Licence
+      funds_flow_diagram: Funds Flow Diagram
+      group_structure_chart: Group Structure Chart
+      legal_opinion: Legal Opinion
+      memorandum_of_association: Memorandum of Association
+      passport: Passport
+      payment_agreement: Payment Agreement
+      register_of_members: Register of Members
+      share_certificate: Share Certificate
+      source_of_wealth_questionnaire: Source of Wealth Questionnaire
+      transaction_extract: Transaction Extract
+      utility_bill: Utility Bill
     match_method:
       exact: Exact match
       fuzzy: Fuzzy match
