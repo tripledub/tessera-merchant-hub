@@ -101,15 +101,15 @@
   <% else %>
     <table class="w-full text-left text-theme-sm" data-table-search-target="table">
       <thead>
-        <tr class="border-b border-gray-200">
-          <th class="py-2 pr-4 font-medium text-gray-500"><%= t('.documents.table.filename') %></th>
-          <th class="px-4 py-2 font-medium text-gray-500"><%= t('.documents.table.status') %></th>
-          <th class="px-4 py-2 font-medium text-gray-500"><%= t('.documents.table.match') %></th>
-          <th class="px-4 py-2 font-medium text-gray-500"><%= t('.documents.table.uploaded') %></th>
-          <th class="py-2 pl-4 font-medium text-gray-500"><%= t('.documents.table.actions') %></th>
+        <tr class="border-b border-gray-200 dark:border-gray-800">
+          <th class="py-2 pr-4 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.documents.table.filename') %></th>
+          <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.documents.table.status') %></th>
+          <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.documents.table.match') %></th>
+          <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.documents.table.uploaded') %></th>
+          <th class="py-2 pl-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.documents.table.actions') %></th>
         </tr>
       </thead>
-      <tbody id="principal-documents-list" class="divide-y divide-gray-100">
+      <tbody id="principal-documents-list" class="divide-y divide-gray-100 dark:divide-gray-800">
         <%= render partial: "kyc_principals/document_row", collection: @kyc_documents, as: :document %>
       </tbody>
     </table>

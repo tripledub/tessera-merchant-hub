@@ -1,4 +1,4 @@
-<div class="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3 text-theme-sm">
+<div class="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3 text-theme-sm dark:border-gray-700 dark:bg-white/[0.03]">
   <div class="flex items-center gap-3 min-w-0">
     <svg class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -8,7 +8,7 @@
       <p class="font-medium text-gray-900 dark:text-white/90 truncate"><%= document.file.filename %></p>
       <div class="flex items-center gap-2 mt-0.5">
         <% if document.kyc_principal %>
-          <span class="text-xs text-gray-500"><%= document.kyc_principal.name %></span>
+          <span class="text-xs text-gray-500 dark:text-gray-400"><%= document.kyc_principal.name %></span>
           <% if document.match_method == "fuzzy" %>
             <span class="inline-flex items-center rounded-full bg-yellow-100 px-1.5 py-0.5 text-xs font-medium text-yellow-700">
               <%= t("kyc_documents.match_method.fuzzy") %>
@@ -51,21 +51,13 @@
 
     <% case document.status %>
     <% when "pending" %>
-      <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
-        <%= t("kyc_documents.status.pending") %>
-      </span>
+      <span class="badge badge-gray"><%= t("kyc_documents.status.pending") %></span>
     <% when "processing" %>
-      <span class="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-700">
-        <%= t("kyc_documents.status.processing") %>
-      </span>
+      <span class="badge badge-info"><%= t("kyc_documents.status.processing") %></span>
     <% when "complete" %>
-      <span class="inline-flex items-center rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-        <%= t("kyc_documents.status.complete") %>
-      </span>
+      <span class="badge badge-success"><%= t("kyc_documents.status.complete") %></span>
     <% when "error" %>
-      <span class="inline-flex items-center rounded-full bg-red-100 px-2 py-0.5 text-xs font-medium text-red-700">
-        <%= t("kyc_documents.status.error") %>
-      </span>
+      <span class="badge badge-error"><%= t("kyc_documents.status.error") %></span>
     <% end %>
 
     <% if document.error? %>
