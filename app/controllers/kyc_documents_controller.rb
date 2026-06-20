@@ -34,7 +34,7 @@ class KycDocumentsController < ApplicationController
         next
       end
 
-      ProcessKycDocumentJob.perform_later(doc.id)
+      ClassifyKycDocumentJob.perform_later(doc.id)
       saved += 1
     end
 
@@ -58,8 +58,13 @@ class KycDocumentsController < ApplicationController
 
   def retry
     authorize document
-    document.update!(status: :pending, result: nil, kyc_principal: nil, match_method: nil, match_confidence: nil)
-    ProcessKycDocumentJob.perform_later(document.id)
+    document.update!(
+      status: :pending, result: nil,
+      document_type: nil, classification_status: :unclassified,
+      classification_confidence: nil, classification_method: nil,
+      kyc_principal: nil, match_method: nil, match_confidence: nil
+    )
+    ClassifyKycDocumentJob.perform_later(document.id)
     broadcast_document(document)
     head :ok
   end
