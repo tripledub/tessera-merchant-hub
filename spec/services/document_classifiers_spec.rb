@@ -57,10 +57,10 @@ RSpec.describe DocumentClassifiers do
   end
 
   describe ".obtain with unknown filename" do
-    it "raises NoHandlerAccepted when no default is set" do
+    it "falls back to AI classifier" do
       condition = DocumentClassifiers::Condition.new(filename: "mystery_doc.pdf", content_type: "application/pdf")
-      expect { described_class.obtain(condition) }
-        .to raise_error(HandlerRegisterable::NoHandlerAccepted)
+      result = described_class.obtain(condition)
+      expect(result).to be_a(DocumentClassifiers::AiFallback)
     end
   end
 

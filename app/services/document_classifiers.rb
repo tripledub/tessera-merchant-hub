@@ -32,4 +32,7 @@ module DocumentClassifiers
   require_relative "document_classifiers/aml_kyc_requirements"
   require_relative "document_classifiers/source_of_wealth_questionnaire"
   require_relative "document_classifiers/aml_ctf_questionnaire"
+  require_relative "document_classifiers/ai_fallback"
+
+  self.default = AiFallback
 end
