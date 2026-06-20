@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_19_075836) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_20_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -46,7 +46,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_19_075836) do
     t.decimal "address_match_confidence", precision: 4, scale: 3
     t.string "address_match_method"
     t.uuid "applicant_id", null: false
+    t.float "classification_confidence"
+    t.string "classification_method"
+    t.integer "classification_status", default: 0, null: false
     t.datetime "created_at", null: false
+    t.integer "document_type"
     t.uuid "kyc_principal_id"
     t.decimal "match_confidence", precision: 4, scale: 3
     t.string "match_method"
