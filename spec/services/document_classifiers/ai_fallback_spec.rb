@@ -10,6 +10,7 @@ RSpec.describe DocumentClassifiers::AiFallback do
   let(:messages) { instance_double(Anthropic::Resources::Messages) }
 
   before do
+    allow(Rails.application.credentials).to receive(:anthropic_api_key).and_return("test-key")
     allow(Anthropic::Client).to receive(:new).and_return(client)
     allow(client).to receive(:messages).and_return(messages)
   end
