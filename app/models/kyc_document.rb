@@ -64,6 +64,10 @@ class KycDocument < ApplicationRecord
   validates :file, presence: true, on: :create
   validate :file_content_type_allowed, if: -> { file.attached? }
 
+  def needs_review?
+    classification_ai_suggested? || classification_unclassified?
+  end
+
   private
 
   def file_content_type_allowed

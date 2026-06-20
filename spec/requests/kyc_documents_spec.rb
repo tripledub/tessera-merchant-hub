@@ -21,12 +21,12 @@ RSpec.describe "KycDocuments", type: :request do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
 
-      it "enqueues a ProcessKycDocumentJob and redirects to applicant" do
+      it "enqueues a ClassifyKycDocumentJob and redirects to applicant" do
         expect {
           post applicant_kyc_documents_path(applicant), params: {
             kyc_document: { files: [ file ] }
           }
-        }.to have_enqueued_job(ProcessKycDocumentJob)
+        }.to have_enqueued_job(ClassifyKycDocumentJob)
         expect(response).to redirect_to(applicant_path(applicant))
       end
 
@@ -91,10 +91,10 @@ RSpec.describe "KycDocuments", type: :request do
         allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
       end
 
-      it "resets the document and enqueues ProcessKycDocumentJob" do
+      it "resets the document and enqueues ClassifyKycDocumentJob" do
         expect {
           post retry_kyc_document_path(document)
-        }.to have_enqueued_job(ProcessKycDocumentJob).with(document.id)
+        }.to have_enqueued_job(ClassifyKycDocumentJob).with(document.id)
         expect(response).to have_http_status(:ok)
         expect(document.reload.status).to eq("pending")
       end
