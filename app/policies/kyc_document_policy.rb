@@ -17,6 +17,10 @@ class KycDocumentPolicy < ApplicationPolicy
     psp_admin?
   end
 
+  def confirm_classification?
+    psp_admin?
+  end
+
   def confirm_link?
     psp_admin?
   end

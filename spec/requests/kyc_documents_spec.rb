@@ -82,6 +82,48 @@ RSpec.describe "KycDocuments", type: :request do
     end
   end
 
+  describe "PATCH /kyc_documents/:id/confirm_classification" do
+    let_it_be(:document) do
+      create(:kyc_document, applicant: applicant, document_type: :passport, classification_status: :auto_classified)
+    end
+
+    context "when signed in as psp_admin" do
+      before do
+        sign_in psp_admin
+        allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
+      end
+
+      it "confirms classification and enqueues extraction" do
+        expect {
+          patch confirm_classification_kyc_document_path(document)
+        }.to have_enqueued_job(ExtractKycDocumentJob).with(document.id)
+        expect(response).to have_http_status(:ok)
+        expect(document.reload.classification_status).to eq("confirmed")
+      end
+
+      it "allows overriding the document type" do
+        patch confirm_classification_kyc_document_path(document), params: { document_type: "utility_bill" }
+        expect(document.reload.document_type).to eq("utility_bill")
+        expect(document.classification_status).to eq("confirmed")
+      end
+
+      it "ignores invalid document types" do
+        patch confirm_classification_kyc_document_path(document), params: { document_type: "invalid_type" }
+        expect(document.reload.document_type).to eq("passport")
+        expect(document.classification_status).to eq("confirmed")
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "returns 403" do
+        patch confirm_classification_kyc_document_path(document)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
   describe "POST /kyc_documents/:id/retry" do
     let_it_be(:document) { create(:kyc_document, applicant: applicant, status: :error) }
 

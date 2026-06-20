@@ -20,7 +20,10 @@ Rails.application.routes.draw do
       resource :document_links, only: %i[new create], controller: "kyc_principal_document_links"
     end
     resources :kyc_documents, only: %i[create destroy], shallow: true do
-      member { post :retry }
+      member do
+        post :retry
+        patch :confirm_classification
+      end
     end
   end
 

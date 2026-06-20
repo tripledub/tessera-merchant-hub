@@ -56,6 +56,25 @@ class KycDocumentsController < ApplicationController
     head :ok
   end
 
+  def confirm_classification
+    authorize document
+    document_type = params[:document_type]
+
+    if document_type.present? && KycDocument.document_types.key?(document_type)
+      document.update!(
+        document_type: document_type,
+        classification_status: :confirmed,
+        classification_method: document.classification_method || "manual"
+      )
+    else
+      document.update!(classification_status: :confirmed)
+    end
+
+    ExtractKycDocumentJob.perform_later(document.id)
+    broadcast_document(document)
+    head :ok
+  end
+
   def retry
     authorize document
     document.update!(
