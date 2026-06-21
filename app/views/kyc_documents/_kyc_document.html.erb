@@ -48,9 +48,9 @@
 
   <div class="flex items-center gap-3 flex-shrink-0">
     <% if document.document_type.present? %>
-      <div class="flex items-center gap-2" data-controller="classification" data-classification-url-value="<%= kyc_document_path(document) %>">
+      <div class="flex items-center gap-2" data-controller="classification" data-classification-url-value="<%= kyc_document_path(document) %>" data-classification-status-value="<%= document.classification_status %>">
         <select data-classification-target="select"
-                data-action="change->classification#confirm"
+                data-action="change->classification#change"
                 class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
           <% KycDocument.document_types.keys.sort.each do |type| %>
             <option value="<%= type %>" <%= "selected" if type == document.document_type %>>

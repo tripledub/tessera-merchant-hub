@@ -3,13 +3,22 @@ import { Turbo } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
   static targets = ["select"]
-  static values = { url: String }
+  static values = { url: String, status: String }
+
+  change() {
+    this.#submit("confirmed")
+  }
 
   confirm() {
+    const newStatus = this.statusValue === "confirmed" ? "auto_classified" : "confirmed"
+    this.#submit(newStatus)
+  }
+
+  #submit(status) {
     const token = document.querySelector("meta[name='csrf-token']")?.content
     const body = new URLSearchParams({
       "kyc_document[document_type]": this.selectTarget.value,
-      "kyc_document[classification_status]": "confirmed"
+      "kyc_document[classification_status]": status
     })
 
     fetch(this.urlValue, {
