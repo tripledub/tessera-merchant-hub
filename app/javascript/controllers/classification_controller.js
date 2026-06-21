@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { Turbo } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
   static targets = ["select"]
@@ -19,6 +20,10 @@ export default class extends Controller {
         "Accept": "text/vnd.turbo-stream.html"
       },
       body: body
+    }).then(response => {
+      if (response.ok) return response.text()
+    }).then(html => {
+      if (html) Turbo.renderStreamMessage(html)
     })
   }
 }
