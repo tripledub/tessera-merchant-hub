@@ -93,12 +93,11 @@ RSpec.describe "KycDocuments", type: :request do
         allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
       end
 
-      it "confirms classification and enqueues extraction" do
-        expect {
-          patch confirm_classification_kyc_document_path(document)
-        }.to have_enqueued_job(ExtractKycDocumentJob).with(document.id)
+      it "confirms classification without triggering extraction" do
+        patch confirm_classification_kyc_document_path(document)
         expect(response).to have_http_status(:ok)
         expect(document.reload.classification_status).to eq("confirmed")
+        expect(ExtractKycDocumentJob).not_to have_been_enqueued
       end
 
       it "allows overriding the document type" do

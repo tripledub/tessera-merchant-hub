@@ -25,6 +25,10 @@ class ApplicantPolicy < ApplicationPolicy
     psp_admin?
   end
 
+  def run_extraction?
+    psp_admin?
+  end
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       return scope.all if user.psp_role?

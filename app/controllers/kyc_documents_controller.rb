@@ -70,7 +70,6 @@ class KycDocumentsController < ApplicationController
       document.update!(classification_status: :confirmed)
     end
 
-    ExtractKycDocumentJob.perform_later(document.id)
     broadcast_document(document)
     head :ok
   end

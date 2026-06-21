@@ -81,6 +81,8 @@ en:
       documents:
         drag_or_click: Drag and drop files here, or click to browse
         empty: No documents uploaded yet.
+        run_extraction: Run extraction
+        run_extraction_confirm: Run extraction on all confirmed documents?
         upload_button: Upload
       edit: Edit
       principals:
@@ -123,6 +125,10 @@ en:
       create_success: Applicant created.
       update_success: Applicant updated.
     kyc_documents:
+      extraction_started:
+        one: Extraction started for 1 document.
+        other: Extraction started for %{count} documents.
+        zero: No confirmed documents to extract.
       no_files: Please select at least one file to upload.
       upload_success:
         one: 1 document uploaded and queued for processing.

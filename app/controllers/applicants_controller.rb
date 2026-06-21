@@ -38,6 +38,14 @@ class ApplicantsController < ApplicationController
     end
   end
 
+  def run_extraction
+    authorize applicant
+    docs = applicant.kyc_documents.where(classification_status: :confirmed, status: :pending)
+    docs.each { |doc| ExtractKycDocumentJob.perform_later(doc.id) }
+    redirect_to applicant_path(applicant),
+      notice: t("flash.kyc_documents.extraction_started", count: docs.size)
+  end
+
   def edit
     authorize applicant
   end
