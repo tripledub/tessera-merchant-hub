@@ -4,7 +4,7 @@ export default class extends Controller {
   static targets = ["select"]
   static values = { url: String }
 
-  update() {
+  confirm() {
     const token = document.querySelector("meta[name='csrf-token']")?.content
     const body = new URLSearchParams({
       "kyc_document[document_type]": this.selectTarget.value,
