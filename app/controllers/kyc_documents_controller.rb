@@ -78,11 +78,22 @@ class KycDocumentsController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace(
-          dom_id(document),
-          partial: "kyc_documents/kyc_document",
-          locals: { document: document }
-        )
+        docs = document.applicant.kyc_documents
+        render turbo_stream: [
+          turbo_stream.replace(
+            dom_id(document),
+            partial: "kyc_documents/kyc_document",
+            locals: { document: document }
+          ),
+          turbo_stream.replace(
+            "classification-counter",
+            partial: "kyc_documents/classification_counter",
+            locals: {
+              confirmed_count: docs.where(classification_status: :confirmed).count,
+              total_count: docs.count
+            }
+          )
+        ]
       end
       format.html { redirect_to applicant_path(document.applicant) }
     end
