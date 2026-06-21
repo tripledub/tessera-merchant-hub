@@ -59,12 +59,12 @@
             </option>
           <% end %>
         </select>
-        <%= button_to confirm_classification_kyc_document_path(document),
+        <%= button_to kyc_document_path(document),
               method: :patch,
               title: t("kyc_documents.classification.confirm_extraction"),
               class: "text-gray-400 hover:text-success-500 dark:hover:text-success-400",
-              data: { classification_target: "form" },
-              form: { data: { turbo: false } } do %>
+              params: { kyc_document: { classification_status: "confirmed" } },
+              data: { classification_target: "form" } do %>
           <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M20.707 5.293a1 1 0 0 1 0 1.414l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414L9 15.586 19.293 5.293a1 1 0 0 1 1.414 0z" fill=""/>
           </svg>
