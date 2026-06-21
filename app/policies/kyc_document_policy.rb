@@ -17,7 +17,7 @@ class KycDocumentPolicy < ApplicationPolicy
     psp_admin?
   end
 
-  def update?
+  def confirm_classification?
     psp_admin?
   end
 

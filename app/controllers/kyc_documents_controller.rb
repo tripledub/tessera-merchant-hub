@@ -56,22 +56,21 @@ class KycDocumentsController < ApplicationController
     head :ok
   end
 
-  def update
+  def confirm_classification
     authorize document
-    attrs = {}
-    doc_type = params.dig(:kyc_document, :document_type)
+    document_type = params[:document_type]
 
-    if doc_type.present? && KycDocument.document_types.key?(doc_type)
-      attrs[:document_type] = doc_type
+    if document_type.present? && KycDocument.document_types.key?(document_type)
+      document.update!(
+        document_type: document_type,
+        classification_status: :confirmed,
+        classification_method: document.classification_method || "manual"
+      )
+    else
+      document.update!(classification_status: :confirmed)
     end
 
-    classification = params.dig(:kyc_document, :classification_status)
-    if classification.present? && KycDocument.classification_statuses.key?(classification)
-      attrs[:classification_status] = classification
-      attrs[:classification_method] = document.classification_method || "manual" if classification == "confirmed"
-    end
-
-    document.update!(attrs) if attrs.any?
+    ExtractKycDocumentJob.perform_later(document.id)
     broadcast_document(document)
     head :ok
   end

@@ -15,11 +15,11 @@ export default class extends Controller {
     const form = this.formTarget.closest("form") || this.formTarget.querySelector("form")
     if (!form) return
 
-    let input = form.querySelector("input[name='kyc_document[document_type]']")
+    let input = form.querySelector("input[name='document_type']")
     if (!input) {
       input = document.createElement("input")
       input.type = "hidden"
-      input.name = "kyc_document[document_type]"
+      input.name = "document_type"
       form.appendChild(input)
     }
     input.value = this.selectTarget.value
