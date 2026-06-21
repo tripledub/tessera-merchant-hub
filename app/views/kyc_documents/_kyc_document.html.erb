@@ -48,9 +48,8 @@
 
   <div class="flex items-center gap-3 flex-shrink-0">
     <% if document.document_type.present? %>
-      <div data-controller="classification" data-classification-url-value="<%= kyc_document_path(document) %>">
+      <div class="flex items-center gap-2" data-controller="classification" data-classification-url-value="<%= kyc_document_path(document) %>">
         <select data-classification-target="select"
-                data-action="change->classification#update"
                 class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
           <% KycDocument.document_types.keys.sort.each do |type| %>
             <option value="<%= type %>" <%= "selected" if type == document.document_type %>>
@@ -58,6 +57,13 @@
             </option>
           <% end %>
         </select>
+        <button type="button" data-action="click->classification#confirm"
+                title="<%= t('kyc_documents.confirm') %>"
+                class="text-gray-400 hover:text-success-500 dark:hover:text-success-400">
+          <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M20.707 5.293a1 1 0 0 1 0 1.414l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414L9 15.586 19.293 5.293a1 1 0 0 1 1.414 0z" fill=""/>
+          </svg>
+        </button>
       </div>
     <% end %>
 
