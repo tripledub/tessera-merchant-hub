@@ -58,6 +58,14 @@
     <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500">
       <%= t('.sections.documents') %>
     </h2>
+    <% if policy(applicant).run_extraction? && applicant.kyc_documents.where(classification_status: :confirmed, status: :pending).any? %>
+      <%= button_to applicant_extraction_run_path(applicant),
+            method: :post,
+            class: "btn-primary",
+            data: { turbo_confirm: t('.documents.run_extraction_confirm') } do %>
+        <%= t('.documents.run_extraction') %>
+      <% end %>
+    <% end %>
   </div>
 
   <%= turbo_stream_from "applicant_#{applicant.id}_documents" %>

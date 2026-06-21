@@ -16,14 +16,12 @@ Rails.application.routes.draw do
   resources :merchants, only: %i[new create index show edit update]
 
   resources :applicants, only: %i[new create index show edit update] do
+    resource :extraction_run, only: :create
     resources :kyc_principals, only: %i[new create show edit update destroy], shallow: true do
       resource :document_links, only: %i[new create], controller: "kyc_principal_document_links"
     end
-    resources :kyc_documents, only: %i[create destroy], shallow: true do
-      member do
-        post :retry
-        patch :confirm_classification
-      end
+    resources :kyc_documents, only: %i[create update destroy], shallow: true do
+      member { post :retry }
     end
   end
 
