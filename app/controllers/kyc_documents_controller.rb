@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class KycDocumentsController < ApplicationController
+  include ActionView::RecordIdentifier
+
   expose(:applicant) { Applicant.find(params[:applicant_id]) }
   expose(:document) { KycDocument.find(params[:id]) }
 
@@ -73,7 +75,17 @@ class KycDocumentsController < ApplicationController
 
     document.update!(attrs) if attrs.any?
     broadcast_document(document)
-    head :ok
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          dom_id(document),
+          partial: "kyc_documents/kyc_document",
+          locals: { document: document }
+        )
+      end
+      format.html { redirect_to applicant_path(document.applicant) }
+    end
   end
 
   def retry

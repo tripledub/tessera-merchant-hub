@@ -94,20 +94,27 @@ RSpec.describe "KycDocuments", type: :request do
       end
 
       it "confirms classification without triggering extraction" do
-        patch kyc_document_path(document), params: { kyc_document: { classification_status: "confirmed" } }
+        patch kyc_document_path(document),
+          params: { kyc_document: { classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
         expect(response).to have_http_status(:ok)
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
         expect(document.reload.classification_status).to eq("confirmed")
         expect(ExtractKycDocumentJob).not_to have_been_enqueued
       end
 
       it "allows overriding the document type" do
-        patch kyc_document_path(document), params: { kyc_document: { document_type: "utility_bill", classification_status: "confirmed" } }
+        patch kyc_document_path(document),
+          params: { kyc_document: { document_type: "utility_bill", classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
         expect(document.reload.document_type).to eq("utility_bill")
         expect(document.classification_status).to eq("confirmed")
       end
 
       it "ignores invalid document types" do
-        patch kyc_document_path(document), params: { kyc_document: { document_type: "invalid_type" } }
+        patch kyc_document_path(document),
+          params: { kyc_document: { document_type: "invalid_type" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
         expect(document.reload.document_type).to eq("passport")
       end
     end
