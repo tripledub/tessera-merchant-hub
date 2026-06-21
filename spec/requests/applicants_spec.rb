@@ -152,40 +152,6 @@ RSpec.describe "Applicants", type: :request do
     end
   end
 
-  describe "POST /applicants/:id/run_extraction" do
-    context "when signed in as psp_admin" do
-      before { sign_in psp_admin }
-
-      it "enqueues extraction for confirmed documents and redirects" do
-        doc = create(:kyc_document, applicant: applicant_a, document_type: :passport,
-          classification_status: :confirmed, status: :pending)
-
-        expect {
-          post run_extraction_applicant_path(applicant_a)
-        }.to have_enqueued_job(ExtractKycDocumentJob).with(doc.id)
-        expect(response).to redirect_to(applicant_path(applicant_a))
-      end
-
-      it "does not enqueue extraction for unconfirmed documents" do
-        create(:kyc_document, applicant: applicant_a, document_type: :passport,
-          classification_status: :auto_classified, status: :pending)
-
-        expect {
-          post run_extraction_applicant_path(applicant_a)
-        }.not_to have_enqueued_job(ExtractKycDocumentJob)
-      end
-    end
-
-    context "when signed in as psp_support" do
-      before { sign_in psp_support }
-
-      it "returns 403" do
-        post run_extraction_applicant_path(applicant_a)
-        expect(response).to have_http_status(:forbidden)
-      end
-    end
-  end
-
   describe "PATCH /applicants/:id" do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }

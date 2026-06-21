@@ -59,7 +59,7 @@
       <%= t('.sections.documents') %>
     </h2>
     <% if policy(applicant).run_extraction? && applicant.kyc_documents.where(classification_status: :confirmed, status: :pending).any? %>
-      <%= button_to run_extraction_applicant_path(applicant),
+      <%= button_to applicant_extraction_run_path(applicant),
             method: :post,
             class: "btn-primary",
             data: { turbo_confirm: t('.documents.run_extraction_confirm') } do %>
