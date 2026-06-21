@@ -57,6 +57,11 @@
   <div class="mb-4 flex items-center justify-between">
     <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500">
       <%= t('.sections.documents') %>
+      <% if @kyc_documents.any? %>
+        <span class="text-gray-400 font-normal normal-case">
+          <%= @kyc_documents.count { |d| d.classification_confirmed? } %>/<%= @kyc_documents.size %> <%= t('.documents.confirmed') %>
+        </span>
+      <% end %>
     </h2>
     <% if policy(applicant).run_extraction? && applicant.kyc_documents.where(classification_status: :confirmed, status: :pending).any? %>
       <%= button_to applicant_extraction_run_path(applicant),

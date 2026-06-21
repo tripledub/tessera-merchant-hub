@@ -47,11 +47,10 @@
   </div>
 
   <div class="flex items-center gap-3 flex-shrink-0">
-    <%# Classification confirm/correct UI — shown when classified but not yet confirmed %>
-    <% if document.pending? && document.document_type.present? && !document.classification_confirmed? %>
-      <div class="flex items-center gap-2" data-controller="classification">
-        <select name="document_type"
-                data-classification-target="select"
+    <% if document.document_type.present? %>
+      <div data-controller="classification" data-classification-url-value="<%= kyc_document_path(document) %>">
+        <select data-classification-target="select"
+                data-action="change->classification#update"
                 class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
           <% KycDocument.document_types.keys.sort.each do |type| %>
             <option value="<%= type %>" <%= "selected" if type == document.document_type %>>
@@ -59,16 +58,6 @@
             </option>
           <% end %>
         </select>
-        <%= button_to kyc_document_path(document),
-              method: :patch,
-              title: t("kyc_documents.classification.confirm_extraction"),
-              class: "text-gray-400 hover:text-success-500 dark:hover:text-success-400",
-              params: { kyc_document: { classification_status: "confirmed" } },
-              data: { classification_target: "form" } do %>
-          <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M20.707 5.293a1 1 0 0 1 0 1.414l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414L9 15.586 19.293 5.293a1 1 0 0 1 1.414 0z" fill=""/>
-          </svg>
-        <% end %>
       </div>
     <% end %>
 

@@ -1,27 +1,24 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["select", "form"]
+  static targets = ["select"]
+  static values = { url: String }
 
-  formTargetConnected(form) {
-    this.syncValue()
-  }
+  update() {
+    const token = document.querySelector("meta[name='csrf-token']")?.content
+    const body = new URLSearchParams({
+      "kyc_document[document_type]": this.selectTarget.value,
+      "kyc_document[classification_status]": "confirmed"
+    })
 
-  selectTargetConnected() {
-    this.selectTarget.addEventListener("change", () => this.syncValue())
-  }
-
-  syncValue() {
-    const form = this.formTarget.closest("form") || this.formTarget.querySelector("form")
-    if (!form) return
-
-    let input = form.querySelector("input[name='kyc_document[document_type]']")
-    if (!input) {
-      input = document.createElement("input")
-      input.type = "hidden"
-      input.name = "kyc_document[document_type]"
-      form.appendChild(input)
-    }
-    input.value = this.selectTarget.value
+    fetch(this.urlValue, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-CSRF-Token": token,
+        "Accept": "text/vnd.turbo-stream.html"
+      },
+      body: body
+    })
   }
 }
