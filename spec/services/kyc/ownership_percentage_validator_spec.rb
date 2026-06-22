@@ -66,9 +66,9 @@ RSpec.describe Kyc::OwnershipPercentageValidator, type: :service do
         )
         expect(warning.message).to include("Acme Holdings Ltd")
         expect(warning.message).to include("75.0%")
-        expect(warning.metadata.expected).to eq(100.0)
-        expect(warning.metadata.actual).to eq(75.0)
-        expect(warning.metadata.deviation).to eq(25.0)
+        expect(warning.typed_metadata.expected).to eq(100.0)
+        expect(warning.typed_metadata.actual).to eq(75.0)
+        expect(warning.typed_metadata.deviation).to eq(25.0)
       end
     end
 
@@ -123,8 +123,8 @@ RSpec.describe Kyc::OwnershipPercentageValidator, type: :service do
           .to change(Kyc::ValidationWarning, :count).by(1)
 
         warning = Kyc::ValidationWarning.last
-        expect(warning.metadata.actual).to eq(110.0)
-        expect(warning.metadata.deviation).to eq(10.0)
+        expect(warning.typed_metadata.actual).to eq(110.0)
+        expect(warning.typed_metadata.deviation).to eq(10.0)
       end
     end
   end

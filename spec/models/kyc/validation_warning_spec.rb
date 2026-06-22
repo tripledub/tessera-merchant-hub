@@ -15,29 +15,51 @@ RSpec.describe Kyc::ValidationWarning, type: :model do
   end
 
   describe "enums" do
-    it { is_expected.to define_enum_for(:warning_type).with_values(percentage_deviation: 0) }
+    it { is_expected.to define_enum_for(:warning_type).with_values(percentage_deviation: 0, nominee_detected: 1) }
   end
 
-  describe "metadata" do
+  describe "#typed_metadata" do
     let(:applicant) { create(:applicant) }
     let(:document) { create(:kyc_document, applicant: applicant, document_type: :group_structure_chart) }
     let(:entity) { create(:kyc_corporate_entity, applicant: applicant, kyc_document: document) }
 
-    it "stores percentage deviation metadata via StoreModel" do
-      warning = described_class.create!(
-        applicant: applicant,
-        kyc_document: document,
-        corporate_entity: entity,
-        warning_type: :percentage_deviation,
-        message: "Ownership sums to 98.16%",
-        metadata: { expected: 100.0, actual: 98.16, deviation: 1.84 }
-      )
+    context "when percentage_deviation" do
+      it "returns a PercentageDeviation StoreModel" do
+        warning = described_class.create!(
+          applicant: applicant,
+          kyc_document: document,
+          corporate_entity: entity,
+          warning_type: :percentage_deviation,
+          message: "Ownership sums to 98.16%",
+          metadata: { expected: 100.0, actual: 98.16, deviation: 1.84 }
+        )
 
-      warning.reload
-      expect(warning.metadata).to be_a(Kyc::ValidationWarningMetadata::PercentageDeviation)
-      expect(warning.metadata.expected).to eq(100.0)
-      expect(warning.metadata.actual).to eq(98.16)
-      expect(warning.metadata.deviation).to eq(1.84)
+        warning.reload
+        typed = warning.typed_metadata
+        expect(typed).to be_a(Kyc::ValidationWarningMetadata::PercentageDeviation)
+        expect(typed.expected).to eq(100.0)
+        expect(typed.actual).to eq(98.16)
+        expect(typed.deviation).to eq(1.84)
+      end
+    end
+
+    context "when nominee_detected" do
+      it "returns a NomineeDetected StoreModel" do
+        warning = described_class.create!(
+          applicant: applicant,
+          kyc_document: document,
+          corporate_entity: entity,
+          warning_type: :nominee_detected,
+          message: "Nominee detected: Acme Corp",
+          metadata: { detection_reason: "nominee_jurisdiction", jurisdiction: "CY" }
+        )
+
+        warning.reload
+        typed = warning.typed_metadata
+        expect(typed).to be_a(Kyc::ValidationWarningMetadata::NomineeDetected)
+        expect(typed.detection_reason).to eq("nominee_jurisdiction")
+        expect(typed.jurisdiction).to eq("CY")
+      end
     end
   end
 
