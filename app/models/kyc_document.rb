@@ -6,6 +6,8 @@ class KycDocument < ApplicationRecord
 
   has_many :corporate_entities, class_name: "Kyc::CorporateEntity", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
+  has_many :validation_warnings, class_name: "Kyc::ValidationWarning", foreign_key: :kyc_document_id,
+           dependent: :destroy, inverse_of: :kyc_document
 
   has_one_attached :file
 

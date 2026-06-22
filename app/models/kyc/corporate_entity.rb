@@ -11,6 +11,8 @@ module Kyc
              dependent: :destroy, inverse_of: :parent_entity
     has_many :parent_edges, class_name: "Kyc::OwnershipEdge", foreign_key: :child_entity_id,
              dependent: :destroy, inverse_of: :child_entity
+    has_many :validation_warnings, class_name: "Kyc::ValidationWarning",
+             dependent: :nullify, inverse_of: :corporate_entity
 
     enum :entity_type, { individual: 0, corporate: 1 }
 
