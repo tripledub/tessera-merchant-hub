@@ -3,13 +3,13 @@
   <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500">
     <%= t('applicants.show.sections.documents') %>
     <% if @kyc_documents.any? %>
-      <%= render "kyc_documents/classification_counter",
+      <%= render "kyc/documents/classification_counter",
             confirmed_count: @kyc_documents.count { |d| d.classification_confirmed? },
             total_count: @kyc_documents.size %>
     <% end %>
   </h2>
   <% if policy(applicant).run_extraction? && applicant.kyc_documents.where(classification_status: :confirmed, status: :pending).any? %>
-    <%= button_to applicant_extraction_run_path(applicant),
+    <%= button_to applicant_kyc_extraction_run_path(applicant),
           method: :post,
           class: "btn-primary",
           data: { turbo_confirm: t('applicants.show.documents.run_extraction_confirm') } do %>
@@ -26,7 +26,7 @@
   <div class="space-y-2 mb-4">
     <% @kyc_documents.each do |doc| %>
       <%= turbo_frame_tag "kyc_document_#{doc.id}" do %>
-        <%= render "kyc_documents/kyc_document", document: doc %>
+        <%= render "kyc/documents/kyc_document", document: doc %>
       <% end %>
     <% end %>
   </div>

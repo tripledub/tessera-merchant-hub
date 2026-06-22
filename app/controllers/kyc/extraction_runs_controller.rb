@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ExtractionRunsController < ApplicationController
+class Kyc::ExtractionRunsController < ApplicationController
   expose(:applicant) { Applicant.find(params[:applicant_id]) }
 
   def create

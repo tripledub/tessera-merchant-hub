@@ -1,5 +1,5 @@
 <%= turbo_stream.append "principals-list",
-      partial: "kyc_principals/principal_row",
+      partial: "kyc/principals/principal_row",
       locals: { kyc_principal: kyc_principal } %>
 <%= turbo_stream.remove "principals-empty" %>
 <%= turbo_stream.update "principal-modal", "" %>

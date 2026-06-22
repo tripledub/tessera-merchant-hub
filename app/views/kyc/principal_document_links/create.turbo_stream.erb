@@ -1,6 +1,6 @@
 <%# Append the newly linked doc to the principal's document table %>
 <%= turbo_stream.append "principal-documents-list",
-      partial: "kyc_principals/document_row",
+      partial: "kyc/principals/document_row",
       locals: { document: @document } %>
 
 <%# Remove it from the modal list %>

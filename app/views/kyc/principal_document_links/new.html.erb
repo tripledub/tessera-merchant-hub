@@ -18,7 +18,7 @@
         <p class="text-theme-sm text-gray-500 italic"><%= t('.empty') %></p>
       <% else %>
         <ul id="unlinked-documents-list" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
-          <%= render partial: "kyc_principal_document_links/unlinked_document",
+          <%= render partial: "kyc/principal_document_links/unlinked_document",
                 collection: @unlinked_documents, as: :document,
                 locals: { kyc_principal: kyc_principal } %>
         </ul>

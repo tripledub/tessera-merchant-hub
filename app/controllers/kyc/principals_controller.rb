@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class KycPrincipalsController < ApplicationController
+class Kyc::PrincipalsController < ApplicationController
   expose(:applicant) { Applicant.find(params[:applicant_id]) if params[:applicant_id] }
   expose(:kyc_principal) { params[:id] ? KycPrincipal.find(params[:id]) : KycPrincipal.new(applicant: applicant) }
 

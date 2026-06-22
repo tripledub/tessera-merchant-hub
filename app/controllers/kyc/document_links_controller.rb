@@ -4,7 +4,7 @@
 #
 # PATCH  /kyc_document_links/:id  — confirm the automated link
 # DELETE /kyc_document_links/:id  — reject the link (unlink document from principal)
-class KycDocumentLinksController < ApplicationController
+class Kyc::DocumentLinksController < ApplicationController
   expose(:document) { KycDocument.find(params[:id]) }
 
   def update
@@ -28,7 +28,7 @@ class KycDocumentLinksController < ApplicationController
     Turbo::StreamsChannel.broadcast_replace_to(
       "applicant_#{doc.applicant_id}_documents",
       target: "kyc_document_#{doc.id}",
-      partial: "kyc_documents/kyc_document",
+      partial: "kyc/documents/kyc_document",
       locals: { document: doc }
     )
   end
