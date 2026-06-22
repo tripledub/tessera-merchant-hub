@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_22_140534) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_22_153222) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -104,6 +104,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_22_140534) do
     t.index ["applicant_id"], name: "index_kyc_principals_on_applicant_id"
   end
 
+  create_table "kyc_validation_warnings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.boolean "acknowledged", default: false, null: false
+    t.uuid "applicant_id", null: false
+    t.uuid "corporate_entity_id"
+    t.datetime "created_at", null: false
+    t.uuid "kyc_document_id", null: false
+    t.string "message", null: false
+    t.jsonb "metadata", default: {}
+    t.datetime "updated_at", null: false
+    t.integer "warning_type", null: false
+    t.index ["applicant_id"], name: "index_kyc_validation_warnings_on_applicant_id"
+    t.index ["corporate_entity_id"], name: "index_kyc_validation_warnings_on_corporate_entity_id"
+    t.index ["kyc_document_id"], name: "index_kyc_validation_warnings_on_kyc_document_id"
+  end
+
   create_table "merchants", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "address_line1"
     t.string "city"
@@ -174,4 +189,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_22_140534) do
   add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "parent_entity_id"
   add_foreign_key "kyc_ownership_edges", "kyc_documents", column: "source_document_id"
   add_foreign_key "kyc_principals", "merchants", column: "applicant_id"
+  add_foreign_key "kyc_validation_warnings", "kyc_corporate_entities", column: "corporate_entity_id"
+  add_foreign_key "kyc_validation_warnings", "kyc_documents"
+  add_foreign_key "kyc_validation_warnings", "merchants", column: "applicant_id"
 end
