@@ -1,0 +1,11 @@
+<%# Tab button — underline with icon style (tailadmin tab-03 pattern) %>
+<%# locals: (tab:, label:, icon:) %>
+<button
+  data-tabs-target="tab"
+  data-tab="<%= tab %>"
+  data-action="click->tabs#select"
+  class="inline-flex items-center gap-2 border-b-2 border-transparent px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors duration-200 ease-in-out hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+>
+  <%= render "applicants/tab_icons/#{icon}" %>
+  <%= label %>
+</button>

@@ -103,6 +103,31 @@ en:
       sections:
         documents: KYC Documents
         principals: Principals
+      tabs:
+        compliance: Compliance
+        documents: Documents
+        overview: Overview
+        ownership: Ownership
+        principals: Principals
+    tabs:
+      compliance:
+        empty_description: Compliance warnings will appear here after document extraction.
+        empty_title: No compliance warnings
+      overview:
+        company: Company
+        country: Country
+        details: Details
+        documents_count: Documents
+        email: Email
+        entities_count: Entities
+        principals_count: Principals
+        status: Status
+        summary: Summary
+        warnings_count: Warnings
+      ownership:
+        empty_description: Upload and extract a group structure chart to see ownership
+          data here.
+        empty_title: No ownership data
   devise:
     failure:
       deactivated: Your account has been deactivated. Please contact your administrator.

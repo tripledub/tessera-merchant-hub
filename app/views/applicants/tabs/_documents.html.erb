@@ -1,0 +1,61 @@
+<%# Documents tab — moved from applicants/show.html.erb %>
+<div class="mb-4 flex items-center justify-between">
+  <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+    <%= t('applicants.show.sections.documents') %>
+    <% if @kyc_documents.any? %>
+      <%= render "kyc_documents/classification_counter",
+            confirmed_count: @kyc_documents.count { |d| d.classification_confirmed? },
+            total_count: @kyc_documents.size %>
+    <% end %>
+  </h2>
+  <% if policy(applicant).run_extraction? && applicant.kyc_documents.where(classification_status: :confirmed, status: :pending).any? %>
+    <%= button_to applicant_extraction_run_path(applicant),
+          method: :post,
+          class: "btn-primary",
+          data: { turbo_confirm: t('applicants.show.documents.run_extraction_confirm') } do %>
+      <%= t('applicants.show.documents.run_extraction') %>
+    <% end %>
+  <% end %>
+</div>
+
+<%= turbo_stream_from "applicant_#{applicant.id}_documents" %>
+
+<% if @kyc_documents.empty? %>
+  <p class="text-theme-sm text-gray-500 mb-4"><%= t('applicants.show.documents.empty') %></p>
+<% else %>
+  <div class="space-y-2 mb-4">
+    <% @kyc_documents.each do |doc| %>
+      <%= turbo_frame_tag "kyc_document_#{doc.id}" do %>
+        <%= render "kyc_documents/kyc_document", document: doc %>
+      <% end %>
+    <% end %>
+  </div>
+<% end %>
+
+<% if policy(KycDocument).create? %>
+  <div id="kyc-upload" class="mt-4 border-t border-gray-200 pt-4">
+    <%= form_with url: applicant_kyc_documents_path(applicant),
+          data: { controller: "dropzone", "dropzone-url-value": rails_direct_uploads_url } do %>
+      <div data-dropzone-target="zone"
+           class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 text-center cursor-pointer"
+           data-action="click->dropzone#browse dragover->dropzone#dragover dragleave->dropzone#dragleave drop->dropzone#drop">
+        <svg class="h-8 w-8 text-gray-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+        </svg>
+        <p class="text-theme-sm text-gray-500"><%= t('applicants.show.documents.drag_or_click') %></p>
+        <input type="file" multiple accept="image/*,application/pdf,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv"
+               data-dropzone-target="input"
+               data-action="change->dropzone#pick"
+               class="hidden" />
+      </div>
+      <ul class="mt-3 space-y-1" data-dropzone-target="list"></ul>
+      <button type="button"
+              data-dropzone-target="submit"
+              data-action="click->dropzone#submit"
+              class="mt-3 btn-primary">
+        <%= t('applicants.show.documents.upload_button') %>
+      </button>
+    <% end %>
+  </div>
+<% end %>
