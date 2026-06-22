@@ -134,6 +134,14 @@ RSpec.describe Kyc::GroupStructureExtractorService, type: :service do
         expect(Kyc::UnresolvedChainDetector).to have_received(:call).with(document)
       end
 
+      it "runs effective UBO calculation after extraction" do
+        allow(Kyc::EffectiveUboCalculator).to receive(:call)
+
+        described_class.call(document)
+
+        expect(Kyc::EffectiveUboCalculator).to have_received(:call).with(document)
+      end
+
       it "clears previous warnings before re-extraction" do
         described_class.call(document)
 
