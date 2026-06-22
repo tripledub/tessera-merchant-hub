@@ -126,6 +126,14 @@ RSpec.describe Kyc::GroupStructureExtractorService, type: :service do
         expect(Kyc::NomineeDetector).to have_received(:call).with(document)
       end
 
+      it "runs unresolved chain detection after extraction" do
+        allow(Kyc::UnresolvedChainDetector).to receive(:call)
+
+        described_class.call(document)
+
+        expect(Kyc::UnresolvedChainDetector).to have_received(:call).with(document)
+      end
+
       it "clears previous warnings before re-extraction" do
         described_class.call(document)
 

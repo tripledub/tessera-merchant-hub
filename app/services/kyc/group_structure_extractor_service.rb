@@ -53,6 +53,7 @@ module Kyc
 
         Kyc::OwnershipPercentageValidator.call(@document)
         Kyc::NomineeDetector.call(@document)
+        Kyc::UnresolvedChainDetector.call(@document)
       end
     end
 
