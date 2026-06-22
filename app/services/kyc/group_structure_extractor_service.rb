@@ -42,6 +42,7 @@ module Kyc
       response = normalize(raw)
 
       ActiveRecord::Base.transaction do
+        Kyc::ValidationWarning.where(kyc_document: @document).delete_all
         Kyc::OwnershipEdge.where(source_document: @document).delete_all
         @document.corporate_entities.delete_all
 
@@ -49,6 +50,8 @@ module Kyc
         create_edges(response[:edges], entity_map)
 
         @document.update!(extracted_data: raw)
+
+        Kyc::OwnershipPercentageValidator.call(@document)
       end
     end
 
