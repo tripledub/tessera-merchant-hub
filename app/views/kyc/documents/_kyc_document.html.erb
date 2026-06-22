@@ -8,7 +8,7 @@
       <p class="font-medium text-gray-900 dark:text-white/90 truncate"><%= document.file.filename %></p>
       <div class="flex items-center gap-2 mt-0.5 flex-wrap">
         <% if document.document_type.present? %>
-          <span class="badge badge-info"><%= t("kyc_documents.document_types.#{document.document_type}") %></span>
+          <span class="badge badge-info"><%= t("kyc.documents.document_types.#{document.document_type}") %></span>
         <% end %>
 
         <% if document.classification_status.present? && document.classification_status != "unclassified" %>
@@ -19,28 +19,28 @@
                when "rejected" then "badge-error"
                else "badge-gray"
              end %>
-          <span class="badge <%= badge_class %>"><%= t("kyc_documents.classification.status.#{document.classification_status}") %></span>
+          <span class="badge <%= badge_class %>"><%= t("kyc.documents.classification.status.#{document.classification_status}") %></span>
         <% end %>
 
         <% if document.kyc_principal %>
           <span class="text-xs text-gray-500 dark:text-gray-400"><%= document.kyc_principal.name %></span>
           <% if document.match_method == "fuzzy" %>
             <span class="inline-flex items-center rounded-full bg-yellow-100 px-1.5 py-0.5 text-xs font-medium text-yellow-700">
-              <%= t("kyc_documents.match_method.fuzzy") %>
+              <%= t("kyc.documents.match_method.fuzzy") %>
             </span>
           <% end %>
           <% if document.kyc_principal.unconfirmed? %>
             <span class="inline-flex items-center rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
-              <%= t("kyc_documents.principal_status.unconfirmed") %>
+              <%= t("kyc.documents.principal_status.unconfirmed") %>
             </span>
           <% end %>
           <% if document.address_match_method.present? %>
             <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium <%= document.address_match_method == 'exact' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' %>">
-              <%= t("kyc_documents.address_match_method.#{document.address_match_method}") %>
+              <%= t("kyc.documents.address_match_method.#{document.address_match_method}") %>
             </span>
           <% end %>
         <% elsif document.complete? %>
-          <span class="text-xs text-gray-400 italic"><%= t("kyc_documents.unlinked") %></span>
+          <span class="text-xs text-gray-400 italic"><%= t("kyc.documents.unlinked") %></span>
         <% end %>
       </div>
     </div>
@@ -54,12 +54,12 @@
                 class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
           <% KycDocument.document_types.keys.sort.each do |type| %>
             <option value="<%= type %>" <%= "selected" if type == document.document_type %>>
-              <%= t("kyc_documents.document_types.#{type}") %>
+              <%= t("kyc.documents.document_types.#{type}") %>
             </option>
           <% end %>
         </select>
         <button type="button" data-action="click->classification#confirm"
-                title="<%= t('kyc_documents.confirm') %>"
+                title="<%= t('kyc.documents.confirm') %>"
                 class="text-gray-400 hover:text-success-500 dark:hover:text-success-400">
           <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M20.707 5.293a1 1 0 0 1 0 1.414l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414L9 15.586 19.293 5.293a1 1 0 0 1 1.414 0z" fill=""/>
@@ -70,14 +70,14 @@
 
     <% if document.kyc_principal && (document.kyc_principal.unconfirmed? || document.match_method == "fuzzy") %>
       <%= button_to kyc_document_link_path(document), method: :patch,
-              title: t("kyc_documents.confirm"),
+              title: t("kyc.documents.confirm"),
               class: "text-gray-400 hover:text-success-500 dark:hover:text-success-400" do %>
           <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M20.707 5.293a1 1 0 0 1 0 1.414l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414L9 15.586 19.293 5.293a1 1 0 0 1 1.414 0z" fill=""/>
           </svg>
         <% end %>
       <%= button_to kyc_document_link_path(document), method: :delete,
-              title: t("kyc_documents.reject"),
+              title: t("kyc.documents.reject"),
               class: "text-gray-400 hover:text-error-500 dark:hover:text-error-400" do %>
           <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 5.293a1 1 0 0 1 1.414 0L12 10.586l5.293-5.293a1 1 0 1 1 1.414 1.414L13.414 12l5.293 5.293a1 1 0 0 1-1.414 1.414L12 13.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L10.586 12 5.293 6.707a1 1 0 0 1 0-1.414z" fill=""/>
@@ -87,18 +87,18 @@
 
     <% case document.status %>
     <% when "pending" %>
-      <span class="badge badge-gray"><%= t("kyc_documents.status.pending") %></span>
+      <span class="badge badge-gray"><%= t("kyc.documents.status.pending") %></span>
     <% when "processing" %>
-      <span class="badge badge-info"><%= t("kyc_documents.status.processing") %></span>
+      <span class="badge badge-info"><%= t("kyc.documents.status.processing") %></span>
     <% when "complete" %>
-      <span class="badge badge-success"><%= t("kyc_documents.status.complete") %></span>
+      <span class="badge badge-success"><%= t("kyc.documents.status.complete") %></span>
     <% when "error" %>
-      <span class="badge badge-error"><%= t("kyc_documents.status.error") %></span>
+      <span class="badge badge-error"><%= t("kyc.documents.status.error") %></span>
     <% end %>
 
     <% if document.error? %>
       <%= button_to retry_kyc_document_path(document), method: :post,
-            title: t("kyc_documents.retry"),
+            title: t("kyc.documents.retry"),
             class: "text-gray-400 hover:text-warning-500 dark:hover:text-warning-400" do %>
         <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path fill-rule="evenodd" clip-rule="evenodd" d="M4.755 10.059a7.5 7.5 0 0 1 12.548-3.364l1.903 1.903h-3.183a.75.75 0 1 0 0 1.5h4.992a.75.75 0 0 0 .75-.75V4.356a.75.75 0 0 0-1.5 0v3.18l-1.9-1.9A9 9 0 0 0 3.306 9.67a.75.75 0 1 0 1.45.388zm15.408 3.352a.75.75 0 0 0-.919.53 7.5 7.5 0 0 1-12.548 3.364l-1.902-1.902h3.183a.75.75 0 0 0 0-1.5H3.984a.75.75 0 0 0-.75.75v4.992a.75.75 0 0 0 1.5 0v-3.18l1.9 1.9a9 9 0 0 0 15.059-4.035.75.75 0 0 0-.53-.919z" fill=""/>
@@ -107,7 +107,7 @@
     <% end %>
 
     <%= button_to kyc_document_path(document), method: :delete,
-            title: t("kyc_documents.delete"),
+            title: t("kyc.documents.delete"),
             class: "text-gray-400 hover:text-error-500 dark:hover:text-error-400" do %>
         <svg class="fill-current" width="18" height="18" viewBox="0 0 21 21" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path fill-rule="evenodd" clip-rule="evenodd" d="M7.04142 4.29199C7.04142 3.04935 8.04878 2.04199 9.29142 2.04199H11.7081C12.9507 2.04199 13.9581 3.04935 13.9581 4.29199V4.54199H16.1252H17.166C17.5802 4.54199 17.916 4.87778 17.916 5.29199C17.916 5.70621 17.5802 6.04199 17.166 6.04199H16.8752V8.74687V13.7469V16.7087C16.8752 17.9513 15.8678 18.9587 14.6252 18.9587H6.37516C5.13252 18.9587 4.12516 17.9513 4.12516 16.7087V13.7469V8.74687V6.04199H3.8335C3.41928 6.04199 3.0835 5.70621 3.0835 5.29199C3.0835 4.87778 3.41928 4.54199 3.8335 4.54199H4.87516H7.04142V4.29199ZM15.3752 13.7469V8.74687V6.04199H13.9581H13.2081H7.79142H7.04142H5.62516V8.74687V13.7469V16.7087C5.62516 17.1229 5.96095 17.4587 6.37516 17.4587H14.6252C15.0394 17.4587 15.3752 17.1229 15.3752 16.7087V13.7469ZM8.54142 4.54199H12.4581V4.29199C12.4581 3.87778 12.1223 3.54199 11.7081 3.54199H9.29142C8.87721 3.54199 8.54142 3.87778 8.54142 4.29199V4.54199ZM8.8335 8.50033C9.24771 8.50033 9.5835 8.83611 9.5835 9.25033V14.2503C9.5835 14.6645 9.24771 15.0003 8.8335 15.0003C8.41928 15.0003 8.0835 14.6645 8.0835 14.2503V9.25033C8.0835 8.83611 8.41928 8.50033 8.8335 8.50033ZM12.9168 9.25033C12.9168 8.83611 12.581 8.50033 12.1668 8.50033C11.7526 8.50033 11.4168 8.83611 11.4168 9.25033V14.2503C11.4168 14.6645 11.7526 15.0003 12.1668 15.0003C12.581 15.0003 12.9168 14.6645 12.9168 14.2503V9.25033Z" fill=""/>

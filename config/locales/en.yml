@@ -179,111 +179,112 @@ en:
       deactivate_success: "%{email} has been deactivated."
       invalid_role: Role is not permitted for merchant users.
       invite_success: Invitation sent to %{email}.
-  kyc_documents:
-    address_match_method:
-      exact: Address verified
-      fuzzy: Address approx. match
-    classification:
+  kyc:
+    documents:
+      address_match_method:
+        exact: Address verified
+        fuzzy: Address approx. match
+      classification:
+        status:
+          ai_suggested: AI suggested
+          auto_classified: Auto-classified
+          confirmed: Confirmed
+          rejected: Rejected
+          unclassified: Unclassified
+      confirm: Confirm
+      delete: Delete document
+      document_types:
+        aml_ctf_policy: AML/CTF Policy
+        aml_ctf_questionnaire: AML/CTF Questionnaire
+        aml_kyc_requirements: AML/KYC Requirements
+        apm_summary: APM Summary
+        articles_of_association: Articles of Association
+        bank_account_statement: Bank Account Statement
+        business_plan: Business Plan
+        certificate_of_amendment: Certificate of Amendment
+        certificate_of_directors: Certificate of Directors
+        certificate_of_incorporation: Certificate of Incorporation
+        certificate_of_incumbency: Certificate of Incumbency
+        certificate_of_registered_address: Certificate of Registered Address
+        certificate_of_shareholders: Certificate of Shareholders
+        declaration_of_trust: Declaration of Trust
+        driving_licence: Driving Licence
+        funds_flow_diagram: Funds Flow Diagram
+        group_structure_chart: Group Structure Chart
+        legal_opinion: Legal Opinion
+        memorandum_of_association: Memorandum of Association
+        passport: Passport
+        payment_agreement: Payment Agreement
+        register_of_members: Register of Members
+        share_certificate: Share Certificate
+        source_of_wealth_questionnaire: Source of Wealth Questionnaire
+        transaction_extract: Transaction Extract
+        utility_bill: Utility Bill
+      match_method:
+        exact: Exact match
+        fuzzy: Fuzzy match
+      principal_status:
+        unconfirmed: Unconfirmed
+      reject: Reject
+      retry: Retry
       status:
-        ai_suggested: AI suggested
-        auto_classified: Auto-classified
-        confirmed: Confirmed
-        rejected: Rejected
-        unclassified: Unclassified
-    confirm: Confirm
-    delete: Delete document
-    document_types:
-      aml_ctf_policy: AML/CTF Policy
-      aml_ctf_questionnaire: AML/CTF Questionnaire
-      aml_kyc_requirements: AML/KYC Requirements
-      apm_summary: APM Summary
-      articles_of_association: Articles of Association
-      bank_account_statement: Bank Account Statement
-      business_plan: Business Plan
-      certificate_of_amendment: Certificate of Amendment
-      certificate_of_directors: Certificate of Directors
-      certificate_of_incorporation: Certificate of Incorporation
-      certificate_of_incumbency: Certificate of Incumbency
-      certificate_of_registered_address: Certificate of Registered Address
-      certificate_of_shareholders: Certificate of Shareholders
-      declaration_of_trust: Declaration of Trust
-      driving_licence: Driving Licence
-      funds_flow_diagram: Funds Flow Diagram
-      group_structure_chart: Group Structure Chart
-      legal_opinion: Legal Opinion
-      memorandum_of_association: Memorandum of Association
-      passport: Passport
-      payment_agreement: Payment Agreement
-      register_of_members: Register of Members
-      share_certificate: Share Certificate
-      source_of_wealth_questionnaire: Source of Wealth Questionnaire
-      transaction_extract: Transaction Extract
-      utility_bill: Utility Bill
-    match_method:
-      exact: Exact match
-      fuzzy: Fuzzy match
-    principal_status:
-      unconfirmed: Unconfirmed
-    reject: Reject
-    retry: Retry
-    status:
-      complete: Complete
-      error: Error
-      pending: Pending
-      processing: Processing
-    unlinked: Unlinked
-  kyc_principal_document_links:
-    new:
-      empty: All documents for this applicant are already linked.
-      link: Link
-      title: Link a document
-  kyc_principals:
-    edit:
-      back: "← Back to applicant"
-      page_title: Edit principal
-      title: Edit %{name}
-    form:
-      cancel: Cancel
-      fields:
-        address_line1: Address line 1
-        address_line2: Address line 2 (optional)
-        city: City
-        country: Country
-        date_of_birth: Date of birth
-        email: Email
-        name: Full name
-        postcode: Postcode
-        role: Role
-      sections:
-        address: Address
-      submit: Save
-    new:
-      page_title: Add principal
-      title: Add a principal
-    show:
-      back: "← Back to applicant"
-      documents:
-        empty: No documents linked to this principal.
-        table:
-          actions: Actions
-          filename: File
-          match: Match
-          status: Status
-          uploaded: Uploaded
-        unlink: Unlink document
-      edit: Edit
-      fields:
-        date_of_birth: Date of birth
-        email: Email
-        name: Full name
-        role: Role
-      link_documents: Link documents
-      not_provided: Not provided
-      search_placeholder: Search files…
-      sections:
-        address: Address
-        documents: Linked documents
-        personal: Personal details
+        complete: Complete
+        error: Error
+        pending: Pending
+        processing: Processing
+      unlinked: Unlinked
+    principal_document_links:
+      new:
+        empty: All documents for this applicant are already linked.
+        link: Link
+        title: Link a document
+    principals:
+      edit:
+        back: "← Back to applicant"
+        page_title: Edit principal
+        title: Edit %{name}
+      form:
+        cancel: Cancel
+        fields:
+          address_line1: Address line 1
+          address_line2: Address line 2 (optional)
+          city: City
+          country: Country
+          date_of_birth: Date of birth
+          email: Email
+          name: Full name
+          postcode: Postcode
+          role: Role
+        sections:
+          address: Address
+        submit: Save
+      new:
+        page_title: Add principal
+        title: Add a principal
+      show:
+        back: "← Back to applicant"
+        documents:
+          empty: No documents linked to this principal.
+          table:
+            actions: Actions
+            filename: File
+            match: Match
+            status: Status
+            uploaded: Uploaded
+          unlink: Unlink document
+        edit: Edit
+        fields:
+          date_of_birth: Date of birth
+          email: Email
+          name: Full name
+          role: Role
+        link_documents: Link documents
+        not_provided: Not provided
+        search_placeholder: Search files…
+        sections:
+          address: Address
+          documents: Linked documents
+          personal: Personal details
   layouts:
     navigation:
       admin: Admin

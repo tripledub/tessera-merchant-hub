@@ -70,7 +70,7 @@ class ExtractKycDocumentJob < ApplicationJob
     Turbo::StreamsChannel.broadcast_replace_to(
       "applicant_#{document.applicant_id}_documents",
       target: "kyc_document_#{document.id}",
-      partial: "kyc_documents/kyc_document",
+      partial: "kyc/documents/kyc_document",
       locals: { document: document }
     )
   end

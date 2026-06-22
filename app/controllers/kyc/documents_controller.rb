@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class KycDocumentsController < ApplicationController
+class Kyc::DocumentsController < ApplicationController
   include ActionView::RecordIdentifier
 
   expose(:applicant) { Applicant.find(params[:applicant_id]) }
@@ -27,7 +27,7 @@ class KycDocumentsController < ApplicationController
         doc.file.attach(file)
       rescue ArgumentError, ActiveRecord::RecordNotFound, ActiveSupport::MessageVerifier::InvalidSignature => e
         doc.destroy
-        Rails.logger.warn("KycDocumentsController: skipping unattachable file — #{e.message}")
+        Rails.logger.warn("Kyc::DocumentsController: skipping unattachable file — #{e.message}")
         next
       end
 
@@ -82,12 +82,12 @@ class KycDocumentsController < ApplicationController
         render turbo_stream: [
           turbo_stream.replace(
             dom_id(document),
-            partial: "kyc_documents/kyc_document",
+            partial: "kyc/documents/kyc_document",
             locals: { document: document }
           ),
           turbo_stream.replace(
             "classification-counter",
-            partial: "kyc_documents/classification_counter",
+            partial: "kyc/documents/classification_counter",
             locals: {
               confirmed_count: docs.where(classification_status: :confirmed).count,
               total_count: docs.count
@@ -118,7 +118,7 @@ class KycDocumentsController < ApplicationController
     Turbo::StreamsChannel.broadcast_replace_to(
       "applicant_#{doc.applicant_id}_documents",
       target: "kyc_document_#{doc.id}",
-      partial: "kyc_documents/kyc_document",
+      partial: "kyc/documents/kyc_document",
       locals: { document: doc }
     )
   end

@@ -16,7 +16,7 @@ RSpec.describe "ExtractionRuns", type: :request do
           classification_status: :confirmed, status: :pending)
 
         expect {
-          post applicant_extraction_run_path(applicant)
+          post applicant_kyc_extraction_run_path(applicant)
         }.to have_enqueued_job(ExtractKycDocumentJob).with(doc.id)
         expect(response).to redirect_to(applicant_path(applicant))
       end
@@ -26,7 +26,7 @@ RSpec.describe "ExtractionRuns", type: :request do
           classification_status: :auto_classified, status: :pending)
 
         expect {
-          post applicant_extraction_run_path(applicant)
+          post applicant_kyc_extraction_run_path(applicant)
         }.not_to have_enqueued_job(ExtractKycDocumentJob)
       end
     end
@@ -35,7 +35,7 @@ RSpec.describe "ExtractionRuns", type: :request do
       before { sign_in psp_support }
 
       it "returns 403" do
-        post applicant_extraction_run_path(applicant)
+        post applicant_kyc_extraction_run_path(applicant)
         expect(response).to have_http_status(:forbidden)
       end
     end

@@ -16,17 +16,21 @@ Rails.application.routes.draw do
   resources :merchants, only: %i[new create index show edit update]
 
   resources :applicants, only: %i[new create index show edit update] do
-    resource :extraction_run, only: :create
-    resources :kyc_principals, only: %i[new create show edit update destroy], shallow: true do
-      resource :document_links, only: %i[new create], controller: "kyc_principal_document_links"
-    end
-    resources :kyc_documents, only: %i[create update destroy], shallow: true do
-      member { post :retry }
+    namespace :kyc do
+      resource :extraction_run, only: :create
+      resources :principals, only: %i[new create show edit update destroy], shallow: true do
+        resource :document_links, only: %i[new create], controller: "principal_document_links"
+      end
+      resources :documents, only: %i[create update destroy], shallow: true do
+        member { post :retry }
+      end
     end
   end
 
   # RESTful link management: PATCH to confirm a link, DELETE to reject/unlink
-  resources :kyc_document_links, only: %i[update destroy]
+  namespace :kyc do
+    resources :document_links, only: %i[update destroy]
+  end
   resources :shops, only: %i[index show new create edit update] do
     post :credential, to: "shop_credentials#create"
     delete "credentials/:id", to: "shop_credentials#destroy", as: :credential_revoke

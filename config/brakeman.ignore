@@ -13,7 +13,7 @@
       "note": "role_params permits only :role which is validated by User model enum; psp-admin only action guarded by Pundit"
     },
     {
-      "fingerprint": "83b17730792e80f030f25d1603b2a686c9a7bdb401763f35966e331cbc8c7633",
+      "fingerprint": "9b7412139d36c493cb065148c3135b62d971a24cfd2077bf4676a6cae3c4ef70",
       "note": "all fields are benign personal/address data; role uses an enum; action is psp-admin only guarded by Pundit"
     }
   ]

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class KycPrincipalDocumentLinksController < ApplicationController
-  expose(:kyc_principal) { KycPrincipal.find(params[:kyc_principal_id]) }
+class Kyc::PrincipalDocumentLinksController < ApplicationController
+  expose(:kyc_principal) { KycPrincipal.find(params[:principal_id]) }
 
   def new
     authorize kyc_principal, :show?
