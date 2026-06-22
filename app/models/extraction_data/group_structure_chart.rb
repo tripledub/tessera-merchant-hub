@@ -4,7 +4,7 @@ module ExtractionData
   class GroupStructureChart < Base
     register_as :group_structure_chart
 
-    attribute :parent_company, :string
     attribute :entities, :string
+    attribute :edges, :string
   end
 end

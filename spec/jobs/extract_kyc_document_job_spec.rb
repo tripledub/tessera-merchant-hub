@@ -104,6 +104,35 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       end
     end
 
+    context "when document is a group_structure_chart" do
+      let(:document) do
+        create(:kyc_document, applicant: applicant, document_type: :group_structure_chart,
+               classification_status: :confirmed)
+      end
+
+      before do
+        allow(Kyc::GroupStructureExtractorService).to receive(:call)
+      end
+
+      it "delegates to Kyc::GroupStructureExtractorService" do
+        described_class.new.perform(document.id)
+
+        expect(Kyc::GroupStructureExtractorService).to have_received(:call).with(document)
+      end
+
+      it "marks the document as complete" do
+        described_class.new.perform(document.id)
+
+        expect(document.reload.status).to eq("complete")
+      end
+
+      it "does not call the standard OCR pipeline" do
+        described_class.new.perform(document.id)
+
+        expect(a_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")).not_to have_been_made
+      end
+    end
+
     context "when OCR service fails" do
       before do
         stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")

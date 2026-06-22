@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_20_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_22_140534) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -42,6 +42,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_160000) do
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
   end
 
+  create_table "kyc_corporate_entities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "entity_type", null: false
+    t.string "jurisdiction"
+    t.uuid "kyc_document_id", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id"], name: "index_kyc_corporate_entities_on_applicant_id"
+    t.index ["kyc_document_id"], name: "index_kyc_corporate_entities_on_kyc_document_id"
+  end
+
   create_table "kyc_documents", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.decimal "address_match_confidence", precision: 4, scale: 3
     t.string "address_match_method"
@@ -60,6 +72,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_160000) do
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_kyc_documents_on_applicant_id"
     t.index ["kyc_principal_id"], name: "index_kyc_documents_on_kyc_principal_id"
+  end
+
+  create_table "kyc_ownership_edges", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "child_entity_id", null: false
+    t.datetime "created_at", null: false
+    t.uuid "parent_entity_id", null: false
+    t.decimal "percentage", precision: 5, scale: 2
+    t.integer "relationship_type", null: false
+    t.uuid "source_document_id"
+    t.datetime "updated_at", null: false
+    t.index ["child_entity_id"], name: "index_kyc_ownership_edges_on_child_entity_id"
+    t.index ["parent_entity_id"], name: "index_kyc_ownership_edges_on_parent_entity_id"
+    t.index ["source_document_id"], name: "index_kyc_ownership_edges_on_source_document_id"
   end
 
   create_table "kyc_principals", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -141,7 +166,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_20_160000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "kyc_corporate_entities", "kyc_documents"
+  add_foreign_key "kyc_corporate_entities", "merchants", column: "applicant_id"
   add_foreign_key "kyc_documents", "kyc_principals"
   add_foreign_key "kyc_documents", "merchants", column: "applicant_id"
+  add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "child_entity_id"
+  add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "parent_entity_id"
+  add_foreign_key "kyc_ownership_edges", "kyc_documents", column: "source_document_id"
   add_foreign_key "kyc_principals", "merchants", column: "applicant_id"
 end
