@@ -15,7 +15,7 @@ RSpec.describe Kyc::ValidationWarning, type: :model do
   end
 
   describe "enums" do
-    it { is_expected.to define_enum_for(:warning_type).with_values(percentage_deviation: 0, nominee_detected: 1) }
+    it { is_expected.to define_enum_for(:warning_type).with_values(percentage_deviation: 0, nominee_detected: 1, unresolved_chain: 2) }
   end
 
   describe "#typed_metadata" do
