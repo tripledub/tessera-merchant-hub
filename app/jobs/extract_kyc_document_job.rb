@@ -14,6 +14,26 @@ class ExtractKycDocumentJob < ApplicationJob
     document.processing!
     broadcast_document(document)
 
+    if document.group_structure_chart?
+      extract_group_structure(document)
+    else
+      extract_standard(document)
+    end
+
+    broadcast_document(document)
+  rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error, Kyc::Inference::Error, Kyc::GroupStructureExtractorService::ExtractionError => e
+    document&.update!(status: :error, result: { "error" => e.message })
+    broadcast_document(document) if document
+  end
+
+  private
+
+  def extract_group_structure(document)
+    Kyc::GroupStructureExtractorService.call(document)
+    document.update!(status: :complete)
+  end
+
+  def extract_standard(document)
     response = ocr_client(document)
 
     match = PrincipalMatcherService.call(applicant: document.applicant, result: response)
@@ -33,13 +53,7 @@ class ExtractKycDocumentJob < ApplicationJob
       address_match_method: address_match&.match_method,
       address_match_confidence: address_match&.match_confidence
     )
-    broadcast_document(document)
-  rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error => e
-    document&.update!(status: :error, result: { "error" => e.message })
-    broadcast_document(document) if document
   end
-
-  private
 
   def ocr_client(document)
     if !Rails.env.production? && ENV["CLAUDE_OCR"].present?
