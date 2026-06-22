@@ -54,6 +54,7 @@ module Kyc
         Kyc::OwnershipPercentageValidator.call(@document)
         Kyc::NomineeDetector.call(@document)
         Kyc::UnresolvedChainDetector.call(@document)
+        Kyc::EffectiveUboCalculator.call(@document)
       end
     end
 

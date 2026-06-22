@@ -15,7 +15,7 @@ RSpec.describe Kyc::ValidationWarning, type: :model do
   end
 
   describe "enums" do
-    it { is_expected.to define_enum_for(:warning_type).with_values(percentage_deviation: 0, nominee_detected: 1, unresolved_chain: 2) }
+    it { is_expected.to define_enum_for(:warning_type).with_values(percentage_deviation: 0, nominee_detected: 1, unresolved_chain: 2, ubo_threshold_exceeded: 3) }
   end
 
   describe "#typed_metadata" do
@@ -40,6 +40,26 @@ RSpec.describe Kyc::ValidationWarning, type: :model do
         expect(typed.expected).to eq(100.0)
         expect(typed.actual).to eq(98.16)
         expect(typed.deviation).to eq(1.84)
+      end
+    end
+
+    context "when ubo_threshold_exceeded" do
+      it "returns a UboThreshold StoreModel" do
+        warning = described_class.create!(
+          applicant: applicant,
+          kyc_document: document,
+          corporate_entity: entity,
+          warning_type: :ubo_threshold_exceeded,
+          message: "UBO identified: Alice Smith has 61.76% effective ownership of Acme Holdings Ltd",
+          metadata: { individual_name: "Alice Smith", effective_percentage: 61.76, threshold: 25.0 }
+        )
+
+        warning.reload
+        typed = warning.typed_metadata
+        expect(typed).to be_a(Kyc::ValidationWarningMetadata::UboThreshold)
+        expect(typed.individual_name).to eq("Alice Smith")
+        expect(typed.effective_percentage).to eq(61.76)
+        expect(typed.threshold).to eq(25.0)
       end
     end
 
