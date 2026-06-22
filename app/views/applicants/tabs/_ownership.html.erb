@@ -1,9 +1,86 @@
-<%# Ownership tab — populated in MH-110 %>
-<div class="py-8 text-center">
-  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-          d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>
-  </svg>
-  <h3 class="mt-2 text-sm font-semibold text-gray-800 dark:text-white/90"><%= t('.empty_title') %></h3>
-  <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.empty_description') %></p>
-</div>
+<%# Ownership tab — entity and edge tables via Kyc::OwnershipPresenter %>
+<% present(applicant, Kyc::OwnershipPresenter) do |p| %>
+  <% if p.has_data? %>
+    <%# Summary stats %>
+    <div class="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.entity_count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.total_entities') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.individual_count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.individuals') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.corporate_count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.corporates') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.edge_count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.relationships') %></p>
+      </div>
+    </div>
+
+    <%# Entities table %>
+    <div class="mb-6">
+      <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.entities_heading') %>
+      </h3>
+      <table class="w-full text-left text-theme-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-800">
+            <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.name') %></th>
+            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.type') %></th>
+            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.jurisdiction') %></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+          <% p.entities.each do |entity| %>
+            <tr>
+              <td class="py-2 pr-4 text-gray-800 dark:text-white/90"><%= entity.name %></td>
+              <td class="px-4 py-2"><%= p.entity_type_badge(entity) %></td>
+              <td class="px-4 py-2 text-gray-500 dark:text-gray-400"><%= entity.jurisdiction || "—" %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+
+    <%# Ownership edges table %>
+    <div>
+      <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.edges_heading') %>
+      </h3>
+      <table class="w-full text-left text-theme-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-800">
+            <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.parent') %></th>
+            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.child') %></th>
+            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.relationship') %></th>
+            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.percentage') %></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+          <% p.edges.each do |edge| %>
+            <tr>
+              <td class="py-2 pr-4 text-gray-800 dark:text-white/90"><%= edge.parent_entity.name %></td>
+              <td class="px-4 py-2 text-gray-800 dark:text-white/90"><%= edge.child_entity.name %></td>
+              <td class="px-4 py-2"><%= p.relationship_type_badge(edge) %></td>
+              <td class="px-4 py-2 text-gray-800 dark:text-white/90"><%= p.formatted_percentage(edge) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <%# Empty state %>
+    <div class="py-8 text-center">
+      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M3.75 21h16.5M4.5 3h15M5.25 3v18m13.5-18v18M9 6.75h1.5m-1.5 3h1.5m-1.5 3h1.5m3-6H15m-1.5 3H15m-1.5 3H15M9 21v-3.375c0-.621.504-1.125 1.125-1.125h3.75c.621 0 1.125.504 1.125 1.125V21"/>
+      </svg>
+      <h3 class="mt-2 text-sm font-semibold text-gray-800 dark:text-white/90"><%= t('.empty_title') %></h3>
+      <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.empty_description') %></p>
+    </div>
+  <% end %>
+<% end %>

@@ -125,9 +125,23 @@ en:
         summary: Summary
         warnings_count: Warnings
       ownership:
+        corporates: Corporates
+        edges_heading: Ownership Relationships
         empty_description: Upload and extract a group structure chart to see ownership
           data here.
         empty_title: No ownership data
+        entities_heading: Entities
+        individuals: Individuals
+        relationships: Relationships
+        table:
+          child: Child
+          jurisdiction: Jurisdiction
+          name: Name
+          parent: Parent
+          percentage: "%"
+          relationship: Type
+          type: Type
+        total_entities: Entities
   devise:
     failure:
       deactivated: Your account has been deactivated. Please contact your administrator.
