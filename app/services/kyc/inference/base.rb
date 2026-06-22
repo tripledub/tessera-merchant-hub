@@ -3,8 +3,8 @@
 module Kyc
   module Inference
     class Base
-      def extract_group_structure(document)
-        raise NotImplementedError, "#{self.class}#extract_group_structure must be implemented"
+      def extract(document:, prompt:)
+        raise NotImplementedError, "#{self.class}#extract must be implemented"
       end
     end
   end

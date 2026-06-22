@@ -6,16 +6,16 @@ RSpec.describe Kyc::GroupStructureExtractorService, type: :service do
   let(:applicant) { create(:applicant) }
   let(:document) { create(:kyc_document, applicant: applicant, document_type: :group_structure_chart) }
 
-  let(:inference_response) do
+  let(:raw_response) do
     {
-      entities: [
-        { name: "Northwind Holdings Ltd", type: "corporate", jurisdiction: "GB" },
-        { name: "Jane Doe", type: "individual", jurisdiction: nil },
-        { name: "Southgate Trading Ltd", type: "corporate", jurisdiction: "CY" }
+      "entities" => [
+        { "name" => "Northwind Holdings Ltd", "type" => "corporate", "jurisdiction" => "GB" },
+        { "name" => "Jane Doe", "type" => "individual", "jurisdiction" => nil },
+        { "name" => "Southgate Trading Ltd", "type" => "corporate", "jurisdiction" => "CY" }
       ],
-      edges: [
-        { parent: "Jane Doe", child: "Northwind Holdings Ltd", relationship_type: "equity", percentage: 100.0 },
-        { parent: "Northwind Holdings Ltd", child: "Southgate Trading Ltd", relationship_type: "nominee", percentage: 100.0 }
+      "edges" => [
+        { "parent" => "Jane Doe", "child" => "Northwind Holdings Ltd", "relationship_type" => "equity", "percentage" => 100.0 },
+        { "parent" => "Northwind Holdings Ltd", "child" => "Southgate Trading Ltd", "relationship_type" => "nominee", "percentage" => 100.0 }
       ]
     }
   end
@@ -24,7 +24,7 @@ RSpec.describe Kyc::GroupStructureExtractorService, type: :service do
 
   before do
     allow(Kyc::Inference).to receive(:adapter).and_return(mock_adapter)
-    allow(mock_adapter).to receive(:extract_group_structure).with(document).and_return(inference_response)
+    allow(mock_adapter).to receive(:extract).with(document: document, prompt: described_class::PROMPT).and_return(raw_response)
   end
 
   describe ".call" do
@@ -90,9 +90,9 @@ RSpec.describe Kyc::GroupStructureExtractorService, type: :service do
     end
 
     it "rolls back all records if an edge references a missing entity" do
-      bad_response = inference_response.deep_dup
-      bad_response[:edges] << { parent: "Ghost Corp", child: "Northwind Holdings Ltd", relationship_type: "equity", percentage: 50.0 }
-      allow(mock_adapter).to receive(:extract_group_structure).and_return(bad_response)
+      bad_response = raw_response.deep_dup
+      bad_response["edges"] << { "parent" => "Ghost Corp", "child" => "Northwind Holdings Ltd", "relationship_type" => "equity", "percentage" => 50.0 }
+      allow(mock_adapter).to receive(:extract).and_return(bad_response)
 
       expect { described_class.call(document) }
         .to raise_error(Kyc::GroupStructureExtractorService::ExtractionError, /entity not found.*Ghost Corp/i)
