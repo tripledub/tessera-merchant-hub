@@ -39,6 +39,7 @@
 !/app/assets/builds/.keep
 /coverage
 .claude/worktrees/
+.claude/launch.json
 .worktrees/
 .superpowers/
 /docs/superpowers/
