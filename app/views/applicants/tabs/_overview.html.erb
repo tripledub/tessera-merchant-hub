@@ -1,0 +1,66 @@
+<%# Overview tab — applicant details and compliance summary %>
+<div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+  <div>
+    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <%= t('.details') %>
+    </h3>
+    <dl class="space-y-2">
+      <% if applicant.company_name.present? %>
+        <div class="flex justify-between">
+          <dt class="text-theme-sm font-medium text-gray-500 dark:text-gray-400"><%= t('.company') %></dt>
+          <dd class="text-theme-sm text-gray-800 dark:text-white/90"><%= applicant.company_name %></dd>
+        </div>
+      <% end %>
+      <% if applicant.contact_email.present? %>
+        <div class="flex justify-between">
+          <dt class="text-theme-sm font-medium text-gray-500 dark:text-gray-400"><%= t('.email') %></dt>
+          <dd class="text-theme-sm text-gray-800 dark:text-white/90"><%= applicant.contact_email %></dd>
+        </div>
+      <% end %>
+      <% if applicant.country.present? %>
+        <div class="flex justify-between">
+          <dt class="text-theme-sm font-medium text-gray-500 dark:text-gray-400"><%= t('.country') %></dt>
+          <dd class="text-theme-sm text-gray-800 dark:text-white/90"><%= applicant.country %></dd>
+        </div>
+      <% end %>
+      <div class="flex justify-between">
+        <dt class="text-theme-sm font-medium text-gray-500 dark:text-gray-400"><%= t('.status') %></dt>
+        <dd class="text-theme-sm">
+          <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium
+            <%= applicant.approved? ? 'bg-green-50 text-green-700 dark:bg-green-500/10 dark:text-green-400' :
+                applicant.rejected? ? 'bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400' :
+                'bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400' %>">
+            <%= applicant.status.humanize %>
+          </span>
+        </dd>
+      </div>
+    </dl>
+  </div>
+
+  <div>
+    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <%= t('.summary') %>
+    </h3>
+    <div class="grid grid-cols-2 gap-3">
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= applicant.kyc_principals.count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.principals_count') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= applicant.kyc_documents.count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.documents_count') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= applicant.corporate_entities.count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.entities_count') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <% warning_count = applicant.validation_warnings.where(acknowledged: false).count %>
+        <p class="text-2xl font-semibold <%= warning_count > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-white/90' %>">
+          <%= warning_count %>
+        </p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.warnings_count') %></p>
+      </div>
+    </div>
+  </div>
+</div>

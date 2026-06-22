@@ -1,0 +1,30 @@
+<%# Principals tab — moved from applicants/show.html.erb %>
+<div class="mb-4 flex items-center justify-between">
+  <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+    <%= t('applicants.show.sections.principals') %>
+  </h2>
+  <% if policy(KycPrincipal).new? %>
+    <%= link_to t('applicants.show.add_principal'), new_applicant_kyc_principal_path(applicant),
+          class: "btn-secondary",
+          data: { turbo_frame: "principal-modal" } %>
+  <% end %>
+</div>
+
+<table class="w-full text-left text-theme-sm">
+  <thead>
+    <tr class="border-b border-gray-200 dark:border-gray-800">
+      <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('applicants.show.principals.table.name') %></th>
+      <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('applicants.show.principals.table.role') %></th>
+      <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('applicants.show.principals.table.actions') %></th>
+    </tr>
+  </thead>
+  <tbody id="principals-list" class="divide-y divide-gray-100 dark:divide-gray-800">
+    <% if @kyc_principals.empty? %>
+      <tr id="principals-empty">
+        <td colspan="3" class="py-4 text-theme-sm text-gray-500"><%= t('applicants.show.principals.empty') %></td>
+      </tr>
+    <% else %>
+      <%= render partial: "kyc_principals/principal_row", collection: @kyc_principals, as: :kyc_principal %>
+    <% end %>
+  </tbody>
+</table>
