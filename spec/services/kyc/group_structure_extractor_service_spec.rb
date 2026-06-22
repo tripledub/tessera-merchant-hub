@@ -118,21 +118,28 @@ RSpec.describe Kyc::GroupStructureExtractorService, type: :service do
         expect(Kyc::OwnershipPercentageValidator).to have_received(:call).with(document)
       end
 
+      it "runs nominee detection after extraction" do
+        allow(Kyc::NomineeDetector).to receive(:call)
+
+        described_class.call(document)
+
+        expect(Kyc::NomineeDetector).to have_received(:call).with(document)
+      end
+
       it "clears previous warnings before re-extraction" do
         described_class.call(document)
 
-        Kyc::ValidationWarning.create!(
+        stale = Kyc::ValidationWarning.create!(
           applicant: applicant,
           kyc_document: document,
           warning_type: :percentage_deviation,
           message: "stale warning",
           metadata: { expected: 100.0, actual: 50.0, deviation: 50.0 }
         )
-        expect(Kyc::ValidationWarning.count).to eq(1)
 
         described_class.call(document)
 
-        expect(Kyc::ValidationWarning.where(kyc_document: document, message: "stale warning").count).to eq(0)
+        expect(Kyc::ValidationWarning.exists?(stale.id)).to be false
       end
     end
   end

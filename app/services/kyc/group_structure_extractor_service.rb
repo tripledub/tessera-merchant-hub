@@ -52,6 +52,7 @@ module Kyc
         @document.update!(extracted_data: raw)
 
         Kyc::OwnershipPercentageValidator.call(@document)
+        Kyc::NomineeDetector.call(@document)
       end
     end
 
