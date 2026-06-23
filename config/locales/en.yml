@@ -111,8 +111,15 @@ en:
         principals: Principals
     tabs:
       compliance:
+        acknowledge: Acknowledge
+        acknowledged: Acknowledged
+        deviations: Deviations
         empty_description: Compliance warnings will appear here after document extraction.
         empty_title: No compliance warnings
+        nominees: Nominees
+        total: Total
+        ubos: UBOs
+        unacknowledged: Open
       overview:
         company: Company
         country: Country
