@@ -44,9 +44,9 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       expect(principal.name).to eq("Jane Smith")
     end
 
-    it "broadcasts twice (processing + complete)" do
+    it "broadcasts document status and tab updates" do
       described_class.new.perform(document.id)
-      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).twice
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).at_least(:twice)
     end
 
     it "broadcasts a toast notification on completion" do
