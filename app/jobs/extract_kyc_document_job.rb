@@ -21,9 +21,13 @@ class ExtractKycDocumentJob < ApplicationJob
     end
 
     broadcast_document(document)
+    broadcast_toast(document)
   rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error, Kyc::Inference::Error, Kyc::GroupStructureExtractorService::ExtractionError => e
     document&.update!(status: :error, result: { "error" => e.message })
-    broadcast_document(document) if document
+    if document
+      broadcast_document(document)
+      broadcast_toast(document)
+    end
   end
 
   private
@@ -64,6 +68,22 @@ class ExtractKycDocumentJob < ApplicationJob
         document_key: document.file.key
       )
     end
+  end
+
+  def broadcast_toast(document)
+    type = document.error? ? :error : :success
+    message = if document.error?
+      "Extraction failed: #{document.file.filename}"
+    else
+      "Extraction complete: #{document.file.filename}"
+    end
+
+    Turbo::StreamsChannel.broadcast_append_to(
+      "applicant_#{document.applicant_id}_documents",
+      target: "toast-container",
+      partial: "shared/toast",
+      locals: { message: message, type: type }
+    )
   end
 
   def broadcast_document(document)
