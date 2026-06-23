@@ -121,11 +121,8 @@ en:
         ubos: UBOs
         unacknowledged: Open
       overview:
-        company: Company
-        country: Country
         details: Details
         documents_count: Documents
-        email: Email
         entities_count: Entities
         principals_count: Principals
         status: Status
