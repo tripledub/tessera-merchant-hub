@@ -395,17 +395,6 @@ aside[data-collapsed] .menu-item {
   @apply text-gray-400 cursor-default dark:text-gray-600;
 }
 
-/* ─── Flash messages ─────────────────────────────────────────────────────── */
-
-@utility flash-notice {
-  @apply rounded-lg border border-success-200 bg-success-50 px-4 py-3 text-theme-sm text-success-800
-         dark:border-success-800 dark:bg-success-500/[0.12] dark:text-success-400;
-}
-
-@utility flash-alert {
-  @apply rounded-lg border border-error-200 bg-error-50 px-4 py-3 text-theme-sm text-error-800
-         dark:border-error-800 dark:bg-error-500/[0.12] dark:text-error-400;
-}
 
 /* ─── Flatpickr date-picker theming ─────────────────────────────────────── */
 

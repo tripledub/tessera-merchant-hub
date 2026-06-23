@@ -1,13 +1,43 @@
 <% flash.each do |type, message| %>
   <% next if message.blank? %>
   <%
-    css = case type.to_s
-          when "notice" then "flash-notice"
-          when "alert"  then "flash-alert"
-          else "rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-theme-sm text-gray-800"
-          end
+    classes = case type.to_s
+              when "notice"
+                "border-success-500 bg-success-50 dark:border-success-500/30 dark:bg-success-500/15"
+              when "alert"
+                "border-error-500 bg-error-50 dark:border-error-500/30 dark:bg-error-500/15"
+              else
+                "border-blue-light-500 bg-blue-light-50 dark:border-blue-light-500/30 dark:bg-blue-light-500/15"
+              end
+    icon_class = case type.to_s
+                 when "notice" then "text-success-500"
+                 when "alert" then "text-error-500"
+                 else "text-blue-light-500"
+                 end
   %>
-  <div class="<%= css %>" role="status" data-testid="flash-<%= type %>">
-    <%= message %>
+  <div class="rounded-xl border <%= classes %> p-4"
+       role="status"
+       data-testid="flash-<%= type %>"
+       data-controller="toast"
+       data-toast-dismiss-after-value="5000">
+    <div class="flex items-start gap-3">
+      <div class="-mt-0.5 <%= icon_class %>">
+        <% case type.to_s %>
+        <% when "notice" %>
+          <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M3.7 12a8.3 8.3 0 1 1 16.6 0 8.3 8.3 0 0 1-16.6 0ZM12 1.9a10.1 10.1 0 1 0 0 20.2 10.1 10.1 0 0 0 0-20.2Zm3.62 8.84a.9.9 0 0 0-1.27-1.27l-3.16 3.16-1.54-1.54a.9.9 0 0 0-1.27 1.27l2.17 2.17a.9.9 0 0 0 1.27 0l3.8-3.8Z" fill=""/>
+          </svg>
+        <% when "alert" %>
+          <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M20.35 12a8.35 8.35 0 1 1-16.7 0 8.35 8.35 0 0 1 16.7 0ZM12 22.15a10.15 10.15 0 1 0 0-20.3 10.15 10.15 0 0 0 0 20.3Zm1-5.68a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM12 6.63a.75.75 0 0 1 .75.75v5.68a.75.75 0 0 1-1.5 0V7.38a.75.75 0 0 1 .75-.75Z" fill=""/>
+          </svg>
+        <% else %>
+          <svg class="fill-current" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path fill-rule="evenodd" clip-rule="evenodd" d="M3.5 12a8.5 8.5 0 1 1 17 0 8.5 8.5 0 0 1-17 0ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 5.53a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm1 2.66a.75.75 0 0 1 .75.75v5.68a.75.75 0 0 1-1.5 0v-5.68a.75.75 0 0 1 .75-.75Z" fill=""/>
+          </svg>
+        <% end %>
+      </div>
+      <p class="text-sm font-medium text-gray-800 dark:text-white/90"><%= message %></p>
+    </div>
   </div>
 <% end %>
