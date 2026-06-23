@@ -16,7 +16,7 @@
 <div id="extraction-progress-container">
   <% processing_count = applicant.kyc_documents.where(status: [:processing, :pending]).where(classification_status: :confirmed).count %>
   <% if processing_count > 0 %>
-    <% total = applicant.kyc_documents.where(classification_status: :confirmed).count %>
+    <% total = processing_count %>
     <%= render "kyc/documents/extraction_progress", total: total %>
   <% end %>
 </div>

@@ -10,7 +10,7 @@ class Kyc::ExtractionRunsController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
-        total = applicant.kyc_documents.where(classification_status: :confirmed).count
+        total = docs.size
         render turbo_stream: [
           turbo_stream.append(
             "toast-container",
