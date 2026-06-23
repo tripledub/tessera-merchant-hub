@@ -10,11 +10,19 @@ class Kyc::ExtractionRunsController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.append(
-          "toast-container",
-          partial: "shared/toast",
-          locals: { message: t("flash.kyc_documents.extraction_started", count: docs.size), type: :info }
-        )
+        total = applicant.kyc_documents.where(classification_status: :confirmed).count
+        render turbo_stream: [
+          turbo_stream.append(
+            "toast-container",
+            partial: "shared/toast",
+            locals: { message: t("flash.kyc_documents.extraction_started", count: docs.size), type: :info }
+          ),
+          turbo_stream.update(
+            "extraction-progress-container",
+            partial: "kyc/documents/extraction_progress",
+            locals: { total: total }
+          )
+        ]
       end
       format.html do
         redirect_to applicant_path(applicant),
