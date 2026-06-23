@@ -18,6 +18,7 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
     stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")
       .to_return(status: 200, body: ocr_response.to_json, headers: { "Content-Type" => "application/json" })
     allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
+    allow(Turbo::StreamsChannel).to receive(:broadcast_append_to)
   end
 
   describe "#perform" do
@@ -46,6 +47,16 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
     it "broadcasts twice (processing + complete)" do
       described_class.new.perform(document.id)
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).twice
+    end
+
+    it "broadcasts a toast notification on completion" do
+      described_class.new.perform(document.id)
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_append_to).with(
+        "applicant_#{applicant.id}_documents",
+        target: "toast-container",
+        partial: "shared/toast",
+        locals: hash_including(type: :success)
+      )
     end
 
     context "when classification is not confirmed" do
@@ -144,6 +155,16 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
         document.reload
         expect(document.status).to eq("error")
         expect(document.result["error"]).to include("503")
+      end
+
+      it "broadcasts an error toast notification" do
+        described_class.new.perform(document.id)
+        expect(Turbo::StreamsChannel).to have_received(:broadcast_append_to).with(
+          "applicant_#{applicant.id}_documents",
+          target: "toast-container",
+          partial: "shared/toast",
+          locals: hash_including(type: :error)
+        )
       end
     end
   end

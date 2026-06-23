@@ -1,0 +1,16 @@
+<div id="toast_<%= SecureRandom.hex(4) %>"
+     data-controller="toast"
+     data-toast-dismiss-after-value="<%= local_assigns[:dismiss_after] || 5000 %>"
+     class="flex items-center gap-3 rounded-lg border px-4 py-3 shadow-lg transition-all duration-300 translate-x-full opacity-0
+       <%= case local_assigns[:type]&.to_s
+           when 'success' then 'border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900/50 dark:text-green-300'
+           when 'error' then 'border-red-200 bg-red-50 text-red-800 dark:border-red-800 dark:bg-red-900/50 dark:text-red-300'
+           else 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-900/50 dark:text-blue-300'
+           end %>">
+  <p class="text-sm font-medium"><%= message %></p>
+  <button data-action="click->toast#dismiss" class="ml-auto text-current opacity-50 hover:opacity-100">
+    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+  </button>
+</div>
