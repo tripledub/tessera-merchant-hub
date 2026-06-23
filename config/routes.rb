@@ -16,6 +16,7 @@ Rails.application.routes.draw do
   resources :merchants, only: %i[new create index show edit update]
 
   resources :applicants, only: %i[new create index show edit update] do
+    get "tab/:tab", action: :tab, as: :tab, on: :member
     namespace :kyc do
       resource :extraction_run, only: :create
       resources :principals, only: %i[new create show edit update destroy], shallow: true do

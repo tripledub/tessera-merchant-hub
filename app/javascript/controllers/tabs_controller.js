@@ -2,12 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 
 // Tabs with underline and icon — based on tailadmin tab-03 pattern.
 // Manages active tab state, URL hash persistence, and panel visibility.
-//
-// Usage:
-//   <div data-controller="tabs" data-tabs-default-value="overview">
-//     <button data-tabs-target="tab" data-tab="overview" data-action="click->tabs#select">Overview</button>
-//     <div data-tabs-target="panel" data-tab="overview">...</div>
-//   </div>
+// Panels with data-tab-src fetch fresh content on each activation.
 export default class extends Controller {
   static targets = ["tab", "panel"]
   static values = { default: { type: String, default: "overview" } }
@@ -37,8 +32,32 @@ export default class extends Controller {
     })
 
     this.panelTargets.forEach(panel => {
-      panel.hidden = panel.dataset.tab !== name
+      const isActive = panel.dataset.tab === name
+      panel.hidden = !isActive
+
+      if (isActive && panel.dataset.tabSrc) {
+        this.#fetchContent(panel)
+      }
     })
+  }
+
+  async #fetchContent(panel) {
+    try {
+      const response = await fetch(panel.dataset.tabSrc, {
+        headers: { "Accept": "text/html" }
+      })
+      if (response.ok) {
+        const html = await response.text()
+        const content = panel.querySelector("[id$='-tab-content']")
+        if (content) {
+          content.innerHTML = html
+        } else {
+          panel.innerHTML = html
+        }
+      }
+    } catch (e) {
+      // Silently fail — stale content is better than an error
+    }
   }
 
   #validTab(name) {

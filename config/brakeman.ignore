@@ -15,6 +15,10 @@
     {
       "fingerprint": "9b7412139d36c493cb065148c3135b62d971a24cfd2077bf4676a6cae3c4ef70",
       "note": "all fields are benign personal/address data; role uses an enum; action is psp-admin only guarded by Pundit"
+    },
+    {
+      "fingerprint": "952ee9dd2f98dbb51ceb3f958156e1d1fdf68fe17a76146acd83693b484d9111",
+      "note": "tab param is validated against an explicit allowlist before render; only 5 known partials"
     }
   ]
 }

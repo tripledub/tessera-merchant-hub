@@ -22,7 +22,6 @@ class ExtractKycDocumentJob < ApplicationJob
 
     broadcast_document(document)
     broadcast_toast(document)
-    broadcast_tabs(document)
   rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error, Kyc::Inference::Error, Kyc::GroupStructureExtractorService::ExtractionError => e
     document&.update!(status: :error, result: { "error" => e.message })
     if document
@@ -84,31 +83,6 @@ class ExtractKycDocumentJob < ApplicationJob
       target: "toast-container",
       partial: "shared/toast",
       locals: { message: message, type: type }
-    )
-  end
-
-  def broadcast_tabs(document)
-    applicant = document.applicant
-
-    Turbo::StreamsChannel.broadcast_replace_to(
-      "applicant_#{applicant.id}_tabs",
-      target: "overview-tab-content",
-      partial: "applicants/tabs/overview",
-      locals: { applicant: applicant }
-    )
-
-    Turbo::StreamsChannel.broadcast_replace_to(
-      "applicant_#{applicant.id}_tabs",
-      target: "ownership-tab-content",
-      partial: "applicants/tabs/ownership",
-      locals: { applicant: applicant }
-    )
-
-    Turbo::StreamsChannel.broadcast_replace_to(
-      "applicant_#{applicant.id}_tabs",
-      target: "compliance-tab-content",
-      partial: "applicants/tabs/compliance",
-      locals: { applicant: applicant }
     )
   end
 
