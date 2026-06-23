@@ -7,7 +7,7 @@ class Kyc::ExtractionRunsController < ApplicationController
     authorize applicant, :run_extraction?
     docs = applicant.kyc_documents.where(classification_status: :confirmed, status: :pending)
     docs.each { |doc| ExtractKycDocumentJob.perform_later(doc.id) }
-    redirect_to applicant_path(applicant),
+    redirect_to applicant_path(applicant, anchor: "documents"),
       notice: t("flash.kyc_documents.extraction_started", count: docs.size)
   end
 end
