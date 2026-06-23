@@ -11,14 +11,24 @@ RSpec.describe "ExtractionRuns", type: :request do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
 
-      it "enqueues extraction for confirmed documents and redirects" do
+      it "enqueues extraction for confirmed documents and responds with toast" do
         doc = create(:kyc_document, applicant: applicant, document_type: :passport,
           classification_status: :confirmed, status: :pending)
 
         expect {
-          post applicant_kyc_extraction_run_path(applicant)
+          post applicant_kyc_extraction_run_path(applicant),
+            headers: { "Accept" => "text/vnd.turbo-stream.html" }
         }.to have_enqueued_job(ExtractKycDocumentJob).with(doc.id)
-        expect(response).to redirect_to(applicant_path(applicant, anchor: "documents"))
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("turbo-stream")
+      end
+
+      it "falls back to redirect for non-Turbo requests" do
+        create(:kyc_document, applicant: applicant, document_type: :passport,
+          classification_status: :confirmed, status: :pending)
+
+        post applicant_kyc_extraction_run_path(applicant)
+        expect(response).to redirect_to(applicant_path(applicant))
       end
 
       it "does not enqueue extraction for unconfirmed documents" do
