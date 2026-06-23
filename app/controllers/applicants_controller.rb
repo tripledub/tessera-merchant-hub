@@ -20,7 +20,8 @@ class ApplicantsController < ApplicationController
   def show
     authorize applicant
     @kyc_principals = applicant.kyc_principals.order(:name)
-    @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal).order(:created_at)
+    @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal)
+                        .order(Arel.sql("CASE status WHEN 1 THEN 0 WHEN 0 THEN 1 WHEN 3 THEN 2 WHEN 2 THEN 3 END"), :created_at)
   end
 
   def new
