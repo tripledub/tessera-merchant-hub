@@ -19,7 +19,11 @@ class Kyc::DocumentLinksController < ApplicationController
     authorize document, :reject_link?
     document.update!(kyc_principal: nil, match_method: nil, match_confidence: nil)
     broadcast_document(document)
-    head :ok
+
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.remove(dom_id(document)) }
+      format.html { redirect_back fallback_location: applicant_path(document.applicant) }
+    end
   end
 
   private
