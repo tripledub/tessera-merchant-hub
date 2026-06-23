@@ -210,6 +210,7 @@ en:
           rejected: Rejected
           unclassified: Unclassified
       confirm: Confirm
+      confirm_match: Confirm principal match
       delete: Delete document
       document_types:
         aml_ctf_policy: AML/CTF Policy
@@ -243,7 +244,7 @@ en:
         fuzzy: Fuzzy match
       principal_status:
         unconfirmed: Unconfirmed
-      reject: Reject
+      reject_match: Reject principal match
       retry: Retry
       status:
         complete: Complete
