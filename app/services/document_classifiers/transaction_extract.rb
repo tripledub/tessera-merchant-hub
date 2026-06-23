@@ -5,7 +5,7 @@ module DocumentClassifiers
     register handler: :transaction_extract
 
     def self.pattern
-      /extract/i
+      /transaction\s*extract|extract\s*[-–]\s*\d/i
     end
   end
 end
