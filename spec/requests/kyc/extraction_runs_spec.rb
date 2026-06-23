@@ -18,7 +18,7 @@ RSpec.describe "ExtractionRuns", type: :request do
         expect {
           post applicant_kyc_extraction_run_path(applicant)
         }.to have_enqueued_job(ExtractKycDocumentJob).with(doc.id)
-        expect(response).to redirect_to(applicant_path(applicant))
+        expect(response).to redirect_to(applicant_path(applicant, anchor: "documents"))
       end
 
       it "does not enqueue extraction for unconfirmed documents" do
