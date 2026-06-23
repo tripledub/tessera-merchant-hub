@@ -20,7 +20,8 @@ export default class extends Controller {
   }
 
   dismiss() {
-    this.element.classList.add("translate-x-full", "opacity-0")
+    this.element.classList.add("opacity-0")
+    this.element.style.transition = "opacity 300ms ease-out"
     setTimeout(() => this.element.remove(), 300)
   }
 }
