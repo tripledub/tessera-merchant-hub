@@ -24,6 +24,19 @@ class ApplicantsController < ApplicationController
                         .order(Arel.sql("CASE status WHEN 1 THEN 0 WHEN 0 THEN 1 WHEN 3 THEN 2 WHEN 2 THEN 3 END"), :created_at)
   end
 
+  def tab
+    authorize applicant
+    tab_name = params[:tab]
+    allowed = %w[overview principals documents ownership compliance]
+    head(:not_found) and return unless allowed.include?(tab_name)
+
+    @kyc_principals = applicant.kyc_principals.order(:name) if tab_name == "principals"
+    @kyc_documents = applicant.kyc_documents.includes(:kyc_principal)
+                       .order(Arel.sql("CASE status WHEN 1 THEN 0 WHEN 0 THEN 1 WHEN 3 THEN 2 WHEN 2 THEN 3 END"), :created_at) if tab_name == "documents"
+
+    render partial: "applicants/tabs/#{tab_name}", locals: { applicant: applicant }, layout: false
+  end
+
   def new
     authorize Applicant, :new?
     @applicant = Applicant.new
