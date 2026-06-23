@@ -39,7 +39,8 @@ RSpec.describe DocumentClassifiers do
       "Example Co - Anti-Money Laundering and Counter-Terrorism Financing Policy.pdf" => :aml_ctf_policy,
       "Example Co - AML_KYC Requirements.pdf" => :aml_kyc_requirements,
       "Processor Inc - Source Of Wealth Questionnaire - SIGNED.pdf" => :source_of_wealth_questionnaire,
-      "Processor Inc - AML CTF questionnaire v1.1 (2).pdf" => :aml_ctf_questionnaire
+      "Processor Inc - AML CTF questionnaire v1.1 (2).pdf" => :aml_ctf_questionnaire,
+      "Jane Doe - Driving Licence - 01-06-2028.pdf" => :driving_licence
     }.each do |sample_filename, expected_type|
       context "with '#{sample_filename}'" do
         let(:filename) { sample_filename }
