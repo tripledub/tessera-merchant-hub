@@ -5,6 +5,8 @@
 # PATCH  /kyc_document_links/:id  — confirm the automated link
 # DELETE /kyc_document_links/:id  — reject the link (unlink document from principal)
 class Kyc::DocumentLinksController < ApplicationController
+  include ActionView::RecordIdentifier
+
   expose(:document) { KycDocument.find(params[:id]) }
 
   def update
