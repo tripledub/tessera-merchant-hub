@@ -40,10 +40,20 @@ class Kyc::DocumentsController < ApplicationController
       saved += 1
     end
 
-    if saved.zero?
-      redirect_to applicant_path(applicant), alert: t("flash.kyc_documents.no_files")
-    else
-      redirect_to applicant_path(applicant), notice: t("flash.kyc_documents.upload_success", count: saved)
+    message = saved.zero? ? t("flash.kyc_documents.no_files") : t("flash.kyc_documents.upload_success", count: saved)
+    type = saved.zero? ? :error : :success
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.append(
+          "toast-container",
+          partial: "shared/toast",
+          locals: { message: message, type: type }
+        )
+      end
+      format.html do
+        redirect_to applicant_path(applicant), saved.zero? ? { alert: message } : { notice: message }
+      end
     end
   end
 
