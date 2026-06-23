@@ -1,0 +1,8 @@
+<% if policy(applicant).run_extraction? %>
+  <%= button_to applicant_kyc_extraction_run_path(applicant),
+        method: :post,
+        class: "btn-primary",
+        data: { turbo_confirm: t('applicants.show.documents.run_extraction_confirm') } do %>
+    <%= t('applicants.show.documents.run_extraction') %>
+  <% end %>
+<% end %>

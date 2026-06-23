@@ -8,14 +8,7 @@
             total_count: @kyc_documents.size %>
     <% end %>
   </h2>
-  <% if policy(applicant).run_extraction? && applicant.kyc_documents.where(classification_status: :confirmed, status: :pending).any? %>
-    <%= button_to applicant_kyc_extraction_run_path(applicant),
-          method: :post,
-          class: "btn-primary",
-          data: { turbo_confirm: t('applicants.show.documents.run_extraction_confirm') } do %>
-      <%= t('applicants.show.documents.run_extraction') %>
-    <% end %>
-  <% end %>
+  <%= render "kyc/documents/extraction_button", applicant: applicant %>
 </div>
 
 <%= turbo_stream_from "applicant_#{applicant.id}_documents" %>
