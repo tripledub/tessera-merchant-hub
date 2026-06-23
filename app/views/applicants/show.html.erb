@@ -40,7 +40,7 @@
         </div>
       </div>
 
-      <div data-tabs-target="panel" data-tab="principals" hidden>
+      <div data-tabs-target="panel" data-tab="principals" hidden data-tab-src="<%= tab_applicant_path(applicant, tab: 'principals') %>">
         <%= render "applicants/tabs/principals", applicant: applicant %>
       </div>
 
