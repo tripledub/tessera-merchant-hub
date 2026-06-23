@@ -5,41 +5,46 @@ export default class extends Controller {
   static values = { total: Number }
 
   connect() {
-    this.completed = 0
-    this.observer = new MutationObserver(() => this.recalculate())
+    this.baselineComplete = this.countComplete()
+    this.update(0)
 
-    const docList = document.querySelector(".space-y-2")
-    if (docList) {
-      this.observer.observe(docList, { childList: true, subtree: true, attributes: true })
-    }
+    document.addEventListener("turbo:before-stream-render", this.boundRecalculate = () => {
+      setTimeout(() => this.recalculate(), 100)
+    })
   }
 
   disconnect() {
-    if (this.observer) this.observer.disconnect()
+    if (this.boundRecalculate) {
+      document.removeEventListener("turbo:before-stream-render", this.boundRecalculate)
+    }
   }
 
   recalculate() {
-    // Count documents with Complete or Error badges
-    const cards = document.querySelectorAll("[id^='kyc_document_']")
-    let done = 0
-    cards.forEach(card => {
-      const text = card.textContent
-      if (text.includes("Complete") || text.includes("Error")) done++
-    })
-
-    // Only update if we're actually tracking (total > 0)
     if (this.totalValue === 0) return
+    const newlyDone = this.countComplete() - this.baselineComplete
+    this.update(Math.max(0, newlyDone))
+  }
 
-    this.completed = done
-    const pct = Math.round((done / this.totalValue) * 100)
+  update(done) {
+    const pct = this.totalValue > 0 ? Math.round((done / this.totalValue) * 100) : 0
 
-    this.barTarget.style.width = `${pct}%`
-    this.counterTarget.textContent = `${done} of ${this.totalValue}`
+    if (this.hasBarTarget) this.barTarget.style.width = `${pct}%`
+    if (this.hasCounterTarget) this.counterTarget.textContent = `${done} of ${this.totalValue}`
 
-    if (done >= this.totalValue) {
+    if (done >= this.totalValue && done > 0 && this.hasLabelTarget) {
       this.labelTarget.textContent = "Extraction complete"
-      this.barTarget.classList.remove("bg-brand-500")
-      this.barTarget.classList.add("bg-green-500")
+      if (this.hasBarTarget) {
+        this.barTarget.classList.remove("bg-brand-500")
+        this.barTarget.classList.add("bg-green-500")
+      }
     }
+  }
+
+  countComplete() {
+    let count = 0
+    document.querySelectorAll("[id^='kyc_document_']").forEach(card => {
+      if (card.textContent.includes("Complete") || card.textContent.includes("Error")) count++
+    })
+    return count
   }
 }
