@@ -19,6 +19,8 @@
   <% end %>
 </div>
 
+<%= turbo_stream_from "applicant_#{applicant.id}_tabs" %>
+
 <div data-controller="tabs" data-tabs-default-value="overview">
   <%# Tab navigation — underline with icon style (tailadmin tab-03) %>
   <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
@@ -35,7 +37,9 @@
     <%# Tab panels %>
     <div class="p-4 sm:p-6">
       <div data-tabs-target="panel" data-tab="overview">
-        <%= render "applicants/tabs/overview", applicant: applicant %>
+        <div id="overview-tab-content">
+          <%= render "applicants/tabs/overview", applicant: applicant %>
+        </div>
       </div>
 
       <div data-tabs-target="panel" data-tab="principals" hidden>
@@ -47,11 +51,15 @@
       </div>
 
       <div data-tabs-target="panel" data-tab="ownership" hidden>
-        <%= render "applicants/tabs/ownership", applicant: applicant %>
+        <div id="ownership-tab-content">
+          <%= render "applicants/tabs/ownership", applicant: applicant %>
+        </div>
       </div>
 
       <div data-tabs-target="panel" data-tab="compliance" hidden>
-        <%= render "applicants/tabs/compliance", applicant: applicant %>
+        <div id="compliance-tab-content">
+          <%= render "applicants/tabs/compliance", applicant: applicant %>
+        </div>
       </div>
     </div>
   </div>
