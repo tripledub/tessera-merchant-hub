@@ -25,7 +25,7 @@ class ApplicantsController < ApplicationController
   end
 
   def tab
-    authorize applicant
+    authorize applicant, :show?
     tab_name = params[:tab]
     allowed = %w[overview principals documents ownership compliance]
     head(:not_found) and return unless allowed.include?(tab_name)
