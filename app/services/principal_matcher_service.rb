@@ -68,7 +68,7 @@ class PrincipalMatcherService
     best_score     = 0.0
 
     principals.each do |p|
-      score = JaroWinkler.similarity(@full_name.downcase, p.name.downcase)
+      score = best_name_score(@full_name.downcase, p.name.downcase)
       if score >= FUZZY_THRESHOLD && score > best_score
         best_score     = score
         best_principal = p
@@ -76,6 +76,21 @@ class PrincipalMatcherService
     end
 
     [ best_principal, best_score ]
+  end
+
+  def best_name_score(a, b)
+    full_score = JaroWinkler.similarity(a, b)
+    return full_score if full_score >= FUZZY_THRESHOLD
+
+    first_last_score = JaroWinkler.similarity(first_and_last(a), first_and_last(b))
+    [ full_score, first_last_score ].max
+  end
+
+  def first_and_last(name)
+    parts = name.strip.split
+    return name if parts.size <= 2
+
+    "#{parts.first} #{parts.last}"
   end
 
   def create_unconfirmed_principal
