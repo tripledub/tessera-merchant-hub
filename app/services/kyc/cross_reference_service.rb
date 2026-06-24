@@ -4,6 +4,10 @@ module Kyc
   class CrossReferenceService
     PERCENTAGE_TOLERANCE = 0.5
 
+    Result = Data.define(:inference_errors) do
+      def success? = inference_errors.empty?
+    end
+
     PROMPT = <<~PROMPT.freeze
       You are a KYC document analyst. Extract all ownership and shareholding information from this document.
 
@@ -29,6 +33,7 @@ module Kyc
     def initialize(entity)
       @entity = entity
       @applicant = entity.applicant
+      @inference_errors = []
     end
 
     def call
@@ -38,13 +43,15 @@ module Kyc
       ).delete_all
 
       chart_edges = Kyc::OwnershipEdge.where(child_entity: @entity, relationship_type: :equity).includes(:parent_entity)
-      return if chart_edges.empty?
+      return Result.new(inference_errors: []) if chart_edges.empty?
 
       @chart_map = build_chart_map(chart_edges)
 
       @entity.linked_documents.each do |document|
         compare_document(document)
       end
+
+      Result.new(inference_errors: @inference_errors)
     end
 
     private
@@ -66,6 +73,7 @@ module Kyc
       check_chart_against_document(document, doc_map)
     rescue Kyc::Inference::Error => e
       Rails.logger.warn("CrossReferenceService: inference error for #{document.file.filename} — #{e.message}")
+      @inference_errors << { document: document.file.filename.to_s, error: e.message }
     end
 
     def extract_shareholders(document)

@@ -14,7 +14,9 @@ module ControlPlane
 
       return { "shop_id" => shop_id } if attrs.empty?
 
-      Shop.where(shop_id: shop_id).update_all(attrs.merge(updated_at: Time.current))
+      rows_affected = Shop.where(shop_id: shop_id).update_all(attrs.merge(updated_at: Time.current))
+
+      raise ActiveRecord::RecordNotFound, "Shop not found: #{shop_id}" if rows_affected.zero?
 
       {
         "shop_id" => shop_id,

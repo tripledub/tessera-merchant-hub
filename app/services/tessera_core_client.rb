@@ -173,6 +173,8 @@ class TesseraCoreClient
 
   def parse(response)
     JSON.parse(response.body)
+  rescue JSON::ParserError => e
+    raise Error, "Unexpected response from tessera-core (#{e.message})"
   end
 
   def normalize_credential(payload)
