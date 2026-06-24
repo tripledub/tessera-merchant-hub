@@ -1,0 +1,122 @@
+<% content_for :title, @entity.name %>
+
+<div class="mb-4">
+  <%= link_to t('.back'), applicant_path(@entity.applicant, anchor: 'ownership'),
+        class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<% present(@entity, Kyc::CorporateEntityPresenter) do |p| %>
+  <div class="mb-6">
+    <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90">
+      <%= @entity.name %>
+    </h1>
+    <div class="mt-1 flex items-center gap-2">
+      <%= p.entity_type_badge %>
+      <% if @entity.jurisdiction.present? %>
+        <span class="text-theme-sm text-gray-500 dark:text-gray-400"><%= @entity.jurisdiction %></span>
+      <% end %>
+    </div>
+  </div>
+
+  <% principal = p.matched_principal %>
+  <% if principal %>
+    <div class="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4 dark:border-blue-800 dark:bg-blue-900/20">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <svg class="h-5 w-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 0 0-5.656 0l-4 4a4 4 0 1 0 5.656 5.656l1.102-1.101m-.758-4.899a4 4 0 0 0 5.656 0l4-4a4 4 0 0 0-5.656-5.656l-1.1 1.1"/>
+          </svg>
+          <span class="text-sm font-medium text-blue-800 dark:text-blue-300"><%= t('.matched_principal') %></span>
+        </div>
+        <%= link_to principal.name, kyc_principal_path(principal),
+              class: "text-sm font-medium text-brand-600 hover:text-brand-700" %>
+      </div>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <%# Inbound edges — who owns this entity %>
+    <div class="card">
+      <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.owned_by') %>
+      </h2>
+      <% if p.inbound_edges.any? %>
+        <table class="w-full text-left text-theme-sm">
+          <thead>
+            <tr class="border-b border-gray-200 dark:border-gray-800">
+              <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.owner') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.type') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.percentage') %></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+            <% p.inbound_edges.each do |edge| %>
+              <tr>
+                <td class="py-2 pr-4">
+                  <%= link_to edge.parent_entity.name, kyc_corporate_entity_path(edge.parent_entity),
+                        class: "text-brand-600 hover:text-brand-700" %>
+                </td>
+                <td class="px-4 py-2"><%= p.relationship_type_badge(edge) %></td>
+                <td class="px-4 py-2 text-gray-800 dark:text-white/90"><%= p.formatted_percentage(edge) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-theme-sm text-gray-400 italic"><%= t('.no_owners') %></p>
+      <% end %>
+    </div>
+
+    <%# Outbound edges — what this entity owns %>
+    <div class="card">
+      <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.owns') %>
+      </h2>
+      <% if p.outbound_edges.any? %>
+        <table class="w-full text-left text-theme-sm">
+          <thead>
+            <tr class="border-b border-gray-200 dark:border-gray-800">
+              <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.entity') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.type') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.percentage') %></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+            <% p.outbound_edges.each do |edge| %>
+              <tr>
+                <td class="py-2 pr-4">
+                  <%= link_to edge.child_entity.name, kyc_corporate_entity_path(edge.child_entity),
+                        class: "text-brand-600 hover:text-brand-700" %>
+                </td>
+                <td class="px-4 py-2"><%= p.relationship_type_badge(edge) %></td>
+                <td class="px-4 py-2 text-gray-800 dark:text-white/90"><%= p.formatted_percentage(edge) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      <% else %>
+        <p class="text-theme-sm text-gray-400 italic"><%= t('.no_holdings') %></p>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Validation warnings %>
+  <% if p.warnings.any? %>
+    <div class="mt-6 card">
+      <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.warnings') %>
+      </h2>
+      <div class="space-y-3">
+        <% p.warnings.each do |warning| %>
+          <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+            <div class="flex items-center gap-2">
+              <% compliance_presenter = Kyc::CompliancePresenter.new(@entity.applicant, self) %>
+              <%= compliance_presenter.warning_type_badge(warning) %>
+              <p class="text-sm text-gray-800 dark:text-white/90"><%= warning.message %></p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+<% end %>
