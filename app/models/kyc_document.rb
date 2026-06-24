@@ -3,6 +3,7 @@
 class KycDocument < ApplicationRecord
   belongs_to :applicant,     foreign_key: :applicant_id,     inverse_of: :kyc_documents
   belongs_to :kyc_principal, foreign_key: :kyc_principal_id, inverse_of: :kyc_documents, optional: true
+  belongs_to :corporate_entity, class_name: "Kyc::CorporateEntity", optional: true
 
   has_many :corporate_entities, class_name: "Kyc::CorporateEntity", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
