@@ -121,6 +121,7 @@ en:
         ubos: UBOs
         unacknowledged: Open
       overview:
+        compliance_readiness: Compliance Readiness
         details: Details
         documents_count: Documents
         entities_count: Entities
@@ -201,6 +202,7 @@ en:
     corporate_entities:
       show:
         back: "← Back to ownership"
+        compliance_requirements: Compliance Requirements
         cross_reference_confirm: Run cross-reference check against linked documents?
         doc_table:
           actions: Actions
