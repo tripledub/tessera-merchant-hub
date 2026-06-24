@@ -100,6 +100,40 @@
     </div>
   </div>
 
+  <%# Linked documents %>
+  <div class="mt-6 card">
+    <div class="mb-4 flex items-center justify-between">
+      <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.linked_documents') %>
+      </h2>
+      <%= link_to t('.link_documents'), new_kyc_corporate_entity_entity_document_link_path(entity),
+            class: "btn-secondary",
+            data: { turbo_frame: "entity-link-documents-modal" } %>
+    </div>
+
+    <turbo-frame id="entity-link-documents-modal"></turbo-frame>
+
+    <% docs = entity.linked_documents.order(created_at: :desc) %>
+    <% if docs.empty? %>
+      <p id="entity-documents-empty" class="text-theme-sm text-gray-400 italic"><%= t('.no_documents') %></p>
+    <% else %>
+      <table class="w-full text-left text-theme-sm">
+        <thead>
+          <tr class="border-b border-gray-200 dark:border-gray-800">
+            <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.doc_table.filename') %></th>
+            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.doc_table.type') %></th>
+            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.doc_table.uploaded') %></th>
+            <th class="py-2 pl-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.doc_table.actions') %></th>
+          </tr>
+        </thead>
+        <tbody id="entity-documents-list" class="divide-y divide-gray-100 dark:divide-gray-800">
+          <%= render partial: "kyc/corporate_entities/document_row", collection: docs, as: :document,
+                locals: { corporate_entity: entity } %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+
   <%# Validation warnings %>
   <% if p.warnings.any? %>
     <div class="mt-6 card">
