@@ -1,19 +1,19 @@
-<% content_for :title, @entity.name %>
+<% content_for :title, entity.name %>
 
 <div class="mb-4">
-  <%= link_to t('.back'), applicant_path(@entity.applicant, anchor: 'ownership'),
+  <%= link_to t('.back'), applicant_path(entity.applicant, anchor: 'ownership'),
         class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
 </div>
 
-<% present(@entity, Kyc::CorporateEntityPresenter) do |p| %>
+<% present(entity, Kyc::CorporateEntityPresenter) do |p| %>
   <div class="mb-6">
     <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90">
-      <%= @entity.name %>
+      <%= entity.name %>
     </h1>
     <div class="mt-1 flex items-center gap-2">
       <%= p.entity_type_badge %>
-      <% if @entity.jurisdiction.present? %>
-        <span class="text-theme-sm text-gray-500 dark:text-gray-400"><%= @entity.jurisdiction %></span>
+      <% if entity.jurisdiction.present? %>
+        <span class="text-theme-sm text-gray-500 dark:text-gray-400"><%= entity.jurisdiction %></span>
       <% end %>
     </div>
   </div>
@@ -110,7 +110,7 @@
         <% p.warnings.each do |warning| %>
           <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
             <div class="flex items-center gap-2">
-              <% compliance_presenter = Kyc::CompliancePresenter.new(@entity.applicant, self) %>
+              <% compliance_presenter = Kyc::CompliancePresenter.new(entity.applicant, self) %>
               <%= compliance_presenter.warning_type_badge(warning) %>
               <p class="text-sm text-gray-800 dark:text-white/90"><%= warning.message %></p>
             </div>
