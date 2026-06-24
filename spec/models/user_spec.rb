@@ -34,8 +34,8 @@ RSpec.describe User, type: :model do
   describe "roles" do
     it { is_expected.to define_enum_for(:role).with_values(psp_admin: 0, psp_support: 1, merchant_admin: 2, merchant_viewer: 3) }
 
-    it "defaults to psp_admin" do
-      expect(build(:user).role).to eq("psp_admin")
+    it "defaults to merchant_viewer" do
+      expect(described_class.new.role).to eq("merchant_viewer")
     end
   end
 
