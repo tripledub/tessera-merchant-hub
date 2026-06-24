@@ -67,7 +67,13 @@ class ExtractKycDocumentJob < ApplicationJob
     return if extracted_address.blank?
     return if principal.address_line1.present?
 
-    principal.update!(address_line1: extracted_address)
+    parts = extracted_address.split(",").map(&:strip)
+    attrs = { address_line1: parts[0] }
+    attrs[:city] = parts[-3] if parts.size >= 3
+    attrs[:postcode] = parts[-2] if parts.size >= 3
+    attrs[:country] = parts[-1] if parts.size >= 2
+
+    principal.update!(attrs.compact_blank)
   end
 
   def broadcast_toast(document)

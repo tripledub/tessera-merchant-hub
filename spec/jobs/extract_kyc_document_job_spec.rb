@@ -142,7 +142,10 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       it "populates the principal's address from the extracted data" do
         described_class.new.perform(document.id)
         principal_no_address.reload
-        expect(principal_no_address.address_line1).to eq("42 Oak Avenue, Manchester, M1 2AB, United Kingdom")
+        expect(principal_no_address.address_line1).to eq("42 Oak Avenue")
+        expect(principal_no_address.city).to eq("Manchester")
+        expect(principal_no_address.postcode).to eq("M1 2AB")
+        expect(principal_no_address.country).to eq("United Kingdom")
       end
 
       it "does not overwrite an existing address" do
