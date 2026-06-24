@@ -47,4 +47,40 @@
       </div>
     </div>
   </div>
+
+  <%# Compliance readiness %>
+  <% assessment = Kyc::Compliance::ReadinessAssessment.for(applicant) %>
+  <% if assessment.entity_count > 0 %>
+    <div class="mt-6">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.compliance_readiness') %>
+      </h3>
+      <% present(assessment, Kyc::ComplianceReadinessPresenter) do |rp| %>
+        <div class="rounded-lg border p-4 <%= assessment.compliant? ? 'border-success-500 bg-success-50 dark:border-success-500/30 dark:bg-success-500/15' : 'border-error-500 bg-error-50 dark:border-error-500/30 dark:bg-error-500/15' %>">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <%= rp.overall_status_badge %>
+              <span class="text-sm text-gray-800 dark:text-white/90"><%= rp.entity_summary %></span>
+            </div>
+            <% if !assessment.compliant? %>
+              <a href="#compliance" data-action="click->tabs#select" data-tab="compliance"
+                 class="text-sm font-medium text-brand-600 hover:text-brand-700">
+                View details →
+              </a>
+            <% end %>
+          </div>
+          <% missing = rp.missing_summary %>
+          <% if missing&.any? %>
+            <ul class="mt-3 space-y-1 text-sm text-gray-600 dark:text-gray-400">
+              <% missing.each do |line| %>
+                <li class="flex items-center gap-1.5">
+                  <span class="text-error-500">✗</span> <%= line %>
+                </li>
+              <% end %>
+            </ul>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  <% end %>
 <% end %>

@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class ExtractKycDocumentJob < ApplicationJob
+  include KycDocumentBroadcaster
+  include OcrClientResolvable
+
   queue_as :default
 
   def perform(kyc_document_id)
@@ -59,17 +62,6 @@ class ExtractKycDocumentJob < ApplicationJob
     )
   end
 
-  def ocr_client(document)
-    if !Rails.env.production? && ENV["CLAUDE_OCR"].present?
-      ClaudeOcrAdapter.process(document: document)
-    else
-      KyneticOcrClient.process(
-        customer_id: document.applicant_id,
-        document_key: document.file.key
-      )
-    end
-  end
-
   def broadcast_toast(document)
     type = document.error? ? :error : :success
     message = if document.error?
@@ -83,15 +75,6 @@ class ExtractKycDocumentJob < ApplicationJob
       target: "toast-container",
       partial: "shared/toast",
       locals: { message: message, type: type }
-    )
-  end
-
-  def broadcast_document(document)
-    Turbo::StreamsChannel.broadcast_replace_to(
-      "applicant_#{document.applicant_id}_documents",
-      target: "kyc_document_#{document.id}",
-      partial: "kyc/documents/kyc_document",
-      locals: { document: document }
     )
   end
 end
