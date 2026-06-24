@@ -47,14 +47,14 @@ class PaymentsController < ApplicationController
       begin
         scope = scope.from_date(params[:date_from])
       rescue ArgumentError, Date::Error
-        # ignore malformed date — filter not applied
+        flash.now[:alert] = "Invalid 'from' date — filter not applied."
       end
     end
     if params[:date_to].present?
       begin
         scope = scope.to_date(params[:date_to])
       rescue ArgumentError, Date::Error
-        # ignore malformed date — filter not applied
+        flash.now[:alert] = "Invalid 'to' date — filter not applied."
       end
     end
     scope = scope.with_reference(params[:reference])    if params[:reference].present?

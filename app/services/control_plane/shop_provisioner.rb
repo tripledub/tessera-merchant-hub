@@ -29,14 +29,22 @@ module ControlPlane
 
       integration_account_id = account.fetch("id")
 
-      Shop.create!(
-        shop_id: shop_id,
-        merchant_id: merchant_id,
-        integration_account_id: integration_account_id,
-        name: name,
-        notification_url: notification_url,
-        country: country
-      )
+      begin
+        Shop.create!(
+          shop_id: shop_id,
+          merchant_id: merchant_id,
+          integration_account_id: integration_account_id,
+          name: name,
+          notification_url: notification_url,
+          country: country
+        )
+      rescue StandardError => e
+        Rails.logger.error(
+          "ShopProvisioner: local Shop.create! failed after integration account #{integration_account_id} " \
+          "was created in tessera-core — manual cleanup may be required (#{e.class}: #{e.message})"
+        )
+        raise
+      end
 
       {
         "shop_id" => shop_id,

@@ -16,11 +16,13 @@ module ControlPlane
 
       return { "shop_id" => shop_id } if sets.empty?
 
-      conn.execute(<<~SQL.squish)
+      rows_affected = conn.update(<<~SQL.squish)
         UPDATE shops
         SET #{sets.join(', ')}
         WHERE shop_id = #{conn.quote(shop_id)}
       SQL
+
+      raise ActiveRecord::RecordNotFound, "Shop not found: #{shop_id}" if rows_affected.zero?
 
       {
         "shop_id" => shop_id,

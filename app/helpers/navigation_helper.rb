@@ -20,7 +20,7 @@ module NavigationHelper
       render "shared/icons/#{name}"
     end
   rescue ActionView::MissingTemplate
-    # Icon partial not yet created — renders nothing rather than erroring.
+    Rails.logger.debug { "NavigationHelper: missing icon partial shared/icons/#{name}" }
     "".html_safe
   end
 end

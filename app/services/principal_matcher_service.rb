@@ -99,7 +99,8 @@ class PrincipalMatcherService
     return nil if value.blank?
 
     Date.parse(value)
-  rescue Date::Error, TypeError
+  rescue Date::Error, TypeError => e
+    Rails.logger.warn("PrincipalMatcherService: unparseable date #{value.inspect} — #{e.message}")
     nil
   end
 end
