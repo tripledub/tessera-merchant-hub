@@ -9,10 +9,10 @@ module Kyc
       result = Kyc::CrossReferenceService.call(corporate_entity)
 
       message, type = if result.success?
-        ["Cross-reference complete for #{corporate_entity.name}", :success]
+        [ "Cross-reference complete for #{corporate_entity.name}", :success ]
       else
         failed_docs = result.inference_errors.map { |e| e[:document] }.join(", ")
-        ["Cross-reference finished with errors (#{failed_docs})", :error]
+        [ "Cross-reference finished with errors (#{failed_docs})", :error ]
       end
 
       respond_to do |format|
