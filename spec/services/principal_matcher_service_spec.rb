@@ -77,6 +77,18 @@ RSpec.describe PrincipalMatcherService, type: :model do
       end
     end
 
+    context "when the extracted name omits middle names" do
+      let!(:principal) { create(:kyc_principal, applicant: applicant, name: "Andrew Minh-Luan Bui") }
+      let(:result_data) { { "full_name" => "Andrew Bui", "document_type" => "utility_bill" } }
+
+      it "matches using first and last name fallback" do
+        result = described_class.call(applicant: applicant, result: result_data)
+
+        expect(result.principal).to eq(principal)
+        expect(result.match_method).to eq("fuzzy")
+      end
+    end
+
     context "when there is no match and document is a passport" do
       let(:result_data) { { "full_name" => "Completely Unknown Person", "date_of_birth" => "2000-01-01", "document_type" => "passport" } }
 
