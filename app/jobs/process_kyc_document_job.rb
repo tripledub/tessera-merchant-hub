@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class ProcessKycDocumentJob < ApplicationJob
+  include KycDocumentBroadcaster
+  include OcrClientResolvable
+
   queue_as :default
 
   def perform(kyc_document_id)
@@ -31,27 +34,5 @@ class ProcessKycDocumentJob < ApplicationJob
   rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error => e
     document&.update!(status: :error, result: { "error" => e.message })
     broadcast_document(document) if document
-  end
-
-  private
-
-  def ocr_client(document)
-    if !Rails.env.production? && ENV["CLAUDE_OCR"].present?
-      ClaudeOcrAdapter.process(document: document)
-    else
-      KyneticOcrClient.process(
-        customer_id: document.applicant_id,
-        document_key: document.file.key
-      )
-    end
-  end
-
-  def broadcast_document(document)
-    Turbo::StreamsChannel.broadcast_replace_to(
-      "applicant_#{document.applicant_id}_documents",
-      target: "kyc_document_#{document.id}",
-      partial: "kyc/documents/kyc_document",
-      locals: { document: document }
-    )
   end
 end

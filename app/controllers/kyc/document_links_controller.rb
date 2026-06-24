@@ -6,6 +6,7 @@
 # DELETE /kyc_document_links/:id  — reject the link (unlink document from principal)
 class Kyc::DocumentLinksController < ApplicationController
   include ActionView::RecordIdentifier
+  include KycDocumentBroadcaster
 
   expose(:document) { KycDocument.find(params[:id]) }
 
@@ -26,16 +27,5 @@ class Kyc::DocumentLinksController < ApplicationController
       format.turbo_stream { render turbo_stream: turbo_stream.remove(dom_id(document)) }
       format.html { redirect_back fallback_location: applicant_path(document.applicant) }
     end
-  end
-
-  private
-
-  def broadcast_document(doc)
-    Turbo::StreamsChannel.broadcast_replace_to(
-      "applicant_#{doc.applicant_id}_documents",
-      target: "kyc_document_#{doc.id}",
-      partial: "kyc/documents/kyc_document",
-      locals: { document: doc }
-    )
   end
 end
