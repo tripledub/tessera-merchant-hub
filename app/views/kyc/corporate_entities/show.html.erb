@@ -144,6 +144,43 @@
     <% end %>
   </div>
 
+  <%# Compliance requirements %>
+  <% results = Kyc::Compliance::RuleRunner.evaluate_entity(entity) %>
+  <% applicable_results = results.reject(&:not_applicable?) %>
+  <% if applicable_results.any? %>
+    <div class="mt-6 card">
+      <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.compliance_requirements') %>
+      </h2>
+      <div class="space-y-2">
+        <% applicable_results.each do |result| %>
+          <div class="flex items-center justify-between rounded-lg border p-3
+            <%= result.met? ? 'border-gray-200 dark:border-gray-800' : 'border-error-200 bg-error-50/50 dark:border-error-800 dark:bg-error-900/20' %>">
+            <div class="flex items-center gap-3">
+              <% if result.met? %>
+                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-success-50 text-success-500 dark:bg-success-500/15">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </span>
+              <% else %>
+                <span class="flex h-6 w-6 items-center justify-center rounded-full bg-error-50 text-error-500 dark:bg-error-500/15">
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </span>
+              <% end %>
+              <div>
+                <p class="text-sm font-medium text-gray-800 dark:text-white/90"><%= result.rule_name %></p>
+                <% if result.unmet? && result.missing.any? %>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">
+                    Missing: <%= result.missing.map(&:humanize).join(", ") %>
+                  </p>
+                <% end %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
   <%# Validation warnings %>
   <% if p.warnings.any? %>
     <div class="mt-6 card">
