@@ -201,6 +201,7 @@ en:
     corporate_entities:
       show:
         back: "← Back to ownership"
+        cross_reference_confirm: Run cross-reference check against linked documents?
         doc_table:
           actions: Actions
           filename: File
@@ -214,6 +215,7 @@ en:
         no_owners: No traced ownership for this entity.
         owned_by: Owned By
         owns: Owns
+        run_cross_reference: Run cross-reference
         table:
           entity: Entity
           owner: Owner
