@@ -106,14 +106,24 @@
       <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
         <%= t('.linked_documents') %>
       </h2>
-      <%= link_to t('.link_documents'), new_kyc_corporate_entity_entity_document_link_path(entity),
-            class: "btn-secondary",
-            data: { turbo_frame: "entity-link-documents-modal" } %>
+      <div class="flex items-center gap-2">
+        <%= link_to t('.link_documents'), new_kyc_corporate_entity_entity_document_link_path(entity),
+              class: "btn-secondary",
+              data: { turbo_frame: "entity-link-documents-modal" } %>
+        <% docs = entity.linked_documents.order(created_at: :desc) %>
+        <% if docs.any? %>
+          <%= button_to cross_reference_kyc_corporate_entity_path(entity),
+                method: :post,
+                class: "btn-primary",
+                data: { turbo_confirm: t('.cross_reference_confirm') } do %>
+            <%= t('.run_cross_reference') %>
+          <% end %>
+        <% end %>
+      </div>
     </div>
 
     <turbo-frame id="entity-link-documents-modal"></turbo-frame>
 
-    <% docs = entity.linked_documents.order(created_at: :desc) %>
     <% if docs.empty? %>
       <p id="entity-documents-empty" class="text-theme-sm text-gray-400 italic"><%= t('.no_documents') %></p>
     <% else %>
