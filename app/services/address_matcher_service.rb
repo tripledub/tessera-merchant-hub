@@ -32,7 +32,7 @@ class AddressMatcherService
     return no_match if @extracted_address.blank?
     return no_match if principal_address.blank?
 
-    score = JaroWinkler.distance(normalise(@extracted_address), normalise(principal_address))
+    score = JaroWinkler.similarity(normalise(@extracted_address), normalise(principal_address))
 
     if score >= EXACT_THRESHOLD
       Result.new(match_method: "exact", match_confidence: 1.0)
