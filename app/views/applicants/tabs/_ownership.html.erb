@@ -81,6 +81,7 @@
             <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.child') %></th>
             <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.relationship') %></th>
             <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.percentage') %></th>
+            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.source') %></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -96,6 +97,7 @@
               </td>
               <td class="px-4 py-2"><%= p.relationship_type_badge(edge) %></td>
               <td class="px-4 py-2 text-gray-800 dark:text-white/90"><%= p.formatted_percentage(edge) %></td>
+              <td class="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 truncate max-w-xs"><%= p.source_document_label(edge) %></td>
             </tr>
           <% end %>
         </tbody>
