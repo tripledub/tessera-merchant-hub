@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ClassifyKycDocumentJob < ApplicationJob
+  include KycDocumentBroadcaster
+
   queue_as :default
 
   def perform(kyc_document_id)
@@ -36,14 +38,5 @@ class ClassifyKycDocumentJob < ApplicationJob
     when DocumentClassifiers::AiFallback then :ai_suggested
     else :auto_classified
     end
-  end
-
-  def broadcast_document(document)
-    Turbo::StreamsChannel.broadcast_replace_to(
-      "applicant_#{document.applicant_id}_documents",
-      target: "kyc_document_#{document.id}",
-      partial: "kyc/documents/kyc_document",
-      locals: { document: document }
-    )
   end
 end

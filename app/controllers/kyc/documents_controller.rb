@@ -2,6 +2,7 @@
 
 class Kyc::DocumentsController < ApplicationController
   include ActionView::RecordIdentifier
+  include KycDocumentBroadcaster
 
   expose(:applicant) { Applicant.find(params[:applicant_id]) }
   expose(:document) { KycDocument.find(params[:id]) }
@@ -120,16 +121,5 @@ class Kyc::DocumentsController < ApplicationController
     ClassifyKycDocumentJob.perform_later(document.id)
     broadcast_document(document)
     head :ok
-  end
-
-  private
-
-  def broadcast_document(doc)
-    Turbo::StreamsChannel.broadcast_replace_to(
-      "applicant_#{doc.applicant_id}_documents",
-      target: "kyc_document_#{doc.id}",
-      partial: "kyc/documents/kyc_document",
-      locals: { document: doc }
-    )
   end
 end

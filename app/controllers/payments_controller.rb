@@ -1,4 +1,6 @@
 class PaymentsController < ApplicationController
+  include TesseraCoreClientDependency
+
   before_action :set_payment, only: %i[show refund void]
 
   ALLOWED_PER_PAGE = [ 10, 25, 50 ].freeze
@@ -20,7 +22,7 @@ class PaymentsController < ApplicationController
 
   def refund
     authorize @payment, :refund?, policy_class: PaymentPolicy
-    client.post_refund(
+    tessera_core_client.post_refund(
       shop_id:    @payment.shop_id,
       payment_id: @payment.id,
       amount:     params[:amount].to_i,
@@ -33,7 +35,7 @@ class PaymentsController < ApplicationController
 
   def void
     authorize @payment, :void?, policy_class: PaymentPolicy
-    client.post_void(shop_id: @payment.shop_id, payment_id: @payment.id)
+    tessera_core_client.post_void(shop_id: @payment.shop_id, payment_id: @payment.id)
     redirect_to payment_path(@payment.id), notice: "Payment voided successfully."
   rescue TesseraCoreClient::Error => e
     redirect_to payment_path(@payment.id), alert: "Void failed: #{e.message}"
@@ -86,9 +88,5 @@ class PaymentsController < ApplicationController
 
   def set_payment
     @payment = Tessera::Payment.find(params[:id])
-  end
-
-  def client
-    @client ||= TesseraCoreClient.new
   end
 end
