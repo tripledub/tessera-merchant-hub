@@ -63,7 +63,35 @@ module Kyc
       "#{edge.percentage}%"
     end
 
+    def pie_chart_entity
+      corporate_ids = entities.select(&:corporate?).map(&:id)
+      target_id = edges.select { |e| corporate_ids.include?(e.child_entity_id) }
+                       .group_by(&:child_entity_id)
+                       .max_by { |_id, group| group.size }
+                       &.first
+      entities.find { |e| e.id == target_id }
+    end
+
+    def pie_chart_data(entity)
+      pie_chart_edges(entity).each_with_index.map do |edge, i|
+        {
+          name: edge.parent_entity.name,
+          percentage: edge.percentage&.to_f || 0,
+          relationship_type: edge.relationship_type,
+          index: i
+        }
+      end
+    end
+
+    def pie_chart_links(entity)
+      pie_chart_edges(entity).map { |edge| kyc_corporate_entity_path(edge.parent_entity) }
+    end
+
     private
+
+    def pie_chart_edges(entity)
+      edges.select { |e| e.child_entity_id == entity.id && %w[equity nominee].include?(e.relationship_type) }
+    end
 
     def document_ids
       applicant.kyc_documents.pluck(:id)

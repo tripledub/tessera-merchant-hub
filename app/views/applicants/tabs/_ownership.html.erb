@@ -21,6 +21,26 @@
       </div>
     </div>
 
+    <%# Ownership pie chart %>
+    <% chart_entity = p.pie_chart_entity %>
+    <% if chart_entity %>
+      <div class="mb-6 rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
+        <div class="px-6 py-5">
+          <h3 class="text-base font-medium text-gray-800 dark:text-white/90">
+            <%= t('.ownership_of', entity: chart_entity.name) %>
+          </h3>
+        </div>
+        <div class="border-t border-gray-100 p-6 dark:border-gray-800">
+          <div class="flex justify-center">
+            <div data-controller="pie-chart"
+                 data-pie-chart-data-value="<%= p.pie_chart_data(chart_entity).to_json %>"
+                 data-pie-chart-links-value="<%= p.pie_chart_links(chart_entity).to_json %>">
+            </div>
+          </div>
+        </div>
+      </div>
+    <% end %>
+
     <%# Entities table %>
     <div class="mb-6">
       <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">

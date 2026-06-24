@@ -3,7 +3,11 @@
 require "rails_helper"
 
 RSpec.describe Kyc::OwnershipPresenter, type: :presenter do
-  let(:template) { ApplicationController.new.view_context }
+  let(:template) do
+    controller = ApplicationController.new
+    controller.request = ActionDispatch::TestRequest.create
+    controller.view_context
+  end
   let(:applicant) { create(:applicant) }
   let(:document) { create(:kyc_document, applicant: applicant, document_type: :group_structure_chart) }
   let(:presenter) { described_class.new(applicant, template) }
@@ -93,6 +97,51 @@ RSpec.describe Kyc::OwnershipPresenter, type: :presenter do
 
     it "counts total entities" do
       expect(presenter.entity_count).to eq(3)
+    end
+  end
+
+  describe "pie chart" do
+    let(:corp_a) { create(:kyc_corporate_entity, applicant: applicant, kyc_document: document, entity_type: :corporate, name: "Alpha Corp") }
+    let(:corp_b) { create(:kyc_corporate_entity, applicant: applicant, kyc_document: document, entity_type: :corporate, name: "Bravo Ltd") }
+    let(:individual) { create(:kyc_corporate_entity, applicant: applicant, kyc_document: document, entity_type: :individual, name: "Jane Doe") }
+
+    before do
+      create(:kyc_ownership_edge, parent_entity: individual, child_entity: corp_a, relationship_type: :equity, percentage: 60.0, source_document: document)
+      create(:kyc_ownership_edge, parent_entity: corp_b, child_entity: corp_a, relationship_type: :equity, percentage: 40.0, source_document: document)
+      create(:kyc_ownership_edge, parent_entity: individual, child_entity: corp_b, relationship_type: :equity, percentage: 100.0, source_document: document)
+    end
+
+    describe "#pie_chart_entity" do
+      it "returns the corporate entity with most inbound edges" do
+        expect(presenter.pie_chart_entity).to eq(corp_a)
+      end
+
+      it "excludes individual entities" do
+        expect(presenter.pie_chart_entity).not_to eq(individual)
+      end
+    end
+
+    describe "#pie_chart_data" do
+      it "returns data for inbound equity/nominee edges" do
+        data = presenter.pie_chart_data(corp_a)
+        expect(data.size).to eq(2)
+        expect(data.map { |d| d[:name] }).to contain_exactly("Jane Doe", "Bravo Ltd")
+      end
+
+      it "includes percentage and relationship type" do
+        data = presenter.pie_chart_data(corp_a)
+        jane_data = data.find { |d| d[:name] == "Jane Doe" }
+        expect(jane_data[:percentage]).to eq(60.0)
+        expect(jane_data[:relationship_type]).to eq("equity")
+      end
+    end
+
+    describe "#pie_chart_links" do
+      it "returns one link per inbound edge" do
+        data = presenter.pie_chart_data(corp_a)
+        links = presenter.pie_chart_links(corp_a)
+        expect(links.size).to eq(data.size)
+      end
     end
   end
 end
