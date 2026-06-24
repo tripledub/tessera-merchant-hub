@@ -116,6 +116,43 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       end
     end
 
+    context "when a utility bill is matched to a principal without an address" do
+      let(:principal_no_address) do
+        create(:kyc_principal, applicant: applicant, name: "Jane Smith")
+      end
+
+      let(:document) do
+        create(:kyc_document, applicant: applicant, document_type: :utility_bill, classification_status: :confirmed)
+      end
+
+      before do
+        principal_no_address
+        stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")
+          .to_return(
+            status: 200,
+            body: {
+              "full_name" => "Jane Smith",
+              "document_type" => "utility_bill",
+              "address" => "42 Oak Avenue, Manchester, M1 2AB, United Kingdom"
+            }.to_json,
+            headers: { "Content-Type" => "application/json" }
+          )
+      end
+
+      it "populates the principal's address from the extracted data" do
+        described_class.new.perform(document.id)
+        principal_no_address.reload
+        expect(principal_no_address.address_line1).to eq("42 Oak Avenue, Manchester, M1 2AB, United Kingdom")
+      end
+
+      it "does not overwrite an existing address" do
+        principal_no_address.update!(address_line1: "Existing Address")
+        described_class.new.perform(document.id)
+        principal_no_address.reload
+        expect(principal_no_address.address_line1).to eq("Existing Address")
+      end
+    end
+
     context "when document is a group_structure_chart" do
       let(:document) do
         create(:kyc_document, applicant: applicant, document_type: :group_structure_chart,
