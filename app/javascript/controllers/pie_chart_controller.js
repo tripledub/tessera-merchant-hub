@@ -47,11 +47,13 @@ export default class extends Controller {
               show: true,
               value: {
                 show: true,
+                color: this.isDarkMode ? "#e5e7eb" : "#1f2937",
                 formatter: (val) => `${parseFloat(val).toFixed(1)}%`
               },
               total: {
                 show: true,
                 label: "Total",
+                color: this.isDarkMode ? "#9ca3af" : "#6b7280",
                 formatter: () => "100%"
               }
             }
@@ -74,6 +76,9 @@ export default class extends Controller {
         fontFamily: "Outfit",
         fontSize: "13px",
         fontWeight: 400,
+        labels: {
+          colors: this.isDarkMode ? "#d1d5db" : "#374151"
+        },
         markers: { size: 5, shape: "circle", radius: 999, strokeWidth: 0 },
         itemMargin: { horizontal: 10, vertical: 4 }
       },
@@ -91,6 +96,10 @@ export default class extends Controller {
 
   disconnect() {
     if (this.chart) this.chart.destroy()
+  }
+
+  get isDarkMode() {
+    return document.documentElement.classList.contains("dark")
   }
 
   equityColor(index) {
