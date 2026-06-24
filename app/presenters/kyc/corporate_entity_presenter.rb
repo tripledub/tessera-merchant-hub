@@ -15,11 +15,11 @@ module Kyc
     end
 
     def inbound_edges
-      Kyc::OwnershipEdge.where(child_entity: entity).includes(:parent_entity)
+      Kyc::OwnershipEdge.where(child_entity: entity).includes(:parent_entity, :source_document)
     end
 
     def outbound_edges
-      Kyc::OwnershipEdge.where(parent_entity: entity).includes(:child_entity)
+      Kyc::OwnershipEdge.where(parent_entity: entity).includes(:child_entity, :source_document)
     end
 
     def warnings
@@ -42,6 +42,12 @@ module Kyc
     def formatted_percentage(edge)
       return "—" if edge.percentage.nil?
       "#{edge.percentage}%"
+    end
+
+    def source_document_label(edge)
+      return "—" unless edge.source_document
+
+      edge.source_document.file.filename.to_s
     end
   end
 end

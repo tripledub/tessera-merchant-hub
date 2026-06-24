@@ -14,7 +14,7 @@ module Kyc
       @edges ||= Kyc::OwnershipEdge
         .joins(:parent_entity, :child_entity)
         .where(parent_entity: { kyc_document_id: document_ids })
-        .includes(:parent_entity, :child_entity)
+        .includes(:parent_entity, :child_entity, :source_document)
         .order("kyc_corporate_entities.name")
     end
 
@@ -61,6 +61,12 @@ module Kyc
       return "—" if edge.percentage.nil?
 
       "#{edge.percentage}%"
+    end
+
+    def source_document_label(edge)
+      return "—" unless edge.source_document
+
+      edge.source_document.file.filename.to_s
     end
 
     def pie_chart_entity

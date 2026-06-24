@@ -146,6 +146,7 @@ en:
           parent: Parent
           percentage: "%"
           relationship: Type
+          source: Source
           type: Type
         total_entities: Entities
   devise:
@@ -223,6 +224,7 @@ en:
           entity: Entity
           owner: Owner
           percentage: "%"
+          source: Source
           type: Type
         unlink: Unlink document
         warnings: Compliance Warnings
