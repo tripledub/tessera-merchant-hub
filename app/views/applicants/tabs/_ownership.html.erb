@@ -37,7 +37,10 @@
         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
           <% p.entities.each do |entity| %>
             <tr>
-              <td class="py-2 pr-4 text-gray-800 dark:text-white/90"><%= entity.name %></td>
+              <td class="py-2 pr-4">
+                <%= link_to entity.name, kyc_corporate_entity_path(entity),
+                      class: "text-brand-600 hover:text-brand-700" %>
+              </td>
               <td class="px-4 py-2"><%= p.entity_type_badge(entity) %></td>
               <td class="px-4 py-2 text-gray-500 dark:text-gray-400"><%= entity.jurisdiction || "—" %></td>
             </tr>
@@ -63,8 +66,14 @@
         <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
           <% p.edges.each do |edge| %>
             <tr>
-              <td class="py-2 pr-4 text-gray-800 dark:text-white/90"><%= edge.parent_entity.name %></td>
-              <td class="px-4 py-2 text-gray-800 dark:text-white/90"><%= edge.child_entity.name %></td>
+              <td class="py-2 pr-4">
+                <%= link_to edge.parent_entity.name, kyc_corporate_entity_path(edge.parent_entity),
+                      class: "text-brand-600 hover:text-brand-700" %>
+              </td>
+              <td class="px-4 py-2">
+                <%= link_to edge.child_entity.name, kyc_corporate_entity_path(edge.child_entity),
+                      class: "text-brand-600 hover:text-brand-700" %>
+              </td>
               <td class="px-4 py-2"><%= p.relationship_type_badge(edge) %></td>
               <td class="px-4 py-2 text-gray-800 dark:text-white/90"><%= p.formatted_percentage(edge) %></td>
             </tr>

@@ -198,6 +198,20 @@ en:
       invalid_role: Role is not permitted for merchant users.
       invite_success: Invitation sent to %{email}.
   kyc:
+    corporate_entities:
+      show:
+        back: "← Back to ownership"
+        matched_principal: Matched KYC Principal
+        no_holdings: This entity does not own any other entities.
+        no_owners: No traced ownership for this entity.
+        owned_by: Owned By
+        owns: Owns
+        table:
+          entity: Entity
+          owner: Owner
+          percentage: "%"
+          type: Type
+        warnings: Compliance Warnings
     documents:
       address_match_method:
         exact: Address verified
