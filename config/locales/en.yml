@@ -137,6 +137,7 @@ en:
         empty_title: No ownership data
         entities_heading: Entities
         individuals: Individuals
+        ownership_of: Ownership of %{entity}
         relationships: Relationships
         table:
           child: Child
