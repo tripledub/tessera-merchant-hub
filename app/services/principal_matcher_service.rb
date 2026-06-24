@@ -68,7 +68,7 @@ class PrincipalMatcherService
     best_score     = 0.0
 
     principals.each do |p|
-      score = JaroWinkler.distance(@full_name.downcase, p.name.downcase)
+      score = JaroWinkler.similarity(@full_name.downcase, p.name.downcase)
       if score >= FUZZY_THRESHOLD && score > best_score
         best_score     = score
         best_principal = p
