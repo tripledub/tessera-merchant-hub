@@ -45,6 +45,7 @@ class ExtractKycDocumentJob < ApplicationJob
 
     match = PrincipalMatcherService.call(applicant: document.applicant, result: response)
     address_match = if match.principal && document.utility_bill?
+      populate_address(match.principal, response["address"])
       AddressMatcherService.call(
         principal: match.principal,
         extracted_address: response["address"]
@@ -60,6 +61,13 @@ class ExtractKycDocumentJob < ApplicationJob
       address_match_method: address_match&.match_method,
       address_match_confidence: address_match&.match_confidence
     )
+  end
+
+  def populate_address(principal, extracted_address)
+    return if extracted_address.blank?
+    return if principal.address_line1.present?
+
+    principal.update!(address_line1: extracted_address)
   end
 
   def broadcast_toast(document)
