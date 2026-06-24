@@ -34,7 +34,7 @@ Rails.application.routes.draw do
     resources :validation_warnings, only: :update
     resources :corporate_entities, only: :show do
       resources :entity_document_links, only: %i[new create destroy]
-      post :cross_reference, on: :member
+      resource :cross_reference, only: :create
     end
   end
   resources :shops, only: %i[index show new create edit update] do

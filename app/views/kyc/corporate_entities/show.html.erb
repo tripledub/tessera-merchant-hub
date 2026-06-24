@@ -112,7 +112,7 @@
               data: { turbo_frame: "entity-link-documents-modal" } %>
         <% docs = entity.linked_documents.order(created_at: :desc) %>
         <% if docs.any? %>
-          <%= button_to cross_reference_kyc_corporate_entity_path(entity),
+          <%= button_to kyc_corporate_entity_cross_reference_path(entity),
                 method: :post,
                 class: "btn-primary",
                 data: { turbo_confirm: t('.cross_reference_confirm') } do %>
