@@ -19,6 +19,7 @@ RSpec.describe "Kyc::CrossReferences", type: :request do
 
       it "calls CrossReferenceService and redirects" do
         allow(Kyc::CrossReferenceService).to receive(:call)
+          .and_return(Kyc::CrossReferenceService::Result.new(inference_errors: []))
 
         post kyc_corporate_entity_cross_reference_path(entity)
 
@@ -28,6 +29,7 @@ RSpec.describe "Kyc::CrossReferences", type: :request do
 
       it "returns a turbo_stream response when requested" do
         allow(Kyc::CrossReferenceService).to receive(:call)
+          .and_return(Kyc::CrossReferenceService::Result.new(inference_errors: []))
 
         post kyc_corporate_entity_cross_reference_path(entity),
              headers: { "Accept" => "text/vnd.turbo-stream.html" }
@@ -43,6 +45,7 @@ RSpec.describe "Kyc::CrossReferences", type: :request do
 
       it "allows access (psp_support can view applicants)" do
         allow(Kyc::CrossReferenceService).to receive(:call)
+          .and_return(Kyc::CrossReferenceService::Result.new(inference_errors: []))
 
         post kyc_corporate_entity_cross_reference_path(entity)
 
