@@ -201,7 +201,15 @@ en:
     corporate_entities:
       show:
         back: "← Back to ownership"
+        doc_table:
+          actions: Actions
+          filename: File
+          type: Type
+          uploaded: Uploaded
+        link_documents: Link documents
+        linked_documents: Linked Documents
         matched_principal: Matched KYC Principal
+        no_documents: No documents linked to this entity.
         no_holdings: This entity does not own any other entities.
         no_owners: No traced ownership for this entity.
         owned_by: Owned By
@@ -211,6 +219,7 @@ en:
           owner: Owner
           percentage: "%"
           type: Type
+        unlink: Unlink document
         warnings: Compliance Warnings
     documents:
       address_match_method:
@@ -266,6 +275,11 @@ en:
         pending: Pending
         processing: Processing
       unlinked: Unlinked
+    entity_document_links:
+      new:
+        empty: All documents are already linked.
+        link: Link
+        title: Link documents to entity
     principal_document_links:
       new:
         empty: All documents for this applicant are already linked.

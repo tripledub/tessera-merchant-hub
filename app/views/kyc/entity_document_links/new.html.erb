@@ -1,0 +1,41 @@
+<turbo-frame id="entity-link-documents-modal">
+  <div data-controller="modal" data-modal-frame-value="entity-link-documents-modal"
+       data-action="keydown.esc@window->modal#close"
+       class="fixed inset-0 z-50 flex items-center justify-center">
+    <div data-action="click->modal#close" class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"></div>
+    <div class="relative z-10 w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-800 dark:bg-gray-900">
+      <div class="mb-5 flex items-center justify-between">
+        <h2 class="text-base font-semibold text-gray-900 dark:text-white/90"><%= t('.title') %></h2>
+        <button type="button" data-action="click->modal#close"
+                class="text-gray-400 hover:text-gray-600 transition">
+          <svg class="h-5 w-5 fill-current" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 5.293a1 1 0 0 1 1.414 0L12 10.586l5.293-5.293a1 1 0 1 1 1.414 1.414L13.414 12l5.293 5.293a1 1 0 0 1-1.414 1.414L12 13.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L10.586 12 5.293 6.707a1 1 0 0 1 0-1.414z"/></svg>
+        </button>
+      </div>
+      <% if @unlinked_documents.empty? %>
+        <p class="text-theme-sm text-gray-500 italic"><%= t('.empty') %></p>
+      <% else %>
+        <ul id="entity-unlinked-documents-list" class="divide-y divide-gray-100 dark:divide-gray-800 max-h-80 overflow-y-auto">
+          <% @unlinked_documents.each do |document| %>
+            <li id="entity_unlinked_document_<%= document.id %>" class="flex items-center justify-between py-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <svg class="h-4 w-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                </svg>
+                <div class="min-w-0">
+                  <p class="text-theme-sm font-medium text-gray-900 dark:text-white/90 truncate"><%= document.file.filename %></p>
+                  <p class="text-xs text-gray-400"><%= document.created_at.strftime("%-d %b %Y") %></p>
+                </div>
+              </div>
+              <%= button_to kyc_corporate_entity_entity_document_links_path(corporate_entity),
+                    params: { document_id: document.id },
+                    method: :post,
+                    class: "btn-secondary flex-shrink-0 py-1 px-3 text-xs" do %>
+                <%= t('.link') %>
+              <% end %>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+  </div>
+</turbo-frame>
