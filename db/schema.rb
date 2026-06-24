@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_22_153222) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_24_060143) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -61,6 +61,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_22_153222) do
     t.float "classification_confidence"
     t.string "classification_method"
     t.integer "classification_status", default: 0, null: false
+    t.uuid "corporate_entity_id"
     t.datetime "created_at", null: false
     t.integer "document_type"
     t.jsonb "extracted_data", default: {}
@@ -71,6 +72,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_22_153222) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_kyc_documents_on_applicant_id"
+    t.index ["corporate_entity_id"], name: "index_kyc_documents_on_corporate_entity_id"
     t.index ["kyc_principal_id"], name: "index_kyc_documents_on_kyc_principal_id"
   end
 
@@ -183,6 +185,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_22_153222) do
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "kyc_corporate_entities", "kyc_documents"
   add_foreign_key "kyc_corporate_entities", "merchants", column: "applicant_id"
+  add_foreign_key "kyc_documents", "kyc_corporate_entities", column: "corporate_entity_id"
   add_foreign_key "kyc_documents", "kyc_principals"
   add_foreign_key "kyc_documents", "merchants", column: "applicant_id"
   add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "child_entity_id"

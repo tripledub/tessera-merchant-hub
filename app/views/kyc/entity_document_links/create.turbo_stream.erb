@@ -1,0 +1,5 @@
+<%= turbo_stream.append "entity-documents-list",
+      partial: "kyc/corporate_entities/document_row",
+      locals: { document: @document, corporate_entity: corporate_entity } %>
+<%= turbo_stream.remove "entity_unlinked_document_#{@document.id}" %>
+<%= turbo_stream.remove "entity-documents-empty" %>
