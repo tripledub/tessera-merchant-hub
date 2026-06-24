@@ -8,19 +8,13 @@ module ControlPlane
     end
 
     def update!(shop_id:, notification_url: nil, test_mode: nil)
-      conn = ActiveRecord::Base.connection
-      sets = []
-      sets << "notification_url = #{conn.quote(notification_url)}" unless notification_url.nil?
-      sets << "test_mode = #{test_mode ? 'TRUE' : 'FALSE'}" unless test_mode.nil?
-      sets << "updated_at = #{conn.quote(Time.current)}"
+      attrs = {}
+      attrs[:notification_url] = notification_url unless notification_url.nil?
+      attrs[:test_mode] = test_mode unless test_mode.nil?
 
-      return { "shop_id" => shop_id } if sets.empty?
+      return { "shop_id" => shop_id } if attrs.empty?
 
-      conn.execute(<<~SQL.squish)
-        UPDATE shops
-        SET #{sets.join(', ')}
-        WHERE shop_id = #{conn.quote(shop_id)}
-      SQL
+      Shop.where(shop_id: shop_id).update_all(attrs.merge(updated_at: Time.current))
 
       {
         "shop_id" => shop_id,

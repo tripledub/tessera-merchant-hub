@@ -4,9 +4,10 @@ class User < ApplicationRecord
          :rememberable,
          :validatable,
          :trackable,
-         :lockable
+         :lockable,
+         :timeoutable
 
-  enum :role, { psp_admin: 0, psp_support: 1, merchant_admin: 2, merchant_viewer: 3 }, default: :psp_admin
+  enum :role, { psp_admin: 0, psp_support: 1, merchant_admin: 2, merchant_viewer: 3 }, default: :merchant_viewer
 
   scope :active,      -> { where(deactivated_at: nil) }
   scope :deactivated, -> { where.not(deactivated_at: nil) }
