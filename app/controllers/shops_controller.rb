@@ -1,5 +1,6 @@
 class ShopsController < ApplicationController
   include IntegrationAccountScoped
+  include TesseraCoreClientDependency
   # Shops are owned by tessera-core (ADR-007); MerchantHub reads them via
   # Tessera::Shop. Core integration accounts via TesseraCoreClient; shop UI config is local (ADR-007).
   def index
@@ -87,13 +88,9 @@ class ShopsController < ApplicationController
   end
 
   def load_credentials_metadata
-    @credentials = client.list_credentials(integration_account_id: integration_account_id_for(@shop))
+    @credentials = tessera_core_client.list_credentials(integration_account_id: integration_account_id_for(@shop))
   rescue TesseraCoreClient::Error => e
     @credentials = []
     @credentials_error = e.message
-  end
-
-  def client
-    @client ||= TesseraCoreClient.new
   end
 end

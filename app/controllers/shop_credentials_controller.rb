@@ -2,13 +2,15 @@
 
 class ShopCredentialsController < ApplicationController
   include IntegrationAccountScoped
+  include TesseraCoreClientDependency
+
   SESSION_KEY = :credential_show_once
 
   def create
     @shop = Tessera::Shop.find_by!(shop_id: params[:shop_id])
     authorize @shop, :generate_credential?, policy_class: ShopPolicy
 
-    result = client.create_credential(integration_account_id: integration_account_id_for(@shop))
+    result = tessera_core_client.create_credential(integration_account_id: integration_account_id_for(@shop))
     session[SESSION_KEY] = {
       "shop_id" => @shop.shop_id,
       "pk" => result["pk"],
@@ -25,7 +27,7 @@ class ShopCredentialsController < ApplicationController
     @shop = Tessera::Shop.find_by!(shop_id: params[:shop_id])
     authorize @shop, :revoke_credential?, policy_class: ShopPolicy
 
-    client.revoke_credential(
+    tessera_core_client.revoke_credential(
       integration_account_id: integration_account_id_for(@shop),
       credential_id: params[:id]
     )
@@ -55,9 +57,5 @@ class ShopCredentialsController < ApplicationController
       payload["shop_id"] == @shop.shop_id &&
       payload["sk"].present? &&
       payload["signing_secret"].present?
-  end
-
-  def client
-    @client ||= TesseraCoreClient.new
   end
 end
