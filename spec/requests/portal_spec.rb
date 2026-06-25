@@ -3,6 +3,16 @@
 require "rails_helper"
 
 RSpec.describe "Onboarding authentication", type: :request do
+  describe "GET /portal/sign_up" do
+    it "renders the dark mode toggle" do
+      get new_applicant_user_registration_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include('data-controller="dark-mode"')
+      expect(response.body).to include('aria-label="Toggle dark mode"')
+    end
+  end
+
   describe "POST /portal (sign up)" do
     let(:sign_up_params) do
       {
