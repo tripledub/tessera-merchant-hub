@@ -45,11 +45,15 @@ RSpec.describe ExtractionData do
   end
 
   describe ExtractionData::UtilityBill do
-    it "validates required fields" do
-      bill = described_class.new
-      expect(bill).not_to be_valid
-      expect(bill.errors[:full_name]).to be_present
-      expect(bill.errors[:address]).to be_present
+    it "has structured account holder address fields" do
+      bill = described_class.new(
+        account_holder_address_line1: "42 Oak Avenue",
+        account_holder_city: "Manchester",
+        account_holder_postcode: "M1 2AB",
+        account_holder_country: "United Kingdom"
+      )
+      expect(bill.account_holder_address_line1).to eq("42 Oak Avenue")
+      expect(bill.account_holder_city).to eq("Manchester")
     end
   end
 

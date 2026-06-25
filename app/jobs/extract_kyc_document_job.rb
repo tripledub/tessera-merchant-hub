@@ -45,10 +45,10 @@ class ExtractKycDocumentJob < ApplicationJob
 
     match = PrincipalMatcherService.call(applicant: document.applicant, result: response)
     address_match = if match.principal && document.utility_bill?
-      populate_address(match.principal, response["address"])
+      populate_address(match.principal, response)
       AddressMatcherService.call(
         principal: match.principal,
-        extracted_address: response["address"]
+        extracted_address: build_address_string(response)
       )
     end
 
@@ -63,17 +63,28 @@ class ExtractKycDocumentJob < ApplicationJob
     )
   end
 
-  def populate_address(principal, extracted_address)
-    return if extracted_address.blank?
+  def populate_address(principal, response)
     return if principal.address_line1.present?
 
-    parts = extracted_address.split(",").map(&:strip)
-    attrs = { address_line1: parts[0] }
-    attrs[:city] = parts[-3] if parts.size >= 3
-    attrs[:postcode] = parts[-2] if parts.size >= 3
-    attrs[:country] = parts[-1] if parts.size >= 2
+    attrs = {
+      address_line1: response["account_holder_address_line1"],
+      city: response["account_holder_city"],
+      postcode: response["account_holder_postcode"],
+      country: response["account_holder_country"]
+    }.compact_blank
 
-    principal.update!(attrs.compact_blank)
+    return if attrs.empty?
+
+    principal.update!(attrs)
+  end
+
+  def build_address_string(response)
+    [
+      response["account_holder_address_line1"],
+      response["account_holder_city"],
+      response["account_holder_postcode"],
+      response["account_holder_country"]
+    ].compact_blank.join(", ")
   end
 
   def broadcast_toast(document)
