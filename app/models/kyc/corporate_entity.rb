@@ -17,6 +17,7 @@ module Kyc
              dependent: :nullify, inverse_of: :corporate_entity
 
     enum :entity_type, { individual: 0, corporate: 1 }
+    enum :source, { document_extracted: 0, applicant_declared: 1 }, default: :document_extracted
 
     validates :name, presence: true
     validates :entity_type, presence: true

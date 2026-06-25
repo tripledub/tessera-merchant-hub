@@ -12,6 +12,7 @@
     </h1>
     <div class="mt-1 flex items-center gap-2">
       <%= p.entity_type_badge %>
+      <%= p.source_badge(entity) %>
       <% if entity.jurisdiction.present? %>
         <span class="text-theme-sm text-gray-500 dark:text-gray-400"><%= entity.jurisdiction %></span>
       <% end %>

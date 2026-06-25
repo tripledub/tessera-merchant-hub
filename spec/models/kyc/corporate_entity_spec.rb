@@ -17,5 +17,6 @@ RSpec.describe Kyc::CorporateEntity, type: :model do
 
   describe "enums" do
     it { is_expected.to define_enum_for(:entity_type).with_values(individual: 0, corporate: 1) }
+    it { is_expected.to define_enum_for(:source).with_values(document_extracted: 0, applicant_declared: 1).with_default(:document_extracted) }
   end
 end

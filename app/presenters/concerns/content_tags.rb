@@ -27,6 +27,14 @@ module ContentTags
       content_tag(:dd, value, class: "text-theme-sm text-gray-800 dark:text-white/90")
   end
 
+  def source_badge(record)
+    if record.applicant_declared?
+      badge(I18n.t("kyc.source.applicant_declared"), :amber)
+    else
+      badge(I18n.t("kyc.source.document_extracted"), :blue)
+    end
+  end
+
   def status_dot(label, colour = :gray)
     dot = content_tag(:span, "", class: "inline-block h-2 w-2 rounded-full #{DOT_COLOURS.fetch(colour, DOT_COLOURS[:gray])}")
     content_tag(:span, class: "inline-flex items-center gap-1.5 text-theme-sm") do

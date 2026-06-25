@@ -15,5 +15,6 @@ RSpec.describe Kyc::OwnershipEdge, type: :model do
 
   describe "enums" do
     it { is_expected.to define_enum_for(:relationship_type).with_values(equity: 0, nominee: 1, contractual: 2) }
+    it { is_expected.to define_enum_for(:source).with_values(document_extracted: 0, applicant_declared: 1).with_default(:document_extracted) }
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_074157) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_134117) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -49,6 +49,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_074157) do
     t.string "jurisdiction"
     t.uuid "kyc_document_id", null: false
     t.string "name", null: false
+    t.integer "source", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_kyc_corporate_entities_on_applicant_id"
     t.index ["kyc_document_id"], name: "index_kyc_corporate_entities_on_kyc_document_id"
@@ -82,6 +83,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_074157) do
     t.uuid "parent_entity_id", null: false
     t.decimal "percentage", precision: 5, scale: 2
     t.integer "relationship_type", null: false
+    t.integer "source", default: 0, null: false
     t.uuid "source_document_id"
     t.datetime "updated_at", null: false
     t.index ["child_entity_id"], name: "index_kyc_ownership_edges_on_child_entity_id"
@@ -101,6 +103,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_074157) do
     t.string "name", null: false
     t.string "postcode"
     t.integer "role", default: 0, null: false
+    t.integer "source", default: 0, null: false
     t.integer "status", default: 1, null: false
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_kyc_principals_on_applicant_id"
