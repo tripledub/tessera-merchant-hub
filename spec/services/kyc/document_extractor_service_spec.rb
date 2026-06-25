@@ -138,5 +138,13 @@ RSpec.describe Kyc::DocumentExtractorService, type: :service do
     it "works with the Generic schema as a fallback" do
       expect { described_class.call(document) }.not_to raise_error
     end
+
+    it "uses a generic open-ended prompt when schema has no attributes" do
+      described_class.call(document)
+      expect(mock_adapter).to have_received(:extract).with(
+        document: document,
+        prompt: include("Extract all relevant information")
+      )
+    end
   end
 end

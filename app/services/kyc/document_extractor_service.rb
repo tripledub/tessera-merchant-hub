@@ -37,6 +37,8 @@ module Kyc
         "\"#{attr}\": \"#{format_hint}\""
       end
 
+      return generic_prompt if fields.empty?
+
       <<~PROMPT
         You are a KYC document analyst. Extract the following fields from this document.
         The document may be in any language — always return field values in English.
@@ -52,6 +54,24 @@ module Kyc
         - Extract values exactly as they appear in the document
         - For dates, use YYYY-MM-DD format
         - Use null for any field you cannot find
+        - Do not invent or guess values
+        - If the document is not in English, translate names and text to English
+      PROMPT
+    end
+
+    def generic_prompt
+      <<~PROMPT
+        You are a KYC document analyst. Extract all relevant information from this document.
+        The document may be in any language — always return field values in English.
+
+        Return ONLY valid JSON — no explanation, no markdown fences.
+
+        Extract whatever fields are visible: names, dates, numbers, addresses, amounts,
+        entities, and any other relevant data. Use descriptive key names.
+
+        Rules:
+        - For dates, use YYYY-MM-DD format
+        - Use null for fields you cannot determine
         - Do not invent or guess values
         - If the document is not in English, translate names and text to English
       PROMPT
