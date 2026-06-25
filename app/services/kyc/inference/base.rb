@@ -6,6 +6,10 @@ module Kyc
       def extract(document:, prompt:)
         raise NotImplementedError, "#{self.class}#extract must be implemented"
       end
+
+      def generate(prompt:)
+        raise NotImplementedError, "#{self.class}#generate must be implemented"
+      end
     end
   end
 end

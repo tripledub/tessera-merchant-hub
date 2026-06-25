@@ -102,3 +102,6 @@ group :development do
 end
 
 gem "store_model", "~> 4.6"
+gem "prawn", "~> 2.5"
+gem "prawn-table", "~> 0.2"
+gem "pdf-inspector", "~> 1.3", group: :test

@@ -1,0 +1,62 @@
+<%# Narrative content — rendered inside turbo-frame#executive-narrative-content %>
+<% presenter = Kyc::ExecutiveSummaryPresenter.new(applicant, self) %>
+<turbo-frame id="executive-narrative-content">
+  <% if presenter.has_narrative? %>
+    <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+      <%# Risk assessment badge %>
+      <div class="mb-3 flex items-center gap-2">
+        <span class="text-sm font-medium text-gray-500 dark:text-gray-400"><%= t('applicants.tabs.summary.risk_assessment') %>:</span>
+        <%= presenter.risk_assessment_badge %>
+      </div>
+
+      <%# Executive overview %>
+      <% if presenter.executive_overview.present? %>
+        <div class="mb-4">
+          <h4 class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('applicants.tabs.summary.executive_overview') %></h4>
+          <p class="text-sm text-gray-800 dark:text-white/90"><%= presenter.executive_overview %></p>
+        </div>
+      <% end %>
+
+      <%# Risk factors %>
+      <% if presenter.risk_factors.any? %>
+        <div class="mb-4">
+          <h4 class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('applicants.tabs.summary.risk_factors') %></h4>
+          <ul class="space-y-1 text-sm text-gray-800 dark:text-white/90">
+            <% presenter.risk_factors.each do |rf| %>
+              <li class="flex items-start gap-1.5">
+                <span class="mt-0.5 text-amber-500">&#9679;</span>
+                <%= rf %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <%# Recommended actions %>
+      <% if presenter.recommended_actions.any? %>
+        <div class="mb-4">
+          <h4 class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('applicants.tabs.summary.recommended_actions') %></h4>
+          <ul class="space-y-1 text-sm text-gray-800 dark:text-white/90">
+            <% presenter.recommended_actions.each do |ra| %>
+              <li class="flex items-start gap-1.5">
+                <span class="mt-0.5 text-blue-500">&#8594;</span>
+                <%= ra %>
+              </li>
+            <% end %>
+          </ul>
+        </div>
+      <% end %>
+
+      <%# Generated at %>
+      <% if presenter.narrative_generated_at.present? %>
+        <p class="text-xs text-gray-400 dark:text-gray-500">
+          <%= t('applicants.tabs.summary.generated_at', time: l(presenter.narrative_generated_at, format: :long)) %>
+        </p>
+      <% end %>
+    </div>
+
+    <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 italic">
+      <%= t('applicants.tabs.summary.ai_disclaimer') %>
+    </p>
+  <% end %>
+</turbo-frame>
