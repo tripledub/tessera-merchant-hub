@@ -1,23 +1,26 @@
 <%= render "layouts/auth_card", title: t("applicant_users.registrations.new.title") do %>
-  <%= form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f| %>
-    <%= render "devise/shared/error_messages", resource: resource %>
+  <%= form_for(resource, as: resource_name, url: registration_path(resource_name),
+        html: { data: { controller: "form-validation", action: "submit->form-validation#submitForm" } }) do |f| %>
     <div class="space-y-5">
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <%= f.label :first_name, t("applicant_users.registrations.new.first_name"), class: "form-label" %>
-          <%= f.text_field :first_name, autofocus: true, autocomplete: "given-name",
-                class: "form-input", placeholder: "First name" %>
+          <%= f.text_field :first_name, autofocus: true, autocomplete: "given-name", required: true,
+                class: field_class(resource, :first_name), placeholder: "First name" %>
+          <%= field_error(resource, :first_name) %>
         </div>
         <div>
           <%= f.label :last_name, t("applicant_users.registrations.new.last_name"), class: "form-label" %>
-          <%= f.text_field :last_name, autocomplete: "family-name",
-                class: "form-input", placeholder: "Last name" %>
+          <%= f.text_field :last_name, autocomplete: "family-name", required: true,
+                class: field_class(resource, :last_name), placeholder: "Last name" %>
+          <%= field_error(resource, :last_name) %>
         </div>
       </div>
       <div>
         <%= f.label :email, t("applicant_users.registrations.new.email"), class: "form-label" %>
-        <%= f.email_field :email, autocomplete: "email",
-              class: "form-input", placeholder: "you@example.com" %>
+        <%= f.email_field :email, autocomplete: "email", required: true,
+              class: field_class(resource, :email), placeholder: "you@example.com" %>
+        <%= field_error(resource, :email) %>
       </div>
       <div>
         <%= f.label :password, t("applicant_users.registrations.new.password"), class: "form-label" %>
@@ -25,8 +28,10 @@
           <p class="mb-1 text-xs text-gray-400"><%= @minimum_password_length %> characters minimum</p>
         <% end %>
         <div data-controller="password-toggle" class="relative">
-          <%= f.password_field :password, autocomplete: "new-password",
-                class: "form-input pr-11", placeholder: "••••••••",
+          <%= f.password_field :password, autocomplete: "new-password", required: true,
+                minlength: @minimum_password_length || 6,
+                class: "#{field_class(resource, :password)} pr-11",
+                placeholder: "••••••••",
                 data: { password_toggle_target: "input" } %>
           <button type="button" data-action="password-toggle#toggle"
                   class="absolute top-1/2 right-4 -translate-y-1/2 text-gray-500 dark:text-gray-400">
@@ -39,11 +44,13 @@
             </svg>
           </button>
         </div>
+        <%= field_error(resource, :password) %>
       </div>
       <div>
         <%= f.label :password_confirmation, t("applicant_users.registrations.new.password_confirmation"), class: "form-label" %>
-        <%= f.password_field :password_confirmation, autocomplete: "new-password",
-              class: "form-input", placeholder: "••••••••" %>
+        <%= f.password_field :password_confirmation, autocomplete: "new-password", required: true,
+              class: field_class(resource, :password_confirmation), placeholder: "••••••••" %>
+        <%= field_error(resource, :password_confirmation) %>
       </div>
       <%= f.submit t("applicant_users.registrations.new.submit"), class: "btn-primary w-full" %>
     </div>
