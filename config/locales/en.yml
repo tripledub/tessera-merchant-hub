@@ -270,6 +270,11 @@ en:
       deactivate_success: "%{email} has been deactivated."
       invalid_role: Role is not permitted for merchant users.
       invite_success: Invitation sent to %{email}.
+  helpers:
+    submit:
+      applicant_user:
+        create: Create account
+        update: Update password
   kyc:
     corporate_entities:
       show:

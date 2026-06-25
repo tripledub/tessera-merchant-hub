@@ -5,3 +5,5 @@
 ignore_unused:
   # Devise resolves this via User#inactive_message returning :deactivated
   - devise.failure.deactivated
+  # Rails form builder resolves these at runtime
+  - helpers.submit.applicant_user.*
