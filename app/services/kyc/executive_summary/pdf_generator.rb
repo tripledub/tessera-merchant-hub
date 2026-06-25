@@ -20,8 +20,17 @@ module Kyc
         @narrative = applicant.executive_narrative
       end
 
+      FONT_DIR = Rails.root.join("app/assets/fonts")
+
       def call
         Prawn::Document.new(page_size: "A4", margin: [ 40, 40, 60, 40 ]) do |pdf|
+          pdf.font_families.update(
+            "DejaVu" => {
+              normal: FONT_DIR.join("DejaVuSans.ttf").to_s,
+              bold: FONT_DIR.join("DejaVuSans-Bold.ttf").to_s
+            }
+          )
+          pdf.font "DejaVu"
           render_header(pdf)
           render_ownership_section(pdf)
           render_ubo_section(pdf)
