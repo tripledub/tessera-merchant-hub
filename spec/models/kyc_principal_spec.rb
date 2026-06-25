@@ -22,4 +22,6 @@ RSpec.describe KycPrincipal, type: :model do
     principal.role = :psc
     expect(principal).to be_valid
   end
+
+  it { is_expected.to define_enum_for(:source).with_values(document_extracted: 0, applicant_declared: 1).with_default(:document_extracted) }
 end

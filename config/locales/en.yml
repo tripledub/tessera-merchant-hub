@@ -380,6 +380,9 @@ en:
           address: Address
           documents: Linked documents
           personal: Personal details
+    source:
+      applicant_declared: Declared
+      document_extracted: Extracted
   layouts:
     navigation:
       admin: Admin
