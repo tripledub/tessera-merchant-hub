@@ -17,11 +17,15 @@ module Kyc
       prompt = build_prompt(schema)
 
       response = Kyc::Inference.adapter.extract(document: @document, prompt: prompt)
+      raise Error, "Expected Hash response, got #{response.class}" unless response.is_a?(Hash)
+
       @document.update!(extracted_data: response)
 
       response
     rescue Kyc::Inference::Error => e
       raise Error, "Inference failed: #{e.message}"
+    rescue ActiveRecord::RecordInvalid => e
+      raise Error, "Failed to save extraction: #{e.message}"
     end
 
     private
@@ -32,6 +36,7 @@ module Kyc
         format_hint = case type
         when :date then "YYYY-MM-DD or null"
         when :boolean then "true or false"
+        when :integer, :decimal, :float then "number or null"
         else "string or null"
         end
         "\"#{attr}\": \"#{format_hint}\""
@@ -51,11 +56,11 @@ module Kyc
         }
 
         Rules:
-        - Extract values exactly as they appear in the document
+        - Preserve proper nouns (names, addresses) but transliterate to Latin script if needed
         - For dates, use YYYY-MM-DD format
         - Use null for any field you cannot find
         - Do not invent or guess values
-        - If the document is not in English, translate names and text to English
+        - If the document is not in English, translate descriptive text to English
       PROMPT
     end
 
@@ -70,10 +75,11 @@ module Kyc
         entities, and any other relevant data. Use descriptive key names.
 
         Rules:
+        - Preserve proper nouns (names, addresses) but transliterate to Latin script if needed
         - For dates, use YYYY-MM-DD format
         - Use null for fields you cannot determine
         - Do not invent or guess values
-        - If the document is not in English, translate names and text to English
+        - If the document is not in English, translate descriptive text to English
       PROMPT
     end
   end

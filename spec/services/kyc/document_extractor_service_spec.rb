@@ -99,6 +99,33 @@ RSpec.describe Kyc::DocumentExtractorService, type: :service do
           .to raise_error(Kyc::DocumentExtractorService::Error, /model unavailable/)
       end
     end
+
+    context "when inference returns a non-Hash response" do
+      let(:document) { create(:kyc_document, document_type: :passport) }
+
+      before do
+        allow(mock_adapter).to receive(:extract).and_return("not a hash")
+      end
+
+      it "raises DocumentExtractorService::Error" do
+        expect { described_class.call(document) }
+          .to raise_error(Kyc::DocumentExtractorService::Error, /Expected Hash/)
+      end
+    end
+
+    context "when document save fails" do
+      let(:document) { create(:kyc_document, document_type: :passport) }
+
+      before do
+        allow(mock_adapter).to receive(:extract).and_return({ "full_name" => "Jane Doe" })
+        allow(document).to receive(:update!).and_raise(ActiveRecord::RecordInvalid)
+      end
+
+      it "wraps the error in DocumentExtractorService::Error" do
+        expect { described_class.call(document) }
+          .to raise_error(Kyc::DocumentExtractorService::Error, /Failed to save/)
+      end
+    end
   end
 
   describe "#build_prompt" do
