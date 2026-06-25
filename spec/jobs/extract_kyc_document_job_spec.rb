@@ -100,8 +100,11 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
         principal_with_address
         allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
           "full_name" => "Jane Smith",
-          "document_type" => "utility_bill",
-          "address" => "12 High Street, London, SW1A 1AA, United Kingdom"
+          "account_holder_address_line1" => "12 High Street",
+          "account_holder_city" => "London",
+          "account_holder_postcode" => "SW1A 1AA",
+          "account_holder_country" => "United Kingdom",
+          "provider" => "Thames Water"
         )
       end
 
@@ -126,8 +129,11 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
         principal_no_address
         allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
           "full_name" => "Jane Smith",
-          "document_type" => "utility_bill",
-          "address" => "42 Oak Avenue, Manchester, M1 2AB, United Kingdom"
+          "account_holder_address_line1" => "42 Oak Avenue",
+          "account_holder_city" => "Manchester",
+          "account_holder_postcode" => "M1 2AB",
+          "account_holder_country" => "United Kingdom",
+          "provider" => "Northern Gas"
         )
       end
 
