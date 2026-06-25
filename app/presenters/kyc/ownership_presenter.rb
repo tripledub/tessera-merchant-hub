@@ -69,6 +69,10 @@ module Kyc
       edge.source_document.file.filename.to_s
     end
 
+    def source_badge(record)
+      record.applicant_declared? ? badge("Declared", :amber) : badge("Extracted", :blue)
+    end
+
     def pie_chart_entity
       corporate_ids = entities.select(&:corporate?).map(&:id)
       target_id = edges.select { |e| corporate_ids.include?(e.child_entity_id) }

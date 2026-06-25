@@ -49,5 +49,9 @@ module Kyc
 
       edge.source_document.file.filename.to_s
     end
+
+    def source_badge(record = entity)
+      record.applicant_declared? ? badge("Declared", :amber) : badge("Extracted", :blue)
+    end
   end
 end

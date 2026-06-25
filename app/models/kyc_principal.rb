@@ -6,6 +6,7 @@ class KycPrincipal < ApplicationRecord
 
   enum :role,   { director: 0, psc: 1, director_and_psc: 2, shareholder: 3 }, default: :director
   enum :status, { unconfirmed: 0, confirmed: 1 }, default: :confirmed
+  enum :source, { document_extracted: 0, applicant_declared: 1 }, default: :document_extracted
 
   validates :name, presence: true
 end
