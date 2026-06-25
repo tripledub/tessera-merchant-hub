@@ -1,6 +1,14 @@
 <%# Executive Summary tab — structured KYC overview via Kyc::ExecutiveSummaryPresenter %>
 <% present(applicant, Kyc::ExecutiveSummaryPresenter) do |p| %>
 
+  <div class="mb-6 flex justify-end">
+    <% if policy(applicant).show? %>
+      <%= link_to t('.download_pdf'),
+            applicant_kyc_executive_narrative_path(applicant),
+            class: "inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700" %>
+    <% end %>
+  </div>
+
   <%# 1. Ownership Overview %>
   <div class="mb-6">
     <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
@@ -206,7 +214,7 @@
       </h3>
       <% if policy(applicant).show? %>
         <%= button_to p.has_narrative? ? t('.regenerate') : t('.generate_summary'),
-              applicant_executive_narrative_path(applicant),
+              applicant_kyc_executive_narrative_path(applicant),
               method: :post,
               class: "inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
               data: { turbo_frame: "executive-narrative-content" } %>

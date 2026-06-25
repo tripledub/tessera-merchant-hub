@@ -164,6 +164,7 @@ en:
         doc_extracted: Extracted
         doc_total: Total
         document_status: Document Status
+        download_pdf: Download PDF
         entities: Entities
         executive_overview: Executive Overview
         generate_summary: Generate Summary

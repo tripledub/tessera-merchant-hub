@@ -3,6 +3,17 @@
 class Kyc::ExecutiveNarrativesController < ApplicationController
   expose(:applicant) { Applicant.find(params[:applicant_id]) }
 
+  def show
+    authorize applicant, :show?
+
+    pdf_data = Kyc::ExecutiveSummary::PdfGenerator.call(applicant)
+
+    send_data pdf_data,
+      filename: "executive-summary-#{applicant.id}-#{Date.current}.pdf",
+      type: "application/pdf",
+      disposition: "attachment"
+  end
+
   def create
     authorize applicant, :show?
 

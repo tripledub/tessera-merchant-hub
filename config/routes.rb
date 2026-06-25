@@ -18,7 +18,7 @@ Rails.application.routes.draw do
   resources :applicants, only: %i[new create index show edit update] do
     get "tab/:tab", action: :tab, as: :tab, on: :member
     namespace :kyc do
-      resource :executive_narrative, only: :create
+      resource :executive_narrative, only: %i[show create]
       resource :extraction_run, only: :create
       resources :principals, only: %i[new create show edit update destroy], shallow: true do
         resource :document_links, only: %i[new create], controller: "principal_document_links"
