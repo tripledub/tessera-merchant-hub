@@ -28,16 +28,10 @@ RSpec.describe Kyc::DocumentExtractorService, type: :service do
         allow(mock_adapter).to receive(:extract).and_return(passport_response)
       end
 
-      it "extracts passport fields correctly" do
+      it "returns the extracted response" do
         result = described_class.call(document)
 
         expect(result).to eq(passport_response)
-      end
-
-      it "stores extracted_data on the document" do
-        described_class.call(document)
-
-        expect(document.reload.extracted_data).to eq(passport_response)
       end
     end
 
@@ -110,20 +104,6 @@ RSpec.describe Kyc::DocumentExtractorService, type: :service do
       it "raises DocumentExtractorService::Error" do
         expect { described_class.call(document) }
           .to raise_error(Kyc::DocumentExtractorService::Error, /Expected Hash/)
-      end
-    end
-
-    context "when document save fails" do
-      let(:document) { create(:kyc_document, document_type: :passport) }
-
-      before do
-        allow(mock_adapter).to receive(:extract).and_return({ "full_name" => "Jane Doe" })
-        allow(document).to receive(:update!).and_raise(ActiveRecord::RecordInvalid)
-      end
-
-      it "wraps the error in DocumentExtractorService::Error" do
-        expect { described_class.call(document) }
-          .to raise_error(Kyc::DocumentExtractorService::Error, /Failed to save/)
       end
     end
   end

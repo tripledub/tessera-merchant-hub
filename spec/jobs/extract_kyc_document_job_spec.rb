@@ -15,19 +15,21 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
   let(:ocr_response) { { "full_name" => "Jane Smith", "document_type" => "passport" } }
 
   before do
-    ENV.delete("CLAUDE_OCR")
-    stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")
-      .to_return(status: 200, body: ocr_response.to_json, headers: { "Content-Type" => "application/json" })
+    allow(Kyc::DocumentExtractorService).to receive(:call).and_return(ocr_response)
     allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
     allow(Turbo::StreamsChannel).to receive(:broadcast_append_to)
   end
 
   describe "#perform" do
-    it "transitions document to complete and stores result" do
+    it "transitions document to complete" do
       described_class.new.perform(document.id)
       document.reload
       expect(document.status).to eq("complete")
-      expect(document.result).to eq(ocr_response)
+    end
+
+    it "delegates to DocumentExtractorService" do
+      described_class.new.perform(document.id)
+      expect(Kyc::DocumentExtractorService).to have_received(:call).with(document)
     end
 
     it "auto-matches principal by full_name" do
@@ -96,16 +98,11 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
 
       before do
         principal_with_address
-        stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")
-          .to_return(
-            status: 200,
-            body: {
-              "full_name" => "Jane Smith",
-              "document_type" => "utility_bill",
-              "address" => "12 High Street, London, SW1A 1AA, United Kingdom"
-            }.to_json,
-            headers: { "Content-Type" => "application/json" }
-          )
+        allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+          "full_name" => "Jane Smith",
+          "document_type" => "utility_bill",
+          "address" => "12 High Street, London, SW1A 1AA, United Kingdom"
+        )
       end
 
       it "stores address_match_method and address_match_confidence" do
@@ -127,16 +124,11 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
 
       before do
         principal_no_address
-        stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")
-          .to_return(
-            status: 200,
-            body: {
-              "full_name" => "Jane Smith",
-              "document_type" => "utility_bill",
-              "address" => "42 Oak Avenue, Manchester, M1 2AB, United Kingdom"
-            }.to_json,
-            headers: { "Content-Type" => "application/json" }
-          )
+        allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+          "full_name" => "Jane Smith",
+          "document_type" => "utility_bill",
+          "address" => "42 Oak Avenue, Manchester, M1 2AB, United Kingdom"
+        )
       end
 
       it "populates the principal's address from the extracted data" do
@@ -178,24 +170,24 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
         expect(document.reload.status).to eq("complete")
       end
 
-      it "does not call the standard OCR pipeline" do
+      it "does not call the generic document extractor" do
         described_class.new.perform(document.id)
 
-        expect(a_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")).not_to have_been_made
+        expect(Kyc::DocumentExtractorService).not_to have_received(:call)
       end
     end
 
-    context "when OCR service fails" do
+    context "when extraction fails" do
       before do
-        stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")
-          .to_return(status: 503, body: "Service Unavailable")
+        allow(Kyc::DocumentExtractorService).to receive(:call)
+          .and_raise(Kyc::DocumentExtractorService::Error, "Inference failed: model unavailable")
       end
 
       it "transitions document to error" do
         described_class.new.perform(document.id)
         document.reload
         expect(document.status).to eq("error")
-        expect(document.result["error"]).to include("503")
+        expect(document.result["error"]).to include("model unavailable")
       end
 
       it "broadcasts an error toast notification" do

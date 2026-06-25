@@ -2,7 +2,6 @@
 
 class ExtractKycDocumentJob < ApplicationJob
   include KycDocumentBroadcaster
-  include OcrClientResolvable
 
   queue_as :default
 
@@ -25,7 +24,8 @@ class ExtractKycDocumentJob < ApplicationJob
 
     broadcast_document(document)
     broadcast_toast(document)
-  rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error, Kyc::Inference::Error, Kyc::GroupStructureExtractorService::ExtractionError => e
+  rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error, Kyc::Inference::Error,
+         Kyc::GroupStructureExtractorService::ExtractionError, Kyc::DocumentExtractorService::Error => e
     document&.update!(status: :error, result: { "error" => e.message })
     if document
       broadcast_document(document)
@@ -41,7 +41,7 @@ class ExtractKycDocumentJob < ApplicationJob
   end
 
   def extract_standard(document)
-    response = ocr_client(document)
+    response = Kyc::DocumentExtractorService.call(document)
 
     match = PrincipalMatcherService.call(applicant: document.applicant, result: response)
     address_match = if match.principal && document.utility_bill?
@@ -54,7 +54,7 @@ class ExtractKycDocumentJob < ApplicationJob
 
     document.update!(
       status: :complete,
-      result: response,
+      extracted_data: response,
       kyc_principal: match.principal,
       match_method: match.match_method,
       match_confidence: match.match_confidence,
