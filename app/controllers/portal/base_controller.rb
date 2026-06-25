@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-class Onboarding::BaseController < ApplicationController
+class Portal::BaseController < ApplicationController
   skip_before_action :authenticate_user!
-  layout "onboarding"
+  layout "portal"
   before_action :authenticate_applicant_user!
 
   private

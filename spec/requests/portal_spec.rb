@@ -3,7 +3,7 @@
 require "rails_helper"
 
 RSpec.describe "Onboarding authentication", type: :request do
-  describe "POST /onboarding (sign up)" do
+  describe "POST /portal (sign up)" do
     let(:sign_up_params) do
       {
         applicant_user: {
@@ -22,7 +22,7 @@ RSpec.describe "Onboarding authentication", type: :request do
       }.to change(ApplicantUser, :count).by(1)
         .and change(Applicant, :count).by(1)
 
-      expect(response).to redirect_to(onboarding_root_path)
+      expect(response).to redirect_to(portal_root_path)
       follow_redirect!
       expect(response).to have_http_status(:ok)
     end
@@ -40,14 +40,14 @@ RSpec.describe "Onboarding authentication", type: :request do
     end
   end
 
-  describe "POST /onboarding/sign_in" do
+  describe "POST /portal/sign_in" do
     let!(:applicant_user) { create(:applicant_user, email: "user@example.com", password: "password123!") }
 
     it "signs in with valid credentials" do
       post new_applicant_user_session_path, params: {
         applicant_user: { email: "user@example.com", password: "password123!" }
       }
-      expect(response).to redirect_to(onboarding_root_path)
+      expect(response).to redirect_to(portal_root_path)
     end
 
     it "rejects invalid credentials" do
@@ -58,7 +58,7 @@ RSpec.describe "Onboarding authentication", type: :request do
     end
   end
 
-  describe "DELETE /onboarding/sign_out" do
+  describe "DELETE /portal/sign_out" do
     let!(:applicant_user) { create(:applicant_user) }
 
     it "signs out the applicant user" do
@@ -68,16 +68,16 @@ RSpec.describe "Onboarding authentication", type: :request do
     end
   end
 
-  describe "GET /onboarding (dashboard)" do
+  describe "GET /portal (dashboard)" do
     it "redirects unauthenticated users to sign in" do
-      get onboarding_root_path
+      get portal_root_path
       expect(response).to redirect_to(new_applicant_user_session_path)
     end
 
     it "shows the dashboard for authenticated applicant users" do
       applicant_user = create(:applicant_user, first_name: "Alex")
       sign_in applicant_user, scope: :applicant_user
-      get onboarding_root_path
+      get portal_root_path
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Welcome, Alex!")
     end

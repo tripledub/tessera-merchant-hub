@@ -2,13 +2,13 @@ Rails.application.routes.draw do
   devise_for :users
 
   devise_for :applicant_users,
-             path: "onboarding",
+             path: "portal",
              controllers: {
-               registrations: "onboarding/registrations",
-               sessions: "onboarding/sessions"
+               registrations: "portal/registrations",
+               sessions: "portal/sessions"
              }
 
-  namespace :onboarding do
+  namespace :portal do
     root to: "dashboard#show"
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html

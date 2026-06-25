@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-class Onboarding::RegistrationsController < Devise::RegistrationsController
-  layout "onboarding"
+class Portal::RegistrationsController < Devise::RegistrationsController
+  layout "portal"
 
   private
 
@@ -20,6 +20,6 @@ class Onboarding::RegistrationsController < Devise::RegistrationsController
   end
 
   def after_sign_up_path_for(_resource)
-    onboarding_root_path
+    portal_root_path
   end
 end

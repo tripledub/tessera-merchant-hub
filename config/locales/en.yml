@@ -500,13 +500,6 @@ en:
         status: Status
         test: Test
         test_mode: Mode
-  onboarding:
-    dashboard:
-      show:
-        coming_soon: Your onboarding chat will be here soon.
-        welcome: Welcome, %{name}!
-    sign_out: Sign out
-    title: MerchantHub Onboarding
   payment_timelines:
     show:
       back: "← Back to payment"
@@ -586,6 +579,13 @@ en:
         details: Details
         timeline: Timeline
       title: Payment
+  portal:
+    dashboard:
+      show:
+        coming_soon: Your onboarding chat will be here soon.
+        welcome: Welcome, %{name}!
+    sign_out: Sign out
+    title: MerchantHub Portal
   shared:
     error_messages:
       header:

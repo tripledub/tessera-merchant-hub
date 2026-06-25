@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title><%= content_for(:title) || t('onboarding.title') %></title>
+    <title><%= content_for(:title) || t('portal.title') %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="application-name" content="<%= t('onboarding.title') %>">
+    <meta name="application-name" content="<%= t('portal.title') %>">
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
@@ -50,11 +50,11 @@
                            2-2zm0 2v2h16V6H4zm0 4v8h16v-8H4zm2 2h4v2H6v-2z"/>
                 </svg>
               </div>
-              <span class="text-base font-semibold text-gray-900 dark:text-white/90"><%= t("onboarding.title") %></span>
+              <span class="text-base font-semibold text-gray-900 dark:text-white/90"><%= t("portal.title") %></span>
             </div>
             <div class="flex items-center gap-4">
               <span class="text-sm text-gray-600 dark:text-gray-400"><%= current_applicant_user.email %></span>
-              <%= link_to t("onboarding.sign_out"), destroy_applicant_user_session_path,
+              <%= link_to t("portal.sign_out"), destroy_applicant_user_session_path,
                     data: { turbo_method: :delete }, class: "text-sm text-brand-600 hover:text-brand-700 hover:underline" %>
             </div>
           </div>
