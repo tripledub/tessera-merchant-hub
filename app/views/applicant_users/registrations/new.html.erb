@@ -3,26 +3,26 @@
         html: { data: { controller: "form-validation", action: "submit->form-validation#submitForm" } }) do |f| %>
     <div class="space-y-5">
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
-        <div>
+        <div data-field>
           <%= f.label :first_name, t("applicant_users.registrations.new.first_name"), class: "form-label" %>
           <%= f.text_field :first_name, autofocus: true, autocomplete: "given-name", required: true,
                 class: field_class(resource, :first_name), placeholder: "First name" %>
           <%= field_error(resource, :first_name) %>
         </div>
-        <div>
+        <div data-field>
           <%= f.label :last_name, t("applicant_users.registrations.new.last_name"), class: "form-label" %>
           <%= f.text_field :last_name, autocomplete: "family-name", required: true,
                 class: field_class(resource, :last_name), placeholder: "Last name" %>
           <%= field_error(resource, :last_name) %>
         </div>
       </div>
-      <div>
+      <div data-field>
         <%= f.label :email, t("applicant_users.registrations.new.email"), class: "form-label" %>
         <%= f.email_field :email, autocomplete: "email", required: true,
               class: field_class(resource, :email), placeholder: "you@example.com" %>
         <%= field_error(resource, :email) %>
       </div>
-      <div>
+      <div data-field>
         <%= f.label :password, t("applicant_users.registrations.new.password"), class: "form-label" %>
         <% if @minimum_password_length %>
           <p class="mb-1 text-xs text-gray-400"><%= @minimum_password_length %> characters minimum</p>
@@ -46,7 +46,7 @@
         </div>
         <%= field_error(resource, :password) %>
       </div>
-      <div>
+      <div data-field>
         <%= f.label :password_confirmation, t("applicant_users.registrations.new.password_confirmation"), class: "form-label" %>
         <%= f.password_field :password_confirmation, autocomplete: "new-password", required: true,
               class: field_class(resource, :password_confirmation), placeholder: "••••••••" %>

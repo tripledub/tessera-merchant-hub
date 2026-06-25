@@ -1,8 +1,6 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["submit"]
-
   connect() {
     this.element.setAttribute("novalidate", "")
     this.element.addEventListener("blur", this.validateField.bind(this), true)
@@ -50,25 +48,29 @@ export default class extends Controller {
     field.classList.remove("form-input")
     field.classList.add("form-input-error")
 
-    let msg = this.errorMessage(field)
-    let errorEl = field.closest("div").querySelector(".form-error")
+    const container = this.fieldContainer(field)
+    let errorEl = container.querySelector(".form-error")
 
     if (!errorEl) {
       errorEl = document.createElement("p")
       errorEl.classList.add("form-error")
-      const wrapper = field.closest("[data-controller='password-toggle']") || field.parentElement
-      wrapper.parentElement.appendChild(errorEl)
+      container.appendChild(errorEl)
     }
 
-    errorEl.textContent = msg
+    errorEl.textContent = this.errorMessage(field)
   }
 
   clearError(field) {
     field.classList.remove("form-input-error")
     field.classList.add("form-input")
 
-    const errorEl = field.closest("div").parentElement?.querySelector(".form-error")
+    const container = this.fieldContainer(field)
+    const errorEl = container.querySelector(".form-error")
     if (errorEl) errorEl.remove()
+  }
+
+  fieldContainer(field) {
+    return field.closest("[data-field]") || field.closest("div:not([data-controller])")?.parentElement || field.parentElement
   }
 
   errorMessage(field) {
