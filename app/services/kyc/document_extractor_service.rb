@@ -19,13 +19,9 @@ module Kyc
       response = Kyc::Inference.adapter.extract(document: @document, prompt: prompt)
       raise Error, "Expected Hash response, got #{response.class}" unless response.is_a?(Hash)
 
-      @document.update!(extracted_data: response)
-
       response
     rescue Kyc::Inference::Error => e
       raise Error, "Inference failed: #{e.message}"
-    rescue ActiveRecord::RecordInvalid => e
-      raise Error, "Failed to save extraction: #{e.message}"
     end
 
     private

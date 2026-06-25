@@ -2,7 +2,6 @@
 
 class ExtractKycDocumentJob < ApplicationJob
   include KycDocumentBroadcaster
-  include OcrClientResolvable
 
   queue_as :default
 
@@ -55,6 +54,7 @@ class ExtractKycDocumentJob < ApplicationJob
 
     document.update!(
       status: :complete,
+      extracted_data: response,
       kyc_principal: match.principal,
       match_method: match.match_method,
       match_confidence: match.match_confidence,
