@@ -39,6 +39,35 @@ en:
         title: Invite a PSP user
   app:
     title: Tessera Merchant Hub
+  applicant_users:
+    passwords:
+      edit:
+        back_to_sign_in: Back to sign in
+        confirm_password: Confirm new password
+        new_password: New password
+        submit: Update password
+        title: Set new password
+      new:
+        back_to_sign_in: Back to sign in
+        submit: Send reset instructions
+        title: Reset your password
+    registrations:
+      new:
+        already_have_account: Already have an account?
+        email: Email
+        first_name: First name
+        last_name: Last name
+        password: Password
+        password_confirmation: Confirm password
+        sign_in_link: Sign in
+        submit: Create account
+        title: Create your account
+    sessions:
+      new:
+        forgot_password: Forgot your password?
+        sign_up_link: Create an account
+        submit: Sign in
+        title: Sign in to Onboarding
   applicants:
     edit:
       back: "← Back to applicant"
@@ -241,6 +270,11 @@ en:
       deactivate_success: "%{email} has been deactivated."
       invalid_role: Role is not permitted for merchant users.
       invite_success: Invitation sent to %{email}.
+  helpers:
+    submit:
+      applicant_user:
+        create: Create account
+        update: Update password
   kyc:
     corporate_entities:
       show:
@@ -550,6 +584,13 @@ en:
         details: Details
         timeline: Timeline
       title: Payment
+  portal:
+    dashboard:
+      show:
+        coming_soon: Your onboarding chat will be here soon.
+        welcome: Welcome, %{name}!
+    sign_out: Sign out
+    title: MerchantHub Portal
   shared:
     error_messages:
       header:

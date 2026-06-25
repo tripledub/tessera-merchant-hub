@@ -1,0 +1,16 @@
+<%= render "layouts/auth_card", title: t("applicant_users.passwords.new.title") do %>
+  <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post }) do |f| %>
+    <div class="space-y-5">
+      <div>
+        <%= f.label :email, class: "form-label" %>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email",
+              class: "form-input", placeholder: "you@example.com" %>
+      </div>
+      <%= f.submit t("applicant_users.passwords.new.submit"), class: "btn-primary w-full" %>
+    </div>
+  <% end %>
+  <div class="mt-5 text-center">
+    <%= link_to t("applicant_users.passwords.new.back_to_sign_in"), new_session_path(resource_name),
+          class: "text-sm text-brand-600 hover:text-brand-700 hover:underline" %>
+  </div>
+<% end %>

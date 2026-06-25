@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || t('portal.title') %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="<%= t('portal.title') %>">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+
+    <%# Dark mode: same approach as main layout %>
+    <script>
+      (function () {
+        var isDark = true;
+        try {
+          var stored = localStorage.getItem("darkMode");
+          if (stored !== null) { isDark = JSON.parse(stored); }
+        } catch (e) { /* malformed value — keep default */ }
+        window.__darkMode = isDark;
+        if (isDark) {
+          document.documentElement.classList.add("dark");
+        } else {
+          document.documentElement.classList.remove("dark");
+        }
+      })();
+    </script>
+  </head>
+
+  <body class="bg-gray-50 font-outfit antialiased dark:bg-gray-950">
+    <% if applicant_user_signed_in? %>
+      <%# ── Authenticated onboarding shell: simple top bar + content ─── %>
+      <div class="min-h-screen flex flex-col">
+        <header class="border-b border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
+          <div class="mx-auto flex max-w-4xl items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-500">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"
+                     class="h-5 w-5 text-white" aria-hidden="true">
+                  <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1
+                           2-2zm0 2v2h16V6H4zm0 4v8h16v-8H4zm2 2h4v2H6v-2z"/>
+                </svg>
+              </div>
+              <span class="text-base font-semibold text-gray-900 dark:text-white/90"><%= t("portal.title") %></span>
+            </div>
+            <div class="flex items-center gap-4">
+              <span class="text-sm text-gray-600 dark:text-gray-400"><%= current_applicant_user.email %></span>
+              <%= link_to t("portal.sign_out"), destroy_applicant_user_session_path,
+                    data: { turbo_method: :delete }, class: "text-sm text-brand-600 hover:text-brand-700 hover:underline" %>
+            </div>
+          </div>
+        </header>
+
+        <main class="flex-1 p-4 sm:p-6 lg:p-8">
+          <div class="mx-auto max-w-4xl">
+            <% if flash.any? %>
+              <div class="mb-6 space-y-3">
+                <%= render "layouts/flash" %>
+              </div>
+            <% end %>
+            <%= yield %>
+          </div>
+        </main>
+      </div>
+
+    <% else %>
+      <%# ── Unauthenticated: full-page (sign in, sign up, etc.) ─── %>
+      <main class="min-h-screen">
+        <% if flash.any? %>
+          <div class="mx-auto max-w-md px-4 pt-6 space-y-3">
+            <%= render "layouts/flash" %>
+          </div>
+        <% end %>
+        <%= yield %>
+      </main>
+    <% end %>
+  </body>
+</html>

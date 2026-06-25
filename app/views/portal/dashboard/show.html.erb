@@ -1,0 +1,8 @@
+<div class="rounded-2xl border border-gray-200 bg-white p-8 dark:border-gray-800 dark:bg-white/[0.03]">
+  <h1 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white/90">
+    <%= t(".welcome", name: current_applicant_user.first_name.presence || current_applicant_user.email) %>
+  </h1>
+  <p class="text-gray-600 dark:text-gray-400">
+    <%= t(".coming_soon") %>
+  </p>
+</div>
