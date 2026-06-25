@@ -211,6 +211,7 @@ en:
     executive_narrative:
       failed: Could not generate the executive summary. Please try again.
       generated: Executive summary generated successfully.
+      rate_limited: Summary was recently generated. Please wait before regenerating.
     kyc_documents:
       extraction_started:
         one: Extraction started for 1 document.

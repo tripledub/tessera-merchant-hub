@@ -19,7 +19,7 @@ module Kyc
         end
 
         response = client.messages.create(
-          model: "claude-sonnet-4-6",
+          model: model_id,
           max_tokens: 4096,
           messages: [
             { role: "user", content: [ content_block, { type: "text", text: prompt } ] }
@@ -31,7 +31,7 @@ module Kyc
 
       def generate(prompt:)
         response = client.messages.create(
-          model: "claude-sonnet-4-6",
+          model: model_id,
           max_tokens: 4096,
           messages: [
             { role: "user", content: prompt }
@@ -42,6 +42,12 @@ module Kyc
       end
 
       private
+
+      MODEL_ID = ENV.fetch("KYC_INFERENCE_MODEL", "claude-sonnet-4-6")
+
+      def model_id
+        MODEL_ID
+      end
 
       def client
         @client ||= Anthropic::Client.new(api_key: api_key)

@@ -15,7 +15,21 @@ class Kyc::ExecutiveNarrativesController < ApplicationController
   end
 
   def create
-    authorize applicant, :show?
+    authorize applicant, :run_extraction?
+
+    if applicant.executive_narrative_generated_at&.after?(60.seconds.ago)
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.append(
+            "toast-container",
+            partial: "shared/toast",
+            locals: { message: t("flash.executive_narrative.rate_limited"), type: :warning }
+          )
+        end
+        format.html { redirect_to applicant_path(applicant), notice: t("flash.executive_narrative.rate_limited") }
+      end
+      return
+    end
 
     begin
       narrative = Kyc::ExecutiveSummary::NarrativeGenerator.call(applicant, force: true)
