@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_134117) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_151325) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_134117) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "applicant_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.string "encrypted_password", default: "", null: false
+    t.string "first_name"
+    t.string "last_name"
+    t.datetime "remember_created_at"
+    t.datetime "reset_password_sent_at"
+    t.string "reset_password_token"
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id"], name: "index_applicant_users_on_applicant_id"
+    t.index ["email"], name: "index_applicant_users_on_email", unique: true
+    t.index ["reset_password_token"], name: "index_applicant_users_on_reset_password_token", unique: true
   end
 
   create_table "kyc_corporate_entities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -188,6 +204,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_134117) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "applicant_users", "merchants", column: "applicant_id"
   add_foreign_key "kyc_corporate_entities", "kyc_documents"
   add_foreign_key "kyc_corporate_entities", "merchants", column: "applicant_id"
   add_foreign_key "kyc_documents", "kyc_corporate_entities", column: "corporate_entity_id"
