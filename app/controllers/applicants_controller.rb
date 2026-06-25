@@ -27,7 +27,7 @@ class ApplicantsController < ApplicationController
   def tab
     authorize applicant, :show?
     tab_name = params[:tab]
-    allowed = %w[overview principals documents ownership compliance]
+    allowed = %w[overview principals documents ownership compliance summary]
     head(:not_found) and return unless allowed.include?(tab_name)
 
     @kyc_principals = applicant.kyc_principals.order(:name) if tab_name == "principals"

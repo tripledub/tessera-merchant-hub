@@ -1,0 +1,283 @@
+<%# Executive Summary tab — structured KYC overview via Kyc::ExecutiveSummaryPresenter %>
+<% present(applicant, Kyc::ExecutiveSummaryPresenter) do |p| %>
+
+  <%# 1. Ownership Overview %>
+  <div class="mb-6">
+    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <%= t('.ownership_overview') %>
+    </h3>
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.entity_count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.entities') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.individual_count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.individuals') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.corporate_count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.corporates') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.edge_count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.relationships') %></p>
+      </div>
+    </div>
+    <% if p.jurisdictions.any? %>
+      <div class="mt-2 flex flex-wrap gap-1.5">
+        <% p.jurisdictions.each do |j| %>
+          <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-500/10 dark:text-gray-400"><%= j %></span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# 2. UBO Analysis %>
+  <% if p.has_ubos? %>
+    <div class="mb-6">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.ubo_analysis') %>
+      </h3>
+      <div class="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+          <thead class="bg-gray-50 dark:bg-white/[0.03]">
+            <tr>
+              <th class="px-4 py-2 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.ubo_name') %></th>
+              <th class="px-4 py-2 text-right text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.ubo_percentage') %></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+            <% p.ubos.each do |ubo| %>
+              <tr>
+                <td class="px-4 py-2 text-sm text-gray-800 dark:text-white/90"><%= ubo[:name] %></td>
+                <td class="px-4 py-2 text-right text-sm text-gray-800 dark:text-white/90">
+                  <%= ubo[:percentage] ? "#{ubo[:percentage]}%" : "—" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  <% end %>
+
+  <%# 3. Compliance Readiness %>
+  <div class="mb-6">
+    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <%= t('.compliance_readiness') %>
+    </h3>
+    <div class="mb-3 flex items-center gap-3">
+      <%= p.compliance_status_badge %>
+      <span class="text-sm text-gray-600 dark:text-gray-400">
+        <%= t('.compliant_of_total', compliant: p.compliant_entity_count, total: p.compliance_entity_count) %>
+      </span>
+    </div>
+    <% if p.entity_results.any? %>
+      <div class="space-y-2">
+        <% p.entity_results.each do |er| %>
+          <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+            <p class="text-sm font-medium text-gray-800 dark:text-white/90"><%= er[:entity_name] %></p>
+            <div class="mt-1 flex flex-wrap gap-1.5">
+              <% er[:results].each do |r| %>
+                <span class="inline-flex items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+                  <% if r[:met] %>
+                    <span class="text-green-500">&#10003;</span>
+                  <% else %>
+                    <span class="text-red-500">&#10007;</span>
+                  <% end %>
+                  <%= r[:rule] %>
+                </span>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# 4. Document Status %>
+  <div class="mb-6">
+    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <%= t('.document_status') %>
+    </h3>
+    <div class="mb-3 grid grid-cols-3 gap-3">
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.document_total %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.doc_total') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-green-600 dark:text-green-400"><%= p.confirmed_document_count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.doc_confirmed') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-blue-600 dark:text-blue-400"><%= p.extracted_document_count %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.doc_extracted') %></p>
+      </div>
+    </div>
+    <% if p.documents_by_type.any? %>
+      <div class="flex flex-wrap gap-1.5">
+        <% p.documents_by_type.each do |type, count| %>
+          <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-500/10 dark:text-gray-400">
+            <%= t("kyc.documents.document_types.#{type}", default: type.humanize) %> (<%= count %>)
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# 5. Identity Verification %>
+  <% if p.principals.any? %>
+    <div class="mb-6">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.identity_verification') %>
+      </h3>
+      <div class="space-y-2">
+        <% p.principals.each do |principal| %>
+          <div class="flex items-center justify-between rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+            <span class="text-sm font-medium text-gray-800 dark:text-white/90"><%= principal[:name] %></span>
+            <div class="flex flex-wrap gap-1.5">
+              <% if principal[:linked_document_types].any? %>
+                <% principal[:linked_document_types].each do |dt| %>
+                  <span class="inline-flex items-center rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-500/10 dark:text-blue-400">
+                    <%= t("kyc.documents.document_types.#{dt}", default: dt.humanize) %>
+                  </span>
+                <% end %>
+              <% else %>
+                <span class="text-xs text-gray-400"><%= t('.no_documents_linked') %></span>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%# 6. Warnings %>
+  <div class="mb-6">
+    <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+      <%= t('.warnings') %>
+    </h3>
+    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.warning_total %></p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.warning_total') %></p>
+      </div>
+      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <p class="text-2xl font-semibold <%= p.unacknowledged_warning_count > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-white/90' %>">
+          <%= p.unacknowledged_warning_count %>
+        </p>
+        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.warning_unacknowledged') %></p>
+      </div>
+    </div>
+    <% if p.warnings_by_type.any? %>
+      <div class="mt-3 flex flex-wrap gap-1.5">
+        <% p.warnings_by_type.each do |type, count| %>
+          <span class="inline-flex items-center rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+            <%= type.humanize %> (<%= count %>)
+          </span>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <%# 7. Cross-Reference Discrepancies %>
+  <% if p.has_discrepancies? %>
+    <div class="mb-6">
+      <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.cross_reference_discrepancies') %>
+      </h3>
+      <div class="space-y-2">
+        <% p.cross_reference_discrepancies.each do |d| %>
+          <div class="rounded-lg border border-red-200 bg-red-50 p-3 dark:border-red-500/30 dark:bg-red-500/10">
+            <p class="text-sm font-medium text-red-800 dark:text-red-400"><%= d[:entity_name] %></p>
+            <p class="text-xs text-red-600 dark:text-red-400/80"><%= d[:message] %></p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+
+  <%# 8. AI Narrative %>
+  <div class="mb-6" id="executive-narrative-section">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        <%= t('.ai_narrative') %>
+      </h3>
+      <% if policy(applicant).show? %>
+        <%= button_to p.has_narrative? ? t('.regenerate') : t('.generate_summary'),
+              applicant_executive_narrative_path(applicant),
+              method: :post,
+              class: "inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700",
+              data: { turbo_frame: "executive-narrative-content" } %>
+      <% end %>
+    </div>
+
+    <turbo-frame id="executive-narrative-content">
+      <% if p.has_narrative? %>
+        <div class="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+          <%# Risk assessment badge %>
+          <div class="mb-3 flex items-center gap-2">
+            <span class="text-sm font-medium text-gray-500 dark:text-gray-400"><%= t('.risk_assessment') %>:</span>
+            <%= p.risk_assessment_badge %>
+          </div>
+
+          <%# Executive overview %>
+          <% if p.executive_overview.present? %>
+            <div class="mb-4">
+              <h4 class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.executive_overview') %></h4>
+              <p class="text-sm text-gray-800 dark:text-white/90"><%= p.executive_overview %></p>
+            </div>
+          <% end %>
+
+          <%# Risk factors %>
+          <% if p.risk_factors.any? %>
+            <div class="mb-4">
+              <h4 class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.risk_factors') %></h4>
+              <ul class="space-y-1 text-sm text-gray-800 dark:text-white/90">
+                <% p.risk_factors.each do |rf| %>
+                  <li class="flex items-start gap-1.5">
+                    <span class="mt-0.5 text-amber-500">&#9679;</span>
+                    <%= rf %>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <%# Recommended actions %>
+          <% if p.recommended_actions.any? %>
+            <div class="mb-4">
+              <h4 class="mb-1 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400"><%= t('.recommended_actions') %></h4>
+              <ul class="space-y-1 text-sm text-gray-800 dark:text-white/90">
+                <% p.recommended_actions.each do |ra| %>
+                  <li class="flex items-start gap-1.5">
+                    <span class="mt-0.5 text-blue-500">&#8594;</span>
+                    <%= ra %>
+                  </li>
+                <% end %>
+              </ul>
+            </div>
+          <% end %>
+
+          <%# Generated at %>
+          <% if p.narrative_generated_at.present? %>
+            <p class="text-xs text-gray-400 dark:text-gray-500">
+              <%= t('.generated_at', time: l(p.narrative_generated_at, format: :long)) %>
+            </p>
+          <% end %>
+        </div>
+
+        <%# Disclaimer %>
+        <p class="mt-2 text-xs text-gray-400 dark:text-gray-500 italic">
+          <%= t('.ai_disclaimer') %>
+        </p>
+      <% else %>
+        <div class="rounded-lg border border-dashed border-gray-300 p-6 text-center dark:border-gray-700">
+          <p class="text-sm text-gray-500 dark:text-gray-400"><%= t('.no_narrative') %></p>
+        </div>
+      <% end %>
+    </turbo-frame>
+  </div>
+
+<% end %>

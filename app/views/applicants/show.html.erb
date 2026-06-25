@@ -24,6 +24,7 @@
   <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
     <div class="border-b border-gray-200 px-4 sm:px-6 dark:border-gray-800">
       <nav class="-mb-px flex space-x-2 overflow-x-auto [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-200 dark:[&::-webkit-scrollbar-thumb]:bg-gray-600 dark:[&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar]:h-1.5">
+        <%= render "applicants/tab_button", tab: "summary", label: t('.tabs.summary'), icon: "chart" %>
         <%= render "applicants/tab_button", tab: "overview", label: t('.tabs.overview'), icon: "grid" %>
         <%= render "applicants/tab_button", tab: "principals", label: t('.tabs.principals'), icon: "users" %>
         <%= render "applicants/tab_button", tab: "documents", label: t('.tabs.documents'), icon: "document" %>
@@ -34,6 +35,12 @@
 
     <%# Tab panels %>
     <div class="p-4 sm:p-6">
+      <div data-tabs-target="panel" data-tab="summary" hidden data-tab-src="<%= tab_applicant_path(applicant, tab: 'summary') %>">
+        <div id="summary-tab-content">
+          <p class="text-sm text-gray-400"><%= t('.tabs.loading') %></p>
+        </div>
+      </div>
+
       <div data-tabs-target="panel" data-tab="overview" data-tab-src="<%= tab_applicant_path(applicant, tab: 'overview') %>">
         <div id="overview-tab-content">
           <%= render "applicants/tabs/overview", applicant: applicant %>
