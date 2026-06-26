@@ -7,6 +7,23 @@ module Onboarding
       "shareholder" => "shareholder",
       "both" => "director_and_psc"
     }.freeze
+    ROLE_SYNONYMS = {
+      "director" => "director",
+      "company director" => "director",
+      "shareholder" => "shareholder",
+      "ubo" => "shareholder",
+      "ultimate beneficial owner" => "shareholder",
+      "psc" => "shareholder",
+      "person with significant control" => "shareholder",
+      "both" => "both",
+      "director and shareholder" => "both",
+      "shareholder and director" => "both",
+      "director and ubo" => "both",
+      "ubo and director" => "both",
+      "director and psc" => "both",
+      "psc and director" => "both",
+      "director_and_psc" => "both"
+    }.freeze
     ROLE_OPTIONS = Onboarding::StateMachine::FIELDS_BY_NAME.fetch(:role).options.freeze
     raise "role map does not match onboarding role options" unless ROLE_MAP.keys.sort == ROLE_OPTIONS.sort
 
@@ -37,11 +54,18 @@ module Onboarding
 
     def normalize_value(field, value)
       definition = Onboarding::StateMachine::FIELDS_BY_NAME[field.to_sym]
-      return value unless definition&.type == :date
+      return normalize_date(value) if definition&.type == :date
+      return normalize_role(value) if field.to_s == "role"
 
-      normalize_date(value)
+      value
     end
     private_class_method :normalize_value
+
+    def normalize_role(value)
+      text = value.to_s.strip.downcase
+      ROLE_SYNONYMS.fetch(text, value)
+    end
+    private_class_method :normalize_role
 
     def normalize_date(value)
       text = value.to_s.strip

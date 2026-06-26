@@ -67,6 +67,8 @@ module Onboarding
             "field_name": "field value or null"
           }
         }
+        For directors_ubos role, use only one of: director, shareholder, both.
+        Map UBO, PSC, or beneficial owner to shareholder unless the person is also a director, then use both.
         Use null when no field value was provided.
       PROMPT
     end

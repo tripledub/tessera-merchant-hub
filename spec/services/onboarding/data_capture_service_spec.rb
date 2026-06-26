@@ -67,6 +67,32 @@ RSpec.describe Onboarding::DataCaptureService do
       )
     end
 
+    it "normalizes common director and UBO role answers before storing looping stage data" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+
+      described_class.call(session: session, extracted_data: {
+        "full_name" => "Jane Smith",
+        "role" => "director and UBO"
+      })
+
+      expect(session.reload.stage_data["directors_ubos"]["current_item"]).to include(
+        "role" => "both"
+      )
+    end
+
+    it "normalizes standalone UBO role answers as shareholder" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+
+      described_class.call(session: session, extracted_data: {
+        "full_name" => "Jane Smith",
+        "role" => "UBO"
+      })
+
+      expect(session.reload.stage_data["directors_ubos"]["current_item"]).to include(
+        "role" => "shareholder"
+      )
+    end
+
     it "commits a complete directors_ubos item and creates an applicant-declared principal" do
       session = create(:onboarding_session, current_stage: :directors_ubos)
 

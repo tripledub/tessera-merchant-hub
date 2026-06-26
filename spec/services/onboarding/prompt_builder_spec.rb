@@ -67,6 +67,8 @@ RSpec.describe Onboarding::PromptBuilder do
       expect(prompt).to include("no explanation, no markdown fences")
       expect(prompt).to include('"bot_message"')
       expect(prompt).to include('"extracted_data"')
+      expect(prompt).to include("For directors_ubos role, use only one of: director, shareholder, both")
+      expect(prompt).to include("Map UBO, PSC, or beneficial owner to shareholder")
       expect(prompt).to include("Use null when no field value was provided")
     end
   end
