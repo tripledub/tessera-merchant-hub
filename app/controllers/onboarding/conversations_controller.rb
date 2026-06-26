@@ -11,12 +11,14 @@ module Onboarding
     end
 
     def create
+      previous_bot_message = @onboarding_session.onboarding_messages.bot.order(:created_at).last
       result = Onboarding::ConversationEngine.respond(
         session: @onboarding_session,
         user_message: message_param
       )
       @messages = ordered_messages
-      @bot_message = @messages.bot.last || transient_bot_message(result.fetch(:bot_message))
+      @bot_message = latest_bot_message_after(previous_bot_message) || transient_bot_message(result.fetch(:bot_message))
+      broadcast_bot_message
 
       respond_to do |format|
         format.turbo_stream
@@ -36,6 +38,24 @@ module Onboarding
 
     def message_param
       params.require(:message)
+    end
+
+    def latest_bot_message_after(previous_bot_message)
+      scope = @onboarding_session.onboarding_messages.bot.order(:created_at)
+      return scope.last if previous_bot_message.blank?
+
+      scope.where.not(id: previous_bot_message.id).last
+    end
+
+    def broadcast_bot_message
+      return unless @bot_message.persisted?
+
+      Turbo::StreamsChannel.broadcast_append_to(
+        @onboarding_session,
+        target: "onboarding_messages",
+        partial: "onboarding/conversations/message",
+        locals: { message: @bot_message }
+      )
     end
 
     def transient_bot_message(content)

@@ -20,6 +20,7 @@ RSpec.describe "Onboarding conversations", type: :request do
       expect(response.body).to include("KYC onboarding")
       expect(response.body).to include("Welcome")
       expect(response.body).to include("data-controller=\"onboarding-chat\"")
+      expect(response.body).to include("data-onboarding-chat-target=\"typing\"")
       expect(response.body).to include("turbo-cable-stream-source")
     end
 
@@ -58,6 +59,32 @@ RSpec.describe "Onboarding conversations", type: :request do
         session: session,
         user_message: "Hello"
       )
+    end
+
+    it "broadcasts persisted bot replies over the onboarding stream" do
+      applicant_user = create(:applicant_user)
+      session = create(:onboarding_session, applicant: applicant_user.applicant)
+      sign_in applicant_user, scope: :applicant_user
+      allow(Turbo::StreamsChannel).to receive(:broadcast_append_to)
+      bot_messages = []
+      stub_persisted_bot_reply(bot_messages)
+
+      post portal_onboarding_messages_path(format: :turbo_stream), params: { message: "Hello" }
+
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_append_to).with(
+        session,
+        target: "onboarding_messages",
+        partial: "onboarding/conversations/message",
+        locals: { message: bot_messages.first }
+      )
+    end
+  end
+
+  def stub_persisted_bot_reply(bot_messages)
+    allow(Onboarding::ConversationEngine).to receive(:respond) do |session:, user_message:|
+      create(:onboarding_message, onboarding_session: session, role: :applicant, content: user_message)
+      bot_messages << create(:onboarding_message, onboarding_session: session, role: :bot, content: "Broadcast reply")
+      { bot_message: "Broadcast reply", extracted_data: {}, stage_changed: false }
     end
   end
 end
