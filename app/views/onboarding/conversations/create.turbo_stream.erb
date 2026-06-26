@@ -1,0 +1,3 @@
+<%= turbo_stream.append "onboarding_messages" do %>
+  <%= render "onboarding/conversations/message", message: @bot_message %>
+<% end %>
