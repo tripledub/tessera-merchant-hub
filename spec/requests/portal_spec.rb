@@ -91,5 +91,15 @@ RSpec.describe "Onboarding authentication", type: :request do
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Welcome, Alex!")
     end
+
+    it "links authenticated applicant users to the onboarding chat" do
+      applicant_user = create(:applicant_user)
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_root_path
+
+      expect(response.body).to include("Continue KYC onboarding")
+      expect(response.body).to include(portal_onboarding_path)
+    end
   end
 end

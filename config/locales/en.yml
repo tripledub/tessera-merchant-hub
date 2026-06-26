@@ -587,7 +587,6 @@ en:
   portal:
     dashboard:
       show:
-        coming_soon: Your onboarding chat will be here soon.
         welcome: Welcome, %{name}!
     sign_out: Sign out
     title: MerchantHub Portal
