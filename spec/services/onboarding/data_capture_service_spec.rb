@@ -195,6 +195,38 @@ RSpec.describe Onboarding::DataCaptureService do
         source: "applicant_declared"
       )
     end
+
+    it "stores human-readable ownership items as JSON without creating an ownership edge" do
+      session = create(:onboarding_session, current_stage: :ownership)
+
+      expect {
+        described_class.call(session: session, extracted_data: {
+          "owner" => "Patsy Pong",
+          "owned_entity" => "McFoo & Sons",
+          "percentage" => "31",
+          "relationship_type" => "equity"
+        })
+      }.not_to change(Kyc::OwnershipEdge, :count)
+
+      expect(session.reload.stage_data["ownership"]).to eq(
+        "items" => [
+          {
+            "owner" => "Patsy Pong",
+            "owned_entity" => "McFoo & Sons",
+            "percentage" => "31",
+            "relationship_type" => "equity"
+          }
+        ]
+      )
+    end
+
+    it "keeps an incomplete ownership item when a new owner is captured before it is complete" do
+      session = create(:onboarding_session, current_stage: :ownership, stage_data: incomplete_ownership_data)
+
+      described_class.call(session: session, extracted_data: { "owner" => "Patsy Pong" })
+
+      expect(session.reload.stage_data["ownership"]).to eq(incomplete_ownership_data_after_new_owner)
+    end
   end
 
   def create_declared_principal(applicant, date_of_birth)
@@ -217,6 +249,31 @@ RSpec.describe Onboarding::DataCaptureService do
           }
         ]
       }
+    }
+  end
+
+  def incomplete_ownership_data
+    {
+      "ownership" => {
+        "current_item" => {
+          "owner" => "Stewart Campbell",
+          "owned_entity" => "McFoo & Sons",
+          "relationship_type" => "equity"
+        }
+      }
+    }
+  end
+
+  def incomplete_ownership_data_after_new_owner
+    {
+      "current_item" => { "owner" => "Patsy Pong" },
+      "incomplete_items" => [
+        {
+          "owner" => "Stewart Campbell",
+          "owned_entity" => "McFoo & Sons",
+          "relationship_type" => "equity"
+        }
+      ]
     }
   end
 end
