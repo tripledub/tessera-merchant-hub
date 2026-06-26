@@ -7,6 +7,15 @@ RSpec.describe Applicant, type: :model do
 
   it { is_expected.to validate_presence_of(:name) }
 
+  it "requires a unique applicant name" do
+    create(:applicant, name: "Acme Ltd")
+
+    duplicate = build(:applicant, name: "acme ltd")
+
+    expect(duplicate).not_to be_valid
+    expect(duplicate.errors[:name]).to include("has already been taken")
+  end
+
   it "is a Merchant subclass" do
     expect(described_class.superclass).to eq(Merchant)
   end

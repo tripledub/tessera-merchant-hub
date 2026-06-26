@@ -19,6 +19,16 @@ RSpec.describe ApplicantUser, type: :model do
     expect(applicant_user).not_to be_valid
   end
 
+  it "requires a first name" do
+    applicant_user.first_name = ""
+    expect(applicant_user).not_to be_valid
+  end
+
+  it "requires a last name" do
+    applicant_user.last_name = ""
+    expect(applicant_user).not_to be_valid
+  end
+
   it "belongs to an applicant" do
     expect(applicant_user.applicant).to be_an(Applicant)
   end
