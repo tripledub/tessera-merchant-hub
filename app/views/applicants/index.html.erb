@@ -75,7 +75,7 @@
 
     <% if @pagy.pages > 1 %>
       <div class="mt-4 border-t border-gray-200 pt-4">
-        <%== pagy_nav(@pagy) %>
+        <%== @pagy.series_nav %>
       </div>
     <% end %>
   <% end %>
