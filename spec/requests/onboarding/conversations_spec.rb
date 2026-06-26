@@ -110,6 +110,22 @@ RSpec.describe "Onboarding conversations", type: :request do
         locals: { message: bot_messages.first }
       )
     end
+
+    it "refreshes stage progress when the response advances the session" do
+      applicant_user = create(:applicant_user)
+      session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :company_info)
+      sign_in applicant_user, scope: :applicant_user
+      allow(Onboarding::ConversationEngine).to receive(:respond) do
+        session.update!(current_stage: :directors_ubos, completed_stages: [ "company_info" ])
+        { bot_message: "Now tell me about directors.", extracted_data: {}, stage_changed: true }
+      end
+
+      post portal_onboarding_messages_path(format: :turbo_stream), params: { message: "Done" }
+
+      expect(response.body).to include('target="onboarding_progress"')
+      expect(response.body).to include('target="onboarding_stage_badge"')
+      expect(response.body).to include("Directors ubos")
+    end
   end
 
   def stub_persisted_bot_reply(bot_messages)

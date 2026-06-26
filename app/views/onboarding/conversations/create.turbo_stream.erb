@@ -3,3 +3,11 @@
     <%= render "onboarding/conversations/message", message: @bot_message %>
   <% end %>
 <% end %>
+
+<%= turbo_stream.replace "onboarding_stage_badge" do %>
+  <%= render "onboarding/conversations/stage_badge", session: @onboarding_session %>
+<% end %>
+
+<%= turbo_stream.replace "onboarding_progress" do %>
+  <%= render "onboarding/conversations/progress", session: @onboarding_session %>
+<% end %>

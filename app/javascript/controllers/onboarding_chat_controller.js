@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["input", "messages", "submit", "typing"]
+  static targets = ["composer", "input", "messages", "submit", "typing"]
 
   connect() {
     this.scrollToLatest()
@@ -32,14 +32,19 @@ export default class extends Controller {
     this.setSubmitting(true)
     this.showTyping()
     this.scrollToLatest()
+    this.scrollComposerIntoView()
   }
 
   submitEnd(event) {
     this.setSubmitting(false)
     this.hideTyping()
+    this.scrollToLatest()
+    this.scrollComposerIntoView()
 
     if (!event.detail.success) {
       this.inputTarget.focus()
+    } else {
+      this.inputTarget.focus({ preventScroll: true })
     }
   }
 
@@ -92,6 +97,14 @@ export default class extends Controller {
   scrollToLatest() {
     requestAnimationFrame(() => {
       this.messagesTarget.scrollTop = this.messagesTarget.scrollHeight
+    })
+  }
+
+  scrollComposerIntoView() {
+    if (!this.hasComposerTarget) return
+
+    requestAnimationFrame(() => {
+      this.composerTarget.scrollIntoView({ block: "end" })
     })
   }
 }
