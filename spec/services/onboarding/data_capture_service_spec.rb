@@ -53,6 +53,20 @@ RSpec.describe Onboarding::DataCaptureService do
       )
     end
 
+    it "normalizes common date formats before storing looping stage data" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+
+      described_class.call(session: session, extracted_data: {
+        "full_name" => "Jane Smith",
+        "date_of_birth" => "01/02/1980",
+        "role" => "director"
+      })
+
+      expect(session.reload.stage_data["directors_ubos"]["current_item"]).to include(
+        "date_of_birth" => "1980-02-01"
+      )
+    end
+
     it "commits a complete directors_ubos item and creates an applicant-declared principal" do
       session = create(:onboarding_session, current_stage: :directors_ubos)
 

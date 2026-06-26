@@ -28,11 +28,49 @@ module Onboarding
 
     def valid_extracted_data(extracted_data)
       extracted_data.each_with_object({}) do |(field, value), result|
-        validation = Onboarding::StateMachine.validate_field(field, value)
-        result[field.to_s] = value if validation[:valid]
+        normalized_value = normalize_value(field, value)
+        validation = Onboarding::StateMachine.validate_field(field, normalized_value)
+        result[field.to_s] = normalized_value if validation[:valid]
       end
     end
     private_class_method :valid_extracted_data
+
+    def normalize_value(field, value)
+      definition = Onboarding::StateMachine::FIELDS_BY_NAME[field.to_sym]
+      return value unless definition&.type == :date
+
+      normalize_date(value)
+    end
+    private_class_method :normalize_value
+
+    def normalize_date(value)
+      text = value.to_s.strip
+      return text if text.blank?
+
+      parse_date(text).iso8601
+    rescue ArgumentError
+      value
+    end
+    private_class_method :normalize_date
+
+    def parse_date(text)
+      formats = [
+        "%Y-%m-%d",
+        "%d/%m/%Y",
+        "%d-%m-%Y",
+        "%d.%m.%Y",
+        "%d %b %Y",
+        "%d %B %Y"
+      ]
+      formats.each do |format|
+        return Date.strptime(text, format)
+      rescue Date::Error
+        next
+      end
+
+      raise ArgumentError, "invalid date"
+    end
+    private_class_method :parse_date
 
     def capture_non_looping_stage(session, valid_data)
       stage = Onboarding::StateMachine.current_stage(session).to_s
