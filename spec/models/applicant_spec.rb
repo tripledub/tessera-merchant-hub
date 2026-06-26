@@ -34,6 +34,12 @@ RSpec.describe Applicant, type: :model do
       .dependent(:destroy)
   end
 
+  it "has one onboarding_session" do
+    expect(applicant).to have_one(:onboarding_session)
+      .with_foreign_key(:applicant_id)
+      .dependent(:destroy)
+  end
+
   it "defaults status to pending" do
     expect(applicant.status).to eq("pending")
   end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_151325) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_26_090100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -160,6 +160,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_151325) do
     t.index ["type"], name: "index_merchants_on_type"
   end
 
+  create_table "onboarding_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.uuid "onboarding_session_id", null: false
+    t.integer "role", null: false
+    t.string "stage"
+    t.jsonb "structured_data", default: {}, null: false
+    t.datetime "updated_at", null: false
+    t.index ["onboarding_session_id"], name: "index_onboarding_messages_on_onboarding_session_id"
+  end
+
+  create_table "onboarding_sessions", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.string "completed_stages", default: [], null: false, array: true
+    t.datetime "created_at", null: false
+    t.integer "current_stage", default: 0, null: false
+    t.jsonb "document_checklist", default: {}, null: false
+    t.jsonb "stage_data", default: {}, null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id"], name: "index_onboarding_sessions_on_applicant_id", unique: true
+  end
+
   create_table "shops", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "country"
     t.datetime "created_at", null: false
@@ -217,4 +240,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_151325) do
   add_foreign_key "kyc_validation_warnings", "kyc_corporate_entities", column: "corporate_entity_id"
   add_foreign_key "kyc_validation_warnings", "kyc_documents"
   add_foreign_key "kyc_validation_warnings", "merchants", column: "applicant_id"
+  add_foreign_key "onboarding_messages", "onboarding_sessions"
+  add_foreign_key "onboarding_sessions", "merchants", column: "applicant_id"
 end

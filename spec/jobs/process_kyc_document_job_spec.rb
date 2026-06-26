@@ -10,6 +10,7 @@ RSpec.describe ProcessKycDocumentJob, type: :job do
   let(:ocr_response) { { "full_name" => "Jane Smith", "document_type" => "passport" } }
 
   before do
+    ENV.delete("CLAUDE_OCR")
     stub_request(:post, "#{ENV.fetch('KYNETIC_OCR_URL', 'http://localhost:8001')}/process")
       .to_return(status: 200, body: ocr_response.to_json, headers: { "Content-Type" => "application/json" })
     allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)

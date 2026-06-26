@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class Applicant < Merchant
+  has_one :onboarding_session, foreign_key: :applicant_id, inverse_of: :applicant, dependent: :destroy
+
   has_many :kyc_principals, foreign_key: :applicant_id, inverse_of: :applicant, dependent: :destroy
   has_many :kyc_documents,  foreign_key: :applicant_id, inverse_of: :applicant, dependent: :destroy
   has_many :corporate_entities, class_name: "Kyc::CorporateEntity", foreign_key: :applicant_id,
