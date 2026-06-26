@@ -17,17 +17,19 @@ module Onboarding
           extracted_data: response.fetch("extracted_data")
         )
         stage_changed = advance_if_complete(session, user_message: user_message)
+        bot_message = response.fetch("bot_message")
+        bot_message = add_stage_transition_prompt(bot_message, session) if stage_changed
 
         create_message!(
           session,
           role: :bot,
-          content: response.fetch("bot_message"),
+          content: bot_message,
           stage: stage,
           structured_data: extracted_data
         )
 
         {
-          bot_message: response.fetch("bot_message"),
+          bot_message: bot_message,
           extracted_data: extracted_data,
           stage_changed: stage_changed
         }
@@ -73,6 +75,27 @@ module Onboarding
       user_message.to_s.match?(/\b(no|none|no more|nothing else|that's all|that is all|all done)\b/i)
     end
     private_class_method :no_more_loop_items?
+
+    def add_stage_transition_prompt(bot_message, session)
+      [ bot_message, stage_transition_prompt(session) ].compact_blank.join("\n\n")
+    end
+    private_class_method :add_stage_transition_prompt
+
+    def stage_transition_prompt(session)
+      case Onboarding::StateMachine.current_stage(session)
+      when :directors_ubos
+        "Next, let’s add the directors and beneficial owners. Please provide the first person’s full name, date of birth, nationality, and whether they are a director, shareholder/UBO, or both."
+      when :ownership
+        "Next, let’s map the ownership structure. Who owns or controls Tab Trade Ltd, what do they own, and is the relationship equity, nominee, or contractual?"
+      when :business_activity
+        "Next, let’s capture the business activity. What industry is Tab Trade Ltd in, and how would you describe what the business does?"
+      when :jurisdictions
+        "Next, let’s record operating jurisdictions. Which country should we add first, and do you have any licence type or licence number for it?"
+      when :document_collection
+        "Next, let’s collect supporting documents. Please use the upload button to add the requested KYC documents."
+      end
+    end
+    private_class_method :stage_transition_prompt
 
     def looping_stage?(session)
       %i[directors_ubos ownership jurisdictions].include?(Onboarding::StateMachine.current_stage(session))

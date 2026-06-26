@@ -66,6 +66,7 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(session.current_stage).to eq("directors_ubos")
       expect(session.stage_data["company_info"]).to include("company_name" => "Acme Ltd")
       expect(result[:stage_changed]).to be(true)
+      expect(result[:bot_message]).to include("Next, let’s add the directors and beneficial owners")
     end
 
     it "does not auto-advance looping stages after the first complete item" do
@@ -87,18 +88,7 @@ RSpec.describe Onboarding::ConversationEngine do
     end
 
     it "advances a complete looping stage when the applicant says there are no more items" do
-      session = create(:onboarding_session, current_stage: :directors_ubos, stage_data: {
-        "directors_ubos" => {
-          "items" => [
-            {
-              "full_name" => "Jane Smith",
-              "date_of_birth" => "1980-01-01",
-              "nationality" => "GB",
-              "role" => "director"
-            }
-          ]
-        }
-      })
+      session = create(:onboarding_session, current_stage: :directors_ubos, stage_data: complete_directors_ubos_data)
       adapter = instance_double(Kyc::Inference::Base, generate: {
         "bot_message" => "Thanks, let's move to ownership.",
         "extracted_data" => {}
@@ -109,6 +99,7 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(session.reload.current_stage).to eq("ownership")
       expect(session.completed_stages).to include("directors_ubos")
       expect(result[:stage_changed]).to be(true)
+      expect(result[:bot_message]).to include("Next, let’s map the ownership structure")
     end
 
     it "accepts a JSON string response from the inference adapter" do
@@ -163,5 +154,20 @@ RSpec.describe Onboarding::ConversationEngine do
 
       expect(session.reload.stage_data).to eq({})
     end
+  end
+
+  def complete_directors_ubos_data
+    {
+      "directors_ubos" => {
+        "items" => [
+          {
+            "full_name" => "Jane Smith",
+            "date_of_birth" => "1980-01-01",
+            "nationality" => "GB",
+            "role" => "director"
+          }
+        ]
+      }
+    }
   end
 end
