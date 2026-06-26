@@ -45,6 +45,12 @@ RSpec.describe Onboarding::StateMachine do
 
       expect(described_class.missing_fields(session)).to eq(%i[date_of_birth nationality role])
     end
+
+    it "returns the first item fields for an untouched looping stage" do
+      session = build(:onboarding_session, current_stage: :directors_ubos)
+
+      expect(described_class.missing_fields(session)).to eq(%i[full_name date_of_birth nationality role])
+    end
   end
 
   describe ".validate_field" do

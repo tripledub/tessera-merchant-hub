@@ -181,7 +181,7 @@ module Onboarding
     private_class_method :looping_stage_complete?
 
     def complete_loop_items(items, stage)
-      items.select { |item| missing_fields_for(stage, item).empty? }
+      Array(items).select { |item| missing_fields_for(stage, item).empty? }
     end
     private_class_method :complete_loop_items
 
