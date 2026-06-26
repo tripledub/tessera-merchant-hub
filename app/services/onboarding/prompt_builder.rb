@@ -60,7 +60,7 @@ module Onboarding
 
     def extraction_instructions
       <<~PROMPT
-        Return only valid JSON with this shape:
+        Return ONLY valid JSON with this shape — no explanation, no markdown fences:
         {
           "bot_message": "Natural language response to show the applicant",
           "extracted_data": {

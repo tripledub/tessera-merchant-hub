@@ -63,7 +63,8 @@ RSpec.describe Onboarding::PromptBuilder do
 
       prompt = described_class.build(session: session)
 
-      expect(prompt).to include("Return only valid JSON")
+      expect(prompt).to include("Return ONLY valid JSON")
+      expect(prompt).to include("no explanation, no markdown fences")
       expect(prompt).to include('"bot_message"')
       expect(prompt).to include('"extracted_data"')
       expect(prompt).to include("Use null when no field value was provided")
