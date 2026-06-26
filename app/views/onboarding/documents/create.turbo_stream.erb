@@ -1,0 +1,5 @@
+<%= turbo_stream.update "onboarding_upload_status" do %>
+  <p class="text-xs <%= @type == :success ? "text-success-600 dark:text-success-400" : "text-error-600 dark:text-error-400" %>">
+    <%= @message %>
+  </p>
+<% end %>

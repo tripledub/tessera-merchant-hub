@@ -15,6 +15,7 @@ Rails.application.routes.draw do
   scope :portal, as: :portal do
     resource :onboarding, only: :show, controller: "onboarding/conversations"
     post "onboarding/messages", to: "onboarding/conversations#create", as: :onboarding_messages
+    post "onboarding/documents", to: "onboarding/documents#create", as: :onboarding_documents
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 

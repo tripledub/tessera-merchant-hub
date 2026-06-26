@@ -1,7 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
-  static targets = ["composer", "input", "messages", "submit", "typing"]
+  static targets = ["composer", "input", "messages", "submit", "typing", "uploadButton", "uploadInput"]
 
   connect() {
     this.scrollToLatest()
@@ -53,6 +53,23 @@ export default class extends Controller {
 
     this.inputTarget.style.height = "auto"
     this.inputTarget.style.height = `${Math.min(this.inputTarget.scrollHeight, 128)}px`
+  }
+
+  submitUpload(event) {
+    if (event.target.files.length === 0) return
+
+    event.target.form.requestSubmit()
+  }
+
+  uploadStart() {
+    if (this.hasUploadButtonTarget) this.uploadButtonTarget.classList.add("opacity-50", "pointer-events-none")
+  }
+
+  uploadEnd() {
+    if (this.hasUploadButtonTarget) this.uploadButtonTarget.classList.remove("opacity-50", "pointer-events-none")
+    if (this.hasUploadInputTarget) this.uploadInputTarget.value = ""
+
+    this.scrollComposerIntoView()
   }
 
   appendApplicantPreview(content) {

@@ -135,4 +135,41 @@ RSpec.describe "Onboarding conversations", type: :request do
       { bot_message: "Broadcast reply", extracted_data: {}, stage_changed: false }
     end
   end
+
+  describe "POST /portal/onboarding/documents" do
+    let(:file) { fixture_file_upload(Rails.root.join("spec/fixtures/files/sample.pdf"), "application/pdf") }
+
+    it "redirects unauthenticated applicants to sign in" do
+      post portal_onboarding_documents_path
+
+      expect(response).to redirect_to(new_applicant_user_session_path)
+    end
+
+    it "uploads a KYC document for the signed-in applicant" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      sign_in applicant_user, scope: :applicant_user
+
+      expect {
+        post portal_onboarding_documents_path(format: :turbo_stream), params: {
+          kyc_document: { files: [ file ] }
+        }
+      }.to change(KycDocument, :count).by(1)
+        .and have_enqueued_job(ClassifyKycDocumentJob)
+
+      expect(response.media_type).to eq Mime[:turbo_stream]
+      expect(response.body).to include("Uploaded 1 document")
+      expect(KycDocument.last.applicant).to eq(applicant_user.applicant)
+    end
+
+    it "returns an upload prompt when no files are selected" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      sign_in applicant_user, scope: :applicant_user
+
+      post portal_onboarding_documents_path(format: :turbo_stream), params: { kyc_document: { files: [] } }
+
+      expect(response.body).to include("Choose at least one file")
+    end
+  end
 end
