@@ -45,7 +45,22 @@ RSpec.describe "Onboarding authentication", type: :request do
 
     it "rejects sign up with missing password confirmation" do
       sign_up_params[:applicant_user][:password_confirmation] = ""
-      post applicant_user_registration_path, params: sign_up_params
+
+      expect {
+        post applicant_user_registration_path, params: sign_up_params
+      }.not_to change(Applicant, :count)
+
+      expect(response).to have_http_status(:unprocessable_entity)
+    end
+
+    it "rejects sign up with missing applicant names without creating an Applicant" do
+      sign_up_params[:applicant_user][:first_name] = ""
+      sign_up_params[:applicant_user][:last_name] = ""
+
+      expect {
+        post applicant_user_registration_path, params: sign_up_params
+      }.not_to change(Applicant, :count)
+
       expect(response).to have_http_status(:unprocessable_entity)
     end
   end

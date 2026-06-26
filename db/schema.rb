@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_26_090100) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_26_184000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -156,6 +156,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_090100) do
     t.string "support_url"
     t.string "type"
     t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_merchants_on_lower_applicant_name", unique: true, where: "((type)::text = 'Applicant'::text)"
     t.index ["merchant_id"], name: "index_merchants_on_merchant_id", unique: true, where: "(merchant_id IS NOT NULL)"
     t.index ["type"], name: "index_merchants_on_type"
   end

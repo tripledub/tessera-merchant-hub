@@ -12,6 +12,7 @@ class Applicant < Merchant
 
   validates :merchant_id, absence: true
   validates :name, presence: true
+  validates :name, uniqueness: { scope: :type, case_sensitive: false }
   validates :contact_email,
     format: { with: URI::MailTo::EMAIL_REGEXP },
     allow_blank: true
