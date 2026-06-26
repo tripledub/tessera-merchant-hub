@@ -103,6 +103,7 @@ module Onboarding
 
     def stage_complete?(session)
       stage = stage_definition(current_stage(session))
+      return false if stage.name == :document_collection
       return non_looping_stage_complete?(session, stage) unless stage.looping
 
       looping_stage_complete?(session, stage)
