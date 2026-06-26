@@ -68,6 +68,24 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(result[:stage_changed]).to be(true)
     end
 
+    it "does not auto-advance looping stages after the first complete item" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Are there any more directors or shareholders?",
+        "extracted_data" => {
+          "full_name" => "Jane Smith",
+          "date_of_birth" => "1980-01-01",
+          "nationality" => "GB",
+          "role" => "director"
+        }
+      })
+
+      result = described_class.respond(session: session, user_message: "Jane is a director", inference_adapter: adapter)
+
+      expect(session.reload.current_stage).to eq("directors_ubos")
+      expect(result[:stage_changed]).to be(false)
+    end
+
     it "accepts a JSON string response from the inference adapter" do
       session = create(:onboarding_session, current_stage: :company_info)
       adapter = instance_double(Kyc::Inference::Base, generate: {
@@ -91,6 +109,34 @@ RSpec.describe Onboarding::ConversationEngine do
       expect {
         described_class.respond(session: session, user_message: "Hello", inference_adapter: adapter)
       }.to raise_error(Kyc::Inference::Error, /bot_message/)
+    end
+
+    it "keeps the applicant message for retry when inference fails" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      adapter = instance_double(Kyc::Inference::Base)
+      allow(adapter).to receive(:generate).and_raise(Kyc::Inference::Error, "timeout")
+
+      expect {
+        described_class.respond(session: session, user_message: "Hello", inference_adapter: adapter)
+      }.to raise_error(Kyc::Inference::Error, /timeout/)
+
+      expect(session.onboarding_messages.pluck(:role, :content)).to eq([
+        [ "applicant", "Hello" ]
+      ])
+    end
+
+    it "rolls back captured data when bot message persistence fails" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      allow(OnboardingMessage).to receive(:create!).and_call_original
+      allow(OnboardingMessage).to receive(:create!)
+        .with(hash_including(role: :bot))
+        .and_raise(ActiveRecord::RecordInvalid)
+
+      expect {
+        described_class.respond(session: session, user_message: "Acme Ltd", inference_adapter: adapter)
+      }.to raise_error(ActiveRecord::RecordInvalid)
+
+      expect(session.reload.stage_data).to eq({})
     end
   end
 end

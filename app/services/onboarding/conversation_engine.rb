@@ -10,29 +10,33 @@ module Onboarding
 
       prompt = Onboarding::PromptBuilder.build(session: session)
       response = parse_response(inference_adapter.generate(prompt: prompt))
-      extracted_data = Onboarding::DataCaptureService.call(
-        session: session,
-        extracted_data: response.fetch("extracted_data")
-      )
-      stage_changed = advance_if_complete(session)
 
-      create_message!(
-        session,
-        role: :bot,
-        content: response.fetch("bot_message"),
-        stage: stage,
-        structured_data: extracted_data
-      )
+      ActiveRecord::Base.transaction do
+        extracted_data = Onboarding::DataCaptureService.call(
+          session: session,
+          extracted_data: response.fetch("extracted_data")
+        )
+        stage_changed = advance_if_complete(session)
 
-      {
-        bot_message: response.fetch("bot_message"),
-        extracted_data: extracted_data,
-        stage_changed: stage_changed
-      }
+        create_message!(
+          session,
+          role: :bot,
+          content: response.fetch("bot_message"),
+          stage: stage,
+          structured_data: extracted_data
+        )
+
+        {
+          bot_message: response.fetch("bot_message"),
+          extracted_data: extracted_data,
+          stage_changed: stage_changed
+        }
+      end
     end
 
     def create_message!(session, role:, content:, stage:, structured_data: {})
-      session.onboarding_messages.create!(
+      OnboardingMessage.create!(
+        onboarding_session: session,
         role: role,
         content: content,
         stage: stage.to_s,
@@ -57,11 +61,17 @@ module Onboarding
     private_class_method :validate_response!
 
     def advance_if_complete(session)
+      return false if looping_stage?(session)
       return false unless Onboarding::StateMachine.stage_complete?(session)
 
       Onboarding::StateMachine.advance!(session)
       true
     end
     private_class_method :advance_if_complete
+
+    def looping_stage?(session)
+      %i[directors_ubos ownership jurisdictions].include?(Onboarding::StateMachine.current_stage(session))
+    end
+    private_class_method :looping_stage?
   end
 end

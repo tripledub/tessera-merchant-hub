@@ -71,6 +71,17 @@ RSpec.describe Onboarding::DataCaptureService do
       )
     end
 
+    it "rolls back committed looping stage data when KYC record persistence fails" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+      allow(KycPrincipal).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)
+
+      expect {
+        described_class.call(session: session, extracted_data: director_payload)
+      }.to raise_error(ActiveRecord::RecordInvalid)
+
+      expect(session.reload.stage_data).to eq({})
+    end
+
     it "updates JSON only for business activity and jurisdictions" do
       business_session = create(:onboarding_session, current_stage: :business_activity)
       jurisdictions_session = create(:onboarding_session, current_stage: :jurisdictions)

@@ -7,6 +7,8 @@ module Onboarding
       "shareholder" => "shareholder",
       "both" => "director_and_psc"
     }.freeze
+    ROLE_OPTIONS = Onboarding::StateMachine::FIELDS_BY_NAME.fetch(:role).options.freeze
+    raise "role map does not match onboarding role options" unless ROLE_MAP.keys.sort == ROLE_OPTIONS.sort
 
     module_function
 
@@ -46,28 +48,22 @@ module Onboarding
       stage_data = session.stage_data.deep_dup
       stage_payload = stage_data.fetch(stage, {})
       current_item = stage_payload.fetch("current_item", {}).merge(valid_data)
-
       stage_payload["current_item"] = current_item
       stage_data[stage] = stage_payload
-      session.update!(stage_data: stage_data)
 
-      commit_current_item!(session) if Onboarding::StateMachine.missing_fields(session).empty?
+      session.stage_data = stage_data
+      item_complete = Onboarding::StateMachine.missing_fields(session).empty?
+      if item_complete
+        stage_payload["items"] = Array(stage_payload["items"]) + [ current_item ]
+        stage_payload.delete("current_item")
+      end
+
+      ActiveRecord::Base.transaction do
+        session.update!(stage_data: stage_data)
+        persist_stage_record(session, stage, current_item) if item_complete
+      end
     end
     private_class_method :capture_looping_stage
-
-    def commit_current_item!(session)
-      stage = Onboarding::StateMachine.current_stage(session).to_s
-      stage_data = session.stage_data.deep_dup
-      stage_payload = stage_data.fetch(stage)
-      current_item = stage_payload.fetch("current_item")
-      stage_payload["items"] = Array(stage_payload["items"]) + [ current_item ]
-      stage_payload.delete("current_item")
-      stage_data[stage] = stage_payload
-
-      session.update!(stage_data: stage_data)
-      persist_stage_record(session, stage, current_item)
-    end
-    private_class_method :commit_current_item!
 
     def persist_stage_record(session, stage, data)
       case stage
@@ -75,6 +71,9 @@ module Onboarding
         create_principal!(session, data)
       when "ownership"
         create_ownership_edge!(session, data)
+      when "jurisdictions"
+        # Jurisdictions are JSON-only until a dedicated persistence model exists.
+        nil
       end
     end
     private_class_method :persist_stage_record
