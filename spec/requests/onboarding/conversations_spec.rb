@@ -38,6 +38,38 @@ RSpec.describe "Onboarding conversations", type: :request do
       expect(response.body).to include("Hello")
       expect(response.body).to include("Hi")
     end
+
+    it "renders the current stage in the progress indicator" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :business_activity)
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      expect(response.body).to include("data-testid=\"onboarding-progress\"")
+      expect(response.body).to include("aria-current=\"step\"")
+      expect(response.body).to include("Business activity")
+    end
+
+    it "shows the document upload button from the document collection stage" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      expect(response.body).to include("data-testid=\"document-upload-button\"")
+    end
+
+    it "hides the document upload button before the document collection stage" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :company_info)
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      expect(response.body).not_to include("data-testid=\"document-upload-button\"")
+    end
   end
 
   describe "POST /portal/onboarding/messages" do
