@@ -13,8 +13,8 @@ class Portal::RegistrationsController < Devise::RegistrationsController
     super
     return if resource.applicant.present?
 
-    resource.applicant = Applicant.create!(
-      name: "#{hash[:first_name]} #{hash[:last_name]}".strip.presence || "Unnamed",
+    resource.applicant = Applicant.new(
+      name: "#{hash[:first_name]} #{hash[:last_name]}".strip,
       status: :pending
     )
   end

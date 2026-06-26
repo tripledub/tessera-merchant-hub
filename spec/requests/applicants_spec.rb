@@ -26,6 +26,15 @@ RSpec.describe "Applicants", type: :request do
         expect(response.body).to include("Acme Corp")
         expect(response.body).not_to include("Beta Ltd")
       end
+
+      it "renders pagination when there is more than one page" do
+        create_list(:applicant, 20)
+
+        get applicants_path
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("page=2")
+      end
     end
 
     context "when signed in as psp_support" do
