@@ -64,9 +64,11 @@ module Onboarding
         {
           "bot_message": "Natural language response to show the applicant",
           "extracted_data": {
-            "field_name": "field value or null"
+            "field_name": "field value or null",
+            "done_adding_items": false
           }
         }
+        For looping stages only, set done_adding_items to true when the applicant clearly says there are no more items to add for the current stage. Otherwise set it to false.
         For directors_ubos role, use only one of: director, shareholder, both.
         Map UBO, PSC, or beneficial owner to shareholder unless the person is also a director, then use both.
         Use null when no field value was provided.

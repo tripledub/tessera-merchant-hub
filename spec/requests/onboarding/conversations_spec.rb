@@ -93,6 +93,22 @@ RSpec.describe "Onboarding conversations", type: :request do
       )
     end
 
+    it "replaces the optimistic applicant preview with the persisted applicant message" do
+      applicant_user = create(:applicant_user)
+      session = create(:onboarding_session, applicant: applicant_user.applicant)
+      sign_in applicant_user, scope: :applicant_user
+      allow(Onboarding::ConversationEngine).to receive(:respond) do |session:, user_message:|
+        create(:onboarding_message, onboarding_session: session, role: :applicant, content: user_message)
+        create(:onboarding_message, onboarding_session: session, role: :bot, content: "Tell me your company name.")
+        { bot_message: "Tell me your company name.", extracted_data: {}, stage_changed: false }
+      end
+
+      post portal_onboarding_messages_path(format: :turbo_stream), params: { message: "Hello" }
+
+      expect(response.body).to include('action="replace" target="onboarding_pending_applicant_message"')
+      expect(response.body).to include("Hello")
+    end
+
     it "broadcasts persisted bot replies over the onboarding stream" do
       applicant_user = create(:applicant_user)
       session = create(:onboarding_session, applicant: applicant_user.applicant)

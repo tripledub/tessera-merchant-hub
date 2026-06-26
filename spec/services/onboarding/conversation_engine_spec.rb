@@ -87,11 +87,11 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(result[:stage_changed]).to be(false)
     end
 
-    it "advances a complete looping stage when the applicant says there are no more items" do
+    it "advances a complete looping stage when the inference response says there are no more items" do
       session = create(:onboarding_session, current_stage: :directors_ubos, stage_data: complete_directors_ubos_data)
       adapter = instance_double(Kyc::Inference::Base, generate: {
         "bot_message" => "Thanks, let's move to ownership.",
-        "extracted_data" => {}
+        "extracted_data" => { "done_adding_items" => true }
       })
 
       result = described_class.respond(session: session, user_message: "none", inference_adapter: adapter)
@@ -100,6 +100,34 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(session.completed_stages).to include("directors_ubos")
       expect(result[:stage_changed]).to be(true)
       expect(result[:bot_message]).to include("Next, let’s map the ownership structure")
+    end
+
+    it "does not advance a looping stage from raw user text without inference confirmation" do
+      session = create(:onboarding_session, current_stage: :directors_ubos, stage_data: complete_directors_ubos_data)
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Please provide their nationality.",
+        "extracted_data" => {}
+      })
+
+      result = described_class.respond(session: session, user_message: "I have no middle name", inference_adapter: adapter)
+
+      expect(session.reload.current_stage).to eq("directors_ubos")
+      expect(result[:stage_changed]).to be(false)
+    end
+
+    it "uses the collected company name in ownership transition prompts" do
+      session = create(:onboarding_session, current_stage: :directors_ubos, stage_data: complete_directors_ubos_data.merge(
+        "company_info" => { "company_name" => "Acme Payments Ltd" }
+      ))
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Thanks, let's move to ownership.",
+        "extracted_data" => { "done_adding_items" => true }
+      })
+
+      result = described_class.respond(session: session, user_message: "That's everyone", inference_adapter: adapter)
+
+      expect(result[:bot_message]).to include("Who owns or controls Acme Payments Ltd")
+      expect(result[:bot_message]).not_to include("Tab Trade Ltd")
     end
 
     it "does not repeat the document collection transition prompt during document collection" do

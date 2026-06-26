@@ -126,6 +126,19 @@ RSpec.describe Onboarding::DataCaptureService do
       expect(KycPrincipal.last).to have_attributes(role: "director_and_psc")
     end
 
+    it "does not guess which declared principal to update when the completed item cannot be matched by date of birth" do
+      applicant = create(:applicant)
+      older_principal = create_declared_principal(applicant, "1960-01-01")
+      younger_principal = create_declared_principal(applicant, "1990-01-01")
+      session = create(:onboarding_session, applicant: applicant, current_stage: :directors_ubos,
+        stage_data: directors_ubos_data_missing_dob)
+
+      described_class.call(session: session, extracted_data: { "role" => "UBO" })
+
+      expect(older_principal.reload.role).to eq("director")
+      expect(younger_principal.reload.role).to eq("director")
+    end
+
     it "rolls back committed looping stage data when KYC record persistence fails" do
       session = create(:onboarding_session, current_stage: :directors_ubos)
       allow(KycPrincipal).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)
@@ -182,5 +195,28 @@ RSpec.describe Onboarding::DataCaptureService do
         source: "applicant_declared"
       )
     end
+  end
+
+  def create_declared_principal(applicant, date_of_birth)
+    create(:kyc_principal,
+      applicant: applicant,
+      name: "Jane Smith",
+      date_of_birth: Date.iso8601(date_of_birth),
+      role: :director,
+      source: :applicant_declared)
+  end
+
+  def directors_ubos_data_missing_dob
+    {
+      "directors_ubos" => {
+        "items" => [
+          {
+            "full_name" => "Jane Smith",
+            "nationality" => "GB",
+            "role" => "director"
+          }
+        ]
+      }
+    }
   end
 end

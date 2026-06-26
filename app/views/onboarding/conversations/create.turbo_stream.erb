@@ -1,3 +1,9 @@
+<% if @applicant_message&.persisted? %>
+  <%= turbo_stream.replace "onboarding_pending_applicant_message" do %>
+    <%= render "onboarding/conversations/message", message: @applicant_message %>
+  <% end %>
+<% end %>
+
 <% unless @bot_message.persisted? %>
   <%= turbo_stream.append "onboarding_messages" do %>
     <%= render "onboarding/conversations/message", message: @bot_message %>

@@ -74,6 +74,7 @@ export default class extends Controller {
 
   appendApplicantPreview(content) {
     const wrapper = document.createElement("div")
+    wrapper.id = "onboarding_pending_applicant_message"
     wrapper.className = "flex justify-end"
 
     const row = document.createElement("div")

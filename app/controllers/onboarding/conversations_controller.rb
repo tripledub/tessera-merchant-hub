@@ -11,12 +11,14 @@ module Onboarding
     end
 
     def create
+      previous_applicant_message = @onboarding_session.onboarding_messages.applicant.order(:created_at).last
       previous_bot_message = @onboarding_session.onboarding_messages.bot.order(:created_at).last
       result = Onboarding::ConversationEngine.respond(
         session: @onboarding_session,
         user_message: message_param
       )
       @messages = ordered_messages
+      @applicant_message = latest_applicant_message_after(previous_applicant_message)
       @bot_message = latest_bot_message_after(previous_bot_message) || transient_bot_message(result.fetch(:bot_message))
       broadcast_bot_message
 
@@ -45,6 +47,13 @@ module Onboarding
       return scope.last if previous_bot_message.blank?
 
       scope.where.not(id: previous_bot_message.id).last
+    end
+
+    def latest_applicant_message_after(previous_applicant_message)
+      scope = @onboarding_session.onboarding_messages.applicant.order(:created_at)
+      return scope.last if previous_applicant_message.blank?
+
+      scope.where.not(id: previous_applicant_message.id).last
     end
 
     def broadcast_bot_message

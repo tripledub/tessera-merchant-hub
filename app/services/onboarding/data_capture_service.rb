@@ -109,7 +109,7 @@ module Onboarding
       stage = Onboarding::StateMachine.current_stage(session).to_s
       stage_data = session.stage_data.deep_dup
       stage_payload = stage_data.fetch(stage, {})
-      return update_latest_looping_item(session, stage, stage_data, stage_payload, valid_data) if latest_item_update?(
+      return update_latest_looping_item(session, stage, stage_data, stage_payload, valid_data) if directors_ubos_role_update?(
         stage,
         stage_payload,
         valid_data
@@ -133,7 +133,7 @@ module Onboarding
     end
     private_class_method :capture_looping_stage
 
-    def latest_item_update?(stage, stage_payload, valid_data)
+    def directors_ubos_role_update?(stage, stage_payload, valid_data)
       return false unless stage == "directors_ubos"
       return false if stage_payload["current_item"].present?
       return false if Array(stage_payload["items"]).empty?
@@ -141,7 +141,7 @@ module Onboarding
 
       valid_data.key?("role")
     end
-    private_class_method :latest_item_update?
+    private_class_method :directors_ubos_role_update?
 
     def update_latest_looping_item(session, stage, stage_data, stage_payload, valid_data)
       items = Array(stage_payload["items"])
@@ -199,6 +199,8 @@ module Onboarding
     private_class_method :persist_stage_record
 
     def update_principal!(session, previous_item, updated_item)
+      return unless principal_update_data_complete?(updated_item)
+
       principal = find_declared_principal(session, previous_item)
       return unless principal
 
@@ -212,6 +214,11 @@ module Onboarding
     end
     private_class_method :update_principal!
 
+    def principal_update_data_complete?(item)
+      item.values_at("full_name", "date_of_birth", "role").all?(&:present?)
+    end
+    private_class_method :principal_update_data_complete?
+
     def find_declared_principal(session, item)
       scope = KycPrincipal.where(
         applicant: session.applicant,
@@ -219,9 +226,9 @@ module Onboarding
         name: item["full_name"]
       )
       date = Date.iso8601(item.fetch("date_of_birth"))
-      scope.find_by(date_of_birth: date) || scope.first
+      scope.find_by(date_of_birth: date)
     rescue ArgumentError, KeyError
-      scope.first
+      nil
     end
     private_class_method :find_declared_principal
 
