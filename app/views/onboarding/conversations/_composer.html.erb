@@ -1,0 +1,43 @@
+<%= form_with url: portal_onboarding_messages_path,
+      method: :post,
+      id: "onboarding_composer",
+      class: "border-t border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-900 sm:p-4",
+      data: {
+        onboarding_chat_target: "composer",
+        turbo_stream: true,
+        action: "turbo:submit-start->onboarding-chat#submitStart turbo:submit-end->onboarding-chat#submitEnd"
+      } do |form| %>
+  <div class="flex items-end gap-2">
+    <% if session.document_collection? %>
+      <label
+        for="onboarding_document_upload"
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition hover:border-brand-500 hover:text-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:border-gray-700 dark:text-gray-300 dark:focus:ring-offset-gray-900"
+        aria-label="Upload document"
+        data-onboarding-chat-target="uploadButton"
+        data-testid="document-upload-button">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="h-5 w-5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5"/>
+        </svg>
+      </label>
+    <% end %>
+    <%= form.text_area :message,
+          name: :message,
+          rows: 1,
+          required: true,
+          placeholder: "Type your reply...",
+          class: "max-h-32 min-h-11 flex-1 resize-none rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 outline-none transition focus:border-brand-500 focus:bg-white focus:ring-2 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:placeholder:text-gray-500",
+          data: {
+            onboarding_chat_target: "input",
+            action: "keydown->onboarding-chat#submitOnEnter input->onboarding-chat#resizeInput"
+          } %>
+    <%= form.button type: :submit,
+          class: "flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-white transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900",
+          data: { onboarding_chat_target: "submit" },
+          aria: { label: "Send message" } do %>
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5" aria-hidden="true">
+        <path d="M3.48 2.4a1.05 1.05 0 0 0-1.42 1.28l2.44 7.3h8.24a1 1 0 1 1 0 2H4.5l-2.44 7.3a1.05 1.05 0 0 0 1.42 1.28l18-9a1.05 1.05 0 0 0 0-1.88l-18-9Z"/>
+      </svg>
+    <% end %>
+  </div>
+  <div id="onboarding_upload_status" class="mt-2 min-h-4"></div>
+<% end %>

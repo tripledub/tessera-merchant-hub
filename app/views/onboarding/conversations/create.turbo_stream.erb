@@ -17,3 +17,7 @@
 <%= turbo_stream.replace "onboarding_progress" do %>
   <%= render "onboarding/conversations/progress", session: @onboarding_session %>
 <% end %>
+
+<%= turbo_stream.replace "onboarding_composer" do %>
+  <%= render "onboarding/conversations/composer", session: @onboarding_session %>
+<% end %>
