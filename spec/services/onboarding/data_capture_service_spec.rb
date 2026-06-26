@@ -111,6 +111,21 @@ RSpec.describe Onboarding::DataCaptureService do
       )
     end
 
+    it "updates the latest completed director item when role-only follow-up changes it to UBO too" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+      described_class.call(session: session, extracted_data: director_payload.merge("role" => "director"))
+
+      expect {
+        described_class.call(session: session, extracted_data: { "role" => "UBO" })
+      }.not_to change(KycPrincipal, :count)
+
+      session.reload
+      expect(session.stage_data["directors_ubos"]).to eq(
+        "items" => [ director_payload.merge("role" => "both") ]
+      )
+      expect(KycPrincipal.last).to have_attributes(role: "director_and_psc")
+    end
+
     it "rolls back committed looping stage data when KYC record persistence fails" do
       session = create(:onboarding_session, current_stage: :directors_ubos)
       allow(KycPrincipal).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)

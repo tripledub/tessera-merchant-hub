@@ -109,6 +109,12 @@ module Onboarding
       stage = Onboarding::StateMachine.current_stage(session).to_s
       stage_data = session.stage_data.deep_dup
       stage_payload = stage_data.fetch(stage, {})
+      return update_latest_looping_item(session, stage, stage_data, stage_payload, valid_data) if latest_item_update?(
+        stage,
+        stage_payload,
+        valid_data
+      )
+
       current_item = stage_payload.fetch("current_item", {}).merge(valid_data)
       stage_payload["current_item"] = current_item
       stage_data[stage] = stage_payload
@@ -127,6 +133,58 @@ module Onboarding
     end
     private_class_method :capture_looping_stage
 
+    def latest_item_update?(stage, stage_payload, valid_data)
+      return false unless stage == "directors_ubos"
+      return false if stage_payload["current_item"].present?
+      return false if Array(stage_payload["items"]).empty?
+      return false if valid_data.key?("full_name")
+
+      valid_data.key?("role")
+    end
+    private_class_method :latest_item_update?
+
+    def update_latest_looping_item(session, stage, stage_data, stage_payload, valid_data)
+      items = Array(stage_payload["items"])
+      previous_item = items.last
+      updated_item = merge_directors_ubos_item(previous_item, valid_data)
+      stage_payload["items"] = items[0...-1] + [ updated_item ]
+      stage_data[stage] = stage_payload
+
+      ActiveRecord::Base.transaction do
+        session.update!(stage_data: stage_data)
+        update_principal!(session, previous_item, updated_item)
+      end
+    end
+    private_class_method :update_latest_looping_item
+
+    def merge_directors_ubos_item(item, valid_data)
+      merged_item = item.merge(valid_data)
+      return merged_item unless item["role"].present? && valid_data["role"].present?
+
+      merged_item.merge("role" => combined_role(item["role"], valid_data["role"]))
+    end
+    private_class_method :merge_directors_ubos_item
+
+    def combined_role(existing_role, new_role)
+      roles = (role_components(existing_role) + role_components(new_role)).uniq
+      return "both" if roles.sort == %w[director shareholder]
+
+      roles.first || new_role
+    end
+    private_class_method :combined_role
+
+    def role_components(role)
+      case role
+      when "both"
+        %w[director shareholder]
+      when "director", "shareholder"
+        [ role ]
+      else
+        []
+      end
+    end
+    private_class_method :role_components
+
     def persist_stage_record(session, stage, data)
       case stage
       when "directors_ubos"
@@ -139,6 +197,33 @@ module Onboarding
       end
     end
     private_class_method :persist_stage_record
+
+    def update_principal!(session, previous_item, updated_item)
+      principal = find_declared_principal(session, previous_item)
+      return unless principal
+
+      principal.update!(
+        name: updated_item.fetch("full_name"),
+        date_of_birth: Date.iso8601(updated_item.fetch("date_of_birth")),
+        role: ROLE_MAP.fetch(updated_item.fetch("role")),
+        address_line1: updated_item["residential_address"],
+        country: updated_item["nationality"]
+      )
+    end
+    private_class_method :update_principal!
+
+    def find_declared_principal(session, item)
+      scope = KycPrincipal.where(
+        applicant: session.applicant,
+        source: :applicant_declared,
+        name: item["full_name"]
+      )
+      date = Date.iso8601(item.fetch("date_of_birth"))
+      scope.find_by(date_of_birth: date) || scope.first
+    rescue ArgumentError, KeyError
+      scope.first
+    end
+    private_class_method :find_declared_principal
 
     def create_principal!(session, data)
       KycPrincipal.create!(
