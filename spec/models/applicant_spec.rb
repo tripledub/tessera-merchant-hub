@@ -16,6 +16,23 @@ RSpec.describe Applicant, type: :model do
     expect(duplicate.errors[:name]).to include("has already been taken")
   end
 
+  it "enforces unique applicant names at the database level" do
+    create(:applicant, name: "Acme Ltd")
+    now = Time.current
+
+    expect {
+      described_class.insert_all!([
+        {
+          type: "Applicant",
+          name: "acme ltd",
+          status: "pending",
+          created_at: now,
+          updated_at: now
+        }
+      ])
+    }.to raise_error(ActiveRecord::RecordNotUnique)
+  end
+
   it "is a Merchant subclass" do
     expect(described_class.superclass).to eq(Merchant)
   end
