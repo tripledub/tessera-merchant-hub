@@ -1,0 +1,96 @@
+# frozen_string_literal: true
+
+require "rails_helper"
+
+RSpec.describe Onboarding::ConversationEngine do
+  describe ".respond" do
+    let(:adapter_response) do
+      {
+        "bot_message" => "What type of company is Acme Ltd?",
+        "extracted_data" => {
+          "company_name" => "Acme Ltd",
+          "registration_number" => "12345678"
+        }
+      }
+    end
+
+    let(:adapter) { instance_double(Kyc::Inference::Base, generate: adapter_response) }
+
+    it "persists applicant and bot messages around the inference call" do
+      session = create(:onboarding_session, current_stage: :company_info)
+
+      result = described_class.respond(
+        session: session,
+        user_message: "The company is Acme Ltd, registration number 12345678",
+        inference_adapter: adapter
+      )
+
+      expect(result).to eq(
+        bot_message: "What type of company is Acme Ltd?",
+        extracted_data: {
+          "company_name" => "Acme Ltd",
+          "registration_number" => "12345678"
+        },
+        stage_changed: false
+      )
+      expect(session.onboarding_messages.pluck(:role, :content, :stage)).to eq([
+        [ "applicant", "The company is Acme Ltd, registration number 12345678", "company_info" ],
+        [ "bot", "What type of company is Acme Ltd?", "company_info" ]
+      ])
+    end
+
+    it "builds the prompt after saving the applicant message" do
+      session = create(:onboarding_session, current_stage: :company_info)
+
+      described_class.respond(session: session, user_message: "Hello", inference_adapter: adapter)
+
+      expect(adapter).to have_received(:generate).with(prompt: include("applicant: Hello"))
+    end
+
+    it "captures extracted data and advances when the stage is complete" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Thanks, let's talk about directors.",
+        "extracted_data" => {
+          "company_name" => "Acme Ltd",
+          "registration_number" => "12345678",
+          "company_type" => "limited_company",
+          "registered_address" => "1 High Street",
+          "country_of_incorporation" => "GB"
+        }
+      })
+
+      result = described_class.respond(session: session, user_message: "Here are the company details", inference_adapter: adapter)
+
+      session.reload
+      expect(session.current_stage).to eq("directors_ubos")
+      expect(session.stage_data["company_info"]).to include("company_name" => "Acme Ltd")
+      expect(result[:stage_changed]).to be(true)
+    end
+
+    it "accepts a JSON string response from the inference adapter" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        bot_message: "Tell me the company registration number.",
+        extracted_data: { company_name: "Acme Ltd" }
+      }.to_json)
+
+      result = described_class.respond(session: session, user_message: "Acme Ltd", inference_adapter: adapter)
+
+      expect(result).to include(
+        bot_message: "Tell me the company registration number.",
+        extracted_data: { "company_name" => "Acme Ltd" },
+        stage_changed: false
+      )
+    end
+
+    it "raises an inference error for malformed adapter responses" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      adapter = instance_double(Kyc::Inference::Base, generate: { "extracted_data" => {} })
+
+      expect {
+        described_class.respond(session: session, user_message: "Hello", inference_adapter: adapter)
+      }.to raise_error(Kyc::Inference::Error, /bot_message/)
+    end
+  end
+end
