@@ -53,6 +53,46 @@ RSpec.describe Onboarding::DataCaptureService do
       )
     end
 
+    it "normalizes common date formats before storing looping stage data" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+
+      described_class.call(session: session, extracted_data: {
+        "full_name" => "Jane Smith",
+        "date_of_birth" => "01/02/1980",
+        "role" => "director"
+      })
+
+      expect(session.reload.stage_data["directors_ubos"]["current_item"]).to include(
+        "date_of_birth" => "1980-02-01"
+      )
+    end
+
+    it "normalizes common director and UBO role answers before storing looping stage data" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+
+      described_class.call(session: session, extracted_data: {
+        "full_name" => "Jane Smith",
+        "role" => "director and UBO"
+      })
+
+      expect(session.reload.stage_data["directors_ubos"]["current_item"]).to include(
+        "role" => "both"
+      )
+    end
+
+    it "normalizes standalone UBO role answers as shareholder" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+
+      described_class.call(session: session, extracted_data: {
+        "full_name" => "Jane Smith",
+        "role" => "UBO"
+      })
+
+      expect(session.reload.stage_data["directors_ubos"]["current_item"]).to include(
+        "role" => "shareholder"
+      )
+    end
+
     it "commits a complete directors_ubos item and creates an applicant-declared principal" do
       session = create(:onboarding_session, current_stage: :directors_ubos)
 
@@ -69,6 +109,34 @@ RSpec.describe Onboarding::DataCaptureService do
         role: "director_and_psc",
         source: "applicant_declared"
       )
+    end
+
+    it "updates the latest completed director item when role-only follow-up changes it to UBO too" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+      described_class.call(session: session, extracted_data: director_payload.merge("role" => "director"))
+
+      expect {
+        described_class.call(session: session, extracted_data: { "role" => "UBO" })
+      }.not_to change(KycPrincipal, :count)
+
+      session.reload
+      expect(session.stage_data["directors_ubos"]).to eq(
+        "items" => [ director_payload.merge("role" => "both") ]
+      )
+      expect(KycPrincipal.last).to have_attributes(role: "director_and_psc")
+    end
+
+    it "does not guess which declared principal to update when the completed item cannot be matched by date of birth" do
+      applicant = create(:applicant)
+      older_principal = create_declared_principal(applicant, "1960-01-01")
+      younger_principal = create_declared_principal(applicant, "1990-01-01")
+      session = create(:onboarding_session, applicant: applicant, current_stage: :directors_ubos,
+        stage_data: directors_ubos_data_missing_dob)
+
+      described_class.call(session: session, extracted_data: { "role" => "UBO" })
+
+      expect(older_principal.reload.role).to eq("director")
+      expect(younger_principal.reload.role).to eq("director")
     end
 
     it "rolls back committed looping stage data when KYC record persistence fails" do
@@ -127,5 +195,28 @@ RSpec.describe Onboarding::DataCaptureService do
         source: "applicant_declared"
       )
     end
+  end
+
+  def create_declared_principal(applicant, date_of_birth)
+    create(:kyc_principal,
+      applicant: applicant,
+      name: "Jane Smith",
+      date_of_birth: Date.iso8601(date_of_birth),
+      role: :director,
+      source: :applicant_declared)
+  end
+
+  def directors_ubos_data_missing_dob
+    {
+      "directors_ubos" => {
+        "items" => [
+          {
+            "full_name" => "Jane Smith",
+            "nationality" => "GB",
+            "role" => "director"
+          }
+        ]
+      }
+    }
   end
 end

@@ -169,6 +169,12 @@ RSpec.describe Onboarding::StateMachine do
 
       expect(described_class.stage_complete?(session)).to be(true)
     end
+
+    it "does not complete document collection through field collection" do
+      session = build(:onboarding_session, current_stage: :document_collection)
+
+      expect(described_class.stage_complete?(session)).to be(false)
+    end
   end
 
   describe ".advance!" do
@@ -196,12 +202,14 @@ RSpec.describe Onboarding::StateMachine do
       }.to raise_error(Onboarding::StateMachine::IncompleteStageError)
     end
 
-    it "marks the session completed at the final stage" do
+    it "does not complete document collection without document upload completion" do
       session = create(:onboarding_session, current_stage: :document_collection)
 
-      expect(described_class.advance!(session)).to eq(:completed)
-      expect(session.reload.status).to eq("completed")
-      expect(session.completed_stages).to eq([ "document_collection" ])
+      expect {
+        described_class.advance!(session)
+      }.to raise_error(Onboarding::StateMachine::IncompleteStageError)
+      expect(session.reload.status).to eq("in_progress")
+      expect(session.completed_stages).to eq([])
     end
   end
 

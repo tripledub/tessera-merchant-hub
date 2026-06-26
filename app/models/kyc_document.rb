@@ -66,6 +66,7 @@ class KycDocument < ApplicationRecord
     application/vnd.ms-excel
     text/csv
   ].freeze
+  MAX_FILE_SIZE = 10.megabytes
 
   def extraction_schema
     ExtractionData::Base.for(document_type)
@@ -79,6 +80,7 @@ class KycDocument < ApplicationRecord
 
   validates :file, presence: true, on: :create
   validate :file_content_type_allowed, if: -> { file.attached? }
+  validate :file_size_allowed, if: -> { file.attached? }
 
   def needs_review?
     classification_ai_suggested? || classification_unclassified?
@@ -90,5 +92,11 @@ class KycDocument < ApplicationRecord
     return if ALLOWED_CONTENT_TYPES.include?(file.content_type)
 
     errors.add(:file, "has an unsupported type (#{file.content_type}). Please upload an image, PDF, Excel, or CSV file.")
+  end
+
+  def file_size_allowed
+    return if file.blob.byte_size <= MAX_FILE_SIZE
+
+    errors.add(:file, "must be less than 10 MB")
   end
 end

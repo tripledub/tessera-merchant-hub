@@ -1,0 +1,30 @@
+<% stages = OnboardingSession.current_stages.keys %>
+<% current_index = stages.index(session.current_stage) || 0 %>
+
+<nav
+  id="onboarding_progress"
+  class="border-b border-gray-200 px-4 py-4 dark:border-gray-800 sm:px-6"
+  aria-label="Onboarding progress"
+  data-testid="onboarding-progress">
+  <ol class="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+    <% stages.each_with_index do |stage, index| %>
+      <% complete = index < current_index || session.completed_stages.include?(stage) %>
+      <% current = stage == session.current_stage %>
+
+      <li
+        class="flex min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium <%= current ? "border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-400 dark:bg-brand-500/10 dark:text-brand-300" : "border-gray-200 text-gray-500 dark:border-gray-800 dark:text-gray-400" %>"
+        <%= %(aria-current="step").html_safe if current %>>
+        <span class="flex h-5 w-5 shrink-0 items-center justify-center rounded-full <%= complete ? "bg-brand-500 text-white" : "bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400" %>">
+          <% if complete %>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-3.5 w-3.5" aria-hidden="true">
+              <path fill-rule="evenodd" d="M16.704 5.29a1 1 0 0 1 .006 1.414l-7.25 7.31a1 1 0 0 1-1.42.002L3.29 9.23a1 1 0 1 1 1.42-1.41l4.04 4.07 6.54-6.596a1 1 0 0 1 1.414-.006Z" clip-rule="evenodd"/>
+            </svg>
+          <% else %>
+            <%= index + 1 %>
+          <% end %>
+        </span>
+        <span class="min-w-0 truncate"><%= stage.humanize %></span>
+      </li>
+    <% end %>
+  </ol>
+</nav>

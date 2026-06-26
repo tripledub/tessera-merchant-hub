@@ -3,26 +3,26 @@
 require "rails_helper"
 
 RSpec.describe Kyc::Inference::ClaudeAdapter, type: :service do
+  let(:claude_response_text) do
+    { "result" => "some data" }.to_json
+  end
+
+  let(:mock_message) do
+    instance_double(Anthropic::Models::Message,
+      content: [ instance_double(Anthropic::Models::TextBlock, text: claude_response_text) ])
+  end
+
+  let(:mock_messages) do
+    instance_double(Anthropic::Resources::Messages, create: mock_message)
+  end
+
+  let(:mock_client) do
+    instance_double(Anthropic::Client, messages: mock_messages)
+  end
+
   describe "#extract" do
     let(:document) { create(:kyc_document, document_type: :group_structure_chart) }
     let(:prompt) { "Extract data from this document." }
-
-    let(:claude_response_text) do
-      { "result" => "some data" }.to_json
-    end
-
-    let(:mock_message) do
-      instance_double(Anthropic::Models::Message,
-        content: [ instance_double(Anthropic::Models::TextBlock, text: claude_response_text) ])
-    end
-
-    let(:mock_messages) do
-      instance_double(Anthropic::Resources::Messages, create: mock_message)
-    end
-
-    let(:mock_client) do
-      instance_double(Anthropic::Client, messages: mock_messages)
-    end
 
     it "returns parsed JSON from the model response" do
       adapter = described_class.new(client: mock_client)
@@ -64,6 +64,19 @@ RSpec.describe Kyc::Inference::ClaudeAdapter, type: :service do
 
       expect(result).to eq("result" => "some data")
       expect(Anthropic::Client).to have_received(:new).with(api_key: "test-key")
+    end
+  end
+
+  describe "#generate" do
+    it "returns parsed JSON from a fenced model response" do
+      fenced_message = instance_double(Anthropic::Models::Message,
+        content: [ instance_double(Anthropic::Models::TextBlock, text: "```json\n{\"result\":\"some data\"}\n```") ])
+      allow(mock_messages).to receive(:create).and_return(fenced_message)
+
+      adapter = described_class.new(client: mock_client)
+      result = adapter.generate(prompt: "Reply with JSON.")
+
+      expect(result).to eq("result" => "some data")
     end
   end
 end

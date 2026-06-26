@@ -66,6 +66,7 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(session.current_stage).to eq("directors_ubos")
       expect(session.stage_data["company_info"]).to include("company_name" => "Acme Ltd")
       expect(result[:stage_changed]).to be(true)
+      expect(result[:bot_message]).to include("Next, let’s add the directors and beneficial owners")
     end
 
     it "does not auto-advance looping stages after the first complete item" do
@@ -84,6 +85,63 @@ RSpec.describe Onboarding::ConversationEngine do
 
       expect(session.reload.current_stage).to eq("directors_ubos")
       expect(result[:stage_changed]).to be(false)
+    end
+
+    it "advances a complete looping stage when the inference response says there are no more items" do
+      session = create(:onboarding_session, current_stage: :directors_ubos, stage_data: complete_directors_ubos_data)
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Thanks, let's move to ownership.",
+        "extracted_data" => { "done_adding_items" => true }
+      })
+
+      result = described_class.respond(session: session, user_message: "none", inference_adapter: adapter)
+
+      expect(session.reload.current_stage).to eq("ownership")
+      expect(session.completed_stages).to include("directors_ubos")
+      expect(result[:stage_changed]).to be(true)
+      expect(result[:bot_message]).to include("Next, let’s map the ownership structure")
+    end
+
+    it "does not advance a looping stage from raw user text without inference confirmation" do
+      session = create(:onboarding_session, current_stage: :directors_ubos, stage_data: complete_directors_ubos_data)
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Please provide their nationality.",
+        "extracted_data" => {}
+      })
+
+      result = described_class.respond(session: session, user_message: "I have no middle name", inference_adapter: adapter)
+
+      expect(session.reload.current_stage).to eq("directors_ubos")
+      expect(result[:stage_changed]).to be(false)
+    end
+
+    it "uses the collected company name in ownership transition prompts" do
+      session = create(:onboarding_session, current_stage: :directors_ubos, stage_data: complete_directors_ubos_data.merge(
+        "company_info" => { "company_name" => "Acme Payments Ltd" }
+      ))
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Thanks, let's move to ownership.",
+        "extracted_data" => { "done_adding_items" => true }
+      })
+
+      result = described_class.respond(session: session, user_message: "That's everyone", inference_adapter: adapter)
+
+      expect(result[:bot_message]).to include("Who owns or controls Acme Payments Ltd")
+      expect(result[:bot_message]).not_to include("Tab Trade Ltd")
+    end
+
+    it "does not repeat the document collection transition prompt during document collection" do
+      session = create(:onboarding_session, current_stage: :document_collection)
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Please upload your proof of address when you have it.",
+        "extracted_data" => {}
+      })
+
+      result = described_class.respond(session: session, user_message: "ok", inference_adapter: adapter)
+
+      expect(session.reload.current_stage).to eq("document_collection")
+      expect(result[:stage_changed]).to be(false)
+      expect(result[:bot_message]).to eq("Please upload your proof of address when you have it.")
     end
 
     it "accepts a JSON string response from the inference adapter" do
@@ -138,5 +196,20 @@ RSpec.describe Onboarding::ConversationEngine do
 
       expect(session.reload.stage_data).to eq({})
     end
+  end
+
+  def complete_directors_ubos_data
+    {
+      "directors_ubos" => {
+        "items" => [
+          {
+            "full_name" => "Jane Smith",
+            "date_of_birth" => "1980-01-01",
+            "nationality" => "GB",
+            "role" => "director"
+          }
+        ]
+      }
+    }
   end
 end

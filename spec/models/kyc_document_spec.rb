@@ -18,6 +18,17 @@ RSpec.describe KycDocument, type: :model do
     expect(document.errors[:file]).not_to be_empty
   end
 
+  it "rejects files larger than the upload limit" do
+    document.file.attach(
+      io: StringIO.new("x" * (KycDocument::MAX_FILE_SIZE + 1)),
+      filename: "large.pdf",
+      content_type: "application/pdf"
+    )
+
+    expect(document).not_to be_valid
+    expect(document.errors[:file]).to include("must be less than 10 MB")
+  end
+
   it "can be assigned to a principal" do
     applicant  = create(:applicant)
     principal  = create(:kyc_principal, applicant: applicant)
