@@ -86,6 +86,31 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(result[:stage_changed]).to be(false)
     end
 
+    it "advances a complete looping stage when the applicant says there are no more items" do
+      session = create(:onboarding_session, current_stage: :directors_ubos, stage_data: {
+        "directors_ubos" => {
+          "items" => [
+            {
+              "full_name" => "Jane Smith",
+              "date_of_birth" => "1980-01-01",
+              "nationality" => "GB",
+              "role" => "director"
+            }
+          ]
+        }
+      })
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Thanks, let's move to ownership.",
+        "extracted_data" => {}
+      })
+
+      result = described_class.respond(session: session, user_message: "none", inference_adapter: adapter)
+
+      expect(session.reload.current_stage).to eq("ownership")
+      expect(session.completed_stages).to include("directors_ubos")
+      expect(result[:stage_changed]).to be(true)
+    end
+
     it "accepts a JSON string response from the inference adapter" do
       session = create(:onboarding_session, current_stage: :company_info)
       adapter = instance_double(Kyc::Inference::Base, generate: {

@@ -16,7 +16,7 @@ module Onboarding
           session: session,
           extracted_data: response.fetch("extracted_data")
         )
-        stage_changed = advance_if_complete(session)
+        stage_changed = advance_if_complete(session, user_message: user_message)
 
         create_message!(
           session,
@@ -60,14 +60,19 @@ module Onboarding
     end
     private_class_method :validate_response!
 
-    def advance_if_complete(session)
-      return false if looping_stage?(session)
+    def advance_if_complete(session, user_message:)
+      return false if looping_stage?(session) && !no_more_loop_items?(user_message)
       return false unless Onboarding::StateMachine.stage_complete?(session)
 
       Onboarding::StateMachine.advance!(session)
       true
     end
     private_class_method :advance_if_complete
+
+    def no_more_loop_items?(user_message)
+      user_message.to_s.match?(/\b(no|none|no more|nothing else|that's all|that is all|all done)\b/i)
+    end
+    private_class_method :no_more_loop_items?
 
     def looping_stage?(session)
       %i[directors_ubos ownership jurisdictions].include?(Onboarding::StateMachine.current_stage(session))
