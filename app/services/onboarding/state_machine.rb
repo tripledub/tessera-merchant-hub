@@ -5,7 +5,7 @@ module Onboarding
     class IncompleteStageError < StandardError; end
     class InvalidTransitionError < StandardError; end
 
-    Field = Data.define(:name, :type, :required, :options)
+    Field = Data.define(:name, :type, :required, :options, :required_when)
     Stage = Data.define(:name, :fields, :looping)
 
     STAGES = [
@@ -13,57 +13,62 @@ module Onboarding
         name: :company_info,
         looping: false,
         fields: [
-          Field.new(name: :company_name, type: :string, required: true, options: nil),
-          Field.new(name: :registration_number, type: :string, required: true, options: nil),
-          Field.new(name: :company_type, type: :string, required: true, options: nil),
-          Field.new(name: :registered_address, type: :string, required: true, options: nil),
-          Field.new(name: :country_of_incorporation, type: :string, required: true, options: nil)
+          Field.new(name: :company_name, type: :string, required: true, options: nil, required_when: nil),
+          Field.new(name: :registration_number, type: :string, required: true, options: nil, required_when: nil),
+          Field.new(name: :company_type, type: :string, required: true, options: nil, required_when: nil),
+          Field.new(name: :registered_address, type: :string, required: true, options: nil, required_when: nil),
+          Field.new(name: :country_of_incorporation, type: :string, required: true, options: nil, required_when: nil)
         ]
       ),
       Stage.new(
         name: :directors_ubos,
         looping: true,
         fields: [
-          Field.new(name: :full_name, type: :string, required: true, options: nil),
-          Field.new(name: :date_of_birth, type: :date, required: true, options: nil),
-          Field.new(name: :nationality, type: :string, required: true, options: nil),
-          Field.new(name: :role, type: :option, required: true, options: %w[director shareholder both]),
-          Field.new(name: :residential_address, type: :string, required: false, options: nil)
+          Field.new(name: :full_name, type: :string, required: true, options: nil, required_when: nil),
+          Field.new(name: :date_of_birth, type: :date, required: true, options: nil, required_when: nil),
+          Field.new(name: :nationality, type: :string, required: true, options: nil, required_when: nil),
+          Field.new(name: :role, type: :option, required: true, options: %w[director shareholder both],
+            required_when: nil),
+          Field.new(name: :residential_address, type: :string, required: false, options: nil, required_when: nil)
         ]
       ),
       Stage.new(
         name: :ownership,
         looping: true,
         fields: [
-          Field.new(name: :owner, type: :reference, required: true, options: nil),
-          Field.new(name: :owned_entity, type: :reference, required: true, options: nil),
-          Field.new(name: :percentage, type: :decimal, required: false, options: nil),
-          Field.new(name: :relationship_type, type: :option, required: true, options: %w[equity nominee contractual])
+          Field.new(name: :owner, type: :reference, required: true, options: nil, required_when: nil),
+          Field.new(name: :owned_entity, type: :reference, required: true, options: nil, required_when: nil),
+          Field.new(name: :percentage, type: :decimal, required: false, options: nil,
+            required_when: ->(data) { data["relationship_type"] == "equity" }),
+          Field.new(name: :relationship_type, type: :option, required: true, options: %w[equity nominee contractual],
+            required_when: nil)
         ]
       ),
       Stage.new(
         name: :business_activity,
         looping: false,
         fields: [
-          Field.new(name: :industry, type: :string, required: true, options: nil),
-          Field.new(name: :business_description, type: :string, required: true, options: nil),
-          Field.new(name: :website, type: :string, required: false, options: nil),
-          Field.new(name: :expected_monthly_volume, type: :string, required: false, options: nil),
-          Field.new(name: :expected_transaction_count, type: :string, required: false, options: nil)
+          Field.new(name: :industry, type: :string, required: true, options: nil, required_when: nil),
+          Field.new(name: :business_description, type: :string, required: true, options: nil, required_when: nil),
+          Field.new(name: :website, type: :string, required: false, options: nil, required_when: nil),
+          Field.new(name: :expected_monthly_volume, type: :string, required: false, options: nil, required_when: nil),
+          Field.new(name: :expected_transaction_count, type: :string, required: false, options: nil,
+            required_when: nil)
         ]
       ),
       Stage.new(
         name: :jurisdictions,
         looping: true,
         fields: [
-          Field.new(name: :country, type: :string, required: true, options: nil),
-          Field.new(name: :licence_type, type: :string, required: false, options: nil),
-          Field.new(name: :licence_number, type: :string, required: false, options: nil)
+          Field.new(name: :country, type: :string, required: true, options: nil, required_when: nil),
+          Field.new(name: :licence_type, type: :string, required: false, options: nil, required_when: nil),
+          Field.new(name: :licence_number, type: :string, required: false, options: nil, required_when: nil)
         ]
       ),
       Stage.new(
         name: :document_collection,
         looping: false,
+        # Completion for this stage is determined by document upload logic, not field collection.
         fields: []
       )
     ].freeze
@@ -71,6 +76,8 @@ module Onboarding
     STAGE_NAMES = STAGES.map(&:name).freeze
     STAGES_BY_NAME = STAGES.index_by(&:name).freeze
     FIELDS_BY_NAME = STAGES.flat_map(&:fields).index_by(&:name).freeze
+    FIELD_NAMES = STAGES.flat_map(&:fields).map(&:name).freeze
+    raise "duplicate field name" if FIELD_NAMES.size != FIELDS_BY_NAME.size
 
     module_function
 
@@ -113,7 +120,7 @@ module Onboarding
         next_stage
       else
         session.update!(completed_stages: completed_stages, status: :completed)
-        stage
+        :completed
       end
     end
 
@@ -130,6 +137,7 @@ module Onboarding
         raise InvalidTransitionError, "cannot go back from #{current_stage(session)} to #{target_stage}"
       end
 
+      # Keep stage_data intact so applicants can revise prior answers without losing work.
       session.update!(
         current_stage: target_stage,
         completed_stages: session.completed_stages.first(target_index)
@@ -185,12 +193,7 @@ module Onboarding
     private_class_method :missing_fields_for
 
     def required_fields_for(stage, data)
-      required_fields = stage.fields.select(&:required)
-      if stage.name == :ownership && data["relationship_type"] == "equity"
-        required_fields + [ FIELDS_BY_NAME.fetch(:percentage) ]
-      else
-        required_fields
-      end
+      stage.fields.select { |field| field.required || field.required_when&.call(data) }
     end
     private_class_method :required_fields_for
 

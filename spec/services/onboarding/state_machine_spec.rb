@@ -131,6 +131,38 @@ RSpec.describe Onboarding::StateMachine do
 
       expect(described_class.stage_complete?(session)).to be(false)
     end
+
+    it "requires ownership percentage for equity relationships" do
+      session = build(:onboarding_session, current_stage: :ownership, stage_data: {
+        "ownership" => {
+          "items" => [
+            {
+              "owner" => "person-1",
+              "owned_entity" => "company-1",
+              "relationship_type" => "equity"
+            }
+          ]
+        }
+      })
+
+      expect(described_class.stage_complete?(session)).to be(false)
+    end
+
+    it "does not require ownership percentage for nominee relationships" do
+      session = build(:onboarding_session, current_stage: :ownership, stage_data: {
+        "ownership" => {
+          "items" => [
+            {
+              "owner" => "person-1",
+              "owned_entity" => "company-1",
+              "relationship_type" => "nominee"
+            }
+          ]
+        }
+      })
+
+      expect(described_class.stage_complete?(session)).to be(true)
+    end
   end
 
   describe ".advance!" do
@@ -156,6 +188,14 @@ RSpec.describe Onboarding::StateMachine do
       expect {
         described_class.advance!(session)
       }.to raise_error(Onboarding::StateMachine::IncompleteStageError)
+    end
+
+    it "marks the session completed at the final stage" do
+      session = create(:onboarding_session, current_stage: :document_collection)
+
+      expect(described_class.advance!(session)).to eq(:completed)
+      expect(session.reload.status).to eq("completed")
+      expect(session.completed_stages).to eq([ "document_collection" ])
     end
   end
 
