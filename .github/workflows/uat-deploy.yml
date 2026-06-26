@@ -1,0 +1,113 @@
+name: UAT Deploy
+
+on:
+  push:
+    branches: [uat]
+  workflow_dispatch:
+    inputs:
+      deploy_ref:
+        description: Git ref to deploy
+        required: false
+        default: uat
+
+concurrency:
+  group: merchant-hub-uat
+  cancel-in-progress: false
+
+jobs:
+  ci:
+    name: CI gate
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: merchanthub
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: merchanthub_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      DATABASE_URL: postgres://merchanthub:password@localhost:5432/merchanthub_test
+      RAILS_ENV: test
+      TESSERA_CORE_URL: http://localhost:4000
+      TESSERA_INTERNAL_API_KEY: test-internal-key
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Security scan
+        run: bin/brakeman --no-pager
+
+      - name: Lint
+        run: bin/rubocop -f github
+
+      - name: Check autoload integrity
+        run: bundle exec rails zeitwerk:check
+
+      - name: Set up database
+        run: bin/rails db:migrate
+
+      - name: Build Tailwind CSS
+        run: bin/rails tailwindcss:build
+
+      - name: Run tests
+        run: bundle exec rspec
+
+  deploy:
+    name: Deploy UAT
+    runs-on: ubuntu-latest
+    needs: ci
+    environment: uat
+
+    env:
+      DEPLOY_REF: ${{ github.event.inputs.deploy_ref || github.ref_name }}
+      UAT_DOMAIN: ${{ vars.UAT_DOMAIN }}
+      CERTBOT_EMAIL: ${{ vars.CERTBOT_EMAIL }}
+      MERCHANT_HUB_REPO_URL: ${{ vars.MERCHANT_HUB_REPO_URL }}
+
+    steps:
+      - name: Checkout infra
+        uses: actions/checkout@v7
+        with:
+          repository: tripledub/tessera-infra
+          ref: feat/IN-20-merchant-hub-uat-pipeline
+          path: tessera-infra
+          token: ${{ secrets.INFRA_REPO_TOKEN }}
+
+      - name: Install Ansible
+        run: sudo apt-get update && sudo apt-get install -y ansible
+
+      - name: Configure SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.UAT_SSH_PRIVATE_KEY }}" > ~/.ssh/uat
+          chmod 600 ~/.ssh/uat
+          ssh-keyscan -H "${{ secrets.UAT_SSH_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Write Ansible inventory and vault
+        working-directory: tessera-infra/environments/uat/ansible
+        run: |
+          printf '[merchant_hub_uat]\n%s ansible_user=%s ansible_ssh_private_key_file=~/.ssh/uat\n' \
+            "${{ secrets.UAT_SSH_HOST }}" "${{ secrets.UAT_SSH_USER }}" > inventory.ini
+          printf '%s\n' "${{ secrets.UAT_ANSIBLE_VAULT_YML }}" > vault.yml
+          printf '%s\n' "${{ secrets.UAT_ANSIBLE_VAULT_PASSWORD }}" > /tmp/uat-vault-pass
+
+      - name: Deploy with Ansible
+        working-directory: tessera-infra/environments/uat/ansible
+        env:
+          ANSIBLE_VAULT_PASSWORD_FILE: /tmp/uat-vault-pass
+        run: ansible-playbook -i inventory.ini playbook.yml
