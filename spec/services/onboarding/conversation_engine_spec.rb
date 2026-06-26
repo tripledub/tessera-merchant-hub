@@ -144,6 +144,28 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(result[:bot_message]).to eq("Please upload your proof of address when you have it.")
     end
 
+    it "records a bot response when ownership data uses human-readable owner names" do
+      session = create(:onboarding_session, current_stage: :ownership)
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Thanks, Patsy Pong has been recorded.",
+        "extracted_data" => {
+          "owner" => "Patsy Pong",
+          "owned_entity" => "McFoo & Sons",
+          "percentage" => "31",
+          "relationship_type" => "equity"
+        }
+      })
+
+      expect {
+        described_class.respond(session: session, user_message: "31%", inference_adapter: adapter)
+      }.not_to change(Kyc::OwnershipEdge, :count)
+
+      expect(session.reload.onboarding_messages.pluck(:role, :content)).to eq([
+        [ "applicant", "31%" ],
+        [ "bot", "Thanks, Patsy Pong has been recorded." ]
+      ])
+    end
+
     it "accepts a JSON string response from the inference adapter" do
       session = create(:onboarding_session, current_stage: :company_info)
       adapter = instance_double(Kyc::Inference::Base, generate: {

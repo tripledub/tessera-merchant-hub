@@ -25,6 +25,7 @@ module Onboarding
       "director_and_psc" => "both"
     }.freeze
     ROLE_OPTIONS = Onboarding::StateMachine::FIELDS_BY_NAME.fetch(:role).options.freeze
+    UUID_PATTERN = /\A[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\z/i
     raise "role map does not match onboarding role options" unless ROLE_MAP.keys.sort == ROLE_OPTIONS.sort
 
     module_function
@@ -115,6 +116,7 @@ module Onboarding
         valid_data
       )
 
+      stage_payload = preserve_incomplete_ownership_item(stage, stage_payload, valid_data)
       current_item = stage_payload.fetch("current_item", {}).merge(valid_data)
       stage_payload["current_item"] = current_item
       stage_data[stage] = stage_payload
@@ -142,6 +144,37 @@ module Onboarding
       valid_data.key?("role")
     end
     private_class_method :directors_ubos_role_update?
+
+    def preserve_incomplete_ownership_item(stage, stage_payload, valid_data)
+      return stage_payload unless starting_new_ownership_item?(stage, stage_payload, valid_data)
+
+      current_item = stage_payload.fetch("current_item")
+      stage_payload.merge(
+        "current_item" => {},
+        "incomplete_items" => Array(stage_payload["incomplete_items"]) + [ current_item ]
+      )
+    end
+    private_class_method :preserve_incomplete_ownership_item
+
+    def starting_new_ownership_item?(stage, stage_payload, valid_data)
+      current_item = stage_payload["current_item"]
+      return false unless stage == "ownership"
+      return false unless current_item.present?
+      return false unless current_item["owner"].present?
+      return false unless valid_data["owner"].present?
+      return false if current_item["owner"] == valid_data["owner"]
+
+      ownership_item_incomplete?(current_item)
+    end
+    private_class_method :starting_new_ownership_item?
+
+    def ownership_item_incomplete?(item)
+      item["owner"].blank? ||
+        item["owned_entity"].blank? ||
+        item["relationship_type"].blank? ||
+        (item["relationship_type"] == "equity" && item["percentage"].blank?)
+    end
+    private_class_method :ownership_item_incomplete?
 
     def update_latest_looping_item(session, stage, stage_data, stage_payload, valid_data)
       items = Array(stage_payload["items"])
@@ -190,7 +223,7 @@ module Onboarding
       when "directors_ubos"
         create_principal!(session, data)
       when "ownership"
-        create_ownership_edge!(session, data)
+        create_ownership_edge!(session, data) if ownership_edge_references?(data)
       when "jurisdictions"
         # Jurisdictions are JSON-only until a dedicated persistence model exists.
         nil
@@ -244,6 +277,16 @@ module Onboarding
       )
     end
     private_class_method :create_principal!
+
+    def ownership_edge_references?(data)
+      uuid?(data["owner"]) && uuid?(data["owned_entity"])
+    end
+    private_class_method :ownership_edge_references?
+
+    def uuid?(value)
+      value.to_s.match?(UUID_PATTERN)
+    end
+    private_class_method :uuid?
 
     def create_ownership_edge!(session, data)
       parent_entity = Kyc::CorporateEntity.find_by!(id: data.fetch("owner"), applicant: session.applicant)
