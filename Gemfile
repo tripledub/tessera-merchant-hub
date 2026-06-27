@@ -59,12 +59,12 @@ gem "faraday"
 # Fuzzy name matching for KYC principal identification
 gem "jaro_winkler"
 
+# Claude API client for KYC document extraction and onboarding chat.
+gem "anthropic"
+
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
-
-  # Dev-only Claude OCR adapter (MH-69) — never loaded in production
-  gem "anthropic"
 
   gem "rspec-rails"
   gem "factory_bot_rails"
