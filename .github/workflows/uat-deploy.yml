@@ -106,8 +106,8 @@ jobs:
           printf '%s\n' "${{ secrets.UAT_ANSIBLE_VAULT_YML }}" > vault.yml
           printf '%s\n' "${{ secrets.UAT_ANSIBLE_VAULT_PASSWORD }}" > /tmp/uat-vault-pass
 
-      - name: Deploy with Ansible
-        working-directory: tessera-infra/environments/uat/ansible
+      - name: Deploy MerchantHub app
+        working-directory: tessera-infra
         env:
           ANSIBLE_VAULT_PASSWORD_FILE: /tmp/uat-vault-pass
-        run: ansible-playbook -i inventory.ini playbook.yml
+        run: make -C environments/uat deploy-app
