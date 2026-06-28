@@ -142,6 +142,21 @@ RSpec.describe "Onboarding conversations", type: :request do
       expect(response.body).to include('target="onboarding_stage_badge"')
       expect(response.body).to include("Directors ubos")
     end
+
+    it "refreshes the composer when the response advances to document collection" do
+      applicant_user = create(:applicant_user)
+      session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :jurisdictions)
+      sign_in applicant_user, scope: :applicant_user
+      allow(Onboarding::ConversationEngine).to receive(:respond) do
+        session.update!(current_stage: :document_collection, completed_stages: [ "jurisdictions" ])
+        { bot_message: "Next, upload your documents.", extracted_data: {}, stage_changed: true }
+      end
+
+      post portal_onboarding_messages_path(format: :turbo_stream), params: { message: "Only the UK" }
+
+      expect(response.body).to include('target="onboarding_composer"')
+      expect(response.body).to include('data-testid="document-upload-button"')
+    end
   end
 
   def stub_persisted_bot_reply(bot_messages)

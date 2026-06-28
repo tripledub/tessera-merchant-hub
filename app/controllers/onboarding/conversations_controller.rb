@@ -17,6 +17,7 @@ module Onboarding
         session: @onboarding_session,
         user_message: message_param
       )
+      @onboarding_session.reload
       @messages = ordered_messages
       @applicant_message = latest_applicant_message_after(previous_applicant_message)
       @bot_message = latest_bot_message_after(previous_bot_message) || transient_bot_message(result.fetch(:bot_message))
