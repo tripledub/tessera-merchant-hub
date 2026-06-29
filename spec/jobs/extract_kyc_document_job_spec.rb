@@ -183,6 +183,41 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       end
     end
 
+    context "when an onboarding session exists in document_collection stage" do
+      let!(:session) do
+        create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
+      end
+
+      before do
+        allow(Onboarding::DocumentFeedbackService).to receive(:call)
+      end
+
+      it "calls DocumentFeedbackService after successful extraction" do
+        described_class.new.perform(document.id)
+
+        expect(Onboarding::DocumentFeedbackService).to have_received(:call).with(document)
+      end
+
+      it "calls DocumentFeedbackService after failed extraction" do
+        allow(Kyc::DocumentExtractorService).to receive(:call)
+          .and_raise(Kyc::DocumentExtractorService::Error, "Inference failed")
+
+        described_class.new.perform(document.id)
+
+        expect(Onboarding::DocumentFeedbackService).to have_received(:call).with(document)
+      end
+    end
+
+    context "when no onboarding session exists" do
+      it "does not call DocumentFeedbackService" do
+        allow(Onboarding::DocumentFeedbackService).to receive(:call)
+
+        described_class.new.perform(document.id)
+
+        expect(Onboarding::DocumentFeedbackService).not_to have_received(:call)
+      end
+    end
+
     context "when extraction fails" do
       before do
         allow(Kyc::DocumentExtractorService).to receive(:call)
