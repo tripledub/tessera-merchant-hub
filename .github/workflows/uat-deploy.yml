@@ -92,19 +92,27 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ansible
 
       - name: Configure SSH
+        env:
+          UAT_SSH_HOST: ${{ secrets.UAT_SSH_HOST }}
+          UAT_SSH_PRIVATE_KEY: ${{ secrets.UAT_SSH_PRIVATE_KEY }}
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.UAT_SSH_PRIVATE_KEY }}" > ~/.ssh/uat
+          printf '%s\n' "$UAT_SSH_PRIVATE_KEY" > ~/.ssh/uat
           chmod 600 ~/.ssh/uat
-          ssh-keyscan -H "${{ secrets.UAT_SSH_HOST }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "$UAT_SSH_HOST" >> ~/.ssh/known_hosts
 
       - name: Write Ansible inventory and vault
         working-directory: tessera-infra/environments/uat/ansible
+        env:
+          UAT_SSH_HOST: ${{ secrets.UAT_SSH_HOST }}
+          UAT_SSH_USER: ${{ secrets.UAT_SSH_USER }}
+          UAT_ANSIBLE_VAULT_YML: ${{ secrets.UAT_ANSIBLE_VAULT_YML }}
+          UAT_ANSIBLE_VAULT_PASSWORD: ${{ secrets.UAT_ANSIBLE_VAULT_PASSWORD }}
         run: |
           printf '[merchant_hub_uat]\n%s ansible_user=%s ansible_ssh_private_key_file=~/.ssh/uat\n' \
-            "${{ secrets.UAT_SSH_HOST }}" "${{ secrets.UAT_SSH_USER }}" > inventory.ini
-          printf '%s\n' "${{ secrets.UAT_ANSIBLE_VAULT_YML }}" > vault.yml
-          printf '%s\n' "${{ secrets.UAT_ANSIBLE_VAULT_PASSWORD }}" > /tmp/uat-vault-pass
+            "$UAT_SSH_HOST" "$UAT_SSH_USER" > inventory.ini
+          printf '%s\n' "$UAT_ANSIBLE_VAULT_YML" > vault.yml
+          printf '%s\n' "$UAT_ANSIBLE_VAULT_PASSWORD" > /tmp/uat-vault-pass
 
       - name: Deploy MerchantHub app
         working-directory: tessera-infra
