@@ -151,6 +151,8 @@ en:
         total: Total
         ubos: UBOs
         unacknowledged: Open
+      kyc_completeness:
+        kyc_completeness: KYC Completeness
       overview:
         compliance_readiness: Compliance Readiness
         details: Details
