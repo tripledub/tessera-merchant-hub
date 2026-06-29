@@ -97,6 +97,6 @@ export default class extends Controller {
   }
 
   get isDarkMode() {
-    return document.documentElement.classList.contains("dark")
+    try { return JSON.parse(localStorage.getItem("darkMode")) === true } catch { return false }
   }
 }
