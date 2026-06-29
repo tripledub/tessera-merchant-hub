@@ -37,7 +37,8 @@
     <div class="p-4 sm:p-6">
       <div data-tabs-target="panel" data-tab="overview" data-tab-src="<%= tab_applicant_path(applicant, tab: 'overview') %>">
         <div id="overview-tab-content">
-          <%= render "applicants/tabs/overview", applicant: applicant %>
+          <%= render "applicants/tabs/overview", applicant: applicant,
+                     calculator: Kyc::CompletenessCalculator.for(applicant) %>
         </div>
       </div>
 
