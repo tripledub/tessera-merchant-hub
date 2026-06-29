@@ -48,6 +48,8 @@
     </div>
   </div>
 
+  <%= render "applicants/tabs/kyc_completeness", calculator: calculator %>
+
   <%# Compliance readiness %>
   <% assessment = Kyc::Compliance::ReadinessAssessment.for(applicant) %>
   <% if assessment.entity_count > 0 %>

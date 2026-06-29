@@ -34,7 +34,10 @@ class ApplicantsController < ApplicationController
     @kyc_documents = applicant.kyc_documents.includes(:kyc_principal)
                        .order(Arel.sql("CASE status WHEN 1 THEN 0 WHEN 0 THEN 1 WHEN 3 THEN 2 WHEN 2 THEN 3 END"), :created_at) if tab_name == "documents"
 
-    render partial: "applicants/tabs/#{tab_name}", locals: { applicant: applicant }, layout: false
+    locals = { applicant: applicant }
+    locals[:calculator] = Kyc::CompletenessCalculator.for(applicant) if tab_name == "overview"
+
+    render partial: "applicants/tabs/#{tab_name}", locals: locals, layout: false
   end
 
   def new
