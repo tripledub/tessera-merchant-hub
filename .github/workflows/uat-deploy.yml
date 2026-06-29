@@ -84,7 +84,7 @@ jobs:
         uses: actions/checkout@v7
         with:
           repository: tripledub/tessera-infra
-          ref: feat/IN-20-merchant-hub-uat-pipeline
+          ref: main
           path: tessera-infra
           token: ${{ secrets.INFRA_REPO_TOKEN }}
 
