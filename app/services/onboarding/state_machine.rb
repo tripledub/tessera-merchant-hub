@@ -104,7 +104,7 @@ module Onboarding
     def stage_complete?(session)
       stage = stage_definition(current_stage(session))
       # Document collection is completed by document review/upload workflow, not chat field collection.
-      return false if stage.name == :document_collection
+      return Onboarding::DocumentCollectionService.all_received?(session) if stage.name == :document_collection
       return non_looping_stage_complete?(session, stage) unless stage.looping
 
       looping_stage_complete?(session, stage)
