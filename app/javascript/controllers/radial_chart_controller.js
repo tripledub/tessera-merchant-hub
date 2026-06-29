@@ -28,6 +28,7 @@ export default class extends Controller {
         height: 280,
         toolbar: { show: false },
         fontFamily: "Outfit, sans-serif",
+        foreColor: this.isDarkMode ? "#f3f4f6" : "#101828",
       },
       series: [this.overallValue],
       colors: [this.colorForPercentage(this.overallValue)],
