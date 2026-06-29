@@ -1,6 +1,7 @@
 <% content_for :title, "KYC onboarding" %>
 
 <%= turbo_stream_from @onboarding_session %>
+<%= turbo_stream_from "onboarding_#{@onboarding_session.id}_documents" %>
 
 <section
   class="flex h-[calc(100vh-8.5rem)] w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
