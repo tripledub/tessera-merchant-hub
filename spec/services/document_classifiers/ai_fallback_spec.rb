@@ -36,6 +36,31 @@ RSpec.describe DocumentClassifiers::AiFallback do
       end
     end
 
+    context "when AI wraps JSON in a markdown fence" do
+      let(:response) do
+        instance_double(
+          Anthropic::Models::Message,
+          content: [
+            instance_double(
+              Anthropic::Models::TextBlock,
+              text: "```json\n{\"document_type\": \"passport\", \"confidence\": 0.85}\n```"
+            )
+          ]
+        )
+      end
+
+      before { allow(messages).to receive(:create).and_return(response) }
+
+      it "returns the AI classification with confidence" do
+        result = handler.classify
+        expect(result).to eq(
+          document_type: :passport,
+          classification_method: :ai,
+          confidence: 0.85
+        )
+      end
+    end
+
     context "when AI returns null document type" do
       let(:response) do
         instance_double(
