@@ -12,6 +12,10 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       classification_status: :confirmed)
   end
 
+  # Intentionally omits "document_type" — MH-173 regression: the real
+  # Kyc::DocumentExtractorService response never includes this key, only
+  # the extracted schema fields. PrincipalMatcherService must source
+  # document_type from the KycDocument itself, not from this hash.
   let(:ocr_response) { { "full_name" => "Jane Smith" } }
 
   before do

@@ -13,6 +13,8 @@ class ProcessKycDocumentJob < ApplicationJob
 
     response = ocr_client(document)
 
+    # Legacy job has no separate classification step, so document.document_type isn't
+    # reliably set yet — this OCR response already carries its own document_type.
     match = PrincipalMatcherService.call(applicant: document.applicant, document_type: response["document_type"], result: response)
     address_match = if match.principal && response["document_type"] == "utility_bill"
       AddressMatcherService.call(
