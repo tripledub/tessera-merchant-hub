@@ -13,7 +13,7 @@ class ProcessKycDocumentJob < ApplicationJob
 
     response = ocr_client(document)
 
-    match = PrincipalMatcherService.call(applicant: document.applicant, result: response)
+    match = PrincipalMatcherService.call(applicant: document.applicant, document_type: response["document_type"], result: response)
     address_match = if match.principal && response["document_type"] == "utility_bill"
       AddressMatcherService.call(
         principal:         match.principal,
