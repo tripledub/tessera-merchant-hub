@@ -5,7 +5,7 @@
 </div>
 
 <div class="mb-6 flex items-start justify-between">
-  <h1 class="text-xl font-semibold text-gray-900"><%= kyc_principal.name %></h1>
+  <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= kyc_principal.name %></h1>
   <% if policy(kyc_principal).edit? %>
     <%= link_to t('.edit'), edit_kyc_principal_path(kyc_principal), class: "btn-secondary" %>
   <% end %>
@@ -21,15 +21,15 @@
     <dl class="space-y-3 text-theme-sm">
       <div class="flex justify-between">
         <dt class="font-medium text-gray-500"><%= t('.fields.name') %></dt>
-        <dd class="text-gray-900"><%= kyc_principal.name %></dd>
+        <dd class="text-gray-900 dark:text-white/90"><%= kyc_principal.name %></dd>
       </div>
       <div class="flex justify-between">
         <dt class="font-medium text-gray-500"><%= t('.fields.role') %></dt>
-        <dd class="text-gray-900"><%= t("applicants.show.principals.roles.#{kyc_principal.role}") %></dd>
+        <dd class="text-gray-900 dark:text-white/90"><%= t("applicants.show.principals.roles.#{kyc_principal.role}") %></dd>
       </div>
       <div class="flex justify-between">
         <dt class="font-medium text-gray-500"><%= t('.fields.date_of_birth') %></dt>
-        <dd class="text-gray-900">
+        <dd class="text-gray-900 dark:text-white/90">
           <% if kyc_principal.date_of_birth.present? %>
             <%= kyc_principal.date_of_birth.strftime("%-d %B %Y") %>
           <% else %>
@@ -39,7 +39,7 @@
       </div>
       <div class="flex justify-between">
         <dt class="font-medium text-gray-500"><%= t('.fields.email') %></dt>
-        <dd class="text-gray-900">
+        <dd class="text-gray-900 dark:text-white/90">
           <% if kyc_principal.email.present? %>
             <%= mail_to kyc_principal.email, kyc_principal.email, class: "text-brand-600 hover:text-brand-700" %>
           <% else %>
@@ -56,7 +56,7 @@
       <%= t('.sections.address') %>
     </h2>
     <% if [ kyc_principal.address_line1, kyc_principal.city, kyc_principal.postcode, kyc_principal.country ].any?(&:present?) %>
-      <address class="not-italic text-theme-sm text-gray-900 space-y-0.5">
+      <address class="not-italic text-theme-sm text-gray-900 dark:text-white/90 space-y-0.5">
         <p><%= kyc_principal.address_line1 %></p>
         <% if kyc_principal.address_line2.present? %>
           <p><%= kyc_principal.address_line2 %></p>
