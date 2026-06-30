@@ -2,6 +2,9 @@
 
 # Matches an extracted OCR result to an existing KycPrincipal, or creates one.
 #
+# document_type is the KycDocument's own document_type (e.g. "passport"), passed in
+# by the caller — it is document metadata, not part of the extracted result hash.
+#
 # Passport:
 #   Exact name + DOB match → :exact
 #   Jaro-Winkler name similarity >= FUZZY_THRESHOLD → :fuzzy with confidence
@@ -18,16 +21,16 @@ class PrincipalMatcherService
 
   Result = Data.define(:principal, :match_method, :match_confidence)
 
-  def self.call(applicant:, result:)
-    new(applicant: applicant, result: result).call
+  def self.call(applicant:, document_type:, result:)
+    new(applicant: applicant, document_type: document_type, result: result).call
   end
 
-  def initialize(applicant:, result:)
-    @applicant    = applicant
-    @result       = result
-    @full_name    = result["full_name"].presence
+  def initialize(applicant:, document_type:, result:)
+    @applicant     = applicant
+    @result        = result
+    @full_name     = result["full_name"].presence
     @date_of_birth = parse_date(result["date_of_birth"])
-    @document_type = result["document_type"]
+    @document_type = document_type
   end
 
   def call
