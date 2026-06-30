@@ -62,13 +62,18 @@ module DocumentClassifiers
           ]
         )
 
-        text = response.content.first.text.strip
+        text = normalize_json_response(response.content.first.text)
         JSON.parse(text)
       rescue JSON::ParserError => e
         raise Error, "AI classifier returned invalid JSON: #{e.message}"
       rescue Anthropic::Errors::APIError => e
         raise Error, "AI classifier API error: #{e.message}"
       end
+    end
+
+    def normalize_json_response(text)
+      stripped = text.strip
+      stripped.match(/\A```(?:json)?\s*(.*?)\s*```\z/m)&.[](1) || stripped
     end
 
     def api_key
