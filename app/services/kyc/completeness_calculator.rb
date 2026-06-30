@@ -80,7 +80,7 @@ module Kyc
     def identity_verification_dimension
       principals = applicant.kyc_principals
       total = principals.count
-      identity_types = KycDocument.document_types.values_at("passport", "driving_licence")
+      identity_types = KycDocument.document_types.values_at(*Kyc::DocumentCategory.types_for(:identity)).compact
       with_identity = principals.joins(:kyc_documents)
                                 .where(kyc_documents: { document_type: identity_types })
                                 .distinct.count
