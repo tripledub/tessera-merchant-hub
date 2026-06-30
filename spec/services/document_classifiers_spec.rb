@@ -6,7 +6,8 @@ RSpec.describe DocumentClassifiers do
   describe ".obtain" do
     subject(:result) { described_class.obtain(condition) }
 
-    let(:condition) { DocumentClassifiers::Condition.new(filename: filename, content_type: "application/pdf") }
+    let(:document) { create(:kyc_document) }
+    let(:condition) { DocumentClassifiers::Condition.new(filename: filename, content_type: "application/pdf", document: document) }
 
     {
       "John Smith - Passport - 16-11-2027.pdf" => :passport,
@@ -59,7 +60,7 @@ RSpec.describe DocumentClassifiers do
 
   describe ".obtain with unknown filename" do
     it "falls back to AI classifier" do
-      condition = DocumentClassifiers::Condition.new(filename: "mystery_doc.pdf", content_type: "application/pdf")
+      condition = DocumentClassifiers::Condition.new(filename: "mystery_doc.pdf", content_type: "application/pdf", document: create(:kyc_document))
       result = described_class.obtain(condition)
       expect(result).to be_a(DocumentClassifiers::AiFallback)
     end

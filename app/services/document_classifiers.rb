@@ -3,7 +3,7 @@
 module DocumentClassifiers
   extend HandlerRegisterable
 
-  Condition = Data.define(:filename, :content_type)
+  Condition = Data.define(:filename, :content_type, :document)
 
   require_relative "document_classifiers/base"
   require_relative "document_classifiers/passport"

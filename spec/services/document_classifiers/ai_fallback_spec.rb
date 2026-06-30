@@ -3,7 +3,8 @@
 require "rails_helper"
 
 RSpec.describe DocumentClassifiers::AiFallback do
-  let(:condition) { DocumentClassifiers::Condition.new(filename: "unknown_doc.pdf", content_type: "application/pdf") }
+  let(:document) { create(:kyc_document) }
+  let(:condition) { DocumentClassifiers::Condition.new(filename: "unknown_doc.pdf", content_type: "application/pdf", document: document) }
   let(:handler) { described_class.new(condition) }
 
   let(:client) { instance_double(Anthropic::Client) }
@@ -33,6 +34,36 @@ RSpec.describe DocumentClassifiers::AiFallback do
           classification_method: :ai,
           confidence: 0.85
         )
+      end
+
+      it "sends the actual file content as a document block, not just the filename" do
+        handler.classify
+
+        expect(messages).to have_received(:create) do |args|
+          content = args[:messages].first[:content]
+          doc_block = content.find { |block| block[:type] == "document" }
+
+          expect(doc_block).not_to be_nil
+          expect(doc_block[:source][:type]).to eq("base64")
+          expect(doc_block[:source][:media_type]).to eq("application/pdf")
+          expect(doc_block[:source][:data]).to be_present
+        end
+      end
+
+      it "sends an image as an image block when content type is not application/pdf" do
+        image_document = create(:kyc_document, :image)
+        image_condition = DocumentClassifiers::Condition.new(filename: "unknown.jpg", content_type: "image/jpeg", document: image_document)
+        image_handler = described_class.new(image_condition)
+
+        image_handler.classify
+
+        expect(messages).to have_received(:create) do |args|
+          content = args[:messages].first[:content]
+          image_block = content.find { |block| block[:type] == "image" }
+
+          expect(image_block).not_to be_nil
+          expect(image_block[:source][:media_type]).to eq("image/jpeg")
+        end
       end
     end
 
@@ -120,6 +151,16 @@ RSpec.describe DocumentClassifiers::AiFallback do
 
       it "raises an error" do
         expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /API error/)
+      end
+    end
+
+    context "when the file blob cannot be downloaded" do
+      before do
+        allow(document.file.blob).to receive(:download).and_raise(ActiveStorage::FileNotFoundError)
+      end
+
+      it "raises an AiFallback::Error instead of propagating the storage error" do
+        expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /file/i)
       end
     end
   end
