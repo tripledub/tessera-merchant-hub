@@ -51,7 +51,7 @@ class ExtractKycDocumentJob < ApplicationJob
   def extract_standard(document)
     response = Kyc::DocumentExtractorService.call(document)
 
-    match = PrincipalMatcherService.call(applicant: document.applicant, result: response)
+    match = PrincipalMatcherService.call(applicant: document.applicant, document_type: document.document_type, result: response)
     address_match = if match.principal && document.utility_bill?
       populate_address(match.principal, response)
       AddressMatcherService.call(

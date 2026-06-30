@@ -12,7 +12,11 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       classification_status: :confirmed)
   end
 
-  let(:ocr_response) { { "full_name" => "Jane Smith", "document_type" => "passport" } }
+  # Intentionally omits "document_type" — MH-173 regression: the real
+  # Kyc::DocumentExtractorService response never includes this key, only
+  # the extracted schema fields. PrincipalMatcherService must source
+  # document_type from the KycDocument itself, not from this hash.
+  let(:ocr_response) { { "full_name" => "Jane Smith" } }
 
   before do
     allow(Kyc::DocumentExtractorService).to receive(:call).and_return(ocr_response)
@@ -45,6 +49,19 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       expect(principal).to be_present
       expect(principal).to be_unconfirmed
       expect(principal.name).to eq("Jane Smith")
+    end
+
+    it "uses DOB-aware matching for passports, falling through to fuzzy when DOB differs" do
+      existing_principal = create(:kyc_principal, applicant: applicant, name: "Jane Smith", date_of_birth: "1970-01-01")
+      allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+        { "full_name" => "Jane Smith", "date_of_birth" => "1995-05-05" }
+      )
+
+      described_class.new.perform(document.id)
+
+      document.reload
+      expect(document.kyc_principal).to eq(existing_principal)
+      expect(document.match_method).to eq("fuzzy")
     end
 
     it "broadcasts document status and tab updates" do
