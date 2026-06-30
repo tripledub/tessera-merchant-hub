@@ -3,7 +3,7 @@
 module Kyc
   module DocumentCategory
     REGISTRY = {
-      identity:         %w[passport driving_licence government_id],
+      identity:         %w[passport driving_licence],
       proof_of_address: %w[utility_bill bank_account_statement]
     }.freeze
 

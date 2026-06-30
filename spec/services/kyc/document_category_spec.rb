@@ -51,7 +51,7 @@ RSpec.describe Kyc::DocumentCategory do
 
   describe ".types_for" do
     it "returns all document types in a category" do
-      expect(described_class.types_for(:identity)).to contain_exactly("passport", "driving_licence", "government_id")
+      expect(described_class.types_for(:identity)).to contain_exactly("passport", "driving_licence")
     end
 
     it "returns an empty array for an unknown category" do

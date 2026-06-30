@@ -86,6 +86,7 @@ class ExtractKycDocumentJob < ApplicationJob
   end
 
   def populate_address(principal, typed_data)
+    return unless typed_data.respond_to?(:structured_address)
     return if principal.address_line1.present?
 
     attrs = {
@@ -101,6 +102,8 @@ class ExtractKycDocumentJob < ApplicationJob
   end
 
   def address_string(typed_data)
+    return "" unless typed_data.respond_to?(:structured_address)
+
     typed_data.structured_address.values.compact_blank.join(", ")
   end
 
