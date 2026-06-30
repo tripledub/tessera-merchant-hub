@@ -35,6 +35,36 @@ RSpec.describe DocumentClassifiers::AiFallback do
           confidence: 0.85
         )
       end
+
+      it "sends the actual file content as a document block, not just the filename" do
+        handler.classify
+
+        expect(messages).to have_received(:create) do |args|
+          content = args[:messages].first[:content]
+          doc_block = content.find { |block| block[:type] == "document" }
+
+          expect(doc_block).not_to be_nil
+          expect(doc_block[:source][:type]).to eq("base64")
+          expect(doc_block[:source][:media_type]).to eq("application/pdf")
+          expect(doc_block[:source][:data]).to be_present
+        end
+      end
+
+      it "sends an image as an image block when content type is not application/pdf" do
+        image_document = create(:kyc_document, :image)
+        image_condition = DocumentClassifiers::Condition.new(filename: "unknown.jpg", content_type: "image/jpeg", document: image_document)
+        image_handler = described_class.new(image_condition)
+
+        image_handler.classify
+
+        expect(messages).to have_received(:create) do |args|
+          content = args[:messages].first[:content]
+          image_block = content.find { |block| block[:type] == "image" }
+
+          expect(image_block).not_to be_nil
+          expect(image_block[:source][:media_type]).to eq("image/jpeg")
+        end
+      end
     end
 
     context "when AI wraps JSON in a markdown fence" do
