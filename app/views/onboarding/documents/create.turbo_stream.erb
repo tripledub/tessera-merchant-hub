@@ -3,3 +3,9 @@
     <%= @message %>
   </p>
 <% end %>
+
+<% if @bot_message %>
+  <%= turbo_stream.append "onboarding_messages" do %>
+    <%= render "onboarding/conversations/message", message: @bot_message %>
+  <% end %>
+<% end %>
