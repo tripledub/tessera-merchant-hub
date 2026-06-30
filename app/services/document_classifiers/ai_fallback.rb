@@ -62,6 +62,8 @@ module DocumentClassifiers
 
         text = normalize_json_response(response.content.first.text)
         JSON.parse(text)
+      rescue ActiveStorage::FileNotFoundError => e
+        raise Error, "AI classifier could not read the document file: #{e.message}"
       rescue JSON::ParserError => e
         raise Error, "AI classifier returned invalid JSON: #{e.message}"
       rescue Anthropic::Errors::APIError => e

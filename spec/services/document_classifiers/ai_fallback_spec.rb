@@ -153,6 +153,16 @@ RSpec.describe DocumentClassifiers::AiFallback do
         expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /API error/)
       end
     end
+
+    context "when the file blob cannot be downloaded" do
+      before do
+        allow(document.file.blob).to receive(:download).and_raise(ActiveStorage::FileNotFoundError)
+      end
+
+      it "raises an AiFallback::Error instead of propagating the storage error" do
+        expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /file/i)
+      end
+    end
   end
 
   describe ".handles?" do
