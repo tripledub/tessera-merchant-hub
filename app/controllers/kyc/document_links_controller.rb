@@ -14,6 +14,7 @@ class Kyc::DocumentLinksController < ApplicationController
     authorize document, :confirm_link?
     document.kyc_principal&.confirmed!
     document.update!(match_method: "exact", match_confidence: 1.0)
+    Kyc::AddressPopulationService.call(document)
     broadcast_document(document)
     head :ok
   end
