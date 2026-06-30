@@ -24,16 +24,24 @@ class ExtractKycDocumentJob < ApplicationJob
 
     broadcast_document(document)
     broadcast_toast(document)
+    send_onboarding_feedback(document)
   rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error, Kyc::Inference::Error,
          Kyc::GroupStructureExtractorService::ExtractionError, Kyc::DocumentExtractorService::Error => e
     document&.update!(status: :error, result: { "error" => e.message })
     if document
       broadcast_document(document)
       broadcast_toast(document)
+      send_onboarding_feedback(document)
     end
   end
 
   private
+
+  def send_onboarding_feedback(document)
+    return unless document.applicant.onboarding_session&.document_collection?
+
+    Onboarding::DocumentFeedbackService.call(document)
+  end
 
   def extract_group_structure(document)
     Kyc::GroupStructureExtractorService.call(document)

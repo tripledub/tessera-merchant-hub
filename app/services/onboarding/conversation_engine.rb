@@ -92,7 +92,9 @@ module Onboarding
       when :jurisdictions
         "Next, let’s record operating jurisdictions. Which country should we add first, and do you have any licence type or licence number for it?"
       when :document_collection
-        "Next, let’s collect supporting documents. Please use the upload button to add the requested KYC documents."
+        checklist = Onboarding::DocumentCollectionService.generate_checklist(session)
+        items = checklist.map { |c| "- #{c["label"]}" }.join("\n")
+        "Now let’s collect your supporting documents. Here’s what we need:\n\n#{items}\n\nPlease use the upload button to add each document."
       end
     end
     private_class_method :stage_transition_prompt

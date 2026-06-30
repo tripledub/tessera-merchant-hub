@@ -130,6 +130,22 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(result[:bot_message]).not_to include("Tab Trade Ltd")
     end
 
+    it "lists the actual checklist items in the document collection transition prompt" do
+      session = create(:onboarding_session, current_stage: :jurisdictions, stage_data: complete_directors_ubos_data.merge(
+        "jurisdictions" => { "items" => [ { "country" => "GB" } ] }
+      ))
+      create(:kyc_principal, applicant: session.applicant, name: "Jane Smith", source: :applicant_declared)
+      adapter = instance_double(Kyc::Inference::Base, generate: {
+        "bot_message" => "Thanks, that's all the jurisdictions noted.",
+        "extracted_data" => { "done_adding_items" => true }
+      })
+
+      result = described_class.respond(session: session, user_message: "Done", inference_adapter: adapter)
+
+      expect(result[:bot_message]).to include("Proof of identity for Jane Smith")
+      expect(result[:bot_message]).not_to match(/^- $/)
+    end
+
     it "does not repeat the document collection transition prompt during document collection" do
       session = create(:onboarding_session, current_stage: :document_collection)
       adapter = instance_double(Kyc::Inference::Base, generate: {

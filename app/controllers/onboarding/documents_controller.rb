@@ -7,6 +7,15 @@ module Onboarding
       @message = upload_documents(files)
       @type = files.blank? ? :error : :success
 
+      if @type == :success && current_applicant.onboarding_session&.document_collection?
+        @bot_message = OnboardingMessage.create!(
+          onboarding_session: current_applicant.onboarding_session,
+          role: :bot,
+          content: "Received #{files.size} #{'file'.pluralize(files.size)} — processing now...",
+          stage: "document_collection"
+        )
+      end
+
       respond_to do |format|
         format.turbo_stream
         format.html { redirect_to portal_onboarding_path, notice: @message }

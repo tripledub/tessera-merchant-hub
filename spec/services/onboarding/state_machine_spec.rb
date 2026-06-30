@@ -170,8 +170,16 @@ RSpec.describe Onboarding::StateMachine do
       expect(described_class.stage_complete?(session)).to be(true)
     end
 
-    it "does not complete document collection through field collection" do
-      session = build(:onboarding_session, current_stage: :document_collection)
+    it "returns true for document_collection when all documents are received" do
+      session = create(:onboarding_session, current_stage: :document_collection)
+      allow(Onboarding::DocumentCollectionService).to receive(:all_received?).with(session).and_return(true)
+
+      expect(described_class.stage_complete?(session)).to be(true)
+    end
+
+    it "returns false for document_collection when documents are outstanding" do
+      session = create(:onboarding_session, current_stage: :document_collection)
+      allow(Onboarding::DocumentCollectionService).to receive(:all_received?).with(session).and_return(false)
 
       expect(described_class.stage_complete?(session)).to be(false)
     end
@@ -202,8 +210,9 @@ RSpec.describe Onboarding::StateMachine do
       }.to raise_error(Onboarding::StateMachine::IncompleteStageError)
     end
 
-    it "does not complete document collection without document upload completion" do
+    it "does not complete document collection when documents are outstanding" do
       session = create(:onboarding_session, current_stage: :document_collection)
+      allow(Onboarding::DocumentCollectionService).to receive(:all_received?).with(session).and_return(false)
 
       expect {
         described_class.advance!(session)
