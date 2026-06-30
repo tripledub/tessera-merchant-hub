@@ -12,7 +12,8 @@ class ClassifyKycDocumentJob < ApplicationJob
 
     condition = DocumentClassifiers::Condition.new(
       filename: document.file.filename.to_s,
-      content_type: document.file.content_type
+      content_type: document.file.content_type,
+      document: document
     )
 
     classifier = DocumentClassifiers.obtain(condition)

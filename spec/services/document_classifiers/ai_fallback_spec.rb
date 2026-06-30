@@ -3,7 +3,8 @@
 require "rails_helper"
 
 RSpec.describe DocumentClassifiers::AiFallback do
-  let(:condition) { DocumentClassifiers::Condition.new(filename: "unknown_doc.pdf", content_type: "application/pdf") }
+  let(:document) { create(:kyc_document) }
+  let(:condition) { DocumentClassifiers::Condition.new(filename: "unknown_doc.pdf", content_type: "application/pdf", document: document) }
   let(:handler) { described_class.new(condition) }
 
   let(:client) { instance_double(Anthropic::Client) }
