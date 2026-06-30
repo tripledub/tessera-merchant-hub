@@ -108,17 +108,28 @@ RSpec.describe Onboarding::DocumentFeedbackService do
           status: :complete, kyc_principal: principal)
       end
 
-      it "creates a completion message" do
+      it "creates a separate completion message" do
         described_class.call(document)
 
-        message = OnboardingMessage.last
-        expect(message.content).to include("that's all the documents we need")
+        contents = OnboardingMessage.order(:created_at).pluck(:content)
+        expect(contents).to include(a_string_including("That's all the documents we need"))
+        expect(contents).to include(a_string_including("received and processed successfully"))
       end
 
-      it "marks the session as completed" do
+      it "marks the session as completed via the state machine" do
         described_class.call(document)
 
-        expect(session.reload.status).to eq("completed")
+        session.reload
+        expect(session.status).to eq("completed")
+        expect(session.completed_stages).to include("document_collection")
+      end
+
+      it "does not double-complete or duplicate the completion message when called twice" do
+        described_class.call(document)
+        described_class.call(document)
+
+        completion_messages = OnboardingMessage.where("content LIKE ?", "%That's all the documents we need%")
+        expect(completion_messages.count).to eq(1)
       end
     end
 
@@ -126,7 +137,7 @@ RSpec.describe Onboarding::DocumentFeedbackService do
       described_class.call(document)
 
       expect(Turbo::StreamsChannel).to have_received(:broadcast_append_to).with(
-        "onboarding_#{session.id}_documents",
+        session,
         target: "onboarding_messages",
         partial: "onboarding/conversations/message",
         locals: hash_including(message: an_instance_of(OnboardingMessage))

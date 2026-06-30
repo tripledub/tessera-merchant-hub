@@ -93,7 +93,7 @@ module Onboarding
         "Next, let’s record operating jurisdictions. Which country should we add first, and do you have any licence type or licence number for it?"
       when :document_collection
         checklist = Onboarding::DocumentCollectionService.generate_checklist(session)
-        items = checklist.map { |c| "- #{c[:label]}" }.join("\n")
+        items = checklist.map { |c| "- #{c["label"]}" }.join("\n")
         "Now let’s collect your supporting documents. Here’s what we need:\n\n#{items}\n\nPlease use the upload button to add each document."
       end
     end

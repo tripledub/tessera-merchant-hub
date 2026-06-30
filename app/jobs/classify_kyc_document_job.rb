@@ -36,7 +36,10 @@ class ClassifyKycDocumentJob < ApplicationJob
 
   def auto_confirm_for_onboarding(document)
     return unless document.classification_auto_classified?
-    return unless document.applicant.onboarding_session&.document_collection?
+
+    session = document.applicant.onboarding_session
+    return unless session&.document_collection?
+    return unless Onboarding::DocumentCollectionService.checklist_expects?(session, document.document_type)
 
     document.update!(classification_status: :confirmed)
     ExtractKycDocumentJob.perform_later(document.id)

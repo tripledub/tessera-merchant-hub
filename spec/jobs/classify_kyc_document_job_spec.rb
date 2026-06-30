@@ -62,7 +62,12 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
 
     context "when auto_classified with onboarding in document_collection stage" do
       before do
-        create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
+        checklist = [
+          { "category" => "identity", "subject" => "John Smith", "document_types" => %w[passport driving_licence],
+            "label" => "Proof of identity for John Smith" }
+        ]
+        create(:onboarding_session, applicant: applicant, current_stage: :document_collection,
+          document_checklist: checklist)
         allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("John Smith - Passport - 16-11-2027.pdf"))
         allow(KycDocument).to receive(:find).with(document.id).and_return(document)
       end
@@ -74,6 +79,27 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
 
         document.reload
         expect(document.classification_status).to eq("confirmed")
+      end
+    end
+
+    context "when auto_classified but document type is not on the checklist" do
+      before do
+        create(:onboarding_session, applicant: applicant, current_stage: :document_collection,
+          document_checklist: [
+            { "category" => "corporate", "subject" => "company", "document_types" => %w[certificate_of_incorporation],
+              "label" => "Certificate of incorporation" }
+          ])
+        allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("John Smith - Passport - 16-11-2027.pdf"))
+        allow(KycDocument).to receive(:find).with(document.id).and_return(document)
+      end
+
+      it "does not auto-confirm or enqueue extraction" do
+        expect {
+          described_class.new.perform(document.id)
+        }.not_to have_enqueued_job(ExtractKycDocumentJob)
+
+        document.reload
+        expect(document.classification_status).to eq("auto_classified")
       end
     end
 

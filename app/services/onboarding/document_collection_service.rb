@@ -21,6 +21,10 @@ module Onboarding
       def all_received?(session)
         new(session).all_received?
       end
+
+      def checklist_expects?(session, document_type)
+        new(session).checklist_expects?(document_type)
+      end
     end
 
     def initialize(session)
@@ -28,6 +32,9 @@ module Onboarding
       @applicant = session.applicant
     end
 
+    # Snapshots required documents once, at document_collection stage entry. Declared
+    # data added or removed afterwards (e.g. a director added post-entry) is not
+    # reflected — the checklist is a fixed contract, not a live view of declared data.
     def generate_checklist
       checklist = []
       checklist.concat(principal_items)
@@ -38,13 +45,15 @@ module Onboarding
     end
 
     def received_documents
-      checklist = @session.document_checklist
-      return [] if checklist.blank?
+      @received_documents ||= begin
+        checklist = @session.document_checklist
+        return [] if checklist.blank?
 
-      documents = @applicant.kyc_documents.includes(:kyc_principal)
+        documents = @applicant.kyc_documents.includes(:kyc_principal)
 
-      checklist.map do |item|
-        item.merge("received" => item_received?(item, documents))
+        checklist.map do |item|
+          item.merge("received" => item_received?(item, documents))
+        end
       end
     end
 
@@ -57,6 +66,13 @@ module Onboarding
       return false if checklist.blank?
 
       outstanding_items.empty?
+    end
+
+    def checklist_expects?(document_type)
+      checklist = @session.document_checklist
+      return false if checklist.blank?
+
+      checklist.any? { |item| item["document_types"].include?(document_type) }
     end
 
     private

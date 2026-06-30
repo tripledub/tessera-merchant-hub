@@ -15,15 +15,9 @@ module Onboarding
     def call
       return unless @session&.document_collection?
 
-      message_text = build_message
-      message = OnboardingMessage.create!(
-        onboarding_session: @session,
-        role: :bot,
-        content: message_text,
-        stage: "document_collection"
-      )
+      @collection_service = DocumentCollectionService.new(@session)
 
-      broadcast_message(message)
+      post_message(build_message)
       complete_session_if_finished
     end
 
@@ -37,29 +31,48 @@ module Onboarding
       elsif @document.match_confidence.present? && @document.match_confidence < 0.80
         "I've processed **#{filename}**, but the name doesn't closely match what was declared. Please check this is the correct document."
       else
-        outstanding = DocumentCollectionService.outstanding_items(@session)
+        outstanding = @collection_service.outstanding_items
         if outstanding.any?
           remaining = outstanding.map { |item| item["label"] }.join(", ")
           "**#{filename}** received and processed successfully. Still needed: #{remaining}."
         else
-          "**#{filename}** looks good — that's all the documents we need. Your application is now complete!"
+          "**#{filename}** received and processed successfully."
         end
       end
     end
 
+    def post_message(content)
+      message = OnboardingMessage.create!(
+        onboarding_session: @session,
+        role: :bot,
+        content: content,
+        stage: "document_collection"
+      )
+      broadcast_message(message)
+      message
+    end
+
     def broadcast_message(message)
       Turbo::StreamsChannel.broadcast_append_to(
-        "onboarding_#{@session.id}_documents",
+        @session,
         target: "onboarding_messages",
         partial: "onboarding/conversations/message",
         locals: { message: message }
       )
     end
 
+    # Locks the session row so concurrent extraction jobs can't both observe
+    # all_received? == true and both advance the stage / post the completion message.
     def complete_session_if_finished
-      return unless DocumentCollectionService.all_received?(@session)
+      completed_now = @session.with_lock do
+        next false if @session.completed?
+        next false unless @collection_service.all_received?
 
-      @session.update!(status: :completed)
+        Onboarding::StateMachine.advance!(@session)
+        true
+      end
+
+      post_message("That's all the documents we need — your application is now complete!") if completed_now
     end
   end
 end
