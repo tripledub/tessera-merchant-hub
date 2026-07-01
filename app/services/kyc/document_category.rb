@@ -22,7 +22,7 @@ module Kyc
     end
 
     def types_for(category)
-      REGISTRY.fetch(category, [])
+      REGISTRY.fetch(category.to_sym, [])
     end
   end
 end

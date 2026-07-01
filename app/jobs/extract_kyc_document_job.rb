@@ -85,6 +85,10 @@ class ExtractKycDocumentJob < ApplicationJob
     end
   end
 
+  # Intentionally not delegating to Kyc::AddressPopulationService here: at this
+  # point extracted_data has not yet been persisted, so the service (which reads
+  # from document.extracted_data) cannot be used. The service handles the
+  # post-hoc case when a document is linked to a principal after extraction.
   def populate_address(principal, typed_data)
     return unless typed_data.respond_to?(:structured_address)
     return if principal.address_line1.present?
