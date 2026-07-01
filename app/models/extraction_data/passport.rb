@@ -2,6 +2,8 @@
 
 module ExtractionData
   class Passport < Base
+    include Concerns::Identifiable
+
     register_as :passport
 
     attribute :full_name, :string
@@ -13,5 +15,13 @@ module ExtractionData
     attribute :issuing_authority, :string
 
     validates :full_name, :document_number, :expiry_date, presence: true
+
+    def person_full_name
+      full_name
+    end
+
+    def person_date_of_birth
+      date_of_birth
+    end
   end
 end

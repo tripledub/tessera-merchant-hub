@@ -63,6 +63,29 @@ RSpec.describe PrincipalMatcherService, type: :model do
       end
     end
 
+    context "when the name matches exactly but DOB differs (driving licence)" do
+      let!(:principal) { create(:kyc_principal, applicant: applicant, name: "John Smith", date_of_birth: "1990-01-15") }
+      let(:result_data) { { "full_name" => "John Smith", "date_of_birth" => "1985-06-20" } }
+
+      it "does not exact-match; falls through to fuzzy (DOB-aware matching applies beyond passports)" do
+        result = described_class.call(applicant: applicant, document_type: "driving_licence", result: result_data)
+
+        expect(result.match_method).to eq("fuzzy")
+      end
+    end
+
+    context "when there is an exact name + DOB match on a driving licence" do
+      let!(:principal) { create(:kyc_principal, applicant: applicant, name: "John Smith", date_of_birth: "1990-01-15") }
+      let(:result_data) { { "full_name" => "John Smith", "date_of_birth" => "1990-01-15" } }
+
+      it "matches exactly, same as a passport would" do
+        result = described_class.call(applicant: applicant, document_type: "driving_licence", result: result_data)
+
+        expect(result.principal).to eq(principal)
+        expect(result.match_method).to eq("exact")
+      end
+    end
+
     context "when there is a fuzzy name match above threshold" do
       let!(:principal) { create(:kyc_principal, applicant: applicant, name: "Jonathan Smith") }
       let(:result_data) { { "full_name" => "Jonathon Smith", "date_of_birth" => nil } }

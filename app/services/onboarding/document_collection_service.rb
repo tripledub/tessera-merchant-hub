@@ -2,9 +2,6 @@
 
 module Onboarding
   class DocumentCollectionService
-    IDENTITY_TYPES = %w[passport driving_licence].freeze
-    ADDRESS_TYPES  = %w[utility_bill].freeze
-
     class << self
       def generate_checklist(session)
         new(session).generate_checklist
@@ -84,13 +81,13 @@ module Onboarding
           {
             "category" => "identity",
             "subject" => principal.name,
-            "document_types" => IDENTITY_TYPES,
+            "document_types" => Kyc::DocumentCategory.types_for(:identity),
             "label" => "Proof of identity for #{principal.name}"
           },
           {
             "category" => "proof_of_address",
             "subject" => principal.name,
-            "document_types" => ADDRESS_TYPES,
+            "document_types" => Kyc::DocumentCategory.types_for(:proof_of_address),
             "label" => "Proof of address for #{principal.name}"
           }
         ]
