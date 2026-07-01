@@ -422,7 +422,7 @@ en:
   layouts:
     navigation:
       admin: Admin
-      app_name: MerchantHub
+      app_name: Kynetic
       applicants: Applicants
       close_sidebar: Close sidebar
       kyc: KYC
@@ -591,7 +591,7 @@ en:
       show:
         welcome: Welcome, %{name}!
     sign_out: Sign out
-    title: MerchantHub Portal
+    title: Kynetic Portal
   shared:
     error_messages:
       header:
