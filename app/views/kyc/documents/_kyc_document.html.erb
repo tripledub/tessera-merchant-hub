@@ -1,9 +1,23 @@
 <div id="<%= dom_id(document) %>" class="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3 text-theme-sm dark:border-gray-700 dark:bg-white/[0.03]">
   <div class="flex items-center gap-3 min-w-0">
-    <svg class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-    </svg>
+    <% if document.file.attached? %>
+      <button type="button"
+              data-controller="document-preview"
+              data-document-preview-url-value="<%= rails_blob_path(document.file, disposition: :inline) %>"
+              data-document-preview-content-type-value="<%= document.file.content_type %>"
+              data-action="click->document-preview#open"
+              class="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+        </svg>
+      </button>
+    <% else %>
+      <svg class="h-5 w-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+      </svg>
+    <% end %>
     <div class="min-w-0">
       <p class="font-medium text-gray-900 dark:text-white/90 truncate"><%= document.file.filename %></p>
       <div class="flex items-center gap-2 mt-0.5 flex-wrap">
