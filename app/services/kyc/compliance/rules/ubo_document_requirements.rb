@@ -6,11 +6,9 @@ module Kyc
       class UboDocumentRequirements < BaseRule
         UBO_THRESHOLD = 25.0
 
-        IDENTITY_DOC_TYPES = %w[passport driving_licence].freeze
-        ADDRESS_DOC_TYPES = %w[utility_bill].freeze
         REQUIRED_CATEGORIES = {
-          "identity" => IDENTITY_DOC_TYPES,
-          "proof_of_address" => ADDRESS_DOC_TYPES
+          "identity" => Kyc::DocumentCategory.types_for(:identity),
+          "proof_of_address" => Kyc::DocumentCategory.types_for(:proof_of_address)
         }.freeze
 
         def applies_to?(entity)

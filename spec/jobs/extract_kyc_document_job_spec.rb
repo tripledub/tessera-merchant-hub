@@ -12,7 +12,11 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       classification_status: :confirmed)
   end
 
-  let(:ocr_response) { { "full_name" => "Jane Smith", "document_type" => "passport" } }
+  # Intentionally omits "document_type" — MH-173 regression: the real
+  # Kyc::DocumentExtractorService response never includes this key, only
+  # the extracted schema fields. PrincipalMatcherService must source
+  # document_type from the KycDocument itself, not from this hash.
+  let(:ocr_response) { { "full_name" => "Jane Smith" } }
 
   before do
     allow(Kyc::DocumentExtractorService).to receive(:call).and_return(ocr_response)
@@ -45,6 +49,19 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       expect(principal).to be_present
       expect(principal).to be_unconfirmed
       expect(principal.name).to eq("Jane Smith")
+    end
+
+    it "uses DOB-aware matching for passports, falling through to fuzzy when DOB differs" do
+      existing_principal = create(:kyc_principal, applicant: applicant, name: "Jane Smith", date_of_birth: "1970-01-01")
+      allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+        { "full_name" => "Jane Smith", "date_of_birth" => "1995-05-05" }
+      )
+
+      described_class.new.perform(document.id)
+
+      document.reload
+      expect(document.kyc_principal).to eq(existing_principal)
+      expect(document.match_method).to eq("fuzzy")
     end
 
     it "broadcasts document status and tab updates" do
@@ -151,6 +168,49 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
         described_class.new.perform(document.id)
         principal_no_address.reload
         expect(principal_no_address.address_line1).to eq("Existing Address")
+      end
+    end
+
+    context "when a bank account statement is matched to a principal without an address" do
+      let(:principal_no_address) do
+        create(:kyc_principal, applicant: applicant, name: "Pieter Bakker")
+      end
+
+      let(:document) do
+        create(:kyc_document, applicant: applicant, document_type: :bank_account_statement, classification_status: :confirmed)
+      end
+
+      before do
+        principal_no_address
+        allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+          "account_holder" => "Pieter Bakker",
+          "bank_name" => "ING",
+          "account_holder_address_line1" => "Willem Augustinstraat 190",
+          "account_holder_city" => "Amsterdam",
+          "account_holder_postcode" => "1061 MJ",
+          "account_holder_country" => "Netherlands"
+        )
+      end
+
+      it "matches the principal by account_holder (not full_name)" do
+        described_class.new.perform(document.id)
+        expect(document.reload.kyc_principal).to eq(principal_no_address)
+      end
+
+      it "populates the principal's address from the structured bank statement fields" do
+        described_class.new.perform(document.id)
+        principal_no_address.reload
+        expect(principal_no_address.address_line1).to eq("Willem Augustinstraat 190")
+        expect(principal_no_address.city).to eq("Amsterdam")
+        expect(principal_no_address.postcode).to eq("1061 MJ")
+        expect(principal_no_address.country).to eq("Netherlands")
+      end
+
+      it "stores address_match_method and address_match_confidence" do
+        described_class.new.perform(document.id)
+        document.reload
+        expect(document.address_match_method).to eq("exact")
+        expect(document.address_match_confidence).to be_present
       end
     end
 

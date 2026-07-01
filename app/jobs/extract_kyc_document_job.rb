@@ -50,13 +50,19 @@ class ExtractKycDocumentJob < ApplicationJob
 
   def extract_standard(document)
     response = Kyc::DocumentExtractorService.call(document)
+    typed_data = document.extraction_schema.new(response)
 
-    match = PrincipalMatcherService.call(applicant: document.applicant, result: response)
-    address_match = if match.principal && document.utility_bill?
-      populate_address(match.principal, response)
+    match = PrincipalMatcherService.call(
+      applicant: document.applicant,
+      document_type: document.document_type,
+      result: matcher_hash(typed_data)
+    )
+
+    address_match = if match.principal && Kyc::DocumentCategory.proof_of_address?(document.document_type)
+      populate_address(match.principal, typed_data)
       AddressMatcherService.call(
         principal: match.principal,
-        extracted_address: build_address_string(response)
+        extracted_address: address_string(typed_data)
       )
     end
 
@@ -71,14 +77,27 @@ class ExtractKycDocumentJob < ApplicationJob
     )
   end
 
-  def populate_address(principal, response)
+  def matcher_hash(typed_data)
+    return {} unless typed_data.respond_to?(:to_matcher_hash)
+
+    typed_data.to_matcher_hash.transform_values do |value|
+      value.respond_to?(:iso8601) ? value.iso8601 : value
+    end
+  end
+
+  # Intentionally not delegating to Kyc::AddressPopulationService here: at this
+  # point extracted_data has not yet been persisted, so the service (which reads
+  # from document.extracted_data) cannot be used. The service handles the
+  # post-hoc case when a document is linked to a principal after extraction.
+  def populate_address(principal, typed_data)
+    return unless typed_data.respond_to?(:structured_address)
     return if principal.address_line1.present?
 
     attrs = {
-      address_line1: response["account_holder_address_line1"],
-      city: response["account_holder_city"],
-      postcode: response["account_holder_postcode"],
-      country: response["account_holder_country"]
+      address_line1: typed_data.structured_address[:line1],
+      city: typed_data.structured_address[:city],
+      postcode: typed_data.structured_address[:postcode],
+      country: typed_data.structured_address[:country]
     }.compact_blank
 
     return if attrs.empty?
@@ -86,13 +105,10 @@ class ExtractKycDocumentJob < ApplicationJob
     principal.update!(attrs)
   end
 
-  def build_address_string(response)
-    [
-      response["account_holder_address_line1"],
-      response["account_holder_city"],
-      response["account_holder_postcode"],
-      response["account_holder_country"]
-    ].compact_blank.join(", ")
+  def address_string(typed_data)
+    return "" unless typed_data.respond_to?(:structured_address)
+
+    typed_data.structured_address.values.compact_blank.join(", ")
   end
 
   def broadcast_toast(document)

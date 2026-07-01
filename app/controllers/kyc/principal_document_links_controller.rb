@@ -12,6 +12,7 @@ class Kyc::PrincipalDocumentLinksController < ApplicationController
     authorize kyc_principal, :update?
     @document = kyc_principal.applicant.kyc_documents.find(params[:document_id])
     @document.update!(kyc_principal: kyc_principal, match_method: "exact", match_confidence: 1.0)
+    Kyc::AddressPopulationService.call(@document)
     respond_to do |format|
       format.turbo_stream
     end

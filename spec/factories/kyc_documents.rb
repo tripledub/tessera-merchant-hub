@@ -14,5 +14,15 @@ FactoryBot.define do
         content_type: "application/pdf"
       )
     end
+
+    trait :image do
+      after(:build) do |doc|
+        doc.file.attach(
+          io: StringIO.new("fake jpeg content"),
+          filename: "passport.jpg",
+          content_type: "image/jpeg"
+        )
+      end
+    end
   end
 end
