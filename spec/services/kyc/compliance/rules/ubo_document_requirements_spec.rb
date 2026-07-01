@@ -113,6 +113,16 @@ RSpec.describe Kyc::Compliance::Rules::UboDocumentRequirements, type: :service d
         expect(result.missing).to be_empty
       end
 
+      it "accepts bank account statement as an alternative proof of address" do
+        create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
+        create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :bank_account_statement)
+
+        result = rule.evaluate(entity)
+
+        expect(result).to be_met
+        expect(result.satisfied).to contain_exactly("identity", "proof_of_address")
+      end
+
       it "accepts driving licence as an alternative identity document" do
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :driving_licence)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :utility_bill)

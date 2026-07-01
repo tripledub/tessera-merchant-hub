@@ -5,12 +5,14 @@
 # document_type is the KycDocument's own document_type (e.g. "passport"), passed in
 # by the caller — it is document metadata, not part of the extracted result hash.
 #
-# Passport:
+# Identity documents (Kyc::DocumentCategory.identity? — passport, driving_licence):
 #   Exact name + DOB match → :exact
 #   Jaro-Winkler name similarity >= FUZZY_THRESHOLD → :fuzzy with confidence
-#   No match → creates new unconfirmed KycPrincipal from extracted data
+#   No match on a passport specifically → creates new unconfirmed KycPrincipal
+#   No match on a non-passport identity document → returns nil (left unlinked;
+#     auto-creation is deliberately passport-only, see MH-175 design spec)
 #
-# Utility bill / other documents:
+# Proof-of-address / other documents:
 #   Fuzzy name match only (no DOB on these documents)
 #   No match → returns nil (document left unlinked)
 #
@@ -42,7 +44,7 @@ class PrincipalMatcherService
     fuzzy_principal, score = find_fuzzy_match
     return Result.new(principal: fuzzy_principal, match_method: "fuzzy", match_confidence: score.round(3)) if fuzzy_principal
 
-    if passport?
+    if auto_creatable_identity?
       principal = create_unconfirmed_principal
       Result.new(principal: principal, match_method: "exact", match_confidence: 1.0)
     else
@@ -57,7 +59,7 @@ class PrincipalMatcherService
   end
 
   def find_exact_match
-    if passport? && @date_of_birth
+    if dob_aware_identity? && @date_of_birth
       principals.find do |p|
         names_match_exactly?(p.name, @full_name) && p.date_of_birth == @date_of_birth
       end
@@ -109,7 +111,11 @@ class PrincipalMatcherService
     a.downcase.strip == b.downcase.strip
   end
 
-  def passport?
+  def dob_aware_identity?
+    Kyc::DocumentCategory.identity?(@document_type)
+  end
+
+  def auto_creatable_identity?
     @document_type == PASSPORT_TYPE
   end
 

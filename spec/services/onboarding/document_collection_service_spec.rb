@@ -23,8 +23,8 @@ RSpec.describe Onboarding::DocumentCollectionService do
         expect(identity_items.map { |i| i["subject"] }).to contain_exactly("Person Alpha", "Person Beta")
         expect(address_items.map { |i| i["subject"] }).to contain_exactly("Person Alpha", "Person Beta")
 
-        expect(identity_items.first["document_types"]).to eq(%w[passport driving_licence])
-        expect(address_items.first["document_types"]).to eq(%w[utility_bill])
+        expect(identity_items.first["document_types"]).to eq(Kyc::DocumentCategory.types_for(:identity))
+        expect(address_items.first["document_types"]).to eq(Kyc::DocumentCategory.types_for(:proof_of_address))
       end
 
       it "ignores document_extracted principals" do
@@ -199,6 +199,20 @@ RSpec.describe Onboarding::DocumentCollectionService do
         described_class.generate_checklist(session)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :utility_bill)
+      end
+
+      it "returns true" do
+        expect(described_class.all_received?(session)).to be true
+      end
+    end
+
+    context "when proof of address is satisfied by a bank statement instead of a utility bill" do
+      let!(:principal) { create(:kyc_principal, applicant: applicant, name: "Person Alpha", source: :applicant_declared) }
+
+      before do
+        described_class.generate_checklist(session)
+        create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
+        create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :bank_account_statement)
       end
 
       it "returns true" do
