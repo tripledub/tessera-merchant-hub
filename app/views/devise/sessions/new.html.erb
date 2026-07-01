@@ -1,4 +1,4 @@
-<%= render "layouts/auth_card", title: "Sign in to MerchantHub" do %>
+<%= render "layouts/auth_card", title: "Sign in to #{t('layouts.navigation.app_name')}" do %>
   <%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>
     <div class="space-y-5">
       <div>
