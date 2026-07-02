@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_26_184000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_02_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -40,6 +40,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_184000) do
     t.bigint "blob_id", null: false
     t.string "variation_digest", null: false
     t.index ["blob_id", "variation_digest"], name: "index_active_storage_variant_records_uniqueness", unique: true
+  end
+
+  create_table "addresses", force: :cascade do |t|
+    t.uuid "addressable_id", null: false
+    t.string "addressable_type", null: false
+    t.string "city", null: false
+    t.string "country", null: false
+    t.datetime "created_at", null: false
+    t.string "line1", null: false
+    t.string "line2"
+    t.string "postcode"
+    t.boolean "primary", default: false, null: false
+    t.string "type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["addressable_type", "addressable_id", "type", "primary"], name: "index_addresses_on_addressable_and_type_primary", unique: true, where: "(\"primary\" = true)"
+    t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable"
   end
 
   create_table "applicant_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|

@@ -15,7 +15,7 @@ RSpec.describe Onboarding::DocumentCollectionService do
       it "creates identity and address items for each declared principal" do
         checklist = described_class.generate_checklist(session)
 
-        expect(checklist.size).to eq(4)
+        expect(checklist.size).to eq(5)
 
         identity_items = checklist.select { |i| i["category"] == "identity" }
         address_items = checklist.select { |i| i["category"] == "proof_of_address" }
@@ -99,7 +99,7 @@ RSpec.describe Onboarding::DocumentCollectionService do
       session.reload
 
       expect(session.document_checklist).to be_an(Array)
-      expect(session.document_checklist.size).to eq(2)
+      expect(session.document_checklist.size).to eq(3)
     end
   end
 
@@ -174,13 +174,13 @@ RSpec.describe Onboarding::DocumentCollectionService do
 
       outstanding = described_class.outstanding_items(session)
 
-      expect(outstanding.size).to eq(1)
-      expect(outstanding.first["category"]).to eq("proof_of_address")
+      expect(outstanding.size).to eq(2)
+      expect(outstanding.map { |i| i["category"] }).to contain_exactly("proof_of_address", "proof_of_business_address")
     end
 
     it "returns all items when nothing uploaded" do
       outstanding = described_class.outstanding_items(session)
-      expect(outstanding.size).to eq(2)
+      expect(outstanding.size).to eq(3)
     end
   end
 
@@ -199,6 +199,7 @@ RSpec.describe Onboarding::DocumentCollectionService do
         described_class.generate_checklist(session)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :utility_bill)
+        create(:kyc_document, applicant: applicant, document_type: :certificate_of_registered_address)
       end
 
       it "returns true" do
@@ -213,6 +214,7 @@ RSpec.describe Onboarding::DocumentCollectionService do
         described_class.generate_checklist(session)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :bank_account_statement)
+        create(:kyc_document, applicant: applicant, document_type: :certificate_of_registered_address)
       end
 
       it "returns true" do

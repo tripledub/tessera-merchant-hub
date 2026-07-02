@@ -2,7 +2,7 @@ class CreateAddresses < ActiveRecord::Migration[8.0]
   def change
     create_table :addresses do |t|
       t.string :type, null: false
-      t.references :addressable, polymorphic: true, null: false
+      t.references :addressable, polymorphic: true, null: false, type: :uuid
       t.string :line1, null: false
       t.string :line2
       t.string :city, null: false

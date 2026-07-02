@@ -70,7 +70,7 @@ RSpec.describe Kyc::Compliance::Rules::UboDocumentRequirements, type: :service d
         result = rule.evaluate(entity)
 
         expect(result).to be_unmet
-        expect(result.missing).to contain_exactly("identity", "proof_of_address")
+        expect(result.missing).to contain_exactly("identity", "proof_of_address", "proof_of_business_address")
       end
     end
 
@@ -89,7 +89,7 @@ RSpec.describe Kyc::Compliance::Rules::UboDocumentRequirements, type: :service d
         result = rule.evaluate(entity)
 
         expect(result).to be_unmet
-        expect(result.missing).to contain_exactly("identity", "proof_of_address")
+        expect(result.missing).to contain_exactly("identity", "proof_of_address", "proof_of_business_address")
       end
 
       it "returns :unmet when only identity document is present" do
@@ -98,34 +98,48 @@ RSpec.describe Kyc::Compliance::Rules::UboDocumentRequirements, type: :service d
         result = rule.evaluate(entity)
 
         expect(result).to be_unmet
-        expect(result.missing).to contain_exactly("proof_of_address")
+        expect(result.missing).to contain_exactly("proof_of_address", "proof_of_business_address")
         expect(result.satisfied).to contain_exactly("identity")
       end
 
-      it "returns :met when passport and utility bill are present" do
+      it "returns :unmet when passport and utility bill are present but no business address doc" do
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :utility_bill)
 
         result = rule.evaluate(entity)
 
-        expect(result).to be_met
+        expect(result).to be_unmet
         expect(result.satisfied).to contain_exactly("identity", "proof_of_address")
+        expect(result.missing).to contain_exactly("proof_of_business_address")
+      end
+
+      it "returns :met when passport, utility bill, and certificate of registered address are present" do
+        create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
+        create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :utility_bill)
+        create(:kyc_document, applicant: applicant, document_type: :certificate_of_registered_address)
+
+        result = rule.evaluate(entity)
+
+        expect(result).to be_met
+        expect(result.satisfied).to contain_exactly("identity", "proof_of_address", "proof_of_business_address")
         expect(result.missing).to be_empty
       end
 
       it "accepts bank account statement as an alternative proof of address" do
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :bank_account_statement)
+        create(:kyc_document, applicant: applicant, document_type: :certificate_of_registered_address)
 
         result = rule.evaluate(entity)
 
         expect(result).to be_met
-        expect(result.satisfied).to contain_exactly("identity", "proof_of_address")
+        expect(result.satisfied).to contain_exactly("identity", "proof_of_address", "proof_of_business_address")
       end
 
       it "accepts driving licence as an alternative identity document" do
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :driving_licence)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :utility_bill)
+        create(:kyc_document, applicant: applicant, document_type: :certificate_of_registered_address)
 
         result = rule.evaluate(entity)
 
@@ -137,6 +151,7 @@ RSpec.describe Kyc::Compliance::Rules::UboDocumentRequirements, type: :service d
 
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
         create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :utility_bill)
+        create(:kyc_document, applicant: applicant, document_type: :certificate_of_registered_address)
 
         result = rule.evaluate(entity)
 
