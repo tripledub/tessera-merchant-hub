@@ -25,7 +25,7 @@ RSpec.describe Kyc::DocumentCategory do
     end
 
     it "returns nil for a document type with no category" do
-      expect(described_class.for("certificate_of_incorporation")).to be_nil
+      expect(described_class.for("group_structure_chart")).to be_nil
     end
   end
 
@@ -56,6 +56,34 @@ RSpec.describe Kyc::DocumentCategory do
 
     it "returns an empty array for an unknown category" do
       expect(described_class.types_for(:nonexistent)).to eq([])
+    end
+  end
+
+  describe ".proof_of_business_address?" do
+    it "returns true for certificate_of_registered_address" do
+      expect(described_class.proof_of_business_address?("certificate_of_registered_address")).to be true
+    end
+
+    it "returns true for certificate_of_incorporation" do
+      expect(described_class.proof_of_business_address?("certificate_of_incorporation")).to be true
+    end
+
+    it "returns true for certificate_of_incumbency" do
+      expect(described_class.proof_of_business_address?("certificate_of_incumbency")).to be true
+    end
+
+    it "returns false for passport" do
+      expect(described_class.proof_of_business_address?("passport")).to be false
+    end
+  end
+
+  describe ".types_for(:proof_of_business_address)" do
+    it "returns the three certificate types" do
+      expect(described_class.types_for(:proof_of_business_address)).to contain_exactly(
+        "certificate_of_registered_address",
+        "certificate_of_incorporation",
+        "certificate_of_incumbency"
+      )
     end
   end
 end
