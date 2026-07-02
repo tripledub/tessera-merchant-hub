@@ -75,6 +75,24 @@ RSpec.describe Kyc::BusinessAddressPopulationService do
       end
     end
 
+    context "when the document has partial extraction data (line1 present but city and country missing)" do
+      let(:document) do
+        create(:kyc_document,
+          applicant: applicant,
+          document_type: :certificate_of_registered_address,
+          status: :complete,
+          extracted_data: {
+            "company_name" => "Acme Ltd",
+            "line1" => "10 Business Park"
+          })
+      end
+
+      it "does nothing and does not raise" do
+        expect { described_class.call(document) }.not_to raise_error
+        expect(applicant.addresses).to be_empty
+      end
+    end
+
     context "when the document is not yet complete" do
       let(:document) do
         create(:kyc_document,

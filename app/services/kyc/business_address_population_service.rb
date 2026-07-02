@@ -17,10 +17,10 @@ module Kyc
       return if @document.applicant.primary_business_address.present?
 
       typed_data = @document.extraction_schema.new(@document.extracted_data)
-      return unless typed_data.respond_to?(:structured_address)
+      return unless typed_data.is_a?(ExtractionData::Concerns::BusinessAddressProviding)
 
       attrs = typed_data.structured_address.compact_blank
-      return if attrs.empty?
+      return unless %i[line1 city country].all? { |k| attrs[k].present? }
 
       @document.applicant.addresses.create!(
         type: "Address::Business",
