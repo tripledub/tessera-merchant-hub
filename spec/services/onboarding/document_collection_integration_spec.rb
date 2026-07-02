@@ -12,23 +12,23 @@ RSpec.describe Onboarding::DocumentCollectionService, type: :service do # ruboco
 
   it "generates checklist, tracks documents, and completes when all received" do
     checklist = described_class.generate_checklist(session)
-    expect(checklist.size).to eq(3) # identity + address + corporate
+    expect(checklist.size).to eq(4) # identity + address + corporate + proof_of_business_address
 
     # Upload identity document
     create(:kyc_document, applicant: applicant, kyc_principal: principal,
            document_type: :passport, classification_status: :confirmed, status: :complete)
 
     outstanding = described_class.outstanding_items(session)
-    expect(outstanding.size).to eq(2)
+    expect(outstanding.size).to eq(3)
 
     # Upload address document
     create(:kyc_document, applicant: applicant, kyc_principal: principal,
            document_type: :utility_bill, classification_status: :confirmed, status: :complete)
 
     outstanding = described_class.outstanding_items(session)
-    expect(outstanding.size).to eq(1)
+    expect(outstanding.size).to eq(2)
 
-    # Upload corporate document
+    # Upload corporate document (also satisfies proof_of_business_address as cert_of_incorporation is in both lists)
     create(:kyc_document, applicant: applicant,
            document_type: :certificate_of_incorporation,
            classification_status: :confirmed, status: :complete)

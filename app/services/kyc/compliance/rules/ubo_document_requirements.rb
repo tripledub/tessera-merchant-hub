@@ -8,7 +8,8 @@ module Kyc
 
         REQUIRED_CATEGORIES = {
           "identity" => Kyc::DocumentCategory.types_for(:identity),
-          "proof_of_address" => Kyc::DocumentCategory.types_for(:proof_of_address)
+          "proof_of_address" => Kyc::DocumentCategory.types_for(:proof_of_address),
+          "proof_of_business_address" => Kyc::DocumentCategory.types_for(:proof_of_business_address)
         }.freeze
 
         def applies_to?(entity)
@@ -26,11 +27,12 @@ module Kyc
           principal = find_matched_principal(entity)
           return build_result(entity: entity, requirements: requirement_names, satisfied: []) unless principal
 
-          doc_types = principal.kyc_documents.pluck(:document_type).compact
+          principal_doc_types = principal.kyc_documents.pluck(:document_type).compact
 
           satisfied = []
           REQUIRED_CATEGORIES.each do |category, types|
-            satisfied << category if types.any? { |t| doc_types.include?(t) }
+            docs = category == "proof_of_business_address" ? cached_applicant_doc_types(entity.applicant) : principal_doc_types
+            satisfied << category if types.any? { |t| docs.include?(t) }
           end
 
           build_result(entity: entity, requirements: requirement_names, satisfied: satisfied)
@@ -40,6 +42,11 @@ module Kyc
 
         def requirement_names
           REQUIRED_CATEGORIES.keys
+        end
+
+        def cached_applicant_doc_types(applicant)
+          @applicant_doc_cache ||= {}
+          @applicant_doc_cache[applicant.id] ||= applicant.kyc_documents.pluck(:document_type).compact
         end
 
         def find_matched_principal(entity)

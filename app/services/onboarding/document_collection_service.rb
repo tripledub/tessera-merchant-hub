@@ -36,6 +36,7 @@ module Onboarding
       checklist = []
       checklist.concat(principal_items)
       checklist.concat(corporate_items)
+      checklist.concat(business_address_items)
       checklist.concat(nominee_items)
       @session.update!(document_checklist: checklist)
       checklist
@@ -103,6 +104,17 @@ module Onboarding
           "subject" => "company",
           "document_types" => %w[certificate_of_incorporation],
           "label" => "Certificate of incorporation"
+        }
+      ]
+    end
+
+    def business_address_items
+      [
+        {
+          "category" => "proof_of_business_address",
+          "subject" => "company",
+          "document_types" => Kyc::DocumentCategory.types_for(:proof_of_business_address),
+          "label" => "Proof of business address"
         }
       ]
     end
