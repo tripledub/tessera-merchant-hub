@@ -20,6 +20,7 @@ RSpec.describe "Onboarding conversations", type: :request do
       expect(response.body).to include("KYC onboarding")
       expect(response.body).to include("Welcome")
       expect(response.body).to include("data-controller=\"onboarding-chat\"")
+      expect(response.body).to include("data-onboarding-chat-session-id-value=")
       expect(response.body).to include("data-onboarding-chat-target=\"typing\"")
       expect(response.body).to include("turbo-cable-stream-source")
     end
@@ -73,97 +74,22 @@ RSpec.describe "Onboarding conversations", type: :request do
   end
 
   describe "POST /portal/onboarding/messages" do
-    it "submits a message through the conversation engine" do
+    it "enqueues a streaming job and returns 200 OK" do
       applicant_user = create(:applicant_user)
-      session = create(:onboarding_session, applicant: applicant_user.applicant)
+      create(:onboarding_session, applicant: applicant_user.applicant)
       sign_in applicant_user, scope: :applicant_user
-      allow(Onboarding::ConversationEngine).to receive(:respond).and_return(
-        bot_message: "Tell me your company name.",
-        extracted_data: {},
-        stage_changed: false
-      )
 
-      post portal_onboarding_messages_path(format: :turbo_stream), params: { message: "Hello" }
+      post portal_onboarding_messages_path, params: { message: "Hello" }
 
-      expect(response.media_type).to eq Mime[:turbo_stream]
-      expect(response.body).to include("Tell me your company name.")
-      expect(Onboarding::ConversationEngine).to have_received(:respond).with(
-        session: session,
-        user_message: "Hello"
-      )
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to be_blank
+      expect(StreamOnboardingResponseJob).to have_been_enqueued.with(anything, "Hello")
     end
 
-    it "replaces the optimistic applicant preview with the persisted applicant message" do
-      applicant_user = create(:applicant_user)
-      session = create(:onboarding_session, applicant: applicant_user.applicant)
-      sign_in applicant_user, scope: :applicant_user
-      allow(Onboarding::ConversationEngine).to receive(:respond) do |session:, user_message:|
-        create(:onboarding_message, onboarding_session: session, role: :applicant, content: user_message)
-        create(:onboarding_message, onboarding_session: session, role: :bot, content: "Tell me your company name.")
-        { bot_message: "Tell me your company name.", extracted_data: {}, stage_changed: false }
-      end
+    it "redirects unauthenticated applicants to sign in" do
+      post portal_onboarding_messages_path, params: { message: "Hello" }
 
-      post portal_onboarding_messages_path(format: :turbo_stream), params: { message: "Hello" }
-
-      expect(response.body).to include('action="replace" target="onboarding_pending_applicant_message"')
-      expect(response.body).to include("Hello")
-    end
-
-    it "broadcasts persisted bot replies over the onboarding stream" do
-      applicant_user = create(:applicant_user)
-      session = create(:onboarding_session, applicant: applicant_user.applicant)
-      sign_in applicant_user, scope: :applicant_user
-      allow(Turbo::StreamsChannel).to receive(:broadcast_append_to)
-      bot_messages = []
-      stub_persisted_bot_reply(bot_messages)
-
-      post portal_onboarding_messages_path(format: :turbo_stream), params: { message: "Hello" }
-
-      expect(Turbo::StreamsChannel).to have_received(:broadcast_append_to).with(
-        session,
-        target: "onboarding_messages",
-        partial: "onboarding/conversations/message",
-        locals: { message: bot_messages.first }
-      )
-    end
-
-    it "refreshes stage progress when the response advances the session" do
-      applicant_user = create(:applicant_user)
-      session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :company_info)
-      sign_in applicant_user, scope: :applicant_user
-      allow(Onboarding::ConversationEngine).to receive(:respond) do
-        session.update!(current_stage: :directors_ubos, completed_stages: [ "company_info" ])
-        { bot_message: "Now tell me about directors.", extracted_data: {}, stage_changed: true }
-      end
-
-      post portal_onboarding_messages_path(format: :turbo_stream), params: { message: "Done" }
-
-      expect(response.body).to include('target="onboarding_progress"')
-      expect(response.body).to include('target="onboarding_stage_badge"')
-      expect(response.body).to include("Directors ubos")
-    end
-
-    it "refreshes the composer when the response advances to document collection" do
-      applicant_user = create(:applicant_user)
-      session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :jurisdictions)
-      sign_in applicant_user, scope: :applicant_user
-      allow(Onboarding::ConversationEngine).to receive(:respond) do
-        session.update!(current_stage: :document_collection, completed_stages: [ "jurisdictions" ])
-        { bot_message: "Next, upload your documents.", extracted_data: {}, stage_changed: true }
-      end
-
-      post portal_onboarding_messages_path(format: :turbo_stream), params: { message: "Only the UK" }
-
-      expect(response.body).to include('target="onboarding_composer"')
-      expect(response.body).to include('data-testid="document-upload-button"')
-    end
-  end
-
-  def stub_persisted_bot_reply(bot_messages)
-    allow(Onboarding::ConversationEngine).to receive(:respond) do |session:, user_message:|
-      create(:onboarding_message, onboarding_session: session, role: :applicant, content: user_message)
-      bot_messages << create(:onboarding_message, onboarding_session: session, role: :bot, content: "Broadcast reply")
-      { bot_message: "Broadcast reply", extracted_data: {}, stage_changed: false }
+      expect(response).to redirect_to(new_applicant_user_session_path)
     end
   end
 
