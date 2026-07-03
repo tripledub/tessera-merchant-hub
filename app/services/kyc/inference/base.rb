@@ -3,11 +3,11 @@
 module Kyc
   module Inference
     class Base
-      def extract(document:, prompt:)
+      def extract(document:, prompt:, schema: nil)
         raise NotImplementedError, "#{self.class}#extract must be implemented"
       end
 
-      def generate(prompt:)
+      def generate(prompt:, schema: nil, stream: false, &block)
         raise NotImplementedError, "#{self.class}#generate must be implemented"
       end
     end

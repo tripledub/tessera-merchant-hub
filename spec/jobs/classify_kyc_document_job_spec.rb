@@ -34,20 +34,14 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
     end
 
     context "when filename does not match any rule-based classifier" do
+      let(:mock_chat) { instance_double(RubyLLM::Chat) }
+
       before do
-        allow(Rails.application.credentials).to receive(:anthropic_api_key).and_return("test-key")
         allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("mystery_doc.pdf"))
         allow(KycDocument).to receive(:find).with(document.id).and_return(document)
-
-        client = instance_double(Anthropic::Client)
-        messages = instance_double(Anthropic::Resources::Messages)
-        allow(Anthropic::Client).to receive(:new).and_return(client)
-        allow(client).to receive(:messages).and_return(messages)
-        allow(messages).to receive(:create).and_return(
-          instance_double(
-            Anthropic::Models::Message,
-            content: [ instance_double(Anthropic::Models::TextBlock, text: '{"document_type": "passport", "confidence": 0.75}') ]
-          )
+        allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+        allow(mock_chat).to receive(:ask).and_return(
+          instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.75}')
         )
       end
 
@@ -104,21 +98,15 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
     end
 
     context "when ai_suggested with onboarding in document_collection stage" do
+      let(:mock_chat) { instance_double(RubyLLM::Chat) }
+
       before do
         create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
-        allow(Rails.application.credentials).to receive(:anthropic_api_key).and_return("test-key")
         allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("mystery_doc.pdf"))
         allow(KycDocument).to receive(:find).with(document.id).and_return(document)
-
-        client = instance_double(Anthropic::Client)
-        messages = instance_double(Anthropic::Resources::Messages)
-        allow(Anthropic::Client).to receive(:new).and_return(client)
-        allow(client).to receive(:messages).and_return(messages)
-        allow(messages).to receive(:create).and_return(
-          instance_double(
-            Anthropic::Models::Message,
-            content: [ instance_double(Anthropic::Models::TextBlock, text: '{"document_type": "passport", "confidence": 0.75}') ]
-          )
+        allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+        allow(mock_chat).to receive(:ask).and_return(
+          instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.75}')
         )
       end
 
@@ -149,18 +137,13 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
     end
 
     context "when classification fails" do
+      let(:mock_chat) { instance_double(RubyLLM::Chat) }
+
       before do
-        allow(Rails.application.credentials).to receive(:anthropic_api_key).and_return("test-key")
         allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("mystery_doc.pdf"))
         allow(KycDocument).to receive(:find).with(document.id).and_return(document)
-
-        client = instance_double(Anthropic::Client)
-        messages = instance_double(Anthropic::Resources::Messages)
-        allow(Anthropic::Client).to receive(:new).and_return(client)
-        allow(client).to receive(:messages).and_return(messages)
-        allow(messages).to receive(:create).and_raise(
-          Anthropic::Errors::APIError.new(url: nil, status: 500, body: nil, message: "server error")
-        )
+        allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+        allow(mock_chat).to receive(:ask).and_raise(RubyLLM::Error.new("server error"))
       end
 
       it "transitions document to error" do

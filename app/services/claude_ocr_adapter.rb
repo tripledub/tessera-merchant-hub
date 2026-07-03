@@ -39,40 +39,23 @@ class ClaudeOcrAdapter
   end
 
   def call
-    blob_data = @document.file.blob.download
-    base64    = Base64.strict_encode64(blob_data)
-    mime_type = @document.file.content_type
+    raise Error, "anthropic_api_key not set in Rails credentials" unless Rails.application.credentials.anthropic_api_key
 
-    content_block = if mime_type == "application/pdf"
-      { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
-    else
-      { type: "image", source: { type: "base64", media_type: mime_type, data: base64 } }
+    blob_data  = @document.file.blob.download
+    media_type = @document.file.content_type
+    extension  = Rack::Mime::MIME_TYPES.invert.fetch(media_type, ".bin").delete_prefix(".")
+
+    result = Tempfile.create([ "kyc_ocr", ".#{extension}" ]) do |f|
+      f.binmode
+      f.write(blob_data)
+      f.flush
+      RubyLLM.chat(model: "claude-opus-4-8").ask(PROMPT, with: f.path)
     end
 
-    client   = Anthropic::Client.new(api_key: api_key)
-    response = client.messages.create(
-      model:      "claude-opus-4-8",
-      max_tokens: 1024,
-      messages:   [
-        {
-          role:    "user",
-          content: [ content_block, { type: "text", text: PROMPT } ]
-        }
-      ]
-    )
-
-    text = response.content.first.text.strip
-    JSON.parse(text)
+    JSON.parse(result.content)
   rescue JSON::ParserError => e
     raise Error, "Claude returned invalid JSON: #{e.message}"
-  rescue Anthropic::Errors::APIError => e
+  rescue RubyLLM::Error => e
     raise Error, "Claude API error: #{e.message}"
-  end
-
-  private
-
-  def api_key
-    Rails.application.credentials.anthropic_api_key ||
-      raise(Error, "anthropic_api_key not set in Rails credentials")
   end
 end

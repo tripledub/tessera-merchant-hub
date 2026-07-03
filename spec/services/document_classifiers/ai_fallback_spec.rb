@@ -7,25 +7,18 @@ RSpec.describe DocumentClassifiers::AiFallback do
   let(:condition) { DocumentClassifiers::Condition.new(filename: "unknown_doc.pdf", content_type: "application/pdf", document: document) }
   let(:handler) { described_class.new(condition) }
 
-  let(:client) { instance_double(Anthropic::Client) }
-  let(:messages) { instance_double(Anthropic::Resources::Messages) }
+  let(:mock_chat) { instance_double(RubyLLM::Chat) }
 
   before do
-    allow(Rails.application.credentials).to receive(:anthropic_api_key).and_return("test-key")
-    allow(Anthropic::Client).to receive(:new).and_return(client)
-    allow(client).to receive(:messages).and_return(messages)
+    allow(RubyLLM).to receive(:chat).and_return(mock_chat)
   end
 
   describe "#classify" do
     context "when AI returns a valid document type" do
-      let(:response) do
-        instance_double(
-          Anthropic::Models::Message,
-          content: [ instance_double(Anthropic::Models::TextBlock, text: '{"document_type": "passport", "confidence": 0.85}') ]
-        )
+      before do
+        response = instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.85}')
+        allow(mock_chat).to receive(:ask).and_return(response)
       end
-
-      before { allow(messages).to receive(:create).and_return(response) }
 
       it "returns the AI classification with confidence" do
         result = handler.classify
@@ -36,51 +29,17 @@ RSpec.describe DocumentClassifiers::AiFallback do
         )
       end
 
-      it "sends the actual file content as a document block, not just the filename" do
+      it "sends the document file to the model as an attachment" do
         handler.classify
-
-        expect(messages).to have_received(:create) do |args|
-          content = args[:messages].first[:content]
-          doc_block = content.find { |block| block[:type] == "document" }
-
-          expect(doc_block).not_to be_nil
-          expect(doc_block[:source][:type]).to eq("base64")
-          expect(doc_block[:source][:media_type]).to eq("application/pdf")
-          expect(doc_block[:source][:data]).to be_present
-        end
-      end
-
-      it "sends an image as an image block when content type is not application/pdf" do
-        image_document = create(:kyc_document, :image)
-        image_condition = DocumentClassifiers::Condition.new(filename: "unknown.jpg", content_type: "image/jpeg", document: image_document)
-        image_handler = described_class.new(image_condition)
-
-        image_handler.classify
-
-        expect(messages).to have_received(:create) do |args|
-          content = args[:messages].first[:content]
-          image_block = content.find { |block| block[:type] == "image" }
-
-          expect(image_block).not_to be_nil
-          expect(image_block[:source][:media_type]).to eq("image/jpeg")
-        end
+        expect(mock_chat).to have_received(:ask).with(anything, with: anything)
       end
     end
 
     context "when AI wraps JSON in a markdown fence" do
-      let(:response) do
-        instance_double(
-          Anthropic::Models::Message,
-          content: [
-            instance_double(
-              Anthropic::Models::TextBlock,
-              text: "```json\n{\"document_type\": \"passport\", \"confidence\": 0.85}\n```"
-            )
-          ]
-        )
+      before do
+        response = instance_double(RubyLLM::Message, content: "```json\n{\"document_type\": \"passport\", \"confidence\": 0.85}\n```")
+        allow(mock_chat).to receive(:ask).and_return(response)
       end
-
-      before { allow(messages).to receive(:create).and_return(response) }
 
       it "returns the AI classification with confidence" do
         result = handler.classify
@@ -93,14 +52,10 @@ RSpec.describe DocumentClassifiers::AiFallback do
     end
 
     context "when AI returns null document type" do
-      let(:response) do
-        instance_double(
-          Anthropic::Models::Message,
-          content: [ instance_double(Anthropic::Models::TextBlock, text: '{"document_type": null, "confidence": 0.0}') ]
-        )
+      before do
+        response = instance_double(RubyLLM::Message, content: '{"document_type": null, "confidence": 0.0}')
+        allow(mock_chat).to receive(:ask).and_return(response)
       end
-
-      before { allow(messages).to receive(:create).and_return(response) }
 
       it "returns nil document type" do
         result = handler.classify
@@ -113,14 +68,10 @@ RSpec.describe DocumentClassifiers::AiFallback do
     end
 
     context "when AI returns an invalid document type" do
-      let(:response) do
-        instance_double(
-          Anthropic::Models::Message,
-          content: [ instance_double(Anthropic::Models::TextBlock, text: '{"document_type": "spaceship_manual", "confidence": 0.5}') ]
-        )
+      before do
+        response = instance_double(RubyLLM::Message, content: '{"document_type": "spaceship_manual", "confidence": 0.5}')
+        allow(mock_chat).to receive(:ask).and_return(response)
       end
-
-      before { allow(messages).to receive(:create).and_return(response) }
 
       it "returns nil document type" do
         expect(handler.classify[:document_type]).to be_nil
@@ -128,14 +79,10 @@ RSpec.describe DocumentClassifiers::AiFallback do
     end
 
     context "when AI returns invalid JSON" do
-      let(:response) do
-        instance_double(
-          Anthropic::Models::Message,
-          content: [ instance_double(Anthropic::Models::TextBlock, text: "not json at all") ]
-        )
+      before do
+        response = instance_double(RubyLLM::Message, content: "not json at all")
+        allow(mock_chat).to receive(:ask).and_return(response)
       end
-
-      before { allow(messages).to receive(:create).and_return(response) }
 
       it "raises an error" do
         expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /invalid JSON/)
@@ -144,9 +91,7 @@ RSpec.describe DocumentClassifiers::AiFallback do
 
     context "when API call fails" do
       before do
-        allow(messages).to receive(:create).and_raise(
-          Anthropic::Errors::APIError.new(url: nil, status: 500, body: nil, message: "server error")
-        )
+        allow(mock_chat).to receive(:ask).and_raise(RubyLLM::Error.new("server error"))
       end
 
       it "raises an error" do
@@ -178,14 +123,10 @@ RSpec.describe DocumentClassifiers::AiFallback do
   end
 
   describe "fallback via obtain" do
-    let(:response) do
-      instance_double(
-        Anthropic::Models::Message,
-        content: [ instance_double(Anthropic::Models::TextBlock, text: '{"document_type": "legal_opinion", "confidence": 0.72}') ]
-      )
+    before do
+      response = instance_double(RubyLLM::Message, content: '{"document_type": "legal_opinion", "confidence": 0.72}')
+      allow(mock_chat).to receive(:ask).and_return(response)
     end
-
-    before { allow(messages).to receive(:create).and_return(response) }
 
     it "is used when no rule-based handler matches" do
       result = DocumentClassifiers.obtain(condition)
