@@ -18,12 +18,11 @@ RSpec.describe "Production solid adapter schemas" do # rubocop:disable RSpec/Des
     expect(queue_schema).to include('create_table "solid_queue_processes"')
   end
 
-  it "loads Action Cable from the dedicated cable database in production" do
+  it "loads Action Cable via AnyCable in production" do
     cable_config = File.read(File.join(root, "config/cable.yml"))
 
-    expect(cable_config).to include("adapter: solid_cable")
-    expect(cable_config).to include("writing: cable")
-    expect(cable_config).not_to include("adapter: redis")
+    expect(cable_config).to include("adapter: anycable")
+    expect(cable_config).to include("REDIS_URL")
   end
 
   it "defines the messages table required for Turbo Stream broadcasts" do
