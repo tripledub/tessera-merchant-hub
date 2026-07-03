@@ -59,8 +59,8 @@ gem "faraday"
 # Fuzzy name matching for KYC principal identification
 gem "jaro_winkler"
 
-# Claude API client for KYC document extraction and onboarding chat.
-gem "anthropic"
+# Unified LLM client — Anthropic/Claude, structured output, streaming.
+gem "ruby_llm"
 
 group :development, :test do
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
