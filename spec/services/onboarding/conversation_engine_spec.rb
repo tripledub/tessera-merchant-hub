@@ -236,6 +236,98 @@ RSpec.describe Onboarding::ConversationEngine do
     end
   end
 
+  describe ".respond with stream: true" do
+    let(:separator) { Onboarding::PromptBuilder::STREAM_SEPARATOR }
+    let(:streaming_adapter) do
+      instance_double(Kyc::Inference::Base).tap do |adapter|
+        allow(adapter).to receive(:generate).with(prompt: anything, stream: true) do |&block|
+          chunks = [
+            "Thanks for that.",
+            "\n#{separator}\n",
+            '{"extracted_data":{"company_name":"Acme Ltd"}}'
+          ]
+          chunks.each { |c| block.call(Struct.new(:content).new(c)) }
+        end
+      end
+    end
+
+    it "broadcasts tokens before the separator and broadcasts a complete event" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      broadcasts = []
+      allow(ActionCable.server).to receive(:broadcast) { |channel, data| broadcasts << [ channel, data ] }
+
+      described_class.respond(
+        session: session,
+        user_message: "Acme Ltd",
+        stream: true,
+        inference_adapter: streaming_adapter
+      )
+
+      token_broadcasts = broadcasts.select { |_, d| d[:type] == "token" }
+      expect(token_broadcasts.map { |_, d| d[:content] }.join).to eq("Thanks for that.")
+
+      complete_broadcast = broadcasts.find { |_, d| d[:type] == "complete" }
+      expect(complete_broadcast).not_to be_nil
+      expect(complete_broadcast[1][:bot_message]).to include("Thanks for that.")
+      expect(complete_broadcast[1][:stage_changed]).to be(false)
+    end
+
+    it "persists the applicant and bot messages" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      allow(ActionCable.server).to receive(:broadcast)
+
+      described_class.respond(
+        session: session,
+        user_message: "Acme Ltd",
+        stream: true,
+        inference_adapter: streaming_adapter
+      )
+
+      messages = session.onboarding_messages.order(:created_at)
+      expect(messages.pluck(:role)).to eq([ "applicant", "bot" ])
+      expect(messages.last.content).to eq("Thanks for that.")
+    end
+
+    it "does not broadcast tokens that come after the separator" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      token_contents = []
+      allow(ActionCable.server).to receive(:broadcast) do |_ch, data|
+        token_contents << data[:content] if data[:type] == "token"
+      end
+
+      described_class.respond(
+        session: session,
+        user_message: "Acme Ltd",
+        stream: true,
+        inference_adapter: streaming_adapter
+      )
+
+      expect(token_contents.join).not_to include(separator)
+      expect(token_contents.join).not_to include("extracted_data")
+    end
+
+    it "broadcasts an error event and re-raises on failure" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      broken_adapter = instance_double(Kyc::Inference::Base)
+      allow(broken_adapter).to receive(:generate).and_raise(Kyc::Inference::Error, "API failure")
+      allow(ActionCable.server).to receive(:broadcast)
+
+      expect {
+        described_class.respond(
+          session: session,
+          user_message: "Hello",
+          stream: true,
+          inference_adapter: broken_adapter
+        )
+      }.to raise_error(Kyc::Inference::Error)
+
+      expect(ActionCable.server).to have_received(:broadcast).with(
+        "onboarding:#{session.id}",
+        hash_including(type: "error")
+      )
+    end
+  end
+
   def complete_directors_ubos_data
     {
       "directors_ubos" => {

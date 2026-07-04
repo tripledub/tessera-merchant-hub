@@ -3,16 +3,17 @@
 module Onboarding
   module PromptBuilder
     HISTORY_LIMIT = 5
+    STREAM_SEPARATOR = "<<<TESSERA_DATA>>>"
 
     module_function
 
-    def build(session:)
+    def build(session:, streaming: false)
       [
         system_instructions,
         stage_context(session),
         collected_data(session),
         recent_history(session),
-        extraction_instructions
+        streaming ? streaming_extraction_instructions : extraction_instructions
       ].join("\n\n")
     end
 
@@ -75,6 +76,20 @@ module Onboarding
       PROMPT
     end
     private_class_method :extraction_instructions
+
+    def streaming_extraction_instructions
+      <<~PROMPT
+        First write a natural language reply to the applicant.
+        Then on its own line write exactly: #{STREAM_SEPARATOR}
+        Then write only valid JSON — no explanation, no markdown fences:
+        {"extracted_data": {"field_name": "field value or null", "done_adding_items": false}}
+        For looping stages only, set done_adding_items to true when the applicant clearly says there are no more items to add for the current stage. Otherwise set it to false.
+        For directors_ubos role, use only one of: director, shareholder, both.
+        Map UBO, PSC, or beneficial owner to shareholder unless the person is also a director, then use both.
+        Use null when no field value was provided.
+      PROMPT
+    end
+    private_class_method :streaming_extraction_instructions
 
     def format_list(values)
       return "- None" if values.empty?
