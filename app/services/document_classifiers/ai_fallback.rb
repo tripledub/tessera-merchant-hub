@@ -52,57 +52,37 @@ module DocumentClassifiers
 
     def ai_classify
       @ai_classify ||= begin
-        response = client.messages.create(
-          model: "claude-haiku-4-5-20251001",
-          max_tokens: 256,
-          messages: [
-            { role: "user", content: [ file_content_block, text_content_block ] }
-          ]
-        )
+        blob_data  = condition.document.file.blob.download
+        media_type = condition.document.file.content_type
+        extension  = Rack::Mime::MIME_TYPES.invert.fetch(media_type, ".bin").delete_prefix(".")
+        prompt     = format(PROMPT, valid_types: VALID_TYPES.join(", ")) +
+          "\n\nFilename (hint only): #{condition.filename}"
 
-        text = normalize_json_response(response.content.first.text)
+        response = Tempfile.create([ "kyc_classify", ".#{extension}" ]) do |f|
+          f.binmode
+          f.write(blob_data)
+          f.flush
+          chat.ask(prompt, with: f.path)
+        end
+
+        text = normalize_json_response(response.content)
         JSON.parse(text)
       rescue ActiveStorage::FileNotFoundError => e
         raise Error, "AI classifier could not read the document file: #{e.message}"
       rescue JSON::ParserError => e
         raise Error, "AI classifier returned invalid JSON: #{e.message}"
-      rescue Anthropic::Errors::APIError => e
+      rescue RubyLLM::Error => e
         raise Error, "AI classifier API error: #{e.message}"
       end
     end
 
-    def file_content_block
-      blob_data = condition.document.file.blob.download
-      base64    = Base64.strict_encode64(blob_data)
-      mime_type = condition.document.file.content_type
-
-      if mime_type == "application/pdf"
-        { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
-      else
-        { type: "image", source: { type: "base64", media_type: mime_type, data: base64 } }
-      end
-    end
-
-    def text_content_block
-      {
-        type: "text",
-        text: format(PROMPT, valid_types: VALID_TYPES.join(", ")) +
-          "\n\nFilename (hint only): #{condition.filename}"
-      }
-    end
-
-    def client
-      @client ||= Anthropic::Client.new(api_key: api_key)
+    def chat
+      @chat ||= RubyLLM.chat(model: "claude-haiku-4-5-20251001")
     end
 
     def normalize_json_response(text)
       stripped = text.strip
       stripped.match(/\A```(?:json)?\s*(.*?)\s*```\z/m)&.[](1) || stripped
-    end
-
-    def api_key
-      Rails.application.credentials.anthropic_api_key ||
-        raise(Error, "anthropic_api_key not set in Rails credentials")
     end
   end
 end

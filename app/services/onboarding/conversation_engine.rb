@@ -4,13 +4,61 @@ module Onboarding
   module ConversationEngine
     module_function
 
-    def respond(session:, user_message:, inference_adapter: Kyc::Inference.adapter)
+    def respond(session:, user_message:, stream: false, inference_adapter: Kyc::Inference.adapter)
       stage = Onboarding::StateMachine.current_stage(session)
       create_message!(session, role: :applicant, content: user_message, stage: stage)
 
-      prompt = Onboarding::PromptBuilder.build(session: session)
-      response = parse_response(inference_adapter.generate(prompt: prompt))
+      if stream
+        respond_streaming(session, stage, inference_adapter)
+      else
+        prompt = Onboarding::PromptBuilder.build(session: session)
+        response = parse_response(inference_adapter.generate(prompt: prompt))
+        persist_and_return(session, stage, response)
+      end
+    end
 
+    def respond_streaming(session, stage, inference_adapter)
+      prompt = Onboarding::PromptBuilder.build(session: session, streaming: true)
+      accumulated = +""
+      past_separator = false
+
+      inference_adapter.generate(prompt: prompt, stream: true) do |chunk|
+        token = chunk.content.to_s
+        accumulated << token
+
+        unless past_separator
+          if accumulated.include?(Onboarding::PromptBuilder::STREAM_SEPARATOR)
+            past_separator = true
+          else
+            ActionCable.server.broadcast("onboarding:#{session.id}", { type: "token", content: token })
+          end
+        end
+      end
+
+      bot_text, json_part = accumulated.split(Onboarding::PromptBuilder::STREAM_SEPARATOR, 2)
+      extracted_data_raw = JSON.parse(json_part.to_s.strip)
+
+      response = {
+        "bot_message"    => bot_text.to_s.strip,
+        "extracted_data" => extracted_data_raw.fetch("extracted_data", {})
+      }
+
+      result = persist_and_return(session, stage, response)
+
+      ActionCable.server.broadcast("onboarding:#{session.id}", {
+        type:          "complete",
+        stage_changed: result[:stage_changed],
+        bot_message:   result[:bot_message]
+      })
+
+      result
+    rescue => e
+      ActionCable.server.broadcast("onboarding:#{session.id}", { type: "error", message: "Something went wrong. Please try again." })
+      raise
+    end
+    private_class_method :respond_streaming
+
+    def persist_and_return(session, stage, response)
       ActiveRecord::Base.transaction do
         extracted_data = Onboarding::DataCaptureService.call(
           session: session,
@@ -29,12 +77,13 @@ module Onboarding
         )
 
         {
-          bot_message: bot_message,
+          bot_message:    bot_message,
           extracted_data: extracted_data,
-          stage_changed: stage_changed
+          stage_changed:  stage_changed
         }
       end
     end
+    private_class_method :persist_and_return
 
     def create_message!(session, role:, content:, stage:, structured_data: {})
       OnboardingMessage.create!(

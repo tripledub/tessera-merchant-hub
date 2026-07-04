@@ -43,3 +43,4 @@
 .worktrees/
 .superpowers/
 /docs/superpowers/
+bin/dist

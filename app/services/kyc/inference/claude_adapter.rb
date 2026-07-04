@@ -3,71 +3,53 @@
 module Kyc
   module Inference
     class ClaudeAdapter < Base
+      MODEL_ID = ENV.fetch("KYC_INFERENCE_MODEL", "claude-sonnet-4-6")
+
       def initialize(client: nil)
         @client = client
       end
 
-      def extract(document:, prompt:)
-        blob_data = document.file.blob.download
-        base64    = Base64.strict_encode64(blob_data)
-        mime_type = document.file.content_type
+      def extract(document:, prompt:, schema: nil)
+        blob_data  = document.file.blob.download
+        media_type = document.file.content_type
+        extension  = Rack::Mime::MIME_TYPES.invert.fetch(media_type, ".bin").delete_prefix(".")
 
-        content_block = if mime_type == "application/pdf"
-          { type: "document", source: { type: "base64", media_type: "application/pdf", data: base64 } }
-        else
-          { type: "image", source: { type: "base64", media_type: mime_type, data: base64 } }
+        result = Tempfile.create([ "kyc_doc", ".#{extension}" ]) do |f|
+          f.binmode
+          f.write(blob_data)
+          f.flush
+          build_chat(schema).ask(prompt, with: f.path)
         end
 
-        response = client.messages.create(
-          model: model_id,
-          max_tokens: 4096,
-          messages: [
-            { role: "user", content: [ content_block, { type: "text", text: prompt } ] }
-          ]
-        )
-
-        parse_response(response)
+        parse_result(result)
+      rescue RubyLLM::Error => e
+        raise Kyc::Inference::Error, e.message
       end
 
-      def generate(prompt:)
-        response = client.messages.create(
-          model: model_id,
-          max_tokens: 4096,
-          messages: [
-            { role: "user", content: prompt }
-          ]
-        )
-
-        parse_response(response)
+      def generate(prompt:, schema: nil, stream: false, &block)
+        if stream
+          build_chat(schema).ask(prompt, &block)
+        else
+          parse_result(build_chat(schema).ask(prompt))
+        end
+      rescue RubyLLM::Error => e
+        raise Kyc::Inference::Error, e.message
       end
 
       private
 
-      MODEL_ID = ENV.fetch("KYC_INFERENCE_MODEL", "claude-sonnet-4-6")
-
-      def model_id
-        MODEL_ID
+      def build_chat(schema)
+        c = @client || RubyLLM.chat(model: MODEL_ID)
+        schema ? c.with_schema(schema) : c
       end
 
-      def client
-        @client ||= Anthropic::Client.new(api_key: api_key)
-      end
+      def parse_result(response)
+        content = response.content
+        return content if content.is_a?(Hash)
 
-      def api_key
-        Rails.application.credentials.anthropic_api_key ||
-          raise(Kyc::Inference::Error, "anthropic_api_key not set in Rails credentials")
-      end
-
-      def parse_response(response)
-        text = normalize_json_response(response.content.first.text)
-        JSON.parse(text)
+        JSON.parse(content)
       rescue JSON::ParserError => e
         raise Kyc::Inference::Error, "Claude returned invalid JSON: #{e.message}"
-      end
-
-      def normalize_json_response(text)
-        stripped = text.strip
-        stripped.match(/\A```(?:json)?\s*(.*?)\s*```\z/m)&.[](1) || stripped
       end
     end
   end

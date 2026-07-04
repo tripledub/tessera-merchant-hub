@@ -3,8 +3,13 @@
 module Kyc
   module DocumentCategory
     REGISTRY = {
-      identity:         %w[passport driving_licence],
-      proof_of_address: %w[utility_bill bank_account_statement]
+      identity:                   %w[passport driving_licence],
+      proof_of_address:           %w[utility_bill bank_account_statement],
+      proof_of_business_address:  %w[
+        certificate_of_registered_address
+        certificate_of_incorporation
+        certificate_of_incumbency
+      ]
     }.freeze
 
     module_function
@@ -19,6 +24,10 @@ module Kyc
 
     def proof_of_address?(document_type)
       self.for(document_type) == :proof_of_address
+    end
+
+    def proof_of_business_address?(document_type)
+      self.for(document_type) == :proof_of_business_address
     end
 
     def types_for(category)

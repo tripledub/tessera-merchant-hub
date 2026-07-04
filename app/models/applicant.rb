@@ -9,6 +9,9 @@ class Applicant < Merchant
            dependent: :destroy, inverse_of: :applicant
   has_many :validation_warnings, class_name: "Kyc::ValidationWarning", foreign_key: :applicant_id,
            dependent: :destroy, inverse_of: :applicant
+  has_many :addresses, as: :addressable, dependent: :destroy
+  has_one :primary_business_address, -> { where(type: "Address::Business", primary: true) },
+          class_name: "Address", as: :addressable
 
   validates :merchant_id, absence: true
   validates :name, presence: true
