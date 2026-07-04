@@ -178,7 +178,7 @@ export default class extends Controller {
     avatar.textContent = "AI"
 
     const bubble = document.createElement("div")
-    bubble.className = "rounded-2xl rounded-bl-sm bg-gray-100 px-4 py-3 text-sm leading-6 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
+    bubble.className = "chat-prose rounded-2xl rounded-bl-sm bg-gray-100 px-4 py-3 text-sm leading-6 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
     bubble.setAttribute("data-streaming-text", "")
 
     row.append(avatar, bubble)
