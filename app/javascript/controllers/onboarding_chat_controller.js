@@ -136,13 +136,13 @@ export default class extends Controller {
 
     if (this.streamingBubble) {
       const bubble = this.streamingBubble.querySelector("[data-streaming-text]")
-      if (bubble && botMessage) bubble.textContent = botMessage
+      if (bubble && botMessage) bubble.innerHTML = botMessage
     } else {
       // No tokens were streamed (fast response); create bubble with final message
       this.hideTyping()
       const wrapper = this.createStreamingBubble()
       const bubble = wrapper.querySelector("[data-streaming-text]")
-      if (bubble && botMessage) bubble.textContent = botMessage
+      if (bubble && botMessage) bubble.innerHTML = botMessage
       this.streamingBubble = wrapper
       this.messagesTarget.append(wrapper)
     }
