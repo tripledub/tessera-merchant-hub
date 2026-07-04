@@ -3,7 +3,7 @@ import { cable } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
   static targets = ["composer", "input", "messages", "submit", "typing", "uploadButton", "uploadInput"]
-  static values  = { sessionId: String }
+  static values  = { sessionId: String, token: String }
 
   connect() {
     this.scrollToLatest()
@@ -13,11 +13,13 @@ export default class extends Controller {
     this.observer.observe(this.messagesTarget, { childList: true })
 
     this.streamingBubble = null
+    this.tokenQueue = []
+    this.drainingTokens = false
 
     if (this.hasSessionIdValue) {
       cable.getConsumer().then(consumer => {
         this.subscription = consumer.subscriptions.create(
-          { channel: "OnboardingChannel", session_id: this.sessionIdValue },
+          { channel: "OnboardingChannel", session_id: this.sessionIdValue, token: this.tokenValue },
           { received: (data) => this.handleCableData(data) }
         )
       })
@@ -103,13 +105,35 @@ export default class extends Controller {
       this.messagesTarget.append(this.streamingBubble)
     }
 
-    const bubble = this.streamingBubble.querySelector("[data-streaming-text]")
-    if (bubble) bubble.textContent += token
+    this.tokenQueue.push(token)
 
-    this.scrollToLatest()
+    if (!this.drainingTokens) {
+      this.drainingTokens = true
+      requestAnimationFrame(() => this.drainTokenQueue())
+    }
+  }
+
+  drainTokenQueue() {
+    const bubble = this.streamingBubble?.querySelector("[data-streaming-text]")
+    if (bubble && this.tokenQueue.length > 0) {
+      bubble.textContent += this.tokenQueue.shift()
+      this.scrollToLatest()
+    }
+
+    if (this.tokenQueue.length > 0) {
+      requestAnimationFrame(() => this.drainTokenQueue())
+    } else {
+      this.drainingTokens = false
+    }
   }
 
   finalizeStreamingBubble(botMessage, stageChanged) {
+    if (this.drainingTokens) {
+      // Wait for the rAF drain to finish before finalizing
+      requestAnimationFrame(() => this.finalizeStreamingBubble(botMessage, stageChanged))
+      return
+    }
+
     if (this.streamingBubble) {
       const bubble = this.streamingBubble.querySelector("[data-streaming-text]")
       if (bubble && botMessage) bubble.textContent = botMessage
@@ -124,6 +148,8 @@ export default class extends Controller {
     }
 
     this.streamingBubble = null
+    const statusEl = document.getElementById("onboarding_pending_applicant_message")?.querySelector("p")
+    if (statusEl) statusEl.textContent = this.formatTimestamp(new Date())
     this.setSubmitting(false)
     this.scrollToLatest()
     this.scrollComposerIntoView()
@@ -209,6 +235,14 @@ export default class extends Controller {
     requestAnimationFrame(() => {
       this.messagesTarget.scrollTop = this.messagesTarget.scrollHeight
     })
+  }
+
+  formatTimestamp(date) {
+    const day = String(date.getDate()).padStart(2, "0")
+    const month = date.toLocaleString("en", { month: "short" })
+    const hh = String(date.getHours()).padStart(2, "0")
+    const mm = String(date.getMinutes()).padStart(2, "0")
+    return `${day} ${month} ${hh}:${mm}`
   }
 
   scrollComposerIntoView() {

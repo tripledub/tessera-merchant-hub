@@ -5,13 +5,9 @@ module ApplicationCable
     identified_by :current_applicant_user
 
     def connect
-      self.current_applicant_user = find_verified_user
-    end
-
-    private
-
-    def find_verified_user
-      env["warden"].user(:applicant_user) || reject_unauthorized_connection
+      # Warden may not have a session when AnyCable Go doesn't forward the cookie header.
+      # Channel-level auth (OnboardingChannel) verifies a signed token instead.
+      self.current_applicant_user = env["warden"]&.user(:applicant_user)
     end
   end
 end

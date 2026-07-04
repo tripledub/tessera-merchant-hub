@@ -7,6 +7,10 @@ module Onboarding
     before_action :set_onboarding_session
 
     def show
+      @cable_token = Rails.application.message_verifier(:cable_auth).generate(
+        { session_id: @onboarding_session.id, user_id: current_applicant_user.id },
+        expires_in: 1.hour
+      )
       @messages = ordered_messages
     end
 
