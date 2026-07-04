@@ -1,4 +1,4 @@
 web: bin/rails server -b 0.0.0.0
 css: bin/rails tailwindcss:watch
 anycable: bundle exec anycable
-anycable-go: anycable-go --host=0.0.0.0 --port=8080 --headers=cookie --redis_url=redis://localhost:6379/1
+ws: bin/anycable-go --host=0.0.0.0 --port=8080 --redis_url=redis://localhost:6379/1
