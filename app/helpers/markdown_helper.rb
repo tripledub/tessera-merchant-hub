@@ -22,4 +22,6 @@ module MarkdownHelper
     sanitized = SANITIZER.sanitize(raw_html, tags: ALLOWED_TAGS, attributes: ALLOWED_ATTRS)
     sanitized.html_safe
   end
+
+  module_function :render_markdown
 end
