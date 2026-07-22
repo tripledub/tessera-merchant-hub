@@ -183,4 +183,78 @@ RSpec.describe "Applicants", type: :request do
       end
     end
   end
+
+  describe "DELETE /applicants/:id" do
+    let(:applicant) { create(:applicant) }
+
+    around do |example|
+      original = Rails.application.config.x.applicant_delete_enabled
+      Rails.application.config.x.applicant_delete_enabled = true
+      example.run
+      Rails.application.config.x.applicant_delete_enabled = original
+    end
+
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "destroys the applicant and redirects to the index" do
+        delete applicant_path(applicant)
+        expect(response).to redirect_to(applicants_path)
+        expect(Applicant.find_by(id: applicant.id)).to be_nil
+      end
+
+      it "redirects back to the applicant with an alert when it has a portal user" do
+        create(:applicant_user, applicant: applicant)
+
+        delete applicant_path(applicant)
+
+        expect(response).to redirect_to(applicant_path(applicant))
+        expect(flash[:alert]).to include("active portal user account")
+        expect(Applicant.find_by(id: applicant.id)).to be_present
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "returns 403" do
+        delete applicant_path(applicant)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context "when signed in as merchant_admin" do
+      before { sign_in merchant_admin }
+
+      it "returns 403" do
+        delete applicant_path(applicant)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+
+    context "when the delete feature is disabled" do
+      before do
+        Rails.application.config.x.applicant_delete_enabled = false
+        sign_in psp_admin
+      end
+
+      it "returns 404" do
+        delete applicant_path(applicant)
+        expect(response).to have_http_status(:not_found)
+      end
+    end
+
+    context "when the config flag is somehow enabled in production" do
+      before do
+        allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("production"))
+        Rails.application.config.x.applicant_delete_enabled = true
+        sign_in psp_admin
+      end
+
+      it "raises instead of allowing the delete" do
+        expect { delete applicant_path(applicant) }
+          .to raise_error(ApplicantsController::ProductionMisconfiguration, /must never be set in production/)
+      end
+    end
+  end
 end

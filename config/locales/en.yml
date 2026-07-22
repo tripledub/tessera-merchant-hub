@@ -238,6 +238,7 @@ en:
         unlock_success: "%{email} has been unlocked."
     applicants:
       create_success: Applicant created.
+      destroy_success: Applicant deleted.
       update_success: Applicant updated.
     executive_narrative:
       failed: Could not generate the executive summary. Please try again.
