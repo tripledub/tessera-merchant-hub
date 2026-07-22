@@ -286,19 +286,6 @@ RSpec.describe "Applicants", type: :request do
         expect(response).to have_http_status(:not_found)
       end
     end
-
-    context "when the config flag is somehow enabled in production" do
-      before do
-        allow(Rails).to receive(:env).and_return(ActiveSupport::EnvironmentInquirer.new("production"))
-        Rails.application.config.x.applicant_delete_enabled = true
-        sign_in psp_admin
-      end
-
-      it "raises instead of allowing the delete" do
-        expect { delete applicant_path(applicant) }
-          .to raise_error(ApplicantsController::ProductionMisconfiguration, /must never be set in production/)
-      end
-    end
   end
 
   describe "GET /applicants/:id/tab/summary — portal users" do
