@@ -1,8 +1,6 @@
 # frozen_string_literal: true
 
 class ApplicantsController < ApplicationController
-  class ProductionMisconfiguration < StandardError; end
-
   expose(:applicants) {
     scope = policy_scope(Applicant)
     if params[:q].present?
@@ -89,10 +87,6 @@ class ApplicantsController < ApplicationController
   end
 
   def ensure_applicant_delete_enabled!
-    if Rails.env.production? && Rails.application.config.x.applicant_delete_enabled
-      raise ProductionMisconfiguration, "APPLICANT_DELETE_ENABLED must never be set in production"
-    end
-
     raise ActiveRecord::RecordNotFound unless Rails.application.config.x.applicant_delete_enabled
   end
 end
