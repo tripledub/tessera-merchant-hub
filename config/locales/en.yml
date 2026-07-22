@@ -213,6 +213,11 @@ en:
         no_narrative: No AI narrative has been generated yet. Click "Generate Summary"
           to create one.
         ownership_overview: Ownership Overview
+        portal_user_email: Email
+        portal_user_remove: Remove portal user
+        portal_user_remove_confirm: Remove portal access for %{email}? They will no
+          longer be able to sign in.
+        portal_users: Portal Users
         recommended_actions: Recommended Actions
         regenerate: Regenerate
         relationships: Relationships
@@ -243,6 +248,8 @@ en:
         invite_success: Invitation sent to %{email}.
         role_updated: Role updated for %{email}.
         unlock_success: "%{email} has been unlocked."
+    applicant_users:
+      destroy_success: Portal user removed.
     applicants:
       create_success: Applicant created.
       destroy_success: Applicant deleted.
