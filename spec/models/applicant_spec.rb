@@ -66,6 +66,11 @@ RSpec.describe Applicant, type: :model do
       .dependent(:destroy)
   end
 
+  it "has many applicant_users" do
+    expect(applicant).to have_many(:applicant_users)
+      .with_foreign_key(:applicant_id)
+  end
+
   it "defaults status to pending" do
     expect(applicant.status).to eq("pending")
   end

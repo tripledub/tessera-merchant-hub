@@ -5,4 +5,8 @@ module ApplicationHelper
     yield presenter if block_given?
     presenter
   end
+
+  def applicant_delete_enabled?
+    Rails.application.config.x.applicant_delete_enabled
+  end
 end

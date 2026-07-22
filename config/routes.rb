@@ -32,7 +32,7 @@ Rails.application.routes.draw do
 
   resources :merchants, only: %i[new create index show edit update]
 
-  resources :applicants, only: %i[new create index show edit update] do
+  resources :applicants, only: %i[new create index show edit update destroy] do
     get "tab/:tab", action: :tab, as: :tab, on: :member
     namespace :kyc do
       resource :executive_narrative, only: %i[show create]
