@@ -30,6 +30,12 @@ RSpec.describe ApplicantPolicy, type: :policy do
     it("denies psp_support") { expect(described_class.new(psp_support, applicant).edit?).to be false }
   end
 
+  describe "destroy?" do
+    it("permits psp_admin")  { expect(described_class.new(psp_admin,   applicant).destroy?).to be true }
+    it("denies psp_support") { expect(described_class.new(psp_support, applicant).destroy?).to be false }
+    it("denies merchant_admin") { expect(described_class.new(merchant_admin, applicant).destroy?).to be false }
+  end
+
   describe "Scope" do
     before do
       create(:applicant)
