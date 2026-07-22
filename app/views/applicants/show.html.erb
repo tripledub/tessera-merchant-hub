@@ -14,9 +14,12 @@
       <p class="mt-0.5 text-theme-sm text-gray-400"><%= applicant.company_name %></p>
     <% end %>
   </div>
-  <% if policy(applicant).edit? %>
-    <%= link_to t('.edit'), edit_applicant_path(applicant), class: "btn-secondary" %>
-  <% end %>
+  <div class="flex items-center gap-2">
+    <% if policy(applicant).edit? %>
+      <%= link_to t('.edit'), edit_applicant_path(applicant), class: "btn-secondary" %>
+    <% end %>
+    <%= render "applicants/delete_button", applicant: applicant %>
+  </div>
 </div>
 
 <div data-controller="tabs" data-tabs-default-value="overview">

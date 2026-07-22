@@ -13,6 +13,7 @@ Turbo.config.forms.confirm = (message, _formElement, submitter) => {
 
   const messageEl = document.getElementById("confirm-modal-message")
   const inputWrapper = document.getElementById("confirm-modal-input-wrapper")
+  const inputLabel = document.getElementById("confirm-modal-input-label")
   const input = document.getElementById("confirm-modal-input")
   const confirmBtn = document.getElementById("confirm-modal-confirm")
   const cancelBtn = document.getElementById("confirm-modal-cancel")
@@ -24,6 +25,7 @@ Turbo.config.forms.confirm = (message, _formElement, submitter) => {
   // a synthetic form with no submitter, so data-confirm-required-text would
   // be silently ignored — always use button_to for anything that needs this gate.
   const requiredText = submitter?.dataset?.confirmRequiredText
+  const requiredLabel = submitter?.dataset?.confirmInputLabel
 
   const setConfirmDisabled = (disabled) => {
     confirmBtn.disabled = disabled
@@ -33,6 +35,7 @@ Turbo.config.forms.confirm = (message, _formElement, submitter) => {
 
   if (requiredText) {
     inputWrapper.classList.remove("hidden")
+    inputLabel.textContent = requiredLabel || ""
     input.value = ""
     input.placeholder = requiredText
     setConfirmDisabled(true)

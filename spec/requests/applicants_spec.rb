@@ -21,6 +21,12 @@ RSpec.describe "Applicants", type: :request do
         expect(response.body).to include("Beta Ltd")
       end
 
+      it "does not render the Actions column when applicant deletion is disabled" do
+        get applicants_path
+        expect(response.body).not_to include(I18n.t("applicants.index.table.actions"))
+        expect(response.body).not_to include("Delete applicant")
+      end
+
       it "filters by name" do
         get applicants_path, params: { q: "Acme" }
         expect(response.body).to include("Acme Corp")
@@ -59,6 +65,43 @@ RSpec.describe "Applicants", type: :request do
       it "redirects to sign in" do
         get applicants_path
         expect(response).to redirect_to(new_user_session_path)
+      end
+    end
+  end
+
+  describe "GET /applicants — Actions column" do
+    around do |example|
+      original = Rails.application.config.x.applicant_delete_enabled
+      Rails.application.config.x.applicant_delete_enabled = true
+      example.run
+      Rails.application.config.x.applicant_delete_enabled = original
+    end
+
+    context "when signed in as psp_admin (can delete)" do
+      before { sign_in psp_admin }
+
+      it "shows the Actions column with matching header/row cell counts" do
+        get applicants_path
+        doc = Nokogiri::HTML(response.body)
+        header_cells = doc.css("table thead th").count
+        first_row_cells = doc.css("table tbody tr").first.css("td").count
+
+        expect(response.body).to include(I18n.t("applicants.index.table.actions"))
+        expect(header_cells).to eq(first_row_cells)
+      end
+    end
+
+    context "when signed in as psp_support (cannot delete)" do
+      before { sign_in psp_support }
+
+      it "hides the Actions column with matching header/row cell counts" do
+        get applicants_path
+        doc = Nokogiri::HTML(response.body)
+        header_cells = doc.css("table thead th").count
+        first_row_cells = doc.css("table tbody tr").first.css("td").count
+
+        expect(response.body).not_to include(I18n.t("applicants.index.table.actions"))
+        expect(header_cells).to eq(first_row_cells)
       end
     end
   end
