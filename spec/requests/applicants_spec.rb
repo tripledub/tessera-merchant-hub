@@ -300,4 +300,40 @@ RSpec.describe "Applicants", type: :request do
       end
     end
   end
+
+  describe "GET /applicants/:id/tab/summary — portal users" do
+    let(:applicant) { create(:applicant) }
+
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "does not render a portal users table when there is none" do
+        get tab_applicant_path(applicant, tab: "summary")
+        expect(response.body).not_to include("Portal Users")
+      end
+
+      it "renders the portal user's email and a remove button when one exists" do
+        applicant_user = create(:applicant_user, applicant: applicant, email: "jane@example.com")
+
+        get tab_applicant_path(applicant, tab: "summary")
+
+        expect(response.body).to include("Portal Users")
+        expect(response.body).to include("jane@example.com")
+        expect(response.body).to include(applicant_user_path(applicant_user))
+      end
+    end
+
+    context "when signed in as psp_support (cannot remove portal users)" do
+      before { sign_in psp_support }
+
+      it "shows the portal user but not a remove button" do
+        applicant_user = create(:applicant_user, applicant: applicant, email: "jane@example.com")
+
+        get tab_applicant_path(applicant, tab: "summary")
+
+        expect(response.body).to include("jane@example.com")
+        expect(response.body).not_to include(applicant_user_path(applicant_user))
+      end
+    end
+  end
 end
