@@ -8,6 +8,11 @@ RSpec.describe Applicants::Deletion, type: :service do
       let(:applicant) { create(:applicant) }
       let!(:kyc_document) { create(:kyc_document, applicant: applicant) }
       let!(:kyc_principal) { create(:kyc_principal, applicant: applicant) }
+      let!(:corporate_entity) { create(:kyc_corporate_entity, applicant: applicant, kyc_document: kyc_document) }
+      let!(:validation_warning) do
+        create(:kyc_validation_warning, applicant: applicant, kyc_document: kyc_document, corporate_entity: corporate_entity)
+      end
+      let!(:onboarding_session) { create(:onboarding_session, applicant: applicant) }
 
       it "destroys the applicant and its associated records" do
         described_class.call(applicant)
@@ -15,6 +20,9 @@ RSpec.describe Applicants::Deletion, type: :service do
         expect(Applicant.find_by(id: applicant.id)).to be_nil
         expect(KycDocument.find_by(id: kyc_document.id)).to be_nil
         expect(KycPrincipal.find_by(id: kyc_principal.id)).to be_nil
+        expect(Kyc::CorporateEntity.find_by(id: corporate_entity.id)).to be_nil
+        expect(Kyc::ValidationWarning.find_by(id: validation_warning.id)).to be_nil
+        expect(OnboardingSession.find_by(id: onboarding_session.id)).to be_nil
       end
 
       it "enqueues a purge job for each attached KYC document file" do
