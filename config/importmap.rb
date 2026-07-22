@@ -10,4 +10,3 @@ pin_all_from "app/javascript/controllers", under: "controllers"
 pin "flatpickr", to: "https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"
 pin "@rails/activestorage", to: "activestorage.esm.js"
 pin "apexcharts" # @5.15.2
-pin "marked", to: "https://cdn.jsdelivr.net/npm/marked@15/marked.min.js"

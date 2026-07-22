@@ -69,6 +69,12 @@ en:
         submit: Sign in
         title: Sign in to Onboarding
   applicants:
+    delete:
+      button: Delete applicant
+      confirm: Delete %{name}? This will permanently remove all KYC principals, documents,
+        corporate entities, validation warnings, and the onboarding session for this
+        applicant. This cannot be undone.
+      confirm_input_label: Type the business name to confirm
     edit:
       back: "← Back to applicant"
       page_title: Edit applicant
@@ -89,6 +95,7 @@ en:
       page_title: Applicants
       search_placeholder: Search by name or company…
       table:
+        actions: Actions
         company: Company
         created: Created
         empty: No applicants found.
@@ -238,6 +245,7 @@ en:
         unlock_success: "%{email} has been unlocked."
     applicants:
       create_success: Applicant created.
+      destroy_success: Applicant deleted.
       update_success: Applicant updated.
     executive_narrative:
       failed: Could not generate the executive summary. Please try again.

@@ -1,6 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
 import { cable } from "@hotwired/turbo-rails"
-import { marked } from "marked"
 
 export default class extends Controller {
   static targets = ["composer", "input", "messages", "submit", "typing", "uploadButton", "uploadInput"]
@@ -137,13 +136,13 @@ export default class extends Controller {
 
     if (this.streamingBubble) {
       const bubble = this.streamingBubble.querySelector("[data-streaming-text]")
-      if (bubble && botMessage) bubble.innerHTML = marked.parse(botMessage)
+      if (bubble && botMessage) bubble.innerHTML = botMessage
     } else {
       // No tokens were streamed (fast response); create bubble with final message
       this.hideTyping()
       const wrapper = this.createStreamingBubble()
       const bubble = wrapper.querySelector("[data-streaming-text]")
-      if (bubble && botMessage) bubble.innerHTML = marked.parse(botMessage)
+      if (bubble && botMessage) bubble.innerHTML = botMessage
       this.streamingBubble = wrapper
       this.messagesTarget.append(wrapper)
     }

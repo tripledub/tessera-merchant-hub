@@ -28,4 +28,6 @@ module MarkdownHelper
     raw_html = RENDERER.render(text.to_s)
     SANITIZER.sanitize(raw_html, tags: ALLOWED_TAGS, attributes: ALLOWED_ATTRS).to_s
   end
+
+  module_function :render_markdown
 end
