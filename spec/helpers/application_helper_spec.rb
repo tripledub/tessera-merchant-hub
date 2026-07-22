@@ -42,4 +42,16 @@ RSpec.describe ApplicationHelper, type: :helper do
       expect(result).to be_a(ApplicantPresenter)
     end
   end
+
+  describe "#applicant_delete_enabled?" do
+    it "returns the config.x.applicant_delete_enabled value" do
+      allow(Rails.application.config.x).to receive(:applicant_delete_enabled).and_return(true)
+      expect(helper.applicant_delete_enabled?).to be true
+    end
+
+    it "returns false when the config value is false" do
+      allow(Rails.application.config.x).to receive(:applicant_delete_enabled).and_return(false)
+      expect(helper.applicant_delete_enabled?).to be false
+    end
+  end
 end

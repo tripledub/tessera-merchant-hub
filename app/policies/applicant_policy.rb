@@ -25,6 +25,10 @@ class ApplicantPolicy < ApplicationPolicy
     psp_admin?
   end
 
+  def destroy?
+    psp_admin?
+  end
+
   def run_extraction?
     psp_admin?
   end

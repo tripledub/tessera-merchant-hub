@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ApplicantsController < ApplicationController
+  class ProductionMisconfiguration < StandardError; end
+
   expose(:applicants) {
     scope = policy_scope(Applicant)
     if params[:q].present?
@@ -11,6 +13,8 @@ class ApplicantsController < ApplicationController
   }
 
   expose(:applicant) { Applicant.find(params[:id]) }
+
+  before_action :ensure_applicant_delete_enabled!, only: :destroy
 
   def index
     authorize Applicant, :index?
@@ -68,9 +72,27 @@ class ApplicantsController < ApplicationController
     end
   end
 
+  def destroy
+    authorize applicant
+    result = Applicants::Deletion.call(applicant)
+    if result.errors.none?
+      redirect_to applicants_path, notice: t("flash.applicants.destroy_success")
+    else
+      redirect_to applicant_path(applicant), alert: result.errors.full_messages.to_sentence
+    end
+  end
+
   private
 
   def applicant_params
     params.require(:applicant).permit(:name, :company_name, :contact_email, :country, :country_code, :address_line1, :city, :support_url)
+  end
+
+  def ensure_applicant_delete_enabled!
+    if Rails.env.production? && Rails.application.config.x.applicant_delete_enabled
+      raise ProductionMisconfiguration, "APPLICANT_DELETE_ENABLED must never be set in production"
+    end
+
+    raise ActiveRecord::RecordNotFound unless Rails.application.config.x.applicant_delete_enabled
   end
 end
