@@ -43,9 +43,10 @@
       <p class="py-10 text-center text-theme-sm text-gray-500 dark:text-gray-400"><%= t(".transcript.empty") %></p>
     <% else %>
       <div class="mt-5 space-y-8">
-        <% presenter.stage_groups.each do |group| %>
-          <section aria-labelledby="stage-<%= group[:stage] %>">
-            <h3 id="stage-<%= group[:stage] %>" class="mb-4 border-b border-gray-200 pb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-gray-800">
+        <% presenter.stage_groups.each_with_index do |group, index| %>
+          <% stage_heading_id = "stage-#{group[:stage]}-#{index}" %>
+          <section aria-labelledby="<%= stage_heading_id %>">
+            <h3 id="<%= stage_heading_id %>" class="mb-4 border-b border-gray-200 pb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-gray-800">
               <%= group[:label] %>
             </h3>
             <div class="space-y-4">

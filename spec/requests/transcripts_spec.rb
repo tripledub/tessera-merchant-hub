@@ -102,6 +102,25 @@ RSpec.describe "Transcripts", type: :request do
       expect(response.body).not_to include("<script>alert('x')</script>")
     end
 
+    it "uses unique headings when a stage is revisited" do
+      session.onboarding_messages.destroy_all
+      create(:onboarding_message, onboarding_session: session, stage: "company_info", created_at: 3.minutes.ago)
+      create(:onboarding_message, onboarding_session: session, stage: "directors_ubos", created_at: 2.minutes.ago)
+      create(:onboarding_message, onboarding_session: session, stage: "company_info", created_at: 1.minute.ago)
+      sign_in psp_support
+
+      get transcript_path(session)
+
+      document = Nokogiri::HTML(response.body)
+      stage_heading_ids = document.css("h3[id^='stage-']").map { |heading| heading["id"] }
+      expect(stage_heading_ids).to eq(%w[
+        stage-company_info-0
+        stage-directors_ubos-1
+        stage-company_info-2
+      ])
+      expect(stage_heading_ids).to eq(stage_heading_ids.uniq)
+    end
+
     it "shows an empty transcript state when there are no messages" do
       session.onboarding_messages.destroy_all
       sign_in psp_support
