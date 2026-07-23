@@ -1,0 +1,60 @@
+<% content_for :title, t(".page_title", applicant: @session.applicant.name) %>
+
+<div class="mb-4">
+  <%= link_to t(".back"), transcripts_path, class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<div class="mb-6 flex flex-wrap items-start justify-between gap-3">
+  <div>
+    <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= @session.applicant.name %></h1>
+    <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400"><%= t(".subtitle") %></p>
+  </div>
+  <%= link_to t(".view_applicant"), applicant_path(@session.applicant), class: "btn-secondary" %>
+</div>
+
+<% present(@session) do |presenter| %>
+  <section aria-labelledby="session-overview-heading" class="mb-6">
+    <h2 id="session-overview-heading" class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <%= t(".overview.title") %>
+    </h2>
+    <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <% [
+        [t(".overview.status"), presenter.status_label],
+        [t(".overview.stage"), presenter.stage_label],
+        [t(".overview.progress"), "#{presenter.progress_percentage}%"],
+        [t(".overview.messages"), presenter.message_count],
+        [t(".overview.applicant_messages"), presenter.applicant_message_count],
+        [t(".overview.chatbot_messages"), presenter.bot_message_count],
+        [t(".overview.started"), l(presenter.started_at, format: :short)],
+        [t(".overview.last_activity"), l(presenter.last_activity_at, format: :short)],
+        [t(".overview.elapsed"), presenter.elapsed_duration]
+      ].each do |label, value| %>
+        <div class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+          <p class="text-theme-xs text-gray-500 dark:text-gray-400"><%= label %></p>
+          <p class="mt-1 text-sm font-semibold text-gray-800 dark:text-white/90"><%= value %></p>
+        </div>
+      <% end %>
+    </div>
+  </section>
+
+  <section aria-labelledby="transcript-heading" class="card">
+    <h2 id="transcript-heading" class="text-base font-semibold text-gray-800 dark:text-white/90"><%= t(".transcript.title") %></h2>
+    <% if presenter.stage_groups.empty? %>
+      <p class="py-10 text-center text-theme-sm text-gray-500 dark:text-gray-400"><%= t(".transcript.empty") %></p>
+    <% else %>
+      <div class="mt-5 space-y-8">
+        <% presenter.stage_groups.each_with_index do |group, index| %>
+          <% stage_heading_id = "stage-#{group[:stage]}-#{index}" %>
+          <section aria-labelledby="<%= stage_heading_id %>">
+            <h3 id="<%= stage_heading_id %>" class="mb-4 border-b border-gray-200 pb-2 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:border-gray-800">
+              <%= group[:label] %>
+            </h3>
+            <div class="space-y-4">
+              <%= render partial: "message", collection: group[:messages], as: :message %>
+            </div>
+          </section>
+        <% end %>
+      </div>
+    <% end %>
+  </section>
+<% end %>

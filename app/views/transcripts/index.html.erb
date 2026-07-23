@@ -1,0 +1,92 @@
+<% content_for :title, t(".page_title") %>
+
+<div class="mb-6">
+  <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= t(".title") %></h1>
+  <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400"><%= t(".subtitle") %></p>
+</div>
+
+<div class="card mb-6">
+  <h2 class="mb-4 text-sm font-semibold text-gray-800 dark:text-white/90"><%= t(".filters.title") %></h2>
+  <%= form_with url: transcripts_path, method: :get, class: "grid gap-4 md:grid-cols-2 xl:grid-cols-5" do |form| %>
+    <div>
+      <%= form.label :applicant_id, t(".filters.applicant"), class: "mb-1.5 block text-theme-xs font-medium text-gray-700 dark:text-gray-400" %>
+      <%= form.select :applicant_id,
+            options_from_collection_for_select(@applicants, :id, :name, params[:applicant_id]),
+            { include_blank: t(".filters.all_applicants") }, class: "form-select" %>
+    </div>
+    <div>
+      <%= form.label :status, t(".filters.status"), class: "mb-1.5 block text-theme-xs font-medium text-gray-700 dark:text-gray-400" %>
+      <%= form.select :status,
+            options_for_select(OnboardingSession.statuses.keys.map { |status| [status.humanize, status] }, params[:status]),
+            { include_blank: t(".filters.all_statuses") }, class: "form-select" %>
+    </div>
+    <div>
+      <%= form.label :current_stage, t(".filters.stage"), class: "mb-1.5 block text-theme-xs font-medium text-gray-700 dark:text-gray-400" %>
+      <%= form.select :current_stage,
+            options_for_select(OnboardingSession.current_stages.keys.map { |stage| [stage.humanize, stage] }, params[:current_stage]),
+            { include_blank: t(".filters.all_stages") }, class: "form-select" %>
+    </div>
+    <div>
+      <%= form.label :date_from, t(".filters.date_from"), class: "mb-1.5 block text-theme-xs font-medium text-gray-700 dark:text-gray-400" %>
+      <%= form.date_field :date_from, value: params[:date_from], class: "form-input" %>
+    </div>
+    <div>
+      <%= form.label :date_to, t(".filters.date_to"), class: "mb-1.5 block text-theme-xs font-medium text-gray-700 dark:text-gray-400" %>
+      <%= form.date_field :date_to, value: params[:date_to], class: "form-input" %>
+    </div>
+    <div class="flex items-center gap-3 md:col-span-2 xl:col-span-5">
+      <%= form.submit t(".filters.apply"), class: "btn-primary" %>
+      <%= link_to t(".filters.clear"), transcripts_path, class: "btn-secondary" %>
+    </div>
+  <% end %>
+</div>
+
+<div class="card overflow-x-auto">
+  <% if @sessions.empty? %>
+    <div class="py-12 text-center">
+      <h2 class="text-sm font-semibold text-gray-800 dark:text-white/90">
+        <%= params.slice(:applicant_id, :status, :current_stage, :date_from, :date_to).values.any?(&:present?) ?
+              t(".empty.filtered_title") : t(".empty.title") %>
+      </h2>
+      <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400"><%= t(".empty.description") %></p>
+      <% if params.slice(:applicant_id, :status, :current_stage, :date_from, :date_to).values.any?(&:present?) %>
+        <%= link_to t(".filters.clear"), transcripts_path, class: "btn-secondary mt-4" %>
+      <% end %>
+    </div>
+  <% else %>
+    <table class="w-full min-w-[960px] text-left text-theme-sm">
+      <thead>
+        <tr class="border-b border-gray-200 dark:border-gray-800">
+          <% %i[applicant status stage messages started last_activity elapsed].each do |heading| %>
+            <th class="px-4 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t(".table.#{heading}") %></th>
+          <% end %>
+          <th class="px-4 py-3"><span class="sr-only"><%= t(".table.actions") %></span></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+        <% @sessions.each do |session| %>
+          <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.03]">
+            <td class="px-4 py-3 font-medium">
+              <%= link_to session.applicant.name, applicant_path(session.applicant),
+                    class: "text-brand-600 hover:underline dark:text-brand-400" %>
+            </td>
+            <td class="px-4 py-3"><span class="badge badge-gray"><%= session.status.humanize %></span></td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-300"><%= session.current_stage.humanize %></td>
+            <td class="px-4 py-3 text-gray-600 dark:text-gray-300"><%= session.messages_count %></td>
+            <td class="px-4 py-3 text-gray-500 dark:text-gray-400"><%= l(session.created_at, format: :short) %></td>
+            <td class="px-4 py-3 text-gray-500 dark:text-gray-400"><%= l(session.last_activity_at, format: :short) %></td>
+            <td class="px-4 py-3 text-gray-500 dark:text-gray-400">
+              <%= distance_of_time_in_words(session.created_at, session.last_activity_at) %>
+            </td>
+            <td class="px-4 py-3 text-right">
+              <%= link_to t(".table.review"), transcript_path(session), class: "text-brand-600 hover:underline dark:text-brand-400" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <% if @pagy.pages > 1 %>
+      <div class="mt-4 border-t border-gray-200 pt-4"><%== @pagy.series_nav %></div>
+    <% end %>
+  <% end %>
+</div>
