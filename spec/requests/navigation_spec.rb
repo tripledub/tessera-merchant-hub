@@ -29,6 +29,12 @@ RSpec.describe "Navigation", type: :request do
         expect(response.body).to include(shops_path)
       end
 
+      it "shows Transcripts link" do
+        get applicants_path
+        expect(response.body).to include(transcripts_path)
+        expect(response.body).to include("Transcripts")
+      end
+
       it "shows a sign out control" do
         get applicants_path
         expect(response.body).to include(destroy_user_session_path)
@@ -46,6 +52,11 @@ RSpec.describe "Navigation", type: :request do
       it "shows Shops for merchant_admin" do
         get shops_path
         expect(response.body).to include(shops_path)
+      end
+
+      it "does not show Transcripts" do
+        get shops_path
+        expect(response.body).not_to include(transcripts_path)
       end
     end
 
