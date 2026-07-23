@@ -449,6 +449,7 @@ en:
       team: Team
       toggle_nav: Toggle navigation menu
       toggle_sidebar: Toggle sidebar
+      transcripts: Transcripts
       users: Users
   merchants:
     edit:
@@ -738,3 +739,56 @@ en:
       submit: Send invite
       subtitle: They will receive an email to set their password.
       title: Invite a team member
+  transcripts:
+    index:
+      empty:
+        description: Completed and active onboarding conversations will appear here.
+        filtered_title: No sessions match these filters
+        title: No onboarding sessions yet
+      filters:
+        all_applicants: All applicants
+        all_stages: All stages
+        all_statuses: All statuses
+        applicant: Applicant
+        apply: Apply filters
+        clear: Clear filters
+        date_from: Started from
+        date_to: Started to
+        stage: Current stage
+        status: Status
+        title: Filter transcripts
+      page_title: Transcripts
+      subtitle: Review onboarding conversations and chatbot efficiency across applicants.
+      table:
+        actions: Actions
+        applicant: Applicant
+        elapsed: Elapsed
+        last_activity: Last activity
+        messages: Messages
+        review: Review
+        stage: Current stage
+        started: Started
+        status: Status
+      title: Transcripts
+    message:
+      applicant: Applicant
+      chatbot: Chatbot
+    show:
+      back: "← Back to transcripts"
+      overview:
+        applicant_messages: Applicant messages
+        chatbot_messages: Chatbot messages
+        elapsed: Elapsed
+        last_activity: Last activity
+        messages: Messages
+        progress: Progress
+        stage: Current stage
+        started: Started
+        status: Status
+        title: Session overview
+      page_title: "%{applicant} transcript"
+      subtitle: Read-only onboarding conversation review
+      transcript:
+        empty: This session has no messages.
+        title: Transcript
+      view_applicant: View applicant
