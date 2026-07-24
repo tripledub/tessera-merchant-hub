@@ -3,14 +3,11 @@
     <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
       <%= t('kyc.principals.show.sections.address') %>
     </h2>
-    <% if p.address_present? %>
+    <% if p.address_lines.any? %>
       <address class="not-italic text-theme-sm text-gray-900 dark:text-white/90 space-y-0.5">
-        <p><%= p.address_line1 %></p>
-        <% if p.address_line2.present? %>
-          <p><%= p.address_line2 %></p>
+        <% p.address_lines.each do |line| %>
+          <p><%= line %></p>
         <% end %>
-        <p><%= p.city_postcode %></p>
-        <p><%= p.country %></p>
       </address>
     <% else %>
       <p class="text-theme-sm text-gray-400 italic"><%= t('kyc.principals.show.not_provided') %></p>

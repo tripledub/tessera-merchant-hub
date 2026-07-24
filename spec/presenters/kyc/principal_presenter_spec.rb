@@ -7,42 +7,34 @@ RSpec.describe Kyc::PrincipalPresenter, type: :presenter do
   let(:kyc_principal) { build(:kyc_principal) }
   let(:presenter) { described_class.new(kyc_principal, template) }
 
-  describe "#address_present?" do
-    it "returns false when no address fields are present" do
-      kyc_principal.assign_attributes(address_line1: nil, city: nil, postcode: nil, country: nil)
-      expect(presenter.address_present?).to be false
+  describe "#address_lines" do
+    it "returns an empty array when no address fields are present" do
+      kyc_principal.assign_attributes(address_line1: nil, address_line2: nil, city: nil, postcode: nil, country: nil)
+      expect(presenter.address_lines).to eq([])
     end
 
-    it "returns true when at least one address field is present" do
-      kyc_principal.assign_attributes(address_line1: nil, city: "London", postcode: nil, country: nil)
-      expect(presenter.address_present?).to be true
-    end
-  end
+    it "builds line1, city/postcode, and country when address_line2 is blank" do
+      kyc_principal.assign_attributes(
+        address_line1: "42 Oak Avenue", address_line2: nil,
+        city: "London", postcode: "SW1A 1AA", country: "United Kingdom"
+      )
 
-  describe "#city_postcode" do
-    it "joins city and postcode with a comma" do
-      kyc_principal.assign_attributes(city: "London", postcode: "SW1A 1AA")
-      expect(presenter.city_postcode).to eq("London, SW1A 1AA")
+      expect(presenter.address_lines).to eq([ "42 Oak Avenue", "London, SW1A 1AA", "United Kingdom" ])
     end
 
-    it "omits a blank city" do
-      kyc_principal.assign_attributes(city: nil, postcode: "SW1A 1AA")
-      expect(presenter.city_postcode).to eq("SW1A 1AA")
+    it "includes address_line2 when present" do
+      kyc_principal.assign_attributes(
+        address_line1: "42 Oak Avenue", address_line2: "Suite 3",
+        city: "London", postcode: "SW1A 1AA", country: "United Kingdom"
+      )
+
+      expect(presenter.address_lines).to eq([ "42 Oak Avenue", "Suite 3", "London, SW1A 1AA", "United Kingdom" ])
     end
 
-    it "returns an empty string when both are blank" do
-      kyc_principal.assign_attributes(city: nil, postcode: nil)
-      expect(presenter.city_postcode).to eq("")
-    end
-  end
+    it "still returns lines when only one field (e.g. city) is present" do
+      kyc_principal.assign_attributes(address_line1: nil, address_line2: nil, city: "London", postcode: nil, country: nil)
 
-  describe "delegated attributes" do
-    it "delegates address_line1, address_line2, and country to the principal" do
-      kyc_principal.assign_attributes(address_line1: "42 Oak Avenue", address_line2: "Suite 3", country: "United Kingdom")
-
-      expect(presenter.address_line1).to eq("42 Oak Avenue")
-      expect(presenter.address_line2).to eq("Suite 3")
-      expect(presenter.country).to eq("United Kingdom")
+      expect(presenter.address_lines).to eq([ nil, "London", nil ])
     end
   end
 end
