@@ -51,23 +51,7 @@
   </div>
 
   <%# Address %>
-  <div class="card">
-    <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-      <%= t('.sections.address') %>
-    </h2>
-    <% if [ kyc_principal.address_line1, kyc_principal.city, kyc_principal.postcode, kyc_principal.country ].any?(&:present?) %>
-      <address class="not-italic text-theme-sm text-gray-900 dark:text-white/90 space-y-0.5">
-        <p><%= kyc_principal.address_line1 %></p>
-        <% if kyc_principal.address_line2.present? %>
-          <p><%= kyc_principal.address_line2 %></p>
-        <% end %>
-        <p><%= [ kyc_principal.city, kyc_principal.postcode ].compact_blank.join(", ") %></p>
-        <p><%= kyc_principal.country %></p>
-      </address>
-    <% else %>
-      <p class="text-theme-sm text-gray-400 italic"><%= t('.not_provided') %></p>
-    <% end %>
-  </div>
+  <%= render "kyc/principals/address_card", kyc_principal: kyc_principal %>
 </div>
 
 <%# Linked documents %>
