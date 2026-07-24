@@ -1,17 +1,19 @@
-<div id="<%= dom_id(kyc_principal, :address_card) %>" class="card">
-  <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
-    <%= t('kyc.principals.show.sections.address') %>
-  </h2>
-  <% if [ kyc_principal.address_line1, kyc_principal.city, kyc_principal.postcode, kyc_principal.country ].any?(&:present?) %>
-    <address class="not-italic text-theme-sm text-gray-900 dark:text-white/90 space-y-0.5">
-      <p><%= kyc_principal.address_line1 %></p>
-      <% if kyc_principal.address_line2.present? %>
-        <p><%= kyc_principal.address_line2 %></p>
-      <% end %>
-      <p><%= [ kyc_principal.city, kyc_principal.postcode ].compact_blank.join(", ") %></p>
-      <p><%= kyc_principal.country %></p>
-    </address>
-  <% else %>
-    <p class="text-theme-sm text-gray-400 italic"><%= t('kyc.principals.show.not_provided') %></p>
-  <% end %>
-</div>
+<% present(kyc_principal, Kyc::PrincipalPresenter) do |p| %>
+  <div id="<%= dom_id(kyc_principal, :address_card) %>" class="card">
+    <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500">
+      <%= t('kyc.principals.show.sections.address') %>
+    </h2>
+    <% if p.address_present? %>
+      <address class="not-italic text-theme-sm text-gray-900 dark:text-white/90 space-y-0.5">
+        <p><%= p.address_line1 %></p>
+        <% if p.address_line2.present? %>
+          <p><%= p.address_line2 %></p>
+        <% end %>
+        <p><%= p.city_postcode %></p>
+        <p><%= p.country %></p>
+      </address>
+    <% else %>
+      <p class="text-theme-sm text-gray-400 italic"><%= t('kyc.principals.show.not_provided') %></p>
+    <% end %>
+  </div>
+<% end %>
