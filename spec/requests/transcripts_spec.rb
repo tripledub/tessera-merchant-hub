@@ -98,6 +98,7 @@ RSpec.describe "Transcripts", type: :request do
 
       expect(response.body).to include(transcript_path(session, format: :text))
       expect(response.body).to include("Copy transcript", "Download as text")
+      expect(response.body).to include("download=\"transcript_#{session.id}.txt\"")
     end
 
     it "renders bot Markdown and strips unsafe HTML" do
