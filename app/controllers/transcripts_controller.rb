@@ -14,6 +14,11 @@ class TranscriptsController < ApplicationController
     @session = policy_scope(OnboardingSession)
       .includes(:applicant, :onboarding_messages)
       .find(params[:id])
+
+    respond_to do |format|
+      format.html
+      format.text
+    end
   end
 
   private

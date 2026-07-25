@@ -54,6 +54,12 @@ class OnboardingSessionPresenter < BasePresenter
     end
   end
 
+  def plain_text_transcript
+    messages.map do |message|
+      "[#{message.created_at.strftime('%Y-%m-%d %H:%M:%S')}] #{message.role}/#{valid_stage(message.stage)}: #{message.content}"
+    end.join("\n")
+  end
+
   private
 
   def messages
