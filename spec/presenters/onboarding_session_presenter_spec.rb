@@ -79,4 +79,40 @@ RSpec.describe OnboardingSessionPresenter, type: :presenter do
     expect(unknown_group[:label]).to eq("Unknown stage")
     expect(unknown_group[:messages].map(&:content)).to contain_exactly("Missing", "Future")
   end
+
+  describe "#plain_text_transcript" do
+    it "formats a single message as [timestamp] role/stage: content" do
+      create(:onboarding_message, onboarding_session: session, role: :applicant, stage: "company_info",
+        content: "The company is Acme Ltd", created_at: Time.zone.parse("2026-06-26 18:42:10"))
+
+      expect(presenter.plain_text_transcript).to eq(
+        "[2026-06-26 18:42:10] applicant/company_info: The company is Acme Ltd"
+      )
+    end
+
+    it "joins multiple messages with newlines in chronological order" do
+      create(:onboarding_message, onboarding_session: session, role: :bot, stage: "company_info",
+        content: "Welcome", created_at: Time.zone.parse("2026-06-26 18:42:00"))
+      create(:onboarding_message, onboarding_session: session, role: :applicant, stage: "company_info",
+        content: "Hi there", created_at: Time.zone.parse("2026-06-26 18:42:10"))
+
+      expect(presenter.plain_text_transcript).to eq(
+        "[2026-06-26 18:42:00] bot/company_info: Welcome\n" \
+        "[2026-06-26 18:42:10] applicant/company_info: Hi there"
+      )
+    end
+
+    it "falls back to unknown for an invalid or missing stage" do
+      create(:onboarding_message, onboarding_session: session, role: :bot, stage: nil,
+        content: "No stage", created_at: Time.zone.parse("2026-06-26 18:42:00"))
+
+      expect(presenter.plain_text_transcript).to eq(
+        "[2026-06-26 18:42:00] bot/unknown: No stage"
+      )
+    end
+
+    it "returns an empty string for a session with no messages" do
+      expect(presenter.plain_text_transcript).to eq("")
+    end
+  end
 end
