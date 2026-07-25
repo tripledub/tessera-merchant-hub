@@ -145,5 +145,26 @@ RSpec.describe "Transcripts", type: :request do
 
       expect(response).to have_http_status(:not_found)
     end
+
+    context "when requesting the plain-text format" do
+      it "returns the plain-text transcript for PSP admin" do
+        sign_in psp_admin
+
+        get transcript_path(session, format: :text)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.media_type).to eq("text/plain")
+        expect(response.body).to include("bot/company_info: Welcome")
+        expect(response.body).to include("applicant/company_info: Here are my details")
+      end
+
+      it "returns forbidden to merchant users" do
+        sign_in merchant_admin
+
+        get transcript_path(session, format: :text)
+
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
   end
 end

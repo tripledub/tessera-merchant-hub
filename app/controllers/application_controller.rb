@@ -18,6 +18,7 @@ class ApplicationController < ActionController::Base
     respond_to do |format|
       format.html { render "errors/forbidden", status: :forbidden }
       format.json { render json: { error: "Forbidden" }, status: :forbidden }
+      format.text { render plain: "Forbidden", status: :forbidden }
     end
   end
 end
