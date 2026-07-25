@@ -91,6 +91,15 @@ RSpec.describe "Transcripts", type: :request do
       expect(response.body.index("Welcome")).to be < response.body.index("Here are my details")
     end
 
+    it "includes a download link and copy button for the plain-text transcript" do
+      sign_in psp_support
+
+      get transcript_path(session)
+
+      expect(response.body).to include(transcript_path(session, format: :text))
+      expect(response.body).to include("Copy transcript", "Download as text")
+    end
+
     it "renders bot Markdown and strips unsafe HTML" do
       create(:onboarding_message, onboarding_session: session, role: :bot,
         content: "**Important** <script>alert('x')</script>")

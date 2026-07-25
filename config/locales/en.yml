@@ -775,6 +775,9 @@ en:
       chatbot: Chatbot
     show:
       back: "← Back to transcripts"
+      copied_text: Copied!
+      copy_text: Copy transcript
+      download_text: Download as text
       overview:
         applicant_messages: Applicant messages
         chatbot_messages: Chatbot messages

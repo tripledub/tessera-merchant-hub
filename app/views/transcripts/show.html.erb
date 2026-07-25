@@ -9,10 +9,21 @@
     <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= @session.applicant.name %></h1>
     <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400"><%= t(".subtitle") %></p>
   </div>
-  <%= link_to t(".view_applicant"), applicant_path(@session.applicant), class: "btn-secondary" %>
+  <div class="flex items-center gap-2">
+    <%= link_to t(".download_text"), transcript_path(@session, format: :text), class: "btn-secondary" %>
+    <button type="button" data-controller="copy-transcript" data-action="copy-transcript#copy"
+            data-copy-transcript-target="button"
+            data-copy-transcript-copied-label-value="<%= t('.copied_text') %>"
+            class="btn-secondary">
+      <%= t(".copy_text") %>
+    </button>
+    <%= link_to t(".view_applicant"), applicant_path(@session.applicant), class: "btn-secondary" %>
+  </div>
 </div>
 
 <% present(@session) do |presenter| %>
+  <pre id="transcript-plain-text" class="hidden"><%= presenter.plain_text_transcript %></pre>
+
   <section aria-labelledby="session-overview-heading" class="mb-6">
     <h2 id="session-overview-heading" class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500">
       <%= t(".overview.title") %>
