@@ -244,4 +244,70 @@ RSpec.describe Onboarding::DocumentCollectionService do
       end
     end
   end
+
+  describe ".defer_item!" do
+    let!(:principal) { create(:kyc_principal, applicant: applicant, name: "Person Alpha", source: :applicant_declared) }
+
+    before do
+      described_class.generate_checklist(session)
+    end
+
+    it "marks the item at the given index as deferred" do
+      described_class.defer_item!(session, 0)
+
+      item = described_class.received_documents(session)[0]
+      expect(item["deferred"]).to be true
+    end
+
+    it "persists the deferred flag on the session" do
+      described_class.defer_item!(session, 0)
+      session.reload
+
+      expect(session.document_checklist[0]["deferred"]).to be true
+    end
+
+    it "returns the deferred item" do
+      result = described_class.defer_item!(session, 0)
+      expect(result["deferred"]).to be true
+    end
+
+    it "does not defer an already-received item" do
+      create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
+      identity_index = described_class.received_documents(session).find_index { |i| i["category"] == "identity" }
+
+      result = described_class.defer_item!(session, identity_index)
+
+      expect(result).to be_nil
+      expect(session.reload.document_checklist[identity_index]["deferred"]).to be_falsey
+    end
+  end
+
+  describe ".outstanding_items, .deferred_items, .all_received?, and .chat_can_continue?" do
+    let!(:principal) { create(:kyc_principal, applicant: applicant, name: "Person Alpha", source: :applicant_declared) }
+
+    before do
+      described_class.generate_checklist(session)
+    end
+
+    it "excludes deferred items from outstanding_items but keeps them out of all_received?" do
+      described_class.defer_item!(session, 0)
+
+      expect(described_class.outstanding_items(session).size).to eq(2)
+      expect(described_class.deferred_items(session).size).to eq(1)
+      expect(described_class.all_received?(session)).to be false
+    end
+
+    it "chat_can_continue? is true once every item is received or deferred" do
+      described_class.defer_item!(session, 0)
+      described_class.defer_item!(session, 1)
+      described_class.defer_item!(session, 2)
+
+      expect(described_class.chat_can_continue?(session)).to be true
+      expect(described_class.all_received?(session)).to be false
+    end
+
+    it "chat_can_continue? is false while any item is neither received nor deferred" do
+      expect(described_class.chat_can_continue?(session)).to be false
+    end
+  end
 end

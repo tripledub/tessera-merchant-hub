@@ -15,8 +15,20 @@ module Onboarding
         new(session).outstanding_items
       end
 
+      def deferred_items(session)
+        new(session).deferred_items
+      end
+
       def all_received?(session)
         new(session).all_received?
+      end
+
+      def chat_can_continue?(session)
+        new(session).chat_can_continue?
+      end
+
+      def defer_item!(session, index)
+        new(session).defer_item!(index)
       end
 
       def checklist_expects?(session, document_type)
@@ -38,6 +50,7 @@ module Onboarding
       checklist.concat(corporate_items)
       checklist.concat(business_address_items)
       checklist.concat(nominee_items)
+      checklist = checklist.map { |item| item.merge("deferred" => false) }
       @session.update!(document_checklist: checklist)
       checklist
     end
@@ -49,21 +62,47 @@ module Onboarding
 
         documents = @applicant.kyc_documents.includes(:kyc_principal)
 
-        checklist.map do |item|
-          item.merge("received" => item_received?(item, documents))
+        checklist.each_with_index.map do |item, index|
+          item.merge("received" => item_received?(item, documents), "index" => index)
         end
       end
     end
 
+    # Items neither received nor deferred — still being actively asked for.
     def outstanding_items
-      received_documents.reject { |item| item["received"] }
+      unreceived_items.reject { |item| item["deferred"] }
     end
 
+    # Items the applicant explicitly opted out of uploading right now. Still required
+    # for KYC sign-off — see #all_received? — but no longer nagged about in the chat.
+    def deferred_items
+      unreceived_items.select { |item| item["deferred"] }
+    end
+
+    # Compliance-complete gate: true only when every item is truly received, deferred
+    # or not. Deliberately unaffected by #defer_item! — deferring never satisfies this.
     def all_received?
       checklist = @session.document_checklist
       return false if checklist.blank?
 
+      unreceived_items.empty?
+    end
+
+    # True once every item is received or deferred — lets the conversation stop
+    # nagging without claiming the session is compliance-complete.
+    def chat_can_continue?
       outstanding_items.empty?
+    end
+
+    def defer_item!(index)
+      item = received_documents[index]
+      return nil if item.nil? || item["received"] || item["deferred"]
+
+      checklist = @session.document_checklist.map(&:dup)
+      checklist[index]["deferred"] = true
+      @session.update!(document_checklist: checklist)
+      @received_documents = nil
+      received_documents[index]
     end
 
     def checklist_expects?(document_type)
@@ -74,6 +113,10 @@ module Onboarding
     end
 
     private
+
+    def unreceived_items
+      received_documents.reject { |item| item["received"] }
+    end
 
     def principal_items
       principals = @applicant.kyc_principals.where(source: :applicant_declared).to_a.uniq(&:name)
