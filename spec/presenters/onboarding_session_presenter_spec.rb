@@ -115,4 +115,26 @@ RSpec.describe OnboardingSessionPresenter, type: :presenter do
       expect(presenter.plain_text_transcript).to eq("")
     end
   end
+
+  describe "#document_checklist_items" do
+    it "returns each checklist item annotated with received/deferred state" do
+      principal = create(:kyc_principal, applicant: session.applicant, name: "Jane Smith",
+        source: :applicant_declared)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      create(:kyc_document, applicant: session.applicant, kyc_principal: principal, document_type: :passport)
+
+      items = presenter.document_checklist_items
+
+      identity = items.find { |i| i["category"] == "identity" }
+      expect(identity["received"]).to be true
+    end
+  end
+
+  describe "#document_status_label" do
+    it "returns Received, Deferred, or Outstanding based on item state" do
+      expect(presenter.document_status_label({ "received" => true, "deferred" => false })).to eq("Received")
+      expect(presenter.document_status_label({ "received" => false, "deferred" => true })).to eq("Deferred")
+      expect(presenter.document_status_label({ "received" => false, "deferred" => false })).to eq("Outstanding")
+    end
+  end
 end

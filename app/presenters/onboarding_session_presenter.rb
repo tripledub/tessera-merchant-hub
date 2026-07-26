@@ -60,6 +60,17 @@ class OnboardingSessionPresenter < BasePresenter
     end.join("\n")
   end
 
+  def document_checklist_items
+    Onboarding::DocumentCollectionService.received_documents(onboarding_session)
+  end
+
+  def document_status_label(item)
+    return "Received" if item["received"]
+    return "Deferred" if item["deferred"]
+
+    "Outstanding"
+  end
+
   private
 
   def messages

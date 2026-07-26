@@ -91,6 +91,20 @@ RSpec.describe "Transcripts", type: :request do
       expect(response.body.index("Welcome")).to be < response.body.index("Here are my details")
     end
 
+    it "shows the document checklist with status badges" do
+      principal = create(:kyc_principal, applicant: session.applicant, name: "Jane Smith", source: :applicant_declared)
+      session.update!(current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      create(:kyc_document, applicant: session.applicant, kyc_principal: principal, document_type: :passport)
+      sign_in psp_support
+
+      get transcript_path(session)
+
+      expect(response.body).to include("Proof of identity for Jane Smith")
+      expect(response.body).to include("Received")
+      expect(response.body).to include("Outstanding")
+    end
+
     it "includes a download link and copy button for the plain-text transcript" do
       sign_in psp_support
 
