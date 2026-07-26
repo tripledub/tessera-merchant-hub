@@ -13,6 +13,7 @@ module Onboarding
       )
       @messages = ordered_messages
       @outstanding_items = Onboarding::DocumentCollectionService.outstanding_items(@onboarding_session)
+      @resume_notice = resume_notice
     end
 
     def create
@@ -24,6 +25,18 @@ module Onboarding
 
     def set_onboarding_session
       @onboarding_session = current_applicant.onboarding_session || current_applicant.create_onboarding_session!
+    end
+
+    def resume_notice
+      return nil if @messages.empty?
+      return nil unless @onboarding_session.document_collection?
+
+      service = Onboarding::DocumentCollectionService.new(@onboarding_session)
+      remaining = service.outstanding_items.size + service.deferred_items.size
+      return nil if remaining.zero?
+
+      "Welcome back — you still have #{remaining} #{'document'.pluralize(remaining)} outstanding. " \
+        "Upload them below when you're ready."
     end
 
     def ordered_messages

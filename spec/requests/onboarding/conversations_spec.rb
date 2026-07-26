@@ -106,6 +106,46 @@ RSpec.describe "Onboarding conversations", type: :request do
 
       expect(response.body).to include("aria-label=\"Can&#39;t upload Proof of identity for Jane Smith now\"")
     end
+
+    it "shows a welcome-back message when returning with outstanding documents" do
+      applicant_user = create(:applicant_user)
+      create(:kyc_principal, applicant: applicant_user.applicant, name: "Jane Smith", source: :applicant_declared)
+      session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      create(:onboarding_message, onboarding_session: session, role: :bot, content: "Here's what we need")
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      # generate_checklist produces 3 items here: identity + proof_of_address for
+      # Jane Smith, plus the always-present business_address_items entry.
+      expect(response.body).to include("Welcome back")
+      expect(response.body).to include("3 documents outstanding")
+    end
+
+    it "does not show a welcome-back message on a brand new session" do
+      applicant_user = create(:applicant_user)
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      expect(response.body).not_to include("Welcome back")
+    end
+
+    it "does not show a welcome-back message once nothing is outstanding" do
+      applicant_user = create(:applicant_user)
+      session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      # generate_checklist always includes one business_address_items entry even with
+      # no principals/company_info/nominees — receive it so nothing remains outstanding.
+      create(:kyc_document, applicant: applicant_user.applicant, document_type: :certificate_of_incorporation)
+      create(:onboarding_message, onboarding_session: session, role: :bot, content: "Here's what we need")
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      expect(response.body).not_to include("Welcome back")
+    end
   end
 
   describe "POST /portal/onboarding/messages" do
