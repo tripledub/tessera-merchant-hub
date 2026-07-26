@@ -12,7 +12,8 @@ module Onboarding
         expires_in: 1.hour
       )
       @messages = ordered_messages
-      @outstanding_items = Onboarding::DocumentCollectionService.outstanding_items(@onboarding_session)
+      @collection_service = Onboarding::DocumentCollectionService.new(@onboarding_session)
+      @outstanding_items = @collection_service.outstanding_items
       @resume_notice = resume_notice
     end
 
@@ -31,8 +32,7 @@ module Onboarding
       return nil if @messages.empty?
       return nil unless @onboarding_session.document_collection?
 
-      service = Onboarding::DocumentCollectionService.new(@onboarding_session)
-      remaining = service.outstanding_items.size + service.deferred_items.size
+      remaining = @outstanding_items.size + @collection_service.deferred_items.size
       return nil if remaining.zero?
 
       "Welcome back — you still have #{remaining} #{'document'.pluralize(remaining)} outstanding. " \
