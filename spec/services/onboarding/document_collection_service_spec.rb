@@ -35,6 +35,15 @@ RSpec.describe Onboarding::DocumentCollectionService do
 
         expect(subjects).not_to include("Extracted Person")
       end
+
+      it "deduplicates identity and address items when duplicate declared principals share a name" do
+        create(:kyc_principal, applicant: applicant, name: "Person Alpha", source: :applicant_declared)
+
+        checklist = described_class.generate_checklist(session)
+        alpha_items = checklist.select { |i| i["subject"] == "Person Alpha" }
+
+        expect(alpha_items.map { |i| i["category"] }).to contain_exactly("identity", "proof_of_address")
+      end
     end
 
     context "with company_info in stage_data" do

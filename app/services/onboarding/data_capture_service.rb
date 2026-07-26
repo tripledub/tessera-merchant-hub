@@ -266,15 +266,18 @@ module Onboarding
     private_class_method :find_declared_principal
 
     def create_principal!(session, data)
-      KycPrincipal.create!(
+      principal = KycPrincipal.find_or_initialize_by(
         applicant: session.applicant,
         name: data.fetch("full_name"),
         date_of_birth: Date.iso8601(data.fetch("date_of_birth")),
-        role: ROLE_MAP.fetch(data.fetch("role")),
-        address_line1: data["residential_address"],
-        country: data["nationality"],
         source: :applicant_declared
       )
+      principal.assign_attributes(
+        role: ROLE_MAP.fetch(data.fetch("role")),
+        address_line1: data["residential_address"],
+        country: data["nationality"]
+      )
+      principal.save!
     end
     private_class_method :create_principal!
 

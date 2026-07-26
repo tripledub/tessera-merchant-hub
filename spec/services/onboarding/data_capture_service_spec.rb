@@ -111,6 +111,25 @@ RSpec.describe Onboarding::DataCaptureService do
       )
     end
 
+    it "updates the existing principal instead of creating a duplicate when the same " \
+       "person is declared again as a new item with a different role" do
+      session = create(:onboarding_session, current_stage: :directors_ubos)
+      described_class.call(session: session, extracted_data: director_payload.merge("role" => "director"))
+      session.reload
+
+      expect {
+        described_class.call(session: session, extracted_data: director_payload.merge("role" => "shareholder"))
+      }.not_to change(KycPrincipal, :count)
+
+      expect(KycPrincipal.sole).to have_attributes(
+        applicant: session.applicant,
+        name: "Jane Smith",
+        date_of_birth: Date.iso8601("1980-01-01"),
+        role: "shareholder",
+        source: "applicant_declared"
+      )
+    end
+
     it "updates the latest completed director item when role-only follow-up changes it to UBO too" do
       session = create(:onboarding_session, current_stage: :directors_ubos)
       described_class.call(session: session, extracted_data: director_payload.merge("role" => "director"))
@@ -141,7 +160,9 @@ RSpec.describe Onboarding::DataCaptureService do
 
     it "rolls back committed looping stage data when KYC record persistence fails" do
       session = create(:onboarding_session, current_stage: :directors_ubos)
-      allow(KycPrincipal).to receive(:create!).and_raise(ActiveRecord::RecordInvalid)
+      principal = KycPrincipal.new
+      allow(principal).to receive(:save!).and_raise(ActiveRecord::RecordInvalid.new(principal))
+      allow(KycPrincipal).to receive(:find_or_initialize_by).and_return(principal)
 
       expect {
         described_class.call(session: session, extracted_data: director_payload)
