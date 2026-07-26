@@ -105,6 +105,18 @@ RSpec.describe "Transcripts", type: :request do
       expect(response.body).to include("Outstanding")
     end
 
+    it "shows a deferred status badge" do
+      create(:kyc_principal, applicant: session.applicant, name: "Jane Smith", source: :applicant_declared)
+      session.update!(current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      Onboarding::DocumentCollectionService.defer_item!(session, 0)
+      sign_in psp_support
+
+      get transcript_path(session)
+
+      expect(response.body).to include("Deferred")
+    end
+
     it "includes a download link and copy button for the plain-text transcript" do
       sign_in psp_support
 
