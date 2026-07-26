@@ -3,16 +3,22 @@
 module Onboarding
   class DocumentDeferralsController < Portal::BaseController
     def create
-      @session = current_applicant.onboarding_session
+      @session = current_applicant.onboarding_session || current_applicant.create_onboarding_session!
       service = Onboarding::DocumentCollectionService.new(@session)
-      index = params.require(:index).to_i
-      @deferred_item = index.negative? ? nil : service.defer_item!(index)
-      post_messages(service) if @deferred_item
+      index = valid_index(params[:index])
+      @deferred_item = index && service.defer_item!(index)
+      @completion_message = post_messages(service) if @deferred_item
 
       respond_to(&:turbo_stream)
     end
 
     private
+
+    def valid_index(raw_index)
+      return nil unless raw_index.to_s.match?(/\A\d+\z/)
+
+      raw_index.to_i
+    end
 
     def post_messages(service)
       @bot_message = OnboardingMessage.create!(

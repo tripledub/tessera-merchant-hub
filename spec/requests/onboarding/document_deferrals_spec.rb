@@ -83,5 +83,31 @@ RSpec.describe "Onboarding document deferrals", type: :request do
 
       expect(session.reload.document_checklist.last["deferred"]).to be false
     end
+
+    it "does nothing for a non-numeric index" do
+      applicant_user = create(:applicant_user)
+      applicant = applicant_user.applicant
+      create(:kyc_principal, applicant: applicant, name: "Jane Smith", source: :applicant_declared)
+      session = create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      sign_in applicant_user, scope: :applicant_user
+
+      expect {
+        post portal_onboarding_document_deferrals_path(format: :turbo_stream), params: { index: "abc" }
+      }.not_to change(OnboardingMessage, :count)
+
+      expect(session.reload.document_checklist[0]["deferred"]).to be false
+    end
+
+    it "does not raise when the applicant has no onboarding session yet" do
+      applicant_user = create(:applicant_user)
+      sign_in applicant_user, scope: :applicant_user
+
+      expect {
+        post portal_onboarding_document_deferrals_path(format: :turbo_stream), params: { index: 0 }
+      }.not_to raise_error
+
+      expect(response).to have_http_status(:ok)
+    end
   end
 end
