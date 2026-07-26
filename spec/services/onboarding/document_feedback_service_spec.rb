@@ -152,7 +152,7 @@ RSpec.describe Onboarding::DocumentFeedbackService do
         session,
         target: "onboarding_document_checklist",
         partial: "onboarding/conversations/document_checklist",
-        locals: { session: session }
+        locals: { outstanding_items: an_instance_of(Array) }
       )
     end
   end

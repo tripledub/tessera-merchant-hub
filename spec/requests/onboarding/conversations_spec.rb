@@ -94,6 +94,18 @@ RSpec.describe "Onboarding conversations", type: :request do
 
       expect(response.body).not_to include("data-testid=\"defer-document-button\"")
     end
+
+    it "gives each defer button a distinguishing accessible name" do
+      applicant_user = create(:applicant_user)
+      create(:kyc_principal, applicant: applicant_user.applicant, name: "Jane Smith", source: :applicant_declared)
+      session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      expect(response.body).to include("aria-label=\"Can&#39;t upload Proof of identity for Jane Smith now\"")
+    end
   end
 
   describe "POST /portal/onboarding/messages" do

@@ -1,5 +1,5 @@
 <%= turbo_stream.replace "onboarding_document_checklist" do %>
-  <%= render "onboarding/conversations/document_checklist", session: @session %>
+  <%= render "onboarding/conversations/document_checklist", outstanding_items: @collection_service.outstanding_items %>
 <% end %>
 
 <% if @bot_message %>

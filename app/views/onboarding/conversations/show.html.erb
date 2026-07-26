@@ -66,6 +66,8 @@
       data-action="change->onboarding-chat#submitUpload" />
   <% end %>
 
-  <%= render "onboarding/conversations/document_checklist", session: @onboarding_session %>
+  <% if @onboarding_session.document_collection? %>
+    <%= render "onboarding/conversations/document_checklist", outstanding_items: @outstanding_items %>
+  <% end %>
   <%= render "onboarding/conversations/composer", session: @onboarding_session %>
 </section>

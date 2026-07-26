@@ -12,6 +12,7 @@ module Onboarding
         expires_in: 1.hour
       )
       @messages = ordered_messages
+      @outstanding_items = Onboarding::DocumentCollectionService.outstanding_items(@onboarding_session)
     end
 
     def create

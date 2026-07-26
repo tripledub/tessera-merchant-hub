@@ -67,7 +67,7 @@ module Onboarding
         @session,
         target: "onboarding_document_checklist",
         partial: "onboarding/conversations/document_checklist",
-        locals: { session: @session }
+        locals: { outstanding_items: @collection_service.outstanding_items }
       )
     end
 

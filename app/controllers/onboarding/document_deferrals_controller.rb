@@ -4,10 +4,10 @@ module Onboarding
   class DocumentDeferralsController < Portal::BaseController
     def create
       @session = current_applicant.onboarding_session || current_applicant.create_onboarding_session!
-      service = Onboarding::DocumentCollectionService.new(@session)
+      @collection_service = Onboarding::DocumentCollectionService.new(@session)
       index = valid_index(params[:index])
-      @deferred_item = index && service.defer_item!(index)
-      @completion_message = post_messages(service) if @deferred_item
+      @deferred_item = index && @collection_service.defer_item!(index)
+      @completion_message = post_messages if @deferred_item
 
       respond_to(&:turbo_stream)
     end
@@ -20,7 +20,7 @@ module Onboarding
       raw_index.to_i
     end
 
-    def post_messages(service)
+    def post_messages
       @bot_message = OnboardingMessage.create!(
         onboarding_session: @session,
         role: :bot,
@@ -28,9 +28,9 @@ module Onboarding
         stage: "document_collection"
       )
 
-      return unless service.chat_can_continue?
+      return unless @collection_service.chat_can_continue?
 
-      remaining = service.deferred_items.size
+      remaining = @collection_service.deferred_items.size
       @completion_message = OnboardingMessage.create!(
         onboarding_session: @session,
         role: :bot,
