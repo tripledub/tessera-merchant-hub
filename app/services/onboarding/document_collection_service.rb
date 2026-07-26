@@ -95,14 +95,17 @@ module Onboarding
     end
 
     def defer_item!(index)
-      item = received_documents[index]
-      return nil if item.nil? || item["received"] || item["deferred"]
+      @session.with_lock do
+        @received_documents = nil
+        item = received_documents[index]
+        next nil if item.nil? || item["received"] || item["deferred"]
 
-      checklist = @session.document_checklist.map(&:dup)
-      checklist[index]["deferred"] = true
-      @session.update!(document_checklist: checklist)
-      @received_documents = nil
-      received_documents[index]
+        checklist = @session.document_checklist.map(&:dup)
+        checklist[index]["deferred"] = true
+        @session.update!(document_checklist: checklist)
+        @received_documents = nil
+        received_documents[index]
+      end
     end
 
     def checklist_expects?(document_type)

@@ -280,6 +280,19 @@ RSpec.describe Onboarding::DocumentCollectionService do
       expect(result).to be_nil
       expect(session.reload.document_checklist[identity_index]["deferred"]).to be_falsey
     end
+
+    it "does not lose a concurrent defer of a different item (read-modify-write race)" do
+      # Two separate session objects, both loaded before either write — simulates two
+      # concurrent requests each holding a stale in-memory copy of document_checklist.
+      session_copy = OnboardingSession.find(session.id)
+
+      described_class.defer_item!(session, 0)
+      described_class.defer_item!(session_copy, 1)
+
+      checklist = session.reload.document_checklist
+      expect(checklist[0]["deferred"]).to be true
+      expect(checklist[1]["deferred"]).to be true
+    end
   end
 
   describe ".outstanding_items, .deferred_items, .all_received?, and .chat_can_continue?" do
