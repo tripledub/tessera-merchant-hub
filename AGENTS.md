@@ -27,6 +27,21 @@ over this file.
 - Before any destructive git command (`reset --hard`, `checkout --`,
   `clean -f`), run `git status` and stash or preserve anything uncommitted.
 
+## Jira Workflow
+
+This board's statuses: **To Do** (needs more detail before it's workable) →
+**Ready for Development** (workable, can be picked up) → **In Progress** →
+**In Review** (PR open) → **UAT** (merged, deployed) → **Done** (passed QA,
+production-ready).
+
+- Before starting work on a ticket, confirm its status is **Ready for
+  Development**. If it's still **To Do**, stop and ask — don't assume the
+  ticket has enough detail to implement.
+- When starting implementation, transition the ticket to **In Progress**.
+- When opening a PR, transition the ticket to **In Review**.
+- Do not transition a ticket to **UAT** or **Done** — those are deployment
+  and QA sign-off steps owned by the user.
+
 ## Testing & TDD
 
 - Write tests first (TDD): a failing test, then the minimal code to pass it,
