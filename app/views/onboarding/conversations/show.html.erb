@@ -23,6 +23,15 @@
     data-onboarding-chat-target="messages">
     <% if @messages.any? %>
       <%= render partial: "onboarding/conversations/message", collection: @messages, as: :message %>
+      <% if @resume_notice %>
+        <%= render "onboarding/conversations/message",
+              message: @onboarding_session.onboarding_messages.build(
+                role: :bot,
+                content: @resume_notice,
+                stage: @onboarding_session.current_stage,
+                created_at: Time.current
+              ) %>
+      <% end %>
     <% else %>
       <%= render "onboarding/conversations/message",
             message: @onboarding_session.onboarding_messages.build(
@@ -66,5 +75,8 @@
       data-action="change->onboarding-chat#submitUpload" />
   <% end %>
 
+  <% if @onboarding_session.document_collection? %>
+    <%= render "onboarding/conversations/document_checklist", outstanding_items: @outstanding_items %>
+  <% end %>
   <%= render "onboarding/conversations/composer", session: @onboarding_session %>
 </section>

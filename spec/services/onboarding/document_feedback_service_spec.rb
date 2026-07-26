@@ -31,6 +31,7 @@ RSpec.describe Onboarding::DocumentFeedbackService do
   before do
     session
     allow(Turbo::StreamsChannel).to receive(:broadcast_append_to)
+    allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
   end
 
   describe ".call" do
@@ -141,6 +142,17 @@ RSpec.describe Onboarding::DocumentFeedbackService do
         target: "onboarding_messages",
         partial: "onboarding/conversations/message",
         locals: hash_including(message: an_instance_of(OnboardingMessage))
+      )
+    end
+
+    it "broadcasts a refresh of the document checklist strip" do
+      described_class.call(document)
+
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
+        session,
+        target: "onboarding_document_checklist",
+        partial: "onboarding/conversations/document_checklist",
+        locals: { outstanding_items: an_instance_of(Array) }
       )
     end
   end
