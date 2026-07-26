@@ -76,7 +76,7 @@ module Onboarding
     private
 
     def principal_items
-      principals = @applicant.kyc_principals.where(source: :applicant_declared)
+      principals = @applicant.kyc_principals.where(source: :applicant_declared).to_a.uniq(&:name)
       principals.flat_map do |principal|
         [
           {
