@@ -87,5 +87,36 @@ RSpec.describe "Kyc::PrincipalDocumentLinks", type: :request do
         expect(response).to redirect_to(new_user_session_path)
       end
     end
+
+    context "when linking a proof-of-address document that populates the address" do
+      let(:principal_without_address) { create(:kyc_principal, applicant: applicant, name: "Jane Doe") }
+      let(:poa_doc) do
+        create(:kyc_document,
+          applicant: applicant,
+          kyc_principal: nil,
+          document_type: :bank_account_statement,
+          status: :complete,
+          extracted_data: {
+            "account_holder" => "Jane Doe",
+            "account_holder_address_line1" => "42 Oak Avenue",
+            "account_holder_city" => "Manchester",
+            "account_holder_postcode" => "M1 2AB",
+            "account_holder_country" => "United Kingdom"
+          })
+      end
+
+      before { sign_in psp_admin }
+
+      it "replaces the address card via turbo stream with the newly populated address" do
+        post kyc_principal_document_links_path(principal_without_address),
+             params: { document_id: poa_doc.id },
+             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:ok)
+        target = ActionView::RecordIdentifier.dom_id(principal_without_address, :address_card)
+        expect(response.body).to include(%(turbo-stream action="replace" target="#{target}"))
+        expect(response.body).to include("42 Oak Avenue")
+      end
+    end
   end
 end

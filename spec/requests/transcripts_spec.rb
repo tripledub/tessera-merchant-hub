@@ -91,6 +91,42 @@ RSpec.describe "Transcripts", type: :request do
       expect(response.body.index("Welcome")).to be < response.body.index("Here are my details")
     end
 
+    it "shows the document checklist with status badges" do
+      principal = create(:kyc_principal, applicant: session.applicant, name: "Jane Smith", source: :applicant_declared)
+      session.update!(current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      create(:kyc_document, applicant: session.applicant, kyc_principal: principal, document_type: :passport)
+      sign_in psp_support
+
+      get transcript_path(session)
+
+      expect(response.body).to include("Proof of identity for Jane Smith")
+      expect(response.body).to include("Received")
+      expect(response.body).to include("Outstanding")
+    end
+
+    it "shows a deferred status badge" do
+      create(:kyc_principal, applicant: session.applicant, name: "Jane Smith", source: :applicant_declared)
+      session.update!(current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      Onboarding::DocumentCollectionService.defer_item!(session, 0)
+      sign_in psp_support
+
+      get transcript_path(session)
+
+      expect(response.body).to include("Deferred")
+    end
+
+    it "includes a download link and copy button for the plain-text transcript" do
+      sign_in psp_support
+
+      get transcript_path(session)
+
+      expect(response.body).to include(transcript_path(session, format: :text))
+      expect(response.body).to include("Copy transcript", "Download as text")
+      expect(response.body).to include("download=\"transcript_#{session.id}.txt\"")
+    end
+
     it "renders bot Markdown and strips unsafe HTML" do
       create(:onboarding_message, onboarding_session: session, role: :bot,
         content: "**Important** <script>alert('x')</script>")
@@ -144,6 +180,27 @@ RSpec.describe "Transcripts", type: :request do
       get transcript_path(SecureRandom.uuid)
 
       expect(response).to have_http_status(:not_found)
+    end
+
+    context "when requesting the plain-text format" do
+      it "returns the plain-text transcript for PSP admin" do
+        sign_in psp_admin
+
+        get transcript_path(session, format: :text)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.media_type).to eq("text/plain")
+        expect(response.body).to include("bot/company_info: Welcome")
+        expect(response.body).to include("applicant/company_info: Here are my details")
+      end
+
+      it "returns forbidden to merchant users" do
+        sign_in merchant_admin
+
+        get transcript_path(session, format: :text)
+
+        expect(response).to have_http_status(:forbidden)
+      end
     end
   end
 end

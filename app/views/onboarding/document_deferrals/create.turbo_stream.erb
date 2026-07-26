@@ -1,0 +1,15 @@
+<%= turbo_stream.replace "onboarding_document_checklist" do %>
+  <%= render "onboarding/conversations/document_checklist", outstanding_items: @collection_service.outstanding_items %>
+<% end %>
+
+<% if @bot_message %>
+  <%= turbo_stream.append "onboarding_messages" do %>
+    <%= render "onboarding/conversations/message", message: @bot_message %>
+  <% end %>
+<% end %>
+
+<% if @completion_message %>
+  <%= turbo_stream.append "onboarding_messages" do %>
+    <%= render "onboarding/conversations/message", message: @completion_message %>
+  <% end %>
+<% end %>

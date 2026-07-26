@@ -775,6 +775,16 @@ en:
       chatbot: Chatbot
     show:
       back: "← Back to transcripts"
+      copied_text: Copied!
+      copy_text: Copy transcript
+      documents:
+        empty: No document checklist has been generated yet.
+        status:
+          deferred: Deferred
+          outstanding: Outstanding
+          received: Received
+        title: Documents
+      download_text: Download as text
       overview:
         applicant_messages: Applicant messages
         chatbot_messages: Chatbot messages

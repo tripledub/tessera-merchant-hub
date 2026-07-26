@@ -18,6 +18,7 @@ module Onboarding
       @collection_service = DocumentCollectionService.new(@session)
 
       post_message(build_message)
+      broadcast_checklist
       complete_session_if_finished
     end
 
@@ -58,6 +59,15 @@ module Onboarding
         target: "onboarding_messages",
         partial: "onboarding/conversations/message",
         locals: { message: message }
+      )
+    end
+
+    def broadcast_checklist
+      Turbo::StreamsChannel.broadcast_replace_to(
+        @session,
+        target: "onboarding_document_checklist",
+        partial: "onboarding/conversations/document_checklist",
+        locals: { outstanding_items: @collection_service.outstanding_items }
       )
     end
 

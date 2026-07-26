@@ -1,7 +1,11 @@
 # frozen_string_literal: true
 
 class OnboardingSessionPresenter < BasePresenter
+  include ContentTags
+
   presents :onboarding_session
+
+  DOCUMENT_STATUS_COLOURS = { received: :green, deferred: :amber, outstanding: :gray }.freeze
 
   def message_count
     messages.size
@@ -54,6 +58,25 @@ class OnboardingSessionPresenter < BasePresenter
     end
   end
 
+  def plain_text_transcript
+    messages.map do |message|
+      "[#{message.created_at.strftime('%Y-%m-%d %H:%M:%S')}] #{message.role}/#{valid_stage(message.stage)}: #{message.content}"
+    end.join("\n")
+  end
+
+  def document_checklist_items
+    @document_checklist_items ||= Onboarding::DocumentCollectionService.received_documents(onboarding_session)
+  end
+
+  def document_status_label(item)
+    I18n.t("transcripts.show.documents.status.#{document_status_key(item)}")
+  end
+
+  def document_status_badge(item)
+    key = document_status_key(item)
+    badge(document_status_label(item), DOCUMENT_STATUS_COLOURS.fetch(key, :gray))
+  end
+
   private
 
   def messages
@@ -66,5 +89,12 @@ class OnboardingSessionPresenter < BasePresenter
 
   def valid_stage(stage)
     OnboardingSession.current_stages.key?(stage) ? stage : "unknown"
+  end
+
+  def document_status_key(item)
+    return :received if item["received"]
+    return :deferred if item["deferred"]
+
+    :outstanding
   end
 end

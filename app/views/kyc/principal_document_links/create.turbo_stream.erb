@@ -8,3 +8,8 @@
 
 <%# Remove the empty state if it was showing %>
 <%= turbo_stream.remove "documents-empty" %>
+
+<%# Refresh the address card in case this document populated it %>
+<%= turbo_stream.replace dom_id(kyc_principal, :address_card),
+      partial: "kyc/principals/address_card",
+      locals: { kyc_principal: kyc_principal } %>
