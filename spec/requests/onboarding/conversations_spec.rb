@@ -71,6 +71,29 @@ RSpec.describe "Onboarding conversations", type: :request do
 
       expect(response.body).not_to include("data-testid=\"document-upload-button\"")
     end
+
+    it "shows outstanding checklist items with a defer button" do
+      applicant_user = create(:applicant_user)
+      create(:kyc_principal, applicant: applicant_user.applicant, name: "Jane Smith", source: :applicant_declared)
+      session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      expect(response.body).to include("Proof of identity for Jane Smith")
+      expect(response.body).to include("data-testid=\"defer-document-button\"")
+    end
+
+    it "hides the checklist strip when there are no outstanding items" do
+      applicant_user = create(:applicant_user)
+      session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :company_info)
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      expect(response.body).not_to include("data-testid=\"defer-document-button\"")
+    end
   end
 
   describe "POST /portal/onboarding/messages" do
