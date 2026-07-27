@@ -2,42 +2,30 @@
 
 module Onboarding
   module ChatCommandHandler
-    HELP_MESSAGE = <<~TEXT.strip
-      Here's what I can help with:
-      - **help** — show this message
-      - **save** or **save and quit** — your progress is saved automatically, so this just confirms it
-      - **skip** or **next** — skip an outstanding document upload, where available
-    TEXT
-
-    SAVE_MESSAGE = "You're all saved — your progress is kept automatically as you go. " \
-      "Come back any time and pick up where you left off."
-
-    SKIP_NOT_AVAILABLE_MESSAGE = "Skipping isn't available at this stage yet — let's finish this step first."
-
-    NOTHING_TO_SKIP_MESSAGE = "There's nothing left to skip right now."
-
     module_function
 
     def call(session:, stage:, command:)
       case command
-      when :help then respond_with(session, stage, HELP_MESSAGE)
-      when :save then respond_with(session, stage, SAVE_MESSAGE)
+      when :help then respond_with(session, stage, I18n.t("onboarding.chat_commands.help"))
+      when :save then respond_with(session, stage, I18n.t("onboarding.chat_commands.save"))
       when :skip then handle_skip(session, stage)
       end
     end
 
     def handle_skip(session, stage)
-      return respond_with(session, stage, SKIP_NOT_AVAILABLE_MESSAGE) unless stage == :document_collection
+      unless stage == :document_collection
+        return respond_with(session, stage, I18n.t("onboarding.chat_commands.skip_not_available"))
+      end
 
       collection_service = Onboarding::DocumentCollectionService.new(session)
       outstanding = collection_service.outstanding_items
-      return respond_with(session, stage, NOTHING_TO_SKIP_MESSAGE) if outstanding.empty?
+      return respond_with(session, stage, I18n.t("onboarding.chat_commands.nothing_to_skip")) if outstanding.empty?
 
       ActiveRecord::Base.transaction do
         item = collection_service.defer_item!(outstanding.first["index"])
-        break respond_with(session, stage, NOTHING_TO_SKIP_MESSAGE) if item.nil?
+        break respond_with(session, stage, I18n.t("onboarding.chat_commands.nothing_to_skip")) if item.nil?
 
-        respond_with(session, stage, "Noted — you can upload #{item['label']} later. Let's continue.")
+        respond_with(session, stage, I18n.t("onboarding.chat_commands.skip_deferred", label: item["label"]))
       end
     end
     private_class_method :handle_skip

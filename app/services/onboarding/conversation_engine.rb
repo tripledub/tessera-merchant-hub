@@ -34,7 +34,7 @@ module Onboarding
       result
     rescue => e
       if stream
-        ActionCable.server.broadcast("onboarding:#{session.id}", { type: "error", message: "Something went wrong. Please try again." })
+        ActionCable.server.broadcast("onboarding:#{session.id}", { type: "error", message: I18n.t("onboarding.conversation.error_message") })
       end
       raise
     end
@@ -76,7 +76,7 @@ module Onboarding
 
       result
     rescue => e
-      ActionCable.server.broadcast("onboarding:#{session.id}", { type: "error", message: "Something went wrong. Please try again." })
+      ActionCable.server.broadcast("onboarding:#{session.id}", { type: "error", message: I18n.t("onboarding.conversation.error_message") })
       raise
     end
     private_class_method :respond_streaming
