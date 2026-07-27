@@ -368,6 +368,30 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(broadcasts.first[1][:bot_message]).to match(/saved/i)
       expect(result[:bot_message]).to match(/saved/i)
     end
+
+    it "broadcasts an error event and re-raises when handling an intercepted command fails" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      allow(ActionCable.server).to receive(:broadcast)
+      allow(OnboardingMessage).to receive(:create!).and_call_original
+      allow(OnboardingMessage).to receive(:create!)
+        .with(hash_including(role: :bot))
+        .and_raise(ActiveRecord::RecordInvalid)
+
+      expect {
+        described_class.respond(
+          session: session,
+          user_message: "help",
+          stream: true,
+          inference_adapter: streaming_adapter
+        )
+      }.to raise_error(ActiveRecord::RecordInvalid)
+
+      expect(streaming_adapter).not_to have_received(:generate)
+      expect(ActionCable.server).to have_received(:broadcast).with(
+        "onboarding:#{session.id}",
+        hash_including(type: "error")
+      )
+    end
   end
 
   def complete_directors_ubos_data

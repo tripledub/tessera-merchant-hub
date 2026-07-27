@@ -83,5 +83,23 @@ RSpec.describe Onboarding::ChatCommandHandler do
 
       expect(result[:bot_message]).to match(/nothing left to skip/i)
     end
+
+    it "rolls back the deferred checklist item when the confirmation message fails to persist" do
+      applicant = create(:applicant_user).applicant
+      create(:kyc_principal, applicant: applicant, name: "Jane Smith", source: :applicant_declared)
+      session = create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+
+      allow(OnboardingMessage).to receive(:create!).and_call_original
+      allow(OnboardingMessage).to receive(:create!)
+        .with(hash_including(content: a_string_matching(/Noted/)))
+        .and_raise(ActiveRecord::RecordInvalid)
+
+      expect {
+        described_class.call(session: session, stage: :document_collection, command: :skip)
+      }.to raise_error(ActiveRecord::RecordInvalid)
+
+      expect(session.reload.document_checklist.first["deferred"]).to be(false)
+    end
   end
 end

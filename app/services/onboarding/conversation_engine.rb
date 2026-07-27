@@ -32,6 +32,11 @@ module Onboarding
       end
 
       result
+    rescue => e
+      if stream
+        ActionCable.server.broadcast("onboarding:#{session.id}", { type: "error", message: "Something went wrong. Please try again." })
+      end
+      raise
     end
     private_class_method :handle_command
 

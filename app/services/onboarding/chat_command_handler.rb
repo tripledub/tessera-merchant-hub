@@ -33,10 +33,12 @@ module Onboarding
       outstanding = collection_service.outstanding_items
       return respond_with(session, stage, NOTHING_TO_SKIP_MESSAGE) if outstanding.empty?
 
-      item = collection_service.defer_item!(outstanding.first["index"])
-      return respond_with(session, stage, NOTHING_TO_SKIP_MESSAGE) if item.nil?
+      ActiveRecord::Base.transaction do
+        item = collection_service.defer_item!(outstanding.first["index"])
+        break respond_with(session, stage, NOTHING_TO_SKIP_MESSAGE) if item.nil?
 
-      respond_with(session, stage, "Noted — you can upload #{item['label']} later. Let's continue.")
+        respond_with(session, stage, "Noted — you can upload #{item['label']} later. Let's continue.")
+      end
     end
     private_class_method :handle_skip
 
