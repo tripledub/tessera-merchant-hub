@@ -48,6 +48,30 @@ RSpec.describe Onboarding::ChatCommandHandler do
       expect(session.reload.document_checklist.first["deferred"]).to be(true)
     end
 
+    it "tells the applicant there is nothing left to skip when the outstanding item was already handled concurrently" do
+      applicant = create(:applicant_user).applicant
+      create(:kyc_principal, applicant: applicant, name: "Jane Smith", source: :applicant_declared)
+      session = create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+
+      outstanding_index = Onboarding::DocumentCollectionService.new(session).outstanding_items.first["index"]
+
+      # Simulate a race: by the time handle_skip acts on the snapshot it just took,
+      # the item has already been deferred (or received) by someone else — e.g. a
+      # concurrent upload in another tab, or a double-submitted skip — so the
+      # re-checked defer_item! legitimately returns nil.
+      collection_service = instance_double(Onboarding::DocumentCollectionService)
+      allow(Onboarding::DocumentCollectionService).to receive(:new).with(session).and_return(collection_service)
+      allow(collection_service).to receive(:outstanding_items).and_return(
+        [ { "index" => outstanding_index, "label" => "Passport" } ]
+      )
+      allow(collection_service).to receive(:defer_item!).with(outstanding_index).and_return(nil)
+
+      result = described_class.call(session: session, stage: :document_collection, command: :skip)
+
+      expect(result[:bot_message]).to match(/nothing left to skip/i)
+    end
+
     it "tells the applicant there is nothing left to skip once all items are received or deferred" do
       applicant = create(:applicant_user).applicant
       session = create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
