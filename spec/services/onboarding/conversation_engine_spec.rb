@@ -234,6 +234,30 @@ RSpec.describe Onboarding::ConversationEngine do
 
       expect(session.reload.stage_data).to eq({})
     end
+
+    it "intercepts a recognized control command before calling inference" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      adapter = instance_double(Kyc::Inference::Base)
+      allow(adapter).to receive(:generate)
+
+      result = described_class.respond(session: session, user_message: "help", inference_adapter: adapter)
+
+      expect(adapter).not_to have_received(:generate)
+      expect(result[:bot_message]).to include("help")
+      expect(result[:stage_changed]).to be(false)
+      expect(session.onboarding_messages.pluck(:role, :content)).to eq([
+        [ "applicant", "help" ],
+        [ "bot", result[:bot_message] ]
+      ])
+    end
+
+    it "does not intercept ordinary conversational messages" do
+      session = create(:onboarding_session, current_stage: :company_info)
+
+      described_class.respond(session: session, user_message: "The company is Acme Ltd", inference_adapter: adapter)
+
+      expect(adapter).to have_received(:generate)
+    end
   end
 
   describe ".respond with stream: true" do
@@ -325,6 +349,24 @@ RSpec.describe Onboarding::ConversationEngine do
         "onboarding:#{session.id}",
         hash_including(type: "error")
       )
+    end
+
+    it "broadcasts a complete event for an intercepted command without streaming tokens" do
+      session = create(:onboarding_session, current_stage: :company_info)
+      broadcasts = []
+      allow(ActionCable.server).to receive(:broadcast) { |channel, data| broadcasts << [ channel, data ] }
+
+      result = described_class.respond(
+        session: session,
+        user_message: "save",
+        stream: true,
+        inference_adapter: streaming_adapter
+      )
+
+      expect(streaming_adapter).not_to have_received(:generate)
+      expect(broadcasts.map { |_, d| d[:type] }).to eq([ "complete" ])
+      expect(broadcasts.first[1][:bot_message]).to match(/saved/i)
+      expect(result[:bot_message]).to match(/saved/i)
     end
   end
 

@@ -8,6 +8,9 @@ module Onboarding
       stage = Onboarding::StateMachine.current_stage(session)
       create_message!(session, role: :applicant, content: user_message, stage: stage)
 
+      command = Onboarding::ChatCommands.detect(user_message)
+      return handle_command(session, stage, command, stream: stream) if command
+
       if stream
         respond_streaming(session, stage, inference_adapter)
       else
@@ -16,6 +19,21 @@ module Onboarding
         persist_and_return(session, stage, response)
       end
     end
+
+    def handle_command(session, stage, command, stream:)
+      result = Onboarding::ChatCommandHandler.call(session: session, stage: stage, command: command)
+
+      if stream
+        ActionCable.server.broadcast("onboarding:#{session.id}", {
+          type:          "complete",
+          stage_changed: result[:stage_changed],
+          bot_message:   MarkdownHelper.render_to_html(result[:bot_message])
+        })
+      end
+
+      result
+    end
+    private_class_method :handle_command
 
     def respond_streaming(session, stage, inference_adapter)
       prompt = Onboarding::PromptBuilder.build(session: session, streaming: true)
