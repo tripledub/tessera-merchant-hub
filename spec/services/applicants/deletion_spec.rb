@@ -38,6 +38,22 @@ RSpec.describe Applicants::Deletion, type: :service do
       end
     end
 
+    context "when the applicant has a document superseded by another of its own documents" do
+      let(:applicant) { create(:applicant) }
+      let!(:new_document) { create(:kyc_document, applicant: applicant) }
+      let!(:old_document) do
+        create(:kyc_document, applicant: applicant, superseded_by_kyc_document: new_document)
+      end
+
+      it "destroys the applicant and both documents regardless of destroy order" do
+        described_class.call(applicant)
+
+        expect(Applicant.find_by(id: applicant.id)).to be_nil
+        expect(KycDocument.find_by(id: old_document.id)).to be_nil
+        expect(KycDocument.find_by(id: new_document.id)).to be_nil
+      end
+    end
+
     context "when the applicant has an associated portal user" do
       let(:applicant) { create(:applicant) }
       let!(:applicant_user) { create(:applicant_user, applicant: applicant) }

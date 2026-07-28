@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_28_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,7 +43,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_130000) do
   end
 
   create_table "addresses", force: :cascade do |t|
-    t.uuid "addressable_id", null: false
+    t.bigint "addressable_id", null: false
     t.string "addressable_type", null: false
     t.string "city", null: false
     t.string "country", null: false
@@ -313,7 +313,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_130000) do
   add_foreign_key "kyc_document_validity_assessments", "kyc_document_validity_policies"
   add_foreign_key "kyc_document_validity_assessments", "kyc_documents"
   add_foreign_key "kyc_documents", "kyc_corporate_entities", column: "corporate_entity_id"
-  add_foreign_key "kyc_documents", "kyc_documents", column: "superseded_by_kyc_document_id"
+  add_foreign_key "kyc_documents", "kyc_documents", column: "superseded_by_kyc_document_id", on_delete: :nullify
   add_foreign_key "kyc_documents", "kyc_principals"
   add_foreign_key "kyc_documents", "merchants", column: "applicant_id"
   add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "child_entity_id"
