@@ -35,7 +35,12 @@ RSpec.describe Kyc::DocumentValidity::DateConfirmationService do
     end
 
     context "when entering a missing date" do
-      let(:document) { create(:kyc_document, validity_dates: {}) }
+      let(:document) do
+        create(:kyc_document, validity_dates: {
+                 "expiry" => { "raw" => nil, "normalized" => nil, "confidence" => nil,
+                               "provenance" => "ai_extraction" }
+               })
+      end
 
       it "succeeds without a reason and snapshots a nil extracted value" do
         result = described_class.call(document: document, date_role: "expiry",
@@ -44,6 +49,28 @@ RSpec.describe Kyc::DocumentValidity::DateConfirmationService do
         expect(result).to be_success
         expect(result.confirmation.extracted_value).to be_nil
         expect(result.confirmation.confirmed_value).to eq(Date.new(2032, 5, 1))
+      end
+    end
+
+    context "with a date_role that is not one of the document's extracted validity_dates roles" do
+      it "fails" do
+        result = described_class.call(document: document, date_role: "bogus_role",
+                                       confirmed_value: "2030-01-01", actor: actor)
+
+        expect(result).not_to be_success
+        expect(result.errors[:date_role]).to be_present
+      end
+    end
+
+    context "when the document has no extracted validity_dates at all (inert per MH-195)" do
+      let(:document) { create(:kyc_document, validity_dates: {}) }
+
+      it "rejects any date_role rather than allowing an unconstrained confirmation" do
+        result = described_class.call(document: document, date_role: "expiry",
+                                       confirmed_value: "2030-01-01", actor: actor)
+
+        expect(result).not_to be_success
+        expect(result.errors[:date_role]).to be_present
       end
     end
 

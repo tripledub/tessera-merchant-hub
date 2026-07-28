@@ -4,11 +4,47 @@ require "rails_helper"
 
 RSpec.describe Kyc::DocumentDateConfirmation, type: :model do
   let_it_be(:actor) { create(:user, :psp_admin) }
-  let_it_be(:document) { create(:kyc_document) }
+  let_it_be(:document) do
+    create(:kyc_document, validity_dates: {
+             "expiry" => { "raw" => "2030-01-01", "normalized" => "2030-01-01", "confidence" => 0.95,
+                           "provenance" => "ai_extraction" },
+             "issued" => { "raw" => nil, "normalized" => nil, "confidence" => nil, "provenance" => "ai_extraction" }
+           })
+  end
 
   describe "validations" do
     it { is_expected.to validate_presence_of(:date_role) }
     it { is_expected.to validate_presence_of(:confirmed_value) }
+
+    it "is invalid when date_role is not one of the document's extracted validity_dates roles" do
+      confirmation = described_class.new(
+        kyc_document: document, date_role: "bogus_role",
+        confirmed_value: Date.new(2030, 1, 1), confirmed_by: actor
+      )
+
+      expect(confirmation).not_to be_valid
+      expect(confirmation.errors[:date_role]).to be_present
+    end
+
+    it "is valid when date_role matches one of the document's extracted validity_dates roles" do
+      confirmation = described_class.new(
+        kyc_document: document, date_role: "issued",
+        confirmed_value: Date.new(2020, 1, 1), confirmed_by: actor
+      )
+
+      expect(confirmation).to be_valid
+    end
+
+    it "is invalid for any date_role when the document has no extracted validity_dates at all" do
+      inert_document = create(:kyc_document, validity_dates: {})
+      confirmation = described_class.new(
+        kyc_document: inert_document, date_role: "expiry",
+        confirmed_value: Date.new(2030, 1, 1), confirmed_by: actor
+      )
+
+      expect(confirmation).not_to be_valid
+      expect(confirmation.errors[:date_role]).to be_present
+    end
 
     it "is valid without a reason when nothing changed" do
       confirmation = described_class.new(

@@ -12,7 +12,8 @@ RSpec.describe "Kyc::DocumentDateConfirmations", type: :request do
   let!(:document) do
     create(:kyc_document, applicant: applicant, validity_dates: {
       "expiry" => { "raw" => "2030-01-01", "normalized" => "2030-01-01", "confidence" => 0.95,
-                    "provenance" => "ai_extraction" }
+                    "provenance" => "ai_extraction" },
+      "issued" => { "raw" => nil, "normalized" => nil, "confidence" => nil, "provenance" => "ai_extraction" }
     })
   end
 
@@ -38,6 +39,15 @@ RSpec.describe "Kyc::DocumentDateConfirmations", type: :request do
 
         expect(Kyc::DocumentDateConfirmation.last.confirmed_value).to eq(Date.new(2031, 4, 1))
         expect(Kyc::DocumentDateConfirmation.last.extracted_value).to be_nil
+      end
+
+      it "rejects a date_role that was not extracted for this document" do
+        expect do
+          post kyc_document_date_confirmations_path,
+               params: { kyc_document_id: document.id, date_role: "bogus_role", confirmed_value: "2030-01-01" }
+        end.not_to change(Kyc::DocumentDateConfirmation, :count)
+
+        expect(response).to have_http_status(:unprocessable_entity).or have_http_status(:redirect)
       end
 
       it "rejects a changed date without a reason" do
