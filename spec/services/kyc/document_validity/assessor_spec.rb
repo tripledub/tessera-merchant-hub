@@ -64,6 +64,19 @@ RSpec.describe Kyc::DocumentValidity::Assessor do
         expect(assessment.reason_details).to eq({ "threshold_days" => 30, "days_remaining" => 10 })
       end
 
+      it "is expiring_soon, not valid, on the exact expiry date under real warning thresholds" do
+        reference_date = Date.new(2026, 1, 1)
+        document = create(:kyc_document, document_type: "passport",
+                           validity_dates: { "expiry" => validity_dates_for(normalized: reference_date.iso8601, confidence: 0.95) })
+
+        assessment = described_class.call(document: document, reference_date: reference_date)
+
+        expect(assessment).to be_expiring_soon_outcome
+        expect(assessment).not_to be_expired_outcome
+        expect(assessment.reason_code).to eq("within_30_day_threshold")
+        expect(assessment.reason_details).to eq({ "threshold_days" => 30, "days_remaining" => 0 })
+      end
+
       # These two boundary tests isolate the expired/not-expired edge from the
       # warning-threshold logic (covered separately above) by publishing a
       # newer policy version with no warning thresholds configured — at
