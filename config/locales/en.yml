@@ -570,6 +570,20 @@ en:
         test: Test
         test_mode: Mode
   onboarding:
+    chat_commands:
+      help: |-
+        Here's what I can help with:
+        - **help** — show this message
+        - **save** or **save and quit** — your progress is saved automatically, so this just confirms it
+        - **skip** or **next** — skip an outstanding document upload, where available
+      nothing_to_skip: There's nothing left to skip right now.
+      save: You're all saved — your progress is kept automatically as you go. Come
+        back any time and pick up where you left off.
+      skip_deferred: Noted — you can upload %{label} later. Let's continue.
+      skip_not_available: Skipping isn't available at this stage yet — let's finish
+        this step first.
+    conversation:
+      error_message: Something went wrong. Please try again.
     conversations:
       document_status:
         invalid: Your %{document_type} is no longer valid — please upload a new one.

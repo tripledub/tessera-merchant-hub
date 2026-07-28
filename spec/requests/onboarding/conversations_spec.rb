@@ -280,6 +280,67 @@ RSpec.describe "Onboarding conversations", type: :request do
     end
   end
 
+  describe "POST /portal/onboarding/messages with a control command" do
+    include ActiveJob::TestHelper
+
+    it "responds to help without calling inference" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :company_info)
+      sign_in applicant_user, scope: :applicant_user
+      adapter = instance_spy(Kyc::Inference::Base)
+      allow(Kyc::Inference).to receive(:adapter).and_return(adapter)
+
+      perform_enqueued_jobs do
+        post portal_onboarding_messages_path, params: { message: "help" }
+      end
+
+      expect(adapter).not_to have_received(:generate)
+      last_message = OnboardingMessage.order(:created_at).last
+      expect(last_message).to have_attributes(role: "bot")
+      expect(last_message.content).to include("help")
+    end
+
+    it "responds to save and quit by confirming progress is saved" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :business_activity)
+      sign_in applicant_user, scope: :applicant_user
+
+      perform_enqueued_jobs do
+        post portal_onboarding_messages_path, params: { message: "save and quit" }
+      end
+
+      expect(OnboardingMessage.order(:created_at).last.content).to match(/saved/i)
+    end
+
+    it "blocks skip outside the document collection stage" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :company_info)
+      sign_in applicant_user, scope: :applicant_user
+
+      perform_enqueued_jobs do
+        post portal_onboarding_messages_path, params: { message: "skip" }
+      end
+
+      expect(OnboardingMessage.order(:created_at).last.content).to match(/not available|isn.t available/i)
+    end
+
+    it "defers the first outstanding document when skip is used during document collection" do
+      applicant_user = create(:applicant_user)
+      applicant = applicant_user.applicant
+      create(:kyc_principal, applicant: applicant, name: "Jane Smith", source: :applicant_declared)
+      session = create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      sign_in applicant_user, scope: :applicant_user
+
+      perform_enqueued_jobs do
+        post portal_onboarding_messages_path, params: { message: "next" }
+      end
+
+      expect(OnboardingMessage.order(:created_at).last.content).to include("Noted")
+      expect(session.reload.document_checklist.first["deferred"]).to be(true)
+    end
+  end
+
   describe "POST /portal/onboarding/documents" do
     let(:file) { fixture_file_upload(Rails.root.join("spec/fixtures/files/sample.pdf"), "application/pdf") }
 
