@@ -157,6 +157,14 @@ RSpec.describe "Applicant overview — document validity integration", type: :re
       expect(readiness).not_to be_compliant
       expect(readiness.confirmation_required_results).not_to be_empty
       expect(readiness.confirmation_required_results & readiness.unmet_results).to be_empty
+
+      # MH-200: the overview tab must render this distinctly from an
+      # outright rejection — amber "Awaiting Review", not red "Not
+      # Compliant" — with the awaiting item actually listed.
+      expect(response.body).to include("Awaiting Review")
+      expect(response.body).not_to include("Not Compliant")
+      expect(response.body).to include("awaiting-confirmation-summary")
+      expect(response.body).to include("Passport")
     end
   end
 
