@@ -98,6 +98,24 @@ RSpec.describe Kyc::DocumentValidity::Assessor, ".assess_or_reuse" do
         described_class.assess_or_reuse(document: document, reference_date: reference_date)
       }.to change(Kyc::DocumentValidityAssessment, :count).by(1)
     end
+
+    it "creates a new assessment when the document is re-extracted with no confirmation involved" do
+      document = create(:kyc_document, document_type: "passport",
+                         validity_dates: { "expiry" => validity_dates_for(normalized: "2026-12-01") })
+      described_class.assess_or_reuse(document: document, reference_date: reference_date)
+
+      document.update!(validity_dates: { "expiry" => validity_dates_for(normalized: "2027-03-15") })
+
+      second = nil
+      expect {
+        second = described_class.assess_or_reuse(document: document, reference_date: reference_date)
+      }.to change(Kyc::DocumentValidityAssessment, :count).by(1)
+
+      expect(Kyc::DocumentValidityAssessment.where(kyc_document: document).count).to eq(2)
+      expect(second.dates_used).to eq(
+        "expiry" => { "date" => "2027-03-15", "source" => "extracted" }
+      )
+    end
   end
 
   context "when the reference date changes (a new application/review cycle)" do
