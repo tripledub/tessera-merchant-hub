@@ -11,6 +11,8 @@ class KycDocument < ApplicationRecord
            dependent: :destroy, inverse_of: :kyc_document
   has_many :date_confirmations, class_name: "Kyc::DocumentDateConfirmation", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
+  has_many :validity_assessments, class_name: "Kyc::DocumentValidityAssessment", foreign_key: :kyc_document_id,
+           dependent: :destroy, inverse_of: :kyc_document
 
   has_one_attached :file
 

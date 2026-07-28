@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_28_100001) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -97,6 +97,21 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_100001) do
     t.text "reason"
     t.datetime "updated_at", null: false
     t.index ["kyc_document_id", "date_role"], name: "idx_on_kyc_document_id_date_role_d8edf912fb"
+  end
+
+  create_table "kyc_document_validity_assessments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "assessed_at", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "dates_used", default: {}, null: false
+    t.uuid "kyc_document_id", null: false
+    t.uuid "kyc_document_validity_policy_id", null: false
+    t.integer "outcome", null: false
+    t.integer "policy_version", null: false
+    t.string "reason_code", null: false
+    t.jsonb "reason_details"
+    t.date "reference_date", null: false
+    t.datetime "updated_at", null: false
+    t.index ["kyc_document_id", "assessed_at"], name: "idx_on_kyc_document_id_assessed_at_64736351bd"
   end
 
   create_table "kyc_document_validity_policies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -279,6 +294,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_100001) do
   add_foreign_key "kyc_corporate_entities", "merchants", column: "applicant_id"
   add_foreign_key "kyc_document_date_confirmations", "kyc_documents"
   add_foreign_key "kyc_document_date_confirmations", "users", column: "confirmed_by_id"
+  add_foreign_key "kyc_document_validity_assessments", "kyc_document_validity_policies"
+  add_foreign_key "kyc_document_validity_assessments", "kyc_documents"
   add_foreign_key "kyc_documents", "kyc_corporate_entities", column: "corporate_entity_id"
   add_foreign_key "kyc_documents", "kyc_principals"
   add_foreign_key "kyc_documents", "merchants", column: "applicant_id"
