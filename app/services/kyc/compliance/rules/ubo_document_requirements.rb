@@ -27,7 +27,7 @@ module Kyc
           principal = find_matched_principal(entity)
           return build_result(entity: entity, requirements: requirement_names, satisfied: []) unless principal
 
-          principal_doc_types = principal.kyc_documents.pluck(:document_type).compact
+          principal_doc_types = principal.kyc_documents.not_superseded.pluck(:document_type).compact
 
           satisfied = []
           REQUIRED_CATEGORIES.each do |category, types|
@@ -46,7 +46,7 @@ module Kyc
 
         def cached_applicant_doc_types(applicant)
           @applicant_doc_cache ||= {}
-          @applicant_doc_cache[applicant.id] ||= applicant.kyc_documents.pluck(:document_type).compact
+          @applicant_doc_cache[applicant.id] ||= applicant.kyc_documents.not_superseded.pluck(:document_type).compact
         end
 
         def find_matched_principal(entity)
