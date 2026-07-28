@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_02_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,7 +43,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_100000) do
   end
 
   create_table "addresses", force: :cascade do |t|
-    t.uuid "addressable_id", null: false
+    t.bigint "addressable_id", null: false
     t.string "addressable_type", null: false
     t.string "city", null: false
     t.string "country", null: false
@@ -85,6 +85,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_100000) do
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_kyc_corporate_entities_on_applicant_id"
     t.index ["kyc_document_id"], name: "index_kyc_corporate_entities_on_kyc_document_id"
+  end
+
+  create_table "kyc_document_validity_policies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.boolean "blocking", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "document_type", null: false
+    t.date "effective_from", null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "max_age_months"
+    t.integer "mode", null: false
+    t.jsonb "required_dates", default: [], null: false
+    t.datetime "updated_at", null: false
+    t.integer "version", null: false
+    t.jsonb "warning_thresholds", default: [], null: false
+    t.index ["document_type", "effective_from"], name: "idx_on_document_type_effective_from_8777c21306"
+    t.index ["document_type", "version"], name: "idx_on_document_type_version_b26bf61bd2", unique: true
   end
 
   create_table "kyc_documents", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
