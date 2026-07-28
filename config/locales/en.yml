@@ -390,7 +390,10 @@ en:
       unlinked: Unlinked
       validity:
         confirmation_history:
-          entry: "%{role}: %{value} confirmed by %{actor} on %{timestamp} — %{reason}"
+          change_confirmed: Confirmed as %{value}
+          change_corrected: Corrected from %{original} to %{value}
+          change_entered: Entered %{value} (no date was extracted)
+          entry: "%{role}: %{change} confirmed by %{actor} on %{timestamp} — %{reason}"
         outcomes:
           confirmation_required: Awaiting review
           expired: Expired

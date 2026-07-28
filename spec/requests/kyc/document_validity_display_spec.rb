@@ -104,6 +104,27 @@ RSpec.describe "Kyc document validity display", type: :request do
       expect(response.body).to include("confirmation-history")
       expect(response.body).to include(psp_admin.email)
       expect(response.body).to include("Renewed")
+      # MH-200 AC requires both the original (extracted) value and the
+      # confirmed value be visible, not just the confirmed value, so a
+      # reviewer can see what a correction changed FROM.
+      expect(response.body).to include("2030-01-01")
+      expect(response.body).to include("2031-06-01")
+    end
+
+    it "shows a missing date entered from scratch distinctly from a correction of an extracted value" do
+      document = create(:kyc_document, applicant: applicant, document_type: :passport, status: :complete,
+             classification_status: :confirmed,
+             validity_dates: { "expiry" => { "raw" => nil, "normalized" => nil, "confidence" => nil,
+               "provenance" => "ai_extraction" } })
+      Kyc::DocumentDateConfirmation.create!(
+        kyc_document: document, date_role: "expiry", extracted_value: nil,
+        confirmed_value: Date.new(2031, 6, 1), confirmed_by: psp_admin
+      )
+
+      get_documents_tab
+
+      expect(response.body).to include("2031-06-01")
+      expect(response.body).to include("no date was extracted")
     end
 
     it "still renders the existing MH-196 confirm/correct interaction alongside the new status display" do

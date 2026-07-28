@@ -3,7 +3,7 @@
     <li>
       <%= t("kyc.documents.validity.confirmation_history.entry",
             role: t("kyc.documents.date_confirmations.roles.#{entry.date_role}", default: entry.date_role.humanize),
-            value: l(entry.confirmed_value),
+            change: presenter.confirmation_change_text(entry),
             actor: entry.confirmed_by.email,
             timestamp: l(entry.created_at, format: :long),
             reason: entry.reason.presence || t("kyc.documents.date_confirmations.no_reason")) %>

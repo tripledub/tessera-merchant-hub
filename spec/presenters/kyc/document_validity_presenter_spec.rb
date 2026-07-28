@@ -223,4 +223,49 @@ RSpec.describe Kyc::DocumentValidityPresenter, type: :presenter do
       expect(presenter.confirmation_history).to eq([ second, first ])
     end
   end
+
+  describe "#confirmation_change_text" do
+    let(:document) do
+      passport_document(
+        "expiry" => { "raw" => "x", "normalized" => (applicant.validity_reference_date + 2.years).iso8601,
+                      "confidence" => 0.95, "provenance" => "ai_extraction" }
+      )
+    end
+    let(:presenter) { build_presenter(document) }
+
+    it "shows the original value alongside the confirmed value when they differ" do
+      entry = Kyc::DocumentDateConfirmation.create!(
+        kyc_document: document, date_role: "expiry", extracted_value: Date.new(2027, 5, 1),
+        confirmed_value: Date.new(2028, 5, 1), confirmed_by: actor, reason: "Renewed"
+      )
+
+      text = presenter.confirmation_change_text(entry)
+
+      expect(text).to include("2027-05-01")
+      expect(text).to include("2028-05-01")
+    end
+
+    it "reads as a plain confirmation when the value is unchanged from what was extracted" do
+      entry = Kyc::DocumentDateConfirmation.create!(
+        kyc_document: document, date_role: "expiry", extracted_value: Date.new(2028, 5, 1),
+        confirmed_value: Date.new(2028, 5, 1), confirmed_by: actor
+      )
+
+      text = presenter.confirmation_change_text(entry)
+
+      expect(text).to eq("Confirmed as 2028-05-01")
+    end
+
+    it "explains that nothing was extracted when a missing date was entered from scratch" do
+      entry = Kyc::DocumentDateConfirmation.create!(
+        kyc_document: document, date_role: "expiry", extracted_value: nil,
+        confirmed_value: Date.new(2028, 5, 1), confirmed_by: actor
+      )
+
+      text = presenter.confirmation_change_text(entry)
+
+      expect(text).to include("2028-05-01")
+      expect(text).to include("no date was extracted")
+    end
+  end
 end

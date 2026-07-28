@@ -92,6 +92,31 @@ module Kyc
       document.date_confirmations.order(created_at: :desc, id: :desc).to_a
     end
 
+    # A plain-language description of what a single Kyc::DocumentDateConfirmation
+    # row actually did to the value, distinguishing three cases a staff member
+    # reviewing the audit trail needs to tell apart:
+    #
+    # - a plain confirmation of a value that was already extracted and left
+    #   unchanged (extracted_value == confirmed_value)
+    # - a correction, where the confirmed value differs from what was
+    #   originally extracted — the original value must remain visible so staff
+    #   can see what it was corrected FROM, not just what it is now
+    # - a date entered from scratch where nothing was extracted at all
+    #   (extracted_value nil — the MH-196 "missing date" scenario), which is
+    #   neither a confirmation nor a correction of an existing value
+    def confirmation_change_text(entry)
+      if entry.extracted_value.nil?
+        I18n.t("kyc.documents.validity.confirmation_history.change_entered",
+               value: l(entry.confirmed_value))
+      elsif entry.extracted_value == entry.confirmed_value
+        I18n.t("kyc.documents.validity.confirmation_history.change_confirmed",
+               value: l(entry.confirmed_value))
+      else
+        I18n.t("kyc.documents.validity.confirmation_history.change_corrected",
+               original: l(entry.extracted_value), value: l(entry.confirmed_value))
+      end
+    end
+
     private
 
     def within_day_threshold_text(threshold)
