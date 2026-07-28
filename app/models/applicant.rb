@@ -26,4 +26,25 @@ class Applicant < Merchant
   def to_param
     id
   end
+
+  # MH-198: the stable reference date document-validity freshness checks are
+  # assessed against. Completeness/readiness are recomputed on every
+  # request, so they must NOT pass Date.current straight through to
+  # Kyc::DocumentValidity::Assessor — a freshness document (e.g.
+  # utility_bill) that was acceptable when submitted would otherwise
+  # silently flip to "stale" purely because time passed while the
+  # application sat in a queue, with nothing about the document itself
+  # changing. There is no dedicated "compliance review" or "review period"
+  # model in this codebase (only this single, ongoing Applicant/
+  # OnboardingSession concept), so `created_at` — when this KYC application
+  # began — is the most stable anchor available today. It is a core,
+  # always-present AR timestamp (unlike OnboardingSession, which is
+  # optional/destroyable), and it stays fixed for the life of the
+  # applicant, which is exactly what "assess freshness against a stable
+  # application/review start date" (MH-198 AC) requires. If a distinct
+  # "compliance review" concept is ever introduced, this is the method to
+  # repoint.
+  def validity_reference_date
+    created_at.to_date
+  end
 end

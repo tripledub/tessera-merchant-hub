@@ -29,6 +29,54 @@ module Kyc
         new(document: document, reference_date: reference_date).call
       end
 
+      # MH-198: the entry point for callers (completeness/readiness) that run
+      # on every request and must NOT append a new historical row just
+      # because the page was reloaded. Since .call always persists, this
+      # reuses Kyc::DocumentValidityAssessment.current_for(document) when the
+      # resolved policy and the authoritative dates behind it are IDENTICAL
+      # to what a fresh .call would resolve right now, and only calls
+      # through to .call (creating a new row) when something has genuinely
+      # changed: a new/updated confirmation or extraction, a newer policy
+      # version, or the reference_date itself moving (e.g. a new
+      # application/review cycle). With a stable reference_date, unchanged
+      # inputs against an unchanged policy always produce an identical
+      # outcome, so reassessing them would be redundant, not merely cheap
+      # to skip.
+      def self.assess_or_reuse(document:, reference_date:)
+        policy = Kyc::DocumentValidity::PolicyResolver.resolve(document_type: document.document_type,
+                                                                 reference_date: reference_date)
+        return nil if policy.nil?
+
+        current = Kyc::DocumentValidityAssessment.current_for(document)
+
+        if current && reusable?(current, policy: policy, document: document, reference_date: reference_date)
+          return current
+        end
+
+        call(document: document, reference_date: reference_date)
+      end
+
+      def self.reusable?(assessment, policy:, document:, reference_date:)
+        return false unless assessment.reference_date == reference_date
+        return false unless assessment.kyc_document_validity_policy_id == policy.id
+        return false unless assessment.policy_version == policy.version
+
+        assessment.dates_used == resolve_dates(document: document, policy: policy,
+                                                 reference_date: reference_date)[:dates_used]
+      end
+      private_class_method :reusable?
+
+      # Exposes the (otherwise private, per-instance) authoritative-date
+      # resolution so .assess_or_reuse can compare "what dates_used would be
+      # right now" against a prior assessment's snapshot without duplicating
+      # the confirmed-beats-extracted-if-confident logic. resolve_dates
+      # itself never reads @reference_date (only .evaluate does), so the
+      # reference_date passed through here is unused today, but kept so this
+      # stays correct if that ever changes.
+      def self.resolve_dates(document:, policy:, reference_date: Date.current)
+        new(document: document, reference_date: reference_date).send(:resolve_dates, policy)
+      end
+
       def initialize(document:, reference_date:)
         @document = document
         @reference_date = reference_date
