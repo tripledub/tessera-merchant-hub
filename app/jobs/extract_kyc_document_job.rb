@@ -66,6 +66,11 @@ class ExtractKycDocumentJob < ApplicationJob
       )
     end
 
+    validity = Kyc::DocumentValidity::DateExtractor.call(
+      document_type: document.document_type,
+      raw_extraction: response
+    )
+
     document.update!(
       status: :complete,
       extracted_data: response,
@@ -73,7 +78,9 @@ class ExtractKycDocumentJob < ApplicationJob
       match_method: match.match_method,
       match_confidence: match.match_confidence,
       address_match_method: address_match&.match_method,
-      address_match_confidence: address_match&.match_confidence
+      address_match_confidence: address_match&.match_confidence,
+      validity_dates: validity[:validity_dates],
+      validity_confirmation_required: validity[:validity_confirmation_required]
     )
   end
 

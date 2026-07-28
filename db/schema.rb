@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_28_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -120,6 +120,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_090000) do
     t.jsonb "result"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
+    t.boolean "validity_confirmation_required", default: false, null: false
+    t.jsonb "validity_dates", default: {}, null: false
     t.index ["applicant_id"], name: "index_kyc_documents_on_applicant_id"
     t.index ["corporate_entity_id"], name: "index_kyc_documents_on_corporate_entity_id"
     t.index ["kyc_principal_id"], name: "index_kyc_documents_on_kyc_principal_id"
