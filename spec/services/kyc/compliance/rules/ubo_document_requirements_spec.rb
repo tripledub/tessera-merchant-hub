@@ -146,6 +146,27 @@ RSpec.describe Kyc::Compliance::Rules::UboDocumentRequirements, type: :service d
         expect(result).to be_met
       end
 
+      it "does not treat a superseded identity document as satisfying the identity requirement" do
+        old_passport = create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
+        old_passport.update!(superseded_by_kyc_document: create(:kyc_document, applicant: applicant))
+
+        result = rule.evaluate(entity)
+
+        expect(result.satisfied).not_to include("identity")
+        expect(result.missing).to include("identity")
+      end
+
+      it "treats a document's non-superseded replacement as satisfying the identity requirement" do
+        old_passport = create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
+        replacement_passport = create(:kyc_document, applicant: applicant, kyc_principal: principal,
+                                                      document_type: :passport)
+        old_passport.update!(superseded_by_kyc_document: replacement_passport)
+
+        result = rule.evaluate(entity)
+
+        expect(result.satisfied).to include("identity")
+      end
+
       it "matches principal name case-insensitively" do
         principal.update!(name: "JAN KOWALSKI")
 

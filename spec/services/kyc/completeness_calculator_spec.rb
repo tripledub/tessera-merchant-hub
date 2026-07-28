@@ -69,6 +69,95 @@ RSpec.describe Kyc::CompletenessCalculator, type: :service do
       expect(dim.denominator).to eq(2)
       expect(dim.percentage).to eq(50.0)
     end
+
+    context "when the document type has no resolvable validity policy (out of rollout)" do
+      it "keeps the pre-MH-198 behaviour of counting on status: :complete alone" do
+        create(:kyc_document, applicant: applicant, classification_status: :confirmed, status: :complete,
+               document_type: "driving_licence")
+
+        dim = calculator.dimensions.find { |d| d.key == :extraction }
+        expect(dim.numerator).to eq(1)
+        expect(dim.denominator).to eq(1)
+      end
+    end
+
+    context "when the document type has a resolvable validity policy (MH-198)" do
+      def validity_dates_for(normalized:, confidence: 0.95)
+        { "raw" => normalized, "normalized" => normalized, "confidence" => confidence, "provenance" => "ai_extraction" }
+      end
+
+      before do
+        Kyc::DocumentValidityPolicy.publish!(
+          document_type: "passport", effective_from: Date.new(2020, 1, 1),
+          mode: :expires, required_dates: [ "expiry" ], warning_thresholds: [ 90, 30 ]
+        )
+      end
+
+      it "counts a valid document as satisfying extraction completeness" do
+        create(:kyc_document, applicant: applicant, classification_status: :confirmed, status: :complete,
+               document_type: "passport",
+               validity_dates: { "expiry" => validity_dates_for(normalized: (applicant.validity_reference_date + 2.years).iso8601) })
+
+        dim = calculator.dimensions.find { |d| d.key == :extraction }
+        expect(dim.numerator).to eq(1)
+        expect(dim.denominator).to eq(1)
+      end
+
+      it "counts an expiring_soon document as satisfying extraction completeness" do
+        create(:kyc_document, applicant: applicant, classification_status: :confirmed, status: :complete,
+               document_type: "passport",
+               validity_dates: { "expiry" => validity_dates_for(normalized: (applicant.validity_reference_date + 10).iso8601) })
+
+        dim = calculator.dimensions.find { |d| d.key == :extraction }
+        expect(dim.numerator).to eq(1)
+        expect(dim.denominator).to eq(1)
+      end
+
+      it "does not count an expired document as satisfying extraction completeness" do
+        create(:kyc_document, applicant: applicant, classification_status: :confirmed, status: :complete,
+               document_type: "passport",
+               validity_dates: { "expiry" => validity_dates_for(normalized: (applicant.validity_reference_date - 1).iso8601) })
+
+        dim = calculator.dimensions.find { |d| d.key == :extraction }
+        expect(dim.numerator).to eq(0)
+        expect(dim.denominator).to eq(1)
+      end
+
+      it "does not count a stale document as satisfying extraction completeness" do
+        Kyc::DocumentValidityPolicy.publish!(
+          document_type: "utility_bill", effective_from: Date.new(2020, 1, 1),
+          mode: :freshness, required_dates: [ "issued" ], warning_thresholds: [], max_age_months: 3
+        )
+        create(:kyc_document, applicant: applicant, classification_status: :confirmed, status: :complete,
+               document_type: "utility_bill",
+               validity_dates: { "issued" => validity_dates_for(normalized: (applicant.validity_reference_date - 4.months).iso8601) })
+
+        dim = calculator.dimensions.find { |d| d.key == :extraction }
+        expect(dim.numerator).to eq(0)
+        expect(dim.denominator).to eq(1)
+      end
+
+      it "does not count a confirmation_required document as satisfying extraction completeness" do
+        create(:kyc_document, applicant: applicant, classification_status: :confirmed, status: :complete,
+               document_type: "passport",
+               validity_dates: { "expiry" => validity_dates_for(normalized: nil, confidence: nil) })
+
+        dim = calculator.dimensions.find { |d| d.key == :extraction }
+        expect(dim.numerator).to eq(0)
+        expect(dim.denominator).to eq(1)
+      end
+
+      it "does not create duplicate assessments across repeated calculator runs" do
+        create(:kyc_document, applicant: applicant, classification_status: :confirmed, status: :complete,
+               document_type: "passport",
+               validity_dates: { "expiry" => validity_dates_for(normalized: (applicant.validity_reference_date + 2.years).iso8601) })
+
+        described_class.for(applicant).dimensions
+        expect {
+          described_class.for(applicant).dimensions
+        }.not_to change(Kyc::DocumentValidityAssessment, :count)
+      end
+    end
   end
 
   describe "identity verification dimension" do

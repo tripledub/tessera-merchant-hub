@@ -1,0 +1,12 @@
+<ul class="mt-2 space-y-1 text-xs text-gray-500 dark:text-gray-400" data-testid="confirmation-history">
+  <% presenter.confirmation_history.each do |entry| %>
+    <li>
+      <%= t("kyc.documents.validity.confirmation_history.entry",
+            role: t("kyc.documents.date_confirmations.roles.#{entry.date_role}", default: entry.date_role.humanize),
+            change: presenter.confirmation_change_text(entry),
+            actor: entry.confirmed_by.email,
+            timestamp: l(entry.created_at, format: :long),
+            reason: entry.reason.presence || t("kyc.documents.date_confirmations.no_reason")) %>
+    </li>
+  <% end %>
+</ul>

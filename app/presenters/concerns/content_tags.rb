@@ -6,15 +6,17 @@ module ContentTags
     red:    "bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-400",
     amber:  "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-400",
     blue:   "bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-400",
+    orange: "bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-400",
     gray:   "bg-gray-100 text-gray-700 dark:bg-gray-500/10 dark:text-gray-400"
   }.freeze
 
   DOT_COLOURS = {
-    green: "bg-green-500",
-    red:   "bg-red-500",
-    amber: "bg-amber-500",
-    blue:  "bg-blue-500",
-    gray:  "bg-gray-400"
+    green:  "bg-green-500",
+    red:    "bg-red-500",
+    amber:  "bg-amber-500",
+    blue:   "bg-blue-500",
+    orange: "bg-orange-500",
+    gray:   "bg-gray-400"
   }.freeze
 
   def badge(text, colour = :gray)
