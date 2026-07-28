@@ -113,4 +113,32 @@ RSpec.describe Kyc::Compliance::ReadinessAssessment, type: :service do
       expect(assessment.unmet_results.size).to eq(1)
     end
   end
+
+  describe "#confirmation_required_results (MH-198)" do
+    it "is distinct from unmet_results and blocks compliant?" do
+      Kyc::Compliance::RuleRegistry.reset!
+
+      stub_const("AwaitingRule", Class.new(Kyc::Compliance::BaseRule) {
+        def applies_to?(_entity)
+          true
+        end
+
+        def evaluate(entity)
+          build_result(
+            entity: entity,
+            requirements: [ "passport" ],
+            satisfied: [],
+            awaiting_confirmation: [ "passport" ]
+          )
+        end
+      })
+
+      entity # ensure created
+      assessment = described_class.for(applicant)
+
+      expect(assessment.confirmation_required_results.size).to eq(1)
+      expect(assessment.unmet_results).to be_empty
+      expect(assessment).not_to be_compliant
+    end
+  end
 end

@@ -24,6 +24,35 @@ RSpec.describe Kyc::Compliance::Rules::CorporateDocumentation, type: :service do
       end
     end
 
+    context "when the only certificate_of_incorporation is superseded" do
+      it "does not treat a superseded certificate_of_incorporation as satisfying the requirement" do
+        entity = create(:kyc_corporate_entity, applicant: applicant, kyc_document: source_document,
+                                                entity_type: :corporate, name: "Northwind Holdings Ltd")
+        old_certificate = create(:kyc_document, applicant: applicant, corporate_entity: entity,
+                                                 document_type: :certificate_of_incorporation)
+        old_certificate.update!(superseded_by_kyc_document: create(:kyc_document, applicant: applicant))
+
+        result = rule.evaluate(entity)
+
+        expect(result.satisfied).not_to include("certificate_of_incorporation")
+        expect(result.missing).to include("certificate_of_incorporation")
+      end
+
+      it "treats a document's non-superseded replacement as satisfying the requirement" do
+        entity = create(:kyc_corporate_entity, applicant: applicant, kyc_document: source_document,
+                                                entity_type: :corporate, name: "Northwind Holdings Ltd")
+        old_certificate = create(:kyc_document, applicant: applicant, corporate_entity: entity,
+                                                 document_type: :certificate_of_incorporation)
+        replacement_certificate = create(:kyc_document, applicant: applicant, corporate_entity: entity,
+                                                         document_type: :certificate_of_incorporation)
+        old_certificate.update!(superseded_by_kyc_document: replacement_certificate)
+
+        result = rule.evaluate(entity)
+
+        expect(result.satisfied).to include("certificate_of_incorporation")
+      end
+    end
+
     context "when corporate entity has no certificate_of_incorporation" do
       it "returns :unmet with missing certificate_of_incorporation" do
         entity = create(:kyc_corporate_entity, applicant: applicant, kyc_document: source_document,

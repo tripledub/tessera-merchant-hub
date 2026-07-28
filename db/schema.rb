@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_02_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,7 +43,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_100000) do
   end
 
   create_table "addresses", force: :cascade do |t|
-    t.uuid "addressable_id", null: false
+    t.bigint "addressable_id", null: false
     t.string "addressable_type", null: false
     t.string "city", null: false
     t.string "country", null: false
@@ -87,6 +87,61 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_100000) do
     t.index ["kyc_document_id"], name: "index_kyc_corporate_entities_on_kyc_document_id"
   end
 
+  create_table "kyc_document_date_confirmations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "confirmed_by_id", null: false
+    t.date "confirmed_value", null: false
+    t.datetime "created_at", null: false
+    t.string "date_role", null: false
+    t.date "extracted_value"
+    t.uuid "kyc_document_id", null: false
+    t.text "reason"
+    t.datetime "updated_at", null: false
+    t.index ["kyc_document_id", "date_role"], name: "idx_on_kyc_document_id_date_role_d8edf912fb"
+  end
+
+  create_table "kyc_document_replacement_requirements", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "closed_at"
+    t.datetime "created_at", null: false
+    t.datetime "escalated_at"
+    t.uuid "kyc_document_id", null: false
+    t.datetime "opened_at", null: false
+    t.integer "status", default: 0, null: false
+    t.uuid "superseded_by_kyc_document_id"
+    t.datetime "updated_at", null: false
+    t.index ["kyc_document_id"], name: "index_kyc_document_replacement_requirements_on_kyc_document_id", unique: true
+  end
+
+  create_table "kyc_document_validity_assessments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "assessed_at", null: false
+    t.datetime "created_at", null: false
+    t.jsonb "dates_used", default: {}, null: false
+    t.uuid "kyc_document_id", null: false
+    t.uuid "kyc_document_validity_policy_id", null: false
+    t.integer "outcome", null: false
+    t.integer "policy_version", null: false
+    t.string "reason_code", null: false
+    t.jsonb "reason_details"
+    t.date "reference_date", null: false
+    t.datetime "updated_at", null: false
+    t.index ["kyc_document_id", "assessed_at"], name: "idx_on_kyc_document_id_assessed_at_64736351bd"
+  end
+
+  create_table "kyc_document_validity_policies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.boolean "blocking", default: true, null: false
+    t.datetime "created_at", null: false
+    t.string "document_type", null: false
+    t.date "effective_from", null: false
+    t.boolean "enabled", default: true, null: false
+    t.integer "max_age_months"
+    t.integer "mode", null: false
+    t.jsonb "required_dates", default: [], null: false
+    t.datetime "updated_at", null: false
+    t.integer "version", null: false
+    t.jsonb "warning_thresholds", default: [], null: false
+    t.index ["document_type", "effective_from"], name: "idx_on_document_type_effective_from_8777c21306"
+    t.index ["document_type", "version"], name: "idx_on_document_type_version_b26bf61bd2", unique: true
+  end
+
   create_table "kyc_documents", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.decimal "address_match_confidence", precision: 4, scale: 3
     t.string "address_match_method"
@@ -103,10 +158,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_100000) do
     t.string "match_method"
     t.jsonb "result"
     t.integer "status", default: 0, null: false
+    t.uuid "superseded_by_kyc_document_id"
     t.datetime "updated_at", null: false
+    t.boolean "validity_confirmation_required", default: false, null: false
+    t.jsonb "validity_dates", default: {}, null: false
     t.index ["applicant_id"], name: "index_kyc_documents_on_applicant_id"
     t.index ["corporate_entity_id"], name: "index_kyc_documents_on_corporate_entity_id"
     t.index ["kyc_principal_id"], name: "index_kyc_documents_on_kyc_principal_id"
+    t.index ["superseded_by_kyc_document_id"], name: "index_kyc_documents_on_superseded_by_kyc_document_id"
   end
 
   create_table "kyc_ownership_edges", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -247,7 +306,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_02_100000) do
   add_foreign_key "applicant_users", "merchants", column: "applicant_id"
   add_foreign_key "kyc_corporate_entities", "kyc_documents"
   add_foreign_key "kyc_corporate_entities", "merchants", column: "applicant_id"
+  add_foreign_key "kyc_document_date_confirmations", "kyc_documents"
+  add_foreign_key "kyc_document_date_confirmations", "users", column: "confirmed_by_id"
+  add_foreign_key "kyc_document_replacement_requirements", "kyc_documents"
+  add_foreign_key "kyc_document_replacement_requirements", "kyc_documents", column: "superseded_by_kyc_document_id"
+  add_foreign_key "kyc_document_validity_assessments", "kyc_document_validity_policies"
+  add_foreign_key "kyc_document_validity_assessments", "kyc_documents"
   add_foreign_key "kyc_documents", "kyc_corporate_entities", column: "corporate_entity_id"
+  add_foreign_key "kyc_documents", "kyc_documents", column: "superseded_by_kyc_document_id", on_delete: :nullify
   add_foreign_key "kyc_documents", "kyc_principals"
   add_foreign_key "kyc_documents", "merchants", column: "applicant_id"
   add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "child_entity_id"

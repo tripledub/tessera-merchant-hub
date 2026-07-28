@@ -132,6 +132,118 @@ RSpec.describe "Onboarding conversations", type: :request do
       expect(response.body).not_to include("Welcome back")
     end
 
+    # MH-200: applicant-facing document validity/replacement notices,
+    # rendered on this same onboarding chat page since it is the only
+    # applicant-facing surface in the app — both during and after
+    # onboarding completes.
+    context "with document validity notices" do
+      before do
+        Kyc::DocumentValidityPolicy.publish!(
+          document_type: "passport", effective_from: Date.new(2020, 1, 1),
+          mode: :expires, required_dates: [ "expiry" ], warning_thresholds: [ 90, 30 ]
+        )
+      end
+
+      it "shows an under-review notice for a confirmation_required document, never a rejection" do
+        applicant_user = create(:applicant_user)
+        create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+        create(:kyc_document, applicant: applicant_user.applicant, document_type: :passport, status: :complete,
+               classification_status: :confirmed,
+               validity_dates: { "expiry" => { "raw" => nil, "normalized" => nil, "confidence" => nil,
+                 "provenance" => "ai_extraction" } })
+        sign_in applicant_user, scope: :applicant_user
+
+        get portal_onboarding_path
+
+        expect(response.body).to include("document-status-notices")
+        expect(response.body).to include("We&#39;re reviewing your Passport.")
+      end
+
+      it "shows an invalid notice identifying the document and the required action" do
+        applicant_user = create(:applicant_user)
+        session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+        create(:kyc_document, applicant: applicant_user.applicant, document_type: :passport, status: :complete,
+               classification_status: :confirmed,
+               validity_dates: { "expiry" => { "raw" => "x",
+                 "normalized" => (applicant_user.applicant.validity_reference_date - 1).iso8601, "confidence" => 0.95,
+                 "provenance" => "ai_extraction" } })
+        sign_in applicant_user, scope: :applicant_user
+
+        get portal_onboarding_path
+
+        expect(response.body).to include("Your Passport is no longer valid")
+      end
+
+      it "shows a replacement-required notice for an open replacement requirement" do
+        applicant_user = create(:applicant_user)
+        create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+        document = create(:kyc_document, applicant: applicant_user.applicant, document_type: :passport,
+               status: :complete, classification_status: :confirmed,
+               validity_dates: { "expiry" => { "raw" => "x",
+                 "normalized" => (applicant_user.applicant.validity_reference_date + 10).iso8601,
+                 "confidence" => 0.95, "provenance" => "ai_extraction" } })
+        create(:kyc_document_replacement_requirement, kyc_document: document, status: :warned)
+        sign_in applicant_user, scope: :applicant_user
+
+        get portal_onboarding_path
+
+        expect(response.body).to include("will need replacing soon")
+      end
+
+      it "does not show a notice for a valid document" do
+        applicant_user = create(:applicant_user)
+        create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+        create(:kyc_document, applicant: applicant_user.applicant, document_type: :passport, status: :complete,
+               classification_status: :confirmed,
+               validity_dates: { "expiry" => { "raw" => "x",
+                 "normalized" => (applicant_user.applicant.validity_reference_date + 2.years).iso8601,
+                 "confidence" => 0.95, "provenance" => "ai_extraction" } })
+        sign_in applicant_user, scope: :applicant_user
+
+        get portal_onboarding_path
+
+        expect(response.body).not_to include("document-status-notices")
+      end
+
+      it "never leaks confidence, reason codes, or staff identity into the page" do
+        psp_admin = create(:user, :psp_admin)
+        applicant_user = create(:applicant_user)
+        create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+        document = create(:kyc_document, applicant: applicant_user.applicant, document_type: :passport,
+               status: :complete, classification_status: :confirmed,
+               validity_dates: { "expiry" => { "raw" => nil, "normalized" => nil, "confidence" => nil,
+                 "provenance" => "ai_extraction" } })
+        Kyc::DocumentDateConfirmation.create!(
+          kyc_document: document, date_role: "expiry", extracted_value: nil,
+          confirmed_value: applicant_user.applicant.validity_reference_date - 1, confirmed_by: psp_admin
+        )
+        sign_in applicant_user, scope: :applicant_user
+
+        get portal_onboarding_path
+
+        expect(response.body).not_to include(psp_admin.email)
+        expect(response.body).not_to include("missing_required_date")
+        expect(response.body).not_to include("past_printed_expiry")
+      end
+
+      it "remains reachable, showing notices, after the onboarding session has completed" do
+        applicant_user = create(:applicant_user)
+        session = create(:onboarding_session, applicant: applicant_user.applicant,
+               current_stage: :document_collection, status: :completed)
+        create(:kyc_document, applicant: applicant_user.applicant, document_type: :passport, status: :complete,
+               classification_status: :confirmed,
+               validity_dates: { "expiry" => { "raw" => "x",
+                 "normalized" => (applicant_user.applicant.validity_reference_date - 1).iso8601, "confidence" => 0.95,
+                 "provenance" => "ai_extraction" } })
+        sign_in applicant_user, scope: :applicant_user
+
+        get portal_onboarding_path
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Your Passport is no longer valid")
+      end
+    end
+
     it "does not show a welcome-back message once nothing is outstanding" do
       applicant_user = create(:applicant_user)
       session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
@@ -165,6 +277,67 @@ RSpec.describe "Onboarding conversations", type: :request do
       post portal_onboarding_messages_path, params: { message: "Hello" }
 
       expect(response).to redirect_to(new_applicant_user_session_path)
+    end
+  end
+
+  describe "POST /portal/onboarding/messages with a control command" do
+    include ActiveJob::TestHelper
+
+    it "responds to help without calling inference" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :company_info)
+      sign_in applicant_user, scope: :applicant_user
+      adapter = instance_spy(Kyc::Inference::Base)
+      allow(Kyc::Inference).to receive(:adapter).and_return(adapter)
+
+      perform_enqueued_jobs do
+        post portal_onboarding_messages_path, params: { message: "help" }
+      end
+
+      expect(adapter).not_to have_received(:generate)
+      last_message = OnboardingMessage.order(:created_at).last
+      expect(last_message).to have_attributes(role: "bot")
+      expect(last_message.content).to include("help")
+    end
+
+    it "responds to save and quit by confirming progress is saved" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :business_activity)
+      sign_in applicant_user, scope: :applicant_user
+
+      perform_enqueued_jobs do
+        post portal_onboarding_messages_path, params: { message: "save and quit" }
+      end
+
+      expect(OnboardingMessage.order(:created_at).last.content).to match(/saved/i)
+    end
+
+    it "blocks skip outside the document collection stage" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :company_info)
+      sign_in applicant_user, scope: :applicant_user
+
+      perform_enqueued_jobs do
+        post portal_onboarding_messages_path, params: { message: "skip" }
+      end
+
+      expect(OnboardingMessage.order(:created_at).last.content).to match(/not available|isn.t available/i)
+    end
+
+    it "defers the first outstanding document when skip is used during document collection" do
+      applicant_user = create(:applicant_user)
+      applicant = applicant_user.applicant
+      create(:kyc_principal, applicant: applicant, name: "Jane Smith", source: :applicant_declared)
+      session = create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      sign_in applicant_user, scope: :applicant_user
+
+      perform_enqueued_jobs do
+        post portal_onboarding_messages_path, params: { message: "next" }
+      end
+
+      expect(OnboardingMessage.order(:created_at).last.content).to include("Noted")
+      expect(session.reload.document_checklist.first["deferred"]).to be(true)
     end
   end
 

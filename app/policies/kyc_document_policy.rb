@@ -28,4 +28,8 @@ class KycDocumentPolicy < ApplicationPolicy
   def reject_link?
     psp_admin?
   end
+
+  def confirm_dates?
+    psp_admin?
+  end
 end

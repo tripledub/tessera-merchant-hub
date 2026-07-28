@@ -22,9 +22,15 @@ module Kyc
 
       private
 
-      def build_result(entity:, requirements:, satisfied:)
-        missing = requirements - satisfied
-        status = missing.empty? ? :met : :unmet
+      def build_result(entity:, requirements:, satisfied:, awaiting_confirmation: [])
+        missing = requirements - satisfied - awaiting_confirmation
+        status = if missing.any?
+          :unmet
+        elsif awaiting_confirmation.any?
+          :confirmation_required
+        else
+          :met
+        end
 
         RuleResult.new(
           rule_name: self.class.rule_name,
@@ -32,7 +38,8 @@ module Kyc
           status: status,
           requirements: requirements,
           satisfied: satisfied,
-          missing: missing
+          missing: missing,
+          awaiting_confirmation: awaiting_confirmation
         )
       end
 
@@ -43,7 +50,8 @@ module Kyc
           status: :not_applicable,
           requirements: [],
           satisfied: [],
-          missing: []
+          missing: [],
+          awaiting_confirmation: []
         )
       end
     end
