@@ -161,6 +161,7 @@ en:
       kyc_completeness:
         kyc_completeness: KYC Completeness
       overview:
+        awaiting_review_badge: Awaiting Review
         compliance_readiness: Compliance Readiness
         details: Details
         documents_count: Documents
@@ -387,6 +388,35 @@ en:
         pending: Pending
         processing: Processing
       unlinked: Unlinked
+      validity:
+        confirmation_history:
+          entry: "%{role}: %{value} confirmed by %{actor} on %{timestamp} — %{reason}"
+        outcomes:
+          confirmation_required: Awaiting review
+          expired: Expired
+          expiring_soon: Expiring soon
+          no_assessment: Not tracked
+          stale: No longer current
+          valid: Valid
+        policy_version: Policy v%{version}
+        reasons:
+          missing_required_date: A required date could not be confirmed.
+          older_than_max_age: Older than the maximum age allowed for this document
+            type.
+          past_printed_expiry: Past the document's printed expiry date.
+          unknown: No reason recorded.
+          within_day_threshold: Expires within %{threshold} days (%{days_remaining}
+            days remaining).
+          within_validity_window: Within the validity window.
+        replacement:
+          closed_at: Resolved on %{date}
+          escalated_at: Escalated on %{date}
+          opened_at: Requested on %{date}
+          status:
+            closed: Replacement received
+            escalated: Replacement urgently required
+            warned: Replacement requested
+          superseded_by: Superseded by %{filename}
     entity_document_links:
       new:
         empty: All documents are already linked.
@@ -536,6 +566,13 @@ en:
         status: Status
         test: Test
         test_mode: Mode
+  onboarding:
+    conversations:
+      document_status:
+        invalid: Your %{document_type} is no longer valid — please upload a new one.
+        replacement_required: Your %{document_type} will need replacing soon — please
+          upload an updated one when you can.
+        under_review: We're reviewing your %{document_type}.
   payment_timelines:
     show:
       back: "← Back to payment"
