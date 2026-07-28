@@ -4,6 +4,7 @@ class KycDocument < ApplicationRecord
   belongs_to :applicant,     foreign_key: :applicant_id,     inverse_of: :kyc_documents
   belongs_to :kyc_principal, foreign_key: :kyc_principal_id, inverse_of: :kyc_documents, optional: true
   belongs_to :corporate_entity, class_name: "Kyc::CorporateEntity", optional: true
+  belongs_to :superseded_by_kyc_document, class_name: "KycDocument", optional: true
 
   has_many :corporate_entities, class_name: "Kyc::CorporateEntity", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
@@ -13,8 +14,17 @@ class KycDocument < ApplicationRecord
            dependent: :destroy, inverse_of: :kyc_document
   has_many :validity_assessments, class_name: "Kyc::DocumentValidityAssessment", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
+  has_one :replacement_requirement, class_name: "Kyc::DocumentReplacementRequirement",
+          foreign_key: :kyc_document_id, dependent: :destroy, inverse_of: :kyc_document
 
   has_one_attached :file
+
+  # MH-199: excludes documents that have been replaced by a newer upload of
+  # the same type (see Kyc::DocumentExpiryMonitoringJob). Used anywhere a
+  # "currently active" set of documents is needed for readiness/completeness,
+  # so a superseded, possibly-expired document doesn't count against (or
+  # for) an applicant once a valid replacement is on file.
+  scope :not_superseded, -> { where(superseded_by_kyc_document_id: nil) }
 
   enum :status, { pending: 0, processing: 1, complete: 2, error: 3 }, default: :pending
 

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_28_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -99,6 +99,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_110000) do
     t.index ["kyc_document_id", "date_role"], name: "idx_on_kyc_document_id_date_role_d8edf912fb"
   end
 
+  create_table "kyc_document_replacement_requirements", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "closed_at"
+    t.datetime "created_at", null: false
+    t.datetime "escalated_at"
+    t.uuid "kyc_document_id", null: false
+    t.datetime "opened_at", null: false
+    t.integer "status", default: 0, null: false
+    t.uuid "superseded_by_kyc_document_id"
+    t.datetime "updated_at", null: false
+    t.index ["kyc_document_id"], name: "index_kyc_document_replacement_requirements_on_kyc_document_id", unique: true
+  end
+
   create_table "kyc_document_validity_assessments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "assessed_at", null: false
     t.datetime "created_at", null: false
@@ -146,12 +158,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_110000) do
     t.string "match_method"
     t.jsonb "result"
     t.integer "status", default: 0, null: false
+    t.uuid "superseded_by_kyc_document_id"
     t.datetime "updated_at", null: false
     t.boolean "validity_confirmation_required", default: false, null: false
     t.jsonb "validity_dates", default: {}, null: false
     t.index ["applicant_id"], name: "index_kyc_documents_on_applicant_id"
     t.index ["corporate_entity_id"], name: "index_kyc_documents_on_corporate_entity_id"
     t.index ["kyc_principal_id"], name: "index_kyc_documents_on_kyc_principal_id"
+    t.index ["superseded_by_kyc_document_id"], name: "index_kyc_documents_on_superseded_by_kyc_document_id"
   end
 
   create_table "kyc_ownership_edges", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -294,9 +308,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_110000) do
   add_foreign_key "kyc_corporate_entities", "merchants", column: "applicant_id"
   add_foreign_key "kyc_document_date_confirmations", "kyc_documents"
   add_foreign_key "kyc_document_date_confirmations", "users", column: "confirmed_by_id"
+  add_foreign_key "kyc_document_replacement_requirements", "kyc_documents"
+  add_foreign_key "kyc_document_replacement_requirements", "kyc_documents", column: "superseded_by_kyc_document_id"
   add_foreign_key "kyc_document_validity_assessments", "kyc_document_validity_policies"
   add_foreign_key "kyc_document_validity_assessments", "kyc_documents"
   add_foreign_key "kyc_documents", "kyc_corporate_entities", column: "corporate_entity_id"
+  add_foreign_key "kyc_documents", "kyc_documents", column: "superseded_by_kyc_document_id"
   add_foreign_key "kyc_documents", "kyc_principals"
   add_foreign_key "kyc_documents", "merchants", column: "applicant_id"
   add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "child_entity_id"

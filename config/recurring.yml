@@ -1,0 +1,13 @@
+# MH-199: Solid Queue recurring job schedule. Picked up automatically from
+# this default path (config/recurring.yml) by Solid Queue's Scheduler
+# process — no additional initializer/config is needed for it to be read
+# (see Solid Queue::Configuration::DEFAULT_RECURRING_SCHEDULE_FILE_PATH).
+# The scheduler process only runs where Solid Queue's supervisor is started
+# (production runs it via `bin/jobs` / the Puma plugin per
+# config/environments/production.rb); it is inert in development/test
+# unless that supervisor is explicitly started.
+production:
+  kyc_document_expiry_monitoring:
+    class: Kyc::DocumentExpiryMonitoringJob
+    queue: default
+    schedule: every day at 2am

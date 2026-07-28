@@ -69,7 +69,12 @@ module Kyc
     end
 
     def extraction_dimension
-      confirmed_docs = applicant.kyc_documents.where(classification_status: :confirmed)
+      # MH-199: superseded documents (replaced by a newer upload of the same
+      # type after their replacement requirement was closed) are excluded —
+      # they are historical artifacts, not part of the applicant's current
+      # active document set, and counting them would understate completeness
+      # once a valid replacement is on file.
+      confirmed_docs = applicant.kyc_documents.not_superseded.where(classification_status: :confirmed)
       total = confirmed_docs.count
       extracted = confirmed_docs.where(status: :complete).select { |doc| extraction_satisfied?(doc) }.size
 

@@ -45,8 +45,13 @@ module Kyc
 
         private
 
+        # MH-199: superseded documents are excluded from both the set of
+        # document types this rule covers and from the documents assessed
+        # for each type — an old, replaced document must not keep an
+        # already-closed requirement's document type "satisfied" (or
+        # unsatisfied) once a valid replacement is on file.
         def covered_document_types(entity)
-          entity.linked_documents.map(&:document_type).uniq.compact.select do |doc_type|
+          entity.linked_documents.not_superseded.map(&:document_type).uniq.compact.select do |doc_type|
             Kyc::DocumentValidity::PolicyResolver.resolve(
               document_type: doc_type, reference_date: entity.applicant.validity_reference_date
             ).present?
@@ -54,7 +59,7 @@ module Kyc
         end
 
         def assess_documents_of_type(entity, doc_type)
-          entity.linked_documents.select { |d| d.document_type == doc_type }.filter_map do |document|
+          entity.linked_documents.not_superseded.select { |d| d.document_type == doc_type }.filter_map do |document|
             Kyc::DocumentValidity::Assessor.assess_or_reuse(
               document: document, reference_date: entity.applicant.validity_reference_date
             )
