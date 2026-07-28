@@ -1,0 +1,53 @@
+<div id="date_confirmation_<%= dom_id(document) %>_<%= date_role %>" class="rounded-md border border-gray-200 p-3 text-theme-sm dark:border-gray-700 dark:bg-white/[0.03]">
+  <p class="font-medium text-gray-900 dark:text-white/90">
+    <%= t("kyc.documents.date_confirmations.roles.#{date_role}", default: date_role.humanize) %>
+  </p>
+
+  <% if presenter.confirmed?(date_role) %>
+    <p class="text-success-600 dark:text-success-400">
+      <%= t("kyc.documents.date_confirmations.confirmed", value: l(presenter.current_confirmation_for(date_role).confirmed_value)) %>
+    </p>
+  <% else %>
+    <p class="text-gray-500 dark:text-gray-400"><%= t("kyc.documents.date_confirmations.unconfirmed") %></p>
+  <% end %>
+
+  <% if errors.present? %>
+    <p class="text-error-500"><%= errors.full_messages.to_sentence %></p>
+  <% end %>
+
+  <%= form_with url: kyc_document_date_confirmations_path, method: :post, local: false, class: "mt-2 flex flex-col gap-2" do %>
+    <%= hidden_field_tag :kyc_document_id, document.id %>
+    <%= hidden_field_tag :date_role, date_role %>
+
+    <label>
+      <%= t("kyc.documents.date_confirmations.confirmed_value") %>
+      <%= date_field_tag :confirmed_value, presenter.form_default_value_for(date_role),
+            class: "rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800" %>
+    </label>
+
+    <label>
+      <%= t("kyc.documents.date_confirmations.reason") %>
+      <%= text_field_tag :reason, nil,
+            placeholder: t("kyc.documents.date_confirmations.reason_placeholder"),
+            class: "w-full rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800" %>
+    </label>
+
+    <%= submit_tag t("kyc.documents.date_confirmations.submit"),
+          class: "self-start rounded-md bg-brand-500 px-3 py-1 text-xs font-medium text-white hover:bg-brand-600" %>
+  <% end %>
+
+  <% history = presenter.history_for(date_role) %>
+  <% if history.any? %>
+    <ul class="mt-2 space-y-1 text-xs text-gray-500 dark:text-gray-400">
+      <% history.each do |entry| %>
+        <li>
+          <%= t("kyc.documents.date_confirmations.history_entry",
+                value: l(entry.confirmed_value),
+                actor: entry.confirmed_by.email,
+                timestamp: l(entry.created_at, format: :long),
+                reason: entry.reason.presence || t("kyc.documents.date_confirmations.no_reason")) %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>

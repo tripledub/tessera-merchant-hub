@@ -333,6 +333,19 @@ en:
           unclassified: Unclassified
       confirm: Confirm
       confirm_match: Confirm principal match
+      date_confirmations:
+        confirmed: 'Confirmed: %{value}'
+        confirmed_value: Date
+        history_entry: "%{value} confirmed by %{actor} on %{timestamp} — %{reason}"
+        no_reason: no reason given
+        reason: Reason (required if you change the extracted date)
+        reason_placeholder: Explain why this differs from the extracted date
+        roles:
+          expiry: Expiry date
+          issued: Issue date
+        submit: Confirm date
+        success: Date confirmed.
+        unconfirmed: Not yet confirmed
       delete: Delete document
       document_types:
         aml_ctf_policy: AML/CTF Policy
