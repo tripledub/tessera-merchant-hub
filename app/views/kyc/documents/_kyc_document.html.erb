@@ -129,3 +129,21 @@
       <% end %>
   </div>
 </div>
+
+<% if document.document_type.present? %>
+  <% present(document, Kyc::DocumentValidityPresenter) do |vp| %>
+    <%= render "kyc/documents/validity_status", presenter: vp %>
+  <% end %>
+<% end %>
+
+<% if document.validity_dates.present? && policy(document).confirm_dates? %>
+  <% present(document, Kyc::DocumentDateConfirmationPresenter) do |presenter| %>
+    <div class="mt-2 space-y-2">
+      <% presenter.date_roles.each do |date_role| %>
+        <%= render "kyc/document_date_confirmations/date_confirmation",
+              document: document, date_role: date_role, presenter: presenter,
+              errors: (local_assigns[:errored_role] == date_role ? local_assigns[:errors] : nil) %>
+      <% end %>
+    </div>
+  <% end %>
+<% end %>

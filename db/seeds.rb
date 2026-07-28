@@ -33,6 +33,35 @@ end
 puts "Seeded #{psp_users.size} PSP demo users. Password: #{demo_password}"
 
 # =============================================================================
+# Document validity policies  —  seed in ALL environments
+# =============================================================================
+unless Kyc::DocumentValidityPolicy.exists?(document_type: "passport")
+  Kyc::DocumentValidityPolicy.publish!(
+    document_type: "passport",
+    effective_from: Date.current,
+    mode: :expires,
+    required_dates: [ "expiry" ],
+    warning_thresholds: [ 90, 30 ],
+    blocking: true,
+    enabled: true
+  )
+  puts "Seeded passport document validity policy (v1)."
+end
+
+unless Kyc::DocumentValidityPolicy.exists?(document_type: "utility_bill")
+  Kyc::DocumentValidityPolicy.publish!(
+    document_type: "utility_bill",
+    effective_from: Date.current,
+    mode: :freshness,
+    required_dates: [ "issued" ],
+    max_age_months: 3,
+    blocking: true,
+    enabled: true
+  )
+  puts "Seeded utility_bill document validity policy (v1)."
+end
+
+# =============================================================================
 # Faker-generated merchants, shops, users, and payments  —  development ONLY
 # =============================================================================
 if Rails.env.development?

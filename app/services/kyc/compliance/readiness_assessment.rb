@@ -15,7 +15,7 @@ module Kyc
       end
 
       def compliant?
-        entity_results.all? { |er| er[:results].none?(&:unmet?) }
+        entity_results.all? { |er| er[:results].none?(&:blocks_automated_completion?) }
       end
 
       def entity_count
@@ -23,7 +23,7 @@ module Kyc
       end
 
       def compliant_entity_count
-        entity_results.count { |er| er[:results].none?(&:unmet?) }
+        entity_results.count { |er| er[:results].none?(&:blocks_automated_completion?) }
       end
 
       def all_results
@@ -37,6 +37,13 @@ module Kyc
 
       def unmet_results
         all_results.select(&:unmet?)
+      end
+
+      # MH-198: kept distinct from unmet_results so callers (e.g. MH-200's
+      # UI) can label these as "awaiting staff review" rather than rejected,
+      # even though both block automated completion (compliant?).
+      def confirmation_required_results
+        all_results.select(&:confirmation_required?)
       end
 
       private

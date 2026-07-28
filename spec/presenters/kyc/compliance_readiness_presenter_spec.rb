@@ -134,4 +134,87 @@ RSpec.describe Kyc::ComplianceReadinessPresenter, type: :presenter do
       expect(presenter.missing_summary).to be_nil
     end
   end
+
+  # MH-200: fixes the MH-198-flagged gap where a confirmation_required result
+  # rendered with the same red "Not Compliant" treatment as an outright
+  # rejection, with no detail at all (missing_summary only ever looked at
+  # unmet_results).
+  describe "confirmation_required handling" do
+    def stub_confirmation_required_rule!
+      stub_const("AwaitingRule", Class.new(Kyc::Compliance::BaseRule) {
+        def applies_to?(_entity)
+          true
+        end
+
+        def evaluate(entity)
+          build_result(
+            entity: entity,
+            requirements: [ "passport" ],
+            satisfied: [],
+            awaiting_confirmation: [ "passport" ]
+          )
+        end
+      })
+    end
+
+    describe "#overall_status_badge" do
+      it "returns an amber 'Awaiting Review' badge when only confirmation_required results block" do
+        stub_confirmation_required_rule!
+        entity # ensure created
+        assessment = Kyc::Compliance::ReadinessAssessment.for(applicant)
+        presenter = described_class.new(assessment, template)
+
+        html = presenter.overall_status_badge
+        expect(html).to include("Awaiting Review")
+        expect(html).to include("bg-amber-50")
+      end
+    end
+
+    describe "#overall_status_container_class" do
+      it "returns an amber container class distinct from compliant/not-compliant" do
+        stub_confirmation_required_rule!
+        entity
+        assessment = Kyc::Compliance::ReadinessAssessment.for(applicant)
+        presenter = described_class.new(assessment, template)
+
+        expect(presenter.overall_status_container_class).to include("border-amber-500")
+      end
+    end
+
+    describe "#awaiting_confirmation_summary" do
+      it "lists confirmation_required items distinctly from unmet items" do
+        stub_confirmation_required_rule!
+        entity
+        assessment = Kyc::Compliance::ReadinessAssessment.for(applicant)
+        presenter = described_class.new(assessment, template)
+
+        summary = presenter.awaiting_confirmation_summary
+        expect(summary).to be_an(Array)
+        expect(summary.first).to include(entity.name)
+        expect(summary.first).to include("Passport")
+        expect(presenter.missing_summary).to be_nil
+      end
+
+      it "returns nil when nothing is awaiting confirmation" do
+        stub_const("AllMetRule", Class.new(Kyc::Compliance::BaseRule) {
+          def applies_to?(_entity)
+            true
+          end
+
+          def evaluate(entity)
+            build_result(
+              entity: entity,
+              requirements: [ "certificate_of_incorporation" ],
+              satisfied: [ "certificate_of_incorporation" ]
+            )
+          end
+        })
+        entity
+        assessment = Kyc::Compliance::ReadinessAssessment.for(applicant)
+        presenter = described_class.new(assessment, template)
+
+        expect(presenter.awaiting_confirmation_summary).to be_nil
+      end
+    end
+  end
 end

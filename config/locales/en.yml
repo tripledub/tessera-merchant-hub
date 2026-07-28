@@ -161,6 +161,7 @@ en:
       kyc_completeness:
         kyc_completeness: KYC Completeness
       overview:
+        awaiting_review_badge: Awaiting Review
         compliance_readiness: Compliance Readiness
         details: Details
         documents_count: Documents
@@ -333,6 +334,19 @@ en:
           unclassified: Unclassified
       confirm: Confirm
       confirm_match: Confirm principal match
+      date_confirmations:
+        confirmed: 'Confirmed: %{value}'
+        confirmed_value: Date
+        history_entry: "%{value} confirmed by %{actor} on %{timestamp} — %{reason}"
+        no_reason: no reason given
+        reason: Reason (required if you change the extracted date)
+        reason_placeholder: Explain why this differs from the extracted date
+        roles:
+          expiry: Expiry date
+          issued: Issue date
+        submit: Confirm date
+        success: Date confirmed.
+        unconfirmed: Not yet confirmed
       delete: Delete document
       document_types:
         aml_ctf_policy: AML/CTF Policy
@@ -374,6 +388,38 @@ en:
         pending: Pending
         processing: Processing
       unlinked: Unlinked
+      validity:
+        confirmation_history:
+          change_confirmed: Confirmed as %{value}
+          change_corrected: Corrected from %{original} to %{value}
+          change_entered: Entered %{value} (no date was extracted)
+          entry: "%{role}: %{change} confirmed by %{actor} on %{timestamp} — %{reason}"
+        outcomes:
+          confirmation_required: Awaiting review
+          expired: Expired
+          expiring_soon: Expiring soon
+          no_assessment: Not tracked
+          stale: No longer current
+          valid: Valid
+        policy_version: Policy v%{version}
+        reasons:
+          missing_required_date: A required date could not be confirmed.
+          older_than_max_age: Older than the maximum age allowed for this document
+            type.
+          past_printed_expiry: Past the document's printed expiry date.
+          unknown: No reason recorded.
+          within_day_threshold: Expires within %{threshold} days (%{days_remaining}
+            days remaining).
+          within_validity_window: Within the validity window.
+        replacement:
+          closed_at: Resolved on %{date}
+          escalated_at: Escalated on %{date}
+          opened_at: Requested on %{date}
+          status:
+            closed: Replacement received
+            escalated: Replacement urgently required
+            warned: Replacement requested
+          superseded_by: Superseded by %{filename}
     entity_document_links:
       new:
         empty: All documents are already linked.
@@ -538,6 +584,12 @@ en:
         this step first.
     conversation:
       error_message: Something went wrong. Please try again.
+    conversations:
+      document_status:
+        invalid: Your %{document_type} is no longer valid — please upload a new one.
+        replacement_required: Your %{document_type} will need replacing soon — please
+          upload an updated one when you can.
+        under_review: We're reviewing your %{document_type}.
   payment_timelines:
     show:
       back: "← Back to payment"
