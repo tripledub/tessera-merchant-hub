@@ -40,6 +40,39 @@ RSpec.describe Kyc::Compliance::Rules::NomineeDocumentation, type: :service do
       end
     end
 
+    context "when the only declaration_of_trust is superseded" do
+      it "does not treat a superseded declaration_of_trust as satisfying the requirement" do
+        entity = create(:kyc_corporate_entity, applicant: applicant, kyc_document: source_document,
+                                                entity_type: :corporate, name: "Northwind Holdings Ltd")
+        create(:kyc_validation_warning, applicant: applicant, kyc_document: source_document,
+                                        corporate_entity: entity, warning_type: :nominee_detected)
+        old_declaration = create(:kyc_document, applicant: applicant, corporate_entity: entity,
+                                                 document_type: :declaration_of_trust)
+        old_declaration.update!(superseded_by_kyc_document: create(:kyc_document, applicant: applicant))
+
+        result = rule.evaluate(entity)
+
+        expect(result.satisfied).not_to include("declaration_of_trust")
+        expect(result.missing).to include("declaration_of_trust")
+      end
+
+      it "treats a document's non-superseded replacement as satisfying the requirement" do
+        entity = create(:kyc_corporate_entity, applicant: applicant, kyc_document: source_document,
+                                                entity_type: :corporate, name: "Northwind Holdings Ltd")
+        create(:kyc_validation_warning, applicant: applicant, kyc_document: source_document,
+                                        corporate_entity: entity, warning_type: :nominee_detected)
+        old_declaration = create(:kyc_document, applicant: applicant, corporate_entity: entity,
+                                                 document_type: :declaration_of_trust)
+        replacement_declaration = create(:kyc_document, applicant: applicant, corporate_entity: entity,
+                                                         document_type: :declaration_of_trust)
+        old_declaration.update!(superseded_by_kyc_document: replacement_declaration)
+
+        result = rule.evaluate(entity)
+
+        expect(result.satisfied).to include("declaration_of_trust")
+      end
+    end
+
     context "when the entity has no nominee_detected warning" do
       it "returns :not_applicable for a corporate entity" do
         entity = create(:kyc_corporate_entity, applicant: applicant, kyc_document: source_document,
