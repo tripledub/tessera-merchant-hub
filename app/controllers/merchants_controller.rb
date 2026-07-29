@@ -32,7 +32,7 @@ class MerchantsController < ApplicationController
 
     if onboarding_params_incomplete?
       flash.now[:alert] = I18n.t("flash.merchants.missing_fields")
-      return render :new, status: :unprocessable_entity
+      return render :new, status: :unprocessable_content
     end
 
     merchant = ControlPlane::MerchantProvisioner.create!(**merchant_params)
@@ -43,10 +43,10 @@ class MerchantsController < ApplicationController
                 notice: I18n.t("flash.merchants.onboard_success", email: admin_email)
   rescue TesseraCoreClient::Error => e
     flash.now[:alert] = I18n.t("flash.merchants.onboard_failed", message: e.message)
-    render :new, status: :unprocessable_entity
+    render :new, status: :unprocessable_content
   rescue ActiveRecord::RecordInvalid => e
     flash.now[:alert] = I18n.t("flash.merchants.admin_create_failed", errors: e.record.errors.full_messages.to_sentence)
-    render :new, status: :unprocessable_entity
+    render :new, status: :unprocessable_content
   end
 
   def edit
@@ -61,7 +61,7 @@ class MerchantsController < ApplicationController
                   notice: t("flash.merchants.update_success")
     else
       flash.now[:alert] = result.errors.full_messages.to_sentence
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

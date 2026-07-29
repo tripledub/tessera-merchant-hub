@@ -22,7 +22,7 @@ class Kyc::DocumentDateConfirmationsController < ApplicationController
       actor: current_user
     )
 
-    status = result.success? ? :ok : :unprocessable_entity
+    status = result.success? ? :ok : :unprocessable_content
 
     respond_to do |format|
       # MH-200: replaces the same dom_id(document) target that

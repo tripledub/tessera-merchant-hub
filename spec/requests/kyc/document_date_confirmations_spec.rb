@@ -47,7 +47,7 @@ RSpec.describe "Kyc::DocumentDateConfirmations", type: :request do
                params: { kyc_document_id: document.id, date_role: "bogus_role", confirmed_value: "2030-01-01" }
         end.not_to change(Kyc::DocumentDateConfirmation, :count)
 
-        expect(response).to have_http_status(:unprocessable_entity).or have_http_status(:redirect)
+        expect(response).to have_http_status(:unprocessable_content).or have_http_status(:redirect)
       end
 
       it "rejects a changed date without a reason" do
@@ -56,7 +56,7 @@ RSpec.describe "Kyc::DocumentDateConfirmations", type: :request do
                params: { kyc_document_id: document.id, date_role: "expiry", confirmed_value: "2032-01-01" }
         end.not_to change(Kyc::DocumentDateConfirmation, :count)
 
-        expect(response).to have_http_status(:unprocessable_entity).or have_http_status(:redirect)
+        expect(response).to have_http_status(:unprocessable_content).or have_http_status(:redirect)
       end
 
       it "accepts a changed date with a reason and creates a new audit row" do
@@ -100,7 +100,7 @@ RSpec.describe "Kyc::DocumentDateConfirmations", type: :request do
                headers: { "Accept" => "text/vnd.turbo-stream.html" }
         end.not_to change(Kyc::DocumentDateConfirmation, :count)
 
-        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response).to have_http_status(:unprocessable_content)
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
       end
     end
