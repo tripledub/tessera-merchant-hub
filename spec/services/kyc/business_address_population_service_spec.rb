@@ -58,6 +58,15 @@ RSpec.describe Kyc::BusinessAddressPopulationService do
         expect(applicant.addresses.where(primary: true).count).to eq(1)
         expect(applicant.primary_business_address.line1).to eq("Existing HQ")
       end
+
+      it "does not raise if the presence check misses the address that already exists" do
+        existing_address = applicant.primary_business_address
+        allow(applicant).to receive(:primary_business_address).and_return(nil, existing_address)
+
+        expect { described_class.call(document) }.not_to raise_error
+        expect(applicant.addresses.where(primary: true).count).to eq(1)
+        expect(applicant.primary_business_address.line1).to eq("Existing HQ")
+      end
     end
 
     context "when the document is not a proof-of-business-address type" do

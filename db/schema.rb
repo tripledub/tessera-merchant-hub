@@ -43,7 +43,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_140000) do
   end
 
   create_table "addresses", force: :cascade do |t|
-    t.bigint "addressable_id", null: false
+    t.uuid "addressable_id", null: false
     t.string "addressable_type", null: false
     t.string "city", null: false
     t.string "country", null: false
