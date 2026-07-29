@@ -30,6 +30,8 @@ module Kyc
         postcode: attrs[:postcode],
         country:  attrs[:country]
       )
+    rescue ActiveRecord::RecordInvalid => e
+      raise unless e.record.errors.of_kind?(:primary, :taken)
     end
   end
 end
