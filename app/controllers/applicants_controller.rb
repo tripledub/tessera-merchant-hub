@@ -53,7 +53,7 @@ class ApplicantsController < ApplicationController
     if @applicant.save
       redirect_to applicant_path(@applicant), notice: t("flash.applicants.create_success")
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -66,7 +66,7 @@ class ApplicantsController < ApplicationController
     if applicant.update(applicant_params)
       redirect_to applicant_path(applicant), notice: t("flash.applicants.update_success")
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

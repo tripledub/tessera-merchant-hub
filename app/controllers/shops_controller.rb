@@ -24,7 +24,7 @@ class ShopsController < ApplicationController
 
     if shop_create_params_incomplete?
       flash.now[:alert] = I18n.t("flash.shops.missing_fields")
-      return render :new, status: :unprocessable_entity
+      return render :new, status: :unprocessable_content
     end
 
     result = ControlPlane::ShopProvisioner.create!(merchant_id: target_merchant_id, **shop_create_params)
@@ -32,7 +32,7 @@ class ShopsController < ApplicationController
                 notice: I18n.t("flash.shops.create_success", name: result["name"])
   rescue TesseraCoreClient::Error => e
     flash.now[:alert] = I18n.t("flash.shops.create_failed", message: e.message)
-    render :new, status: :unprocessable_entity
+    render :new, status: :unprocessable_content
   end
 
   def edit
@@ -49,7 +49,7 @@ class ShopsController < ApplicationController
       redirect_to shop_path(@shop), notice: I18n.t("flash.shops.update_success")
     else
       flash.now[:alert] = I18n.t("flash.shops.update_failed", errors: result.errors.full_messages.to_sentence)
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 

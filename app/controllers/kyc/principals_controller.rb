@@ -22,7 +22,7 @@ class Kyc::PrincipalsController < ApplicationController
         format.html { redirect_to applicant_path(kyc_principal.applicant), notice: t("flash.kyc_principals.create_success") }
       end
     else
-      render :new, status: :unprocessable_entity
+      render :new, status: :unprocessable_content
     end
   end
 
@@ -35,7 +35,7 @@ class Kyc::PrincipalsController < ApplicationController
     if kyc_principal.update(kyc_principal_params)
       redirect_to applicant_path(kyc_principal.applicant), notice: t("flash.kyc_principals.update_success")
     else
-      render :edit, status: :unprocessable_entity
+      render :edit, status: :unprocessable_content
     end
   end
 
