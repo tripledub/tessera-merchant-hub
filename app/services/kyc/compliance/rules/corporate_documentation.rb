@@ -13,7 +13,7 @@ module Kyc
         def evaluate(entity)
           return not_applicable(entity) unless applies_to?(entity)
 
-          doc_types = entity.linked_documents.pluck(:document_type).compact
+          doc_types = entity.linked_documents.not_superseded.pluck(:document_type).compact
           satisfied = REQUIRED_DOC_TYPES.select { |t| doc_types.include?(t) }
 
           build_result(entity: entity, requirements: REQUIRED_DOC_TYPES, satisfied: satisfied)

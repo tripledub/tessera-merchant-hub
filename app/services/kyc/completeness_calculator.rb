@@ -69,12 +69,31 @@ module Kyc
     end
 
     def extraction_dimension
-      confirmed_docs = applicant.kyc_documents.where(classification_status: :confirmed)
+      # MH-199: superseded documents (replaced by a newer upload of the same
+      # type after their replacement requirement was closed) are excluded —
+      # they are historical artifacts, not part of the applicant's current
+      # active document set, and counting them would understate completeness
+      # once a valid replacement is on file.
+      confirmed_docs = applicant.kyc_documents.not_superseded.where(classification_status: :confirmed)
       total = confirmed_docs.count
-      extracted = confirmed_docs.where(status: :complete).count
+      extracted = confirmed_docs.where(status: :complete).select { |doc| extraction_satisfied?(doc) }.size
 
       Dimension.new(key: :extraction, label: "Extraction",
                     numerator: extracted, denominator: total)
+    end
+
+    # MH-198: a confirmed + extracted document only counts toward extraction
+    # completeness if it is ALSO validity-acceptable. Documents whose type
+    # has no resolvable policy (out of rollout) get a nil assessment back —
+    # "no validity opinion" — and keep exactly their pre-MH-198 behaviour of
+    # counting on status: :complete alone.
+    def extraction_satisfied?(document)
+      assessment = Kyc::DocumentValidity::Assessor.assess_or_reuse(
+        document: document, reference_date: applicant.validity_reference_date
+      )
+      return true if assessment.nil?
+
+      assessment.valid_outcome? || assessment.expiring_soon_outcome?
     end
 
     def identity_verification_dimension

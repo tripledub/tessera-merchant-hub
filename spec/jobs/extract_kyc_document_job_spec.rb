@@ -278,6 +278,84 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       end
     end
 
+    context "when a validity policy is in effect for the document type" do
+      before do
+        Kyc::DocumentValidityPolicy.publish!(
+          document_type: "passport",
+          effective_from: 1.year.ago.to_date,
+          mode: :expires,
+          required_dates: [ "expiry" ]
+        )
+        allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+          "full_name" => "Jane Smith",
+          "expiry_date" => "2030-06-15"
+        )
+      end
+
+      it "merges validity_dates into the same update as the rest of the extraction result" do
+        described_class.new.perform(document.id)
+        document.reload
+
+        expect(document.validity_dates["expiry"]["raw"]).to eq("2030-06-15")
+        expect(document.validity_dates["expiry"]["normalized"]).to eq("2030-06-15")
+        expect(document.validity_dates["expiry"]["provenance"]).to eq("ai_extraction")
+      end
+
+      it "still completes the existing classification/principal behaviour unchanged" do
+        described_class.new.perform(document.id)
+        document.reload
+
+        expect(document.status).to eq("complete")
+        expect(document.kyc_principal).to be_present
+      end
+    end
+
+    context "when the document type has no resolvable validity policy (outside rollout)" do
+      let(:document) do
+        create(:kyc_document,
+          applicant: applicant,
+          document_type: :driving_licence,
+          classification_status: :confirmed)
+      end
+
+      before do
+        allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+          "full_name" => "Jane Smith",
+          "expiry_date" => "2030-06-15"
+        )
+      end
+
+      it "leaves validity fields inert" do
+        described_class.new.perform(document.id)
+        document.reload
+
+        expect(document.validity_dates).to eq({})
+        expect(document.validity_confirmation_required).to be(false)
+      end
+    end
+
+    context "when extraction fails entirely for a document type with a validity policy" do
+      before do
+        Kyc::DocumentValidityPolicy.publish!(
+          document_type: "passport",
+          effective_from: 1.year.ago.to_date,
+          mode: :expires,
+          required_dates: [ "expiry" ]
+        )
+        allow(Kyc::DocumentExtractorService).to receive(:call)
+          .and_raise(Kyc::DocumentExtractorService::Error, "Inference failed")
+      end
+
+      it "does not mark the document as needing validity confirmation or fabricate validity dates" do
+        described_class.new.perform(document.id)
+        document.reload
+
+        expect(document.status).to eq("error")
+        expect(document.validity_dates).to eq({})
+        expect(document.validity_confirmation_required).to be(false)
+      end
+    end
+
     context "when extraction fails" do
       before do
         allow(Kyc::DocumentExtractorService).to receive(:call)
