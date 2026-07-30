@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { cable } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
-  static targets = ["composer", "input", "messages", "submit", "typing", "uploadButton", "uploadInput"]
+  static targets = ["composer", "input", "messages", "submit", "typing", "uploadButton", "uploadInput", "uploadStatus"]
   static values  = { sessionId: String, token: String }
 
   connect() {
@@ -67,8 +67,17 @@ export default class extends Controller {
     this.inputTarget.style.height = `${Math.min(this.inputTarget.scrollHeight, 128)}px`
   }
 
+  triggerUpload() {
+    if (this.hasUploadInputTarget) this.uploadInputTarget.click()
+  }
+
   submitUpload(event) {
     if (event.target.files.length === 0) return
+
+    const names = Array.from(event.target.files).map(file => file.name).join(", ")
+    if (this.hasUploadStatusTarget) {
+      this.uploadStatusTarget.innerHTML = `<p class="text-xs text-gray-500 dark:text-gray-400">Uploading ${this.escapeHtml(names)}…</p>`
+    }
 
     event.target.form.requestSubmit()
   }
@@ -241,6 +250,12 @@ export default class extends Controller {
     requestAnimationFrame(() => {
       this.messagesTarget.scrollTop = this.messagesTarget.scrollHeight
     })
+  }
+
+  escapeHtml(text) {
+    const div = document.createElement("div")
+    div.textContent = text
+    return div.innerHTML
   }
 
   formatTimestamp(date) {
