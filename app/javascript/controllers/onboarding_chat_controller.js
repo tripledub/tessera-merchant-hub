@@ -42,7 +42,7 @@ export default class extends Controller {
     const message = this.inputTarget.value.trim()
     if (message.length === 0) return
 
-    this.appendApplicantPreview(message)
+    this.pendingApplicantMessageEl = this.appendApplicantPreview(message)
     this.inputTarget.value = ""
     this.resizeInput()
     this.setSubmitting(true)
@@ -148,8 +148,10 @@ export default class extends Controller {
     }
 
     this.streamingBubble = null
-    const statusEl = document.getElementById("onboarding_pending_applicant_message")?.querySelector("p")
+    const statusEl = this.pendingApplicantMessageEl?.querySelector("p")
     if (statusEl) statusEl.textContent = this.formatTimestamp(new Date())
+    this.pendingApplicantMessageEl?.removeAttribute("id")
+    this.pendingApplicantMessageEl = null
     this.setSubmitting(false)
     this.scrollToLatest()
     this.scrollComposerIntoView()
@@ -161,6 +163,10 @@ export default class extends Controller {
   handleStreamError() {
     this.streamingBubble?.remove()
     this.streamingBubble = null
+    const statusEl = this.pendingApplicantMessageEl?.querySelector("p")
+    if (statusEl) statusEl.textContent = "Failed to send — please try again"
+    this.pendingApplicantMessageEl?.removeAttribute("id")
+    this.pendingApplicantMessageEl = null
     this.hideTyping()
     this.setSubmitting(false)
     this.inputTarget.focus()
