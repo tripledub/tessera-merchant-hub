@@ -376,5 +376,50 @@ RSpec.describe "Onboarding conversations", type: :request do
 
       expect(response.body).to include("Choose at least one file")
     end
+
+    it "names the uploaded file in the success message" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      sign_in applicant_user, scope: :applicant_user
+
+      post portal_onboarding_documents_path(format: :turbo_stream), params: {
+        kyc_document: { files: [ file ] }
+      }
+
+      expect(response.body).to include("sample.pdf")
+    end
+
+    it "gives a specific, actionable reason when a file type is unsupported" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      sign_in applicant_user, scope: :applicant_user
+      unsupported = fixture_file_upload(Rails.root.join("spec/fixtures/files/unsupported.txt"), "text/plain")
+
+      expect {
+        post portal_onboarding_documents_path(format: :turbo_stream), params: {
+          kyc_document: { files: [ unsupported ] }
+        }
+      }.not_to change(KycDocument, :count)
+
+      expect(response.body).to include("unsupported.txt")
+      expect(response.body).to include("unsupported type")
+    end
+
+    it "reports success and failure separately when uploading a mix of valid and invalid files" do
+      applicant_user = create(:applicant_user)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      sign_in applicant_user, scope: :applicant_user
+      unsupported = fixture_file_upload(Rails.root.join("spec/fixtures/files/unsupported.txt"), "text/plain")
+
+      expect {
+        post portal_onboarding_documents_path(format: :turbo_stream), params: {
+          kyc_document: { files: [ file, unsupported ] }
+        }
+      }.to change(KycDocument, :count).by(1)
+
+      expect(response.body).to include("sample.pdf")
+      expect(response.body).to include("unsupported.txt")
+      expect(response.body).to include("unsupported type")
+    end
   end
 end

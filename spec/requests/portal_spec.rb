@@ -50,7 +50,7 @@ RSpec.describe "Onboarding authentication", type: :request do
         post applicant_user_registration_path, params: sign_up_params
       }.not_to change(Applicant, :count)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
 
     it "rejects sign up with missing applicant names without creating an Applicant" do
@@ -61,7 +61,7 @@ RSpec.describe "Onboarding authentication", type: :request do
         post applicant_user_registration_path, params: sign_up_params
       }.not_to change(Applicant, :count)
 
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 
@@ -79,7 +79,7 @@ RSpec.describe "Onboarding authentication", type: :request do
       post new_applicant_user_session_path, params: {
         applicant_user: { email: "user@example.com", password: "wrong" }
       }
-      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response).to have_http_status(:unprocessable_content)
     end
   end
 
