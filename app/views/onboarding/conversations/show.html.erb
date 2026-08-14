@@ -36,7 +36,7 @@
       <%= render "onboarding/conversations/message",
             message: @onboarding_session.onboarding_messages.build(
               role: :bot,
-              content: "Welcome. I’ll guide you through the KYC onboarding questions and keep track of your progress as we go.",
+              content: "Welcome. I’ll guide you through the KYC onboarding questions and keep track of your progress as we go. To begin, please tell us the name of your business.",
               stage: @onboarding_session.current_stage,
               created_at: Time.current
             ) %>
