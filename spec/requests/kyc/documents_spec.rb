@@ -117,6 +117,23 @@ RSpec.describe "KycDocuments", type: :request do
           headers: { "Accept" => "text/vnd.turbo-stream.html" }
         expect(document.reload.document_type).to eq("passport")
       end
+
+      it "renders the validity status inside a single dom_id-wrapped element (MH-208)" do
+        # A turbo_stream.replace can only remove content living inside its target
+        # element. Confirming the classification repeatedly used to leave the
+        # validity badge (and date confirmation blocks) as orphaned siblings of
+        # the replaced element, so each confirm click left an extra "Not tracked"
+        # badge behind instead of replacing the previous one.
+        patch kyc_document_path(document),
+          params: { kyc_document: { classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        wrapper = fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}")
+
+        expect(wrapper.size).to eq(1)
+        expect(wrapper.first.css("[data-testid='document-validity-status']")).to be_present
+      end
     end
 
     context "when signed in as psp_support" do
