@@ -35,9 +35,5 @@ module Kyc
 
       extracted_value_for(date_role)
     end
-
-    def history_for(date_role)
-      document.date_confirmations.where(date_role: date_role).order(created_at: :desc, id: :desc).to_a
-    end
   end
 end
