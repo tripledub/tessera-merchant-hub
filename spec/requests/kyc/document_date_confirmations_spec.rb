@@ -120,7 +120,27 @@ RSpec.describe "Kyc::DocumentDateConfirmations", type: :request do
         card = fragment.css("#date_confirmation_#{ActionView::RecordIdentifier.dom_id(document)}_expiry")
 
         expect(card.first.css("li")).to be_empty
-        expect(fragment.css("[data-testid='confirmation-history'] li").size).to eq(1)
+        expect(fragment.css("[data-testid='confirmation-history']").size).to eq(1)
+      end
+
+      it "shows only the latest confirmation in the document-level history, not a growing list" do
+        document.update!(document_type: :passport)
+
+        post kyc_document_date_confirmations_path,
+             params: { kyc_document_id: document.id, date_role: "expiry", confirmed_value: "2030-01-01" },
+             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        post kyc_document_date_confirmations_path,
+             params: { kyc_document_id: document.id, date_role: "expiry", confirmed_value: "2033-01-01",
+                       reason: "Second correction" },
+             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        history = fragment.css("[data-testid='confirmation-history']")
+
+        expect(history.size).to eq(1)
+        expect(history.first.text).to include("Second correction")
+        expect(history.first.text).not_to include("no reason given")
       end
     end
 
