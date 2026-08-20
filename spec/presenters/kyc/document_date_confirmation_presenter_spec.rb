@@ -80,25 +80,4 @@ RSpec.describe Kyc::DocumentDateConfirmationPresenter, type: :presenter do
       expect(presenter.form_default_value_for("expiry")).to eq(Date.new(2031, 6, 1).iso8601)
     end
   end
-
-  describe "#history_for" do
-    it "returns confirmations for the role, most recent first" do
-      first = Kyc::DocumentDateConfirmation.create!(
-        kyc_document: document, date_role: "expiry", extracted_value: Date.new(2030, 1, 1),
-        confirmed_value: Date.new(2030, 1, 1), confirmed_by: actor
-      )
-      second = travel_to(first.created_at + 1.minute) do
-        Kyc::DocumentDateConfirmation.create!(
-          kyc_document: document, date_role: "expiry", extracted_value: Date.new(2030, 1, 1),
-          confirmed_value: Date.new(2031, 1, 1), confirmed_by: actor, reason: "Corrected"
-        )
-      end
-
-      expect(presenter.history_for("expiry")).to eq([ second, first ])
-    end
-
-    it "is empty when nothing has been confirmed yet" do
-      expect(presenter.history_for("expiry")).to eq([])
-    end
-  end
 end

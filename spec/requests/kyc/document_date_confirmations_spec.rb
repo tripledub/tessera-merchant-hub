@@ -103,6 +103,25 @@ RSpec.describe "Kyc::DocumentDateConfirmations", type: :request do
         expect(response).to have_http_status(:unprocessable_content)
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
       end
+
+      it "does not repeat the confirmation history inside the per-role date confirmation card (MH-209)" do
+        # Confirmation history is shown once, in the document-level audit trail
+        # (Kyc::DocumentValidityPresenter#confirmation_history). The per-role
+        # date confirmation card used to render the same entries again via
+        # Kyc::DocumentDateConfirmationPresenter#history_for, which was
+        # confusing duplication when a document has a single date role.
+        document.update!(document_type: :passport)
+
+        post kyc_document_date_confirmations_path,
+             params: { kyc_document_id: document.id, date_role: "expiry", confirmed_value: "2030-01-01" },
+             headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        card = fragment.css("#date_confirmation_#{ActionView::RecordIdentifier.dom_id(document)}_expiry")
+
+        expect(card.first.css("li")).to be_empty
+        expect(fragment.css("[data-testid='confirmation-history'] li").size).to eq(1)
+      end
     end
 
     context "when signed in as psp_support" do
