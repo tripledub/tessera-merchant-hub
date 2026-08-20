@@ -1,4 +1,5 @@
-<div id="<%= dom_id(document) %>" class="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3 text-theme-sm dark:border-gray-700 dark:bg-white/[0.03]">
+<div id="<%= dom_id(document) %>">
+  <div class="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3 text-theme-sm dark:border-gray-700 dark:bg-white/[0.03]">
   <div class="flex items-center gap-3 min-w-0">
     <% if document.file.attached? %>
       <button type="button"
@@ -128,22 +129,23 @@
         </svg>
       <% end %>
   </div>
+  </div>
+
+  <% if document.document_type.present? %>
+    <% present(document, Kyc::DocumentValidityPresenter) do |vp| %>
+      <%= render "kyc/documents/validity_status", presenter: vp %>
+    <% end %>
+  <% end %>
+
+  <% if document.validity_dates.present? && policy(document).confirm_dates? %>
+    <% present(document, Kyc::DocumentDateConfirmationPresenter) do |presenter| %>
+      <div class="mt-2 space-y-2">
+        <% presenter.date_roles.each do |date_role| %>
+          <%= render "kyc/document_date_confirmations/date_confirmation",
+                document: document, date_role: date_role, presenter: presenter,
+                errors: (local_assigns[:errored_role] == date_role ? local_assigns[:errors] : nil) %>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
 </div>
-
-<% if document.document_type.present? %>
-  <% present(document, Kyc::DocumentValidityPresenter) do |vp| %>
-    <%= render "kyc/documents/validity_status", presenter: vp %>
-  <% end %>
-<% end %>
-
-<% if document.validity_dates.present? && policy(document).confirm_dates? %>
-  <% present(document, Kyc::DocumentDateConfirmationPresenter) do |presenter| %>
-    <div class="mt-2 space-y-2">
-      <% presenter.date_roles.each do |date_role| %>
-        <%= render "kyc/document_date_confirmations/date_confirmation",
-              document: document, date_role: date_role, presenter: presenter,
-              errors: (local_assigns[:errored_role] == date_role ? local_assigns[:errors] : nil) %>
-      <% end %>
-    </div>
-  <% end %>
-<% end %>

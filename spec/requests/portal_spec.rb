@@ -89,7 +89,7 @@ RSpec.describe "Onboarding authentication", type: :request do
     it "signs out the applicant user" do
       sign_in applicant_user, scope: :applicant_user
       delete destroy_applicant_user_session_path
-      expect(response).to redirect_to(root_path)
+      expect(response).to redirect_to(new_applicant_user_session_path)
     end
   end
 
