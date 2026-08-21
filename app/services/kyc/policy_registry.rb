@@ -41,11 +41,10 @@ module Kyc
     def initialize(path:)
       @path = Pathname(path)
       @requirements_by_sector = {}
+      @files_by_sector = {}
     end
 
     def load!
-      seen_ids = {}
-
       @path.glob("*.yml").sort.each do |file|
         policy = safely_load(file)
         validate_policy!(policy, file)
@@ -55,13 +54,17 @@ module Kyc
           invalid!(file, "sector #{sector.inspect} is defined more than once")
         end
 
+        seen_ids = {}
         @requirements_by_sector[sector] = policy.fetch("requirements").map do |attributes|
           validate_requirement!(attributes, file, seen_ids)
           build_requirement(attributes)
         end.freeze
+        @files_by_sector[sector] = file
       end
 
+      validate_effective_compositions!
       @requirements_by_sector.freeze
+      @files_by_sector.freeze
       freeze
     end
 
@@ -69,8 +72,6 @@ module Kyc
       validate_requested_sector!(sector)
 
       base = @requirements_by_sector.fetch(BASE_SECTOR, EMPTY_REQUIREMENTS)
-      return base if sector == "general"
-
       overlay = @requirements_by_sector.fetch(sector, EMPTY_REQUIREMENTS)
       (base + overlay).freeze
     end
@@ -116,6 +117,21 @@ module Kyc
       end
 
       seen_ids[id] = file.basename.to_s
+    end
+
+    def validate_effective_compositions!
+      base_ids = @requirements_by_sector.fetch(BASE_SECTOR, EMPTY_REQUIREMENTS).map(&:id)
+
+      @requirements_by_sector.except(BASE_SECTOR).each do |sector, requirements|
+        duplicate_id = (base_ids & requirements.map(&:id)).first
+        next unless duplicate_id
+
+        invalid!(
+          @files_by_sector.fetch(sector),
+          "duplicate requirement ID; first defined in #{@files_by_sector.fetch(BASE_SECTOR).basename}",
+          duplicate_id
+        )
+      end
     end
 
     def validate_non_empty_strings!(attributes, file, context)
