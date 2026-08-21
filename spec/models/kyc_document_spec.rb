@@ -12,6 +12,13 @@ RSpec.describe KycDocument, type: :model do
     expect(document.status).to eq("pending")
   end
 
+  it "defines the crypto policy document types" do
+    expect(described_class.document_types).to include(
+      "vasp_registration" => 74,
+      "wallet_custody_infrastructure_attestation" => 75
+    )
+  end
+
   it "requires an attached file" do
     document.file = nil
     expect(document).not_to be_valid
