@@ -205,13 +205,20 @@ RSpec.describe Kyc::PolicyRegistry do
   end
 
   describe "#requirements_for" do
-    it "returns only base requirements for the general sector" do
+    it "composes base requirements with a general overlay" do
       write_policy("base.yml", policy_yaml(sector: "base", requirements: base_requirement))
+      write_policy(
+        "general.yml",
+        policy_yaml(
+          sector: "general",
+          requirements: required_document(id: "general.passport", document_type: "passport")
+        )
+      )
       write_policy("crypto_exchange.yml", policy_yaml)
 
       requirements = described_class.load!(path: fixture_path).requirements_for("general")
 
-      expect(requirements.map(&:id)).to eq([ "base.passport_validity" ])
+      expect(requirements.map(&:id)).to eq([ "base.passport_validity", "general.passport" ])
       expect(requirements).to be_frozen
     end
 
@@ -237,6 +244,30 @@ RSpec.describe Kyc::PolicyRegistry do
       end.to raise_error(
         Kyc::PolicyRegistry::InvalidPolicy,
         /crypto_exchange\.yml.*base\.passport_validity.*duplicate/i
+      )
+    end
+
+    it "allows mutually exclusive sector overlays to reuse a requirement ID" do
+      write_policy("base.yml", policy_yaml(sector: "base", requirements: base_requirement))
+      write_policy(
+        "crypto_exchange.yml",
+        policy_yaml(requirements: required_document(id: "sector.registration"))
+      )
+      write_policy(
+        "gambling.yml",
+        policy_yaml(
+          sector: "gambling",
+          requirements: required_document(id: "sector.registration", document_type: "passport")
+        )
+      )
+
+      registry = described_class.load!(path: fixture_path)
+
+      expect(registry.requirements_for("crypto_exchange").map(&:id)).to eq(
+        [ "base.passport_validity", "sector.registration" ]
+      )
+      expect(registry.requirements_for("gambling").map(&:id)).to eq(
+        [ "base.passport_validity", "sector.registration" ]
       )
     end
   end
