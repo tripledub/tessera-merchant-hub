@@ -46,4 +46,25 @@ RSpec.describe Onboarding::DocumentCollectionService, type: :service do # ruboco
     expect(described_class.all_received?(session)).to be false
     expect(Onboarding::StateMachine.stage_complete?(session)).to be false
   end
+
+  context "with a Crypto Exchange applicant" do
+    let(:applicant) { create(:applicant, sector: :crypto_exchange) }
+
+    it "marks each required policy document as received when uploaded" do
+      described_class.generate_checklist(session)
+
+      create(:kyc_document, applicant: applicant, document_type: :vasp_registration,
+             classification_status: :confirmed, status: :complete)
+
+      received = described_class.received_documents(session)
+      expect(received.find { |item| item["requirement_id"] == "crypto.vasp_registration" }["received"]).to be true
+      expect(received.find { |item| item["requirement_id"] == "crypto.wallet_custody_infrastructure_attestation" }["received"]).to be false
+
+      create(:kyc_document, applicant: applicant, document_type: :wallet_custody_infrastructure_attestation,
+             classification_status: :confirmed, status: :complete)
+
+      received = described_class.received_documents(session)
+      expect(received.find { |item| item["requirement_id"] == "crypto.wallet_custody_infrastructure_attestation" }["received"]).to be true
+    end
+  end
 end

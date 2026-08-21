@@ -50,6 +50,7 @@ module Onboarding
       checklist.concat(corporate_items)
       checklist.concat(business_address_items)
       checklist.concat(nominee_items)
+      checklist.concat(policy_document_items)
       checklist = checklist.map { |item| item.merge("deferred" => false) }
       @session.update!(document_checklist: checklist)
       checklist
@@ -182,6 +183,21 @@ module Onboarding
           "label" => "Declaration of trust"
         }
       ]
+    end
+
+    def policy_document_items
+      Kyc::EffectivePolicy.for(@applicant)
+        .select { |requirement| requirement.rule == "required_document" }
+        .map do |requirement|
+          {
+            "category" => "sector_policy",
+            "requirement_id" => requirement.id,
+            "subject" => requirement.parameters.fetch("subject"),
+            "document_types" => [ requirement.parameters.fetch("document_type") ],
+            "label" => requirement.title,
+            "guidance" => requirement.guidance
+          }
+        end
     end
 
     def item_received?(item, documents)
