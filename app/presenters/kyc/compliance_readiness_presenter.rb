@@ -77,11 +77,12 @@ module Kyc
       result.entity&.name || result.title
     end
 
-    # True when every blocking result is confirmation_required — i.e.
-    # nothing is outright unmet, so the overall picture is "awaiting staff
-    # review", not "not compliant".
+    # True when every blocking result is confirmation_required. Non-blocking
+    # warnings remain visible in unmet_results without turning an otherwise
+    # awaiting-review assessment into an outright rejection.
     def awaiting_confirmation_only?
-      assessment.unmet_results.empty? && assessment.confirmation_required_results.any?
+      assessment.unmet_results.none?(&:blocks_automated_completion?) &&
+        assessment.confirmation_required_results.any?
     end
   end
 end
