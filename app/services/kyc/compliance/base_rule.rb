@@ -22,7 +22,8 @@ module Kyc
 
       private
 
-      def build_result(entity:, requirements:, satisfied:, awaiting_confirmation: [])
+      def build_result(entity:, requirements:, satisfied:, awaiting_confirmation: [], requirement_id: nil,
+                       title: nil, guidance: nil, outcome: :blocking)
         missing = requirements - satisfied - awaiting_confirmation
         status = if missing.any?
           :unmet
@@ -39,11 +40,15 @@ module Kyc
           requirements: requirements,
           satisfied: satisfied,
           missing: missing,
-          awaiting_confirmation: awaiting_confirmation
+          awaiting_confirmation: awaiting_confirmation,
+          requirement_id: requirement_id,
+          title: title,
+          guidance: guidance,
+          outcome: outcome
         )
       end
 
-      def not_applicable(entity)
+      def not_applicable(entity, requirement_id: nil, title: nil, guidance: nil, outcome: :blocking)
         RuleResult.new(
           rule_name: self.class.rule_name,
           entity: entity,
@@ -51,7 +56,11 @@ module Kyc
           requirements: [],
           satisfied: [],
           missing: [],
-          awaiting_confirmation: []
+          awaiting_confirmation: [],
+          requirement_id: requirement_id,
+          title: title,
+          guidance: guidance,
+          outcome: outcome
         )
       end
     end

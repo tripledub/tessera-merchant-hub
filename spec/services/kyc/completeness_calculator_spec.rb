@@ -182,6 +182,38 @@ RSpec.describe Kyc::CompletenessCalculator, type: :service do
     end
   end
 
+  describe "compliance rules dimension" do
+    before do
+      Kyc::PolicyRegistry.instance = Kyc::PolicyRegistry.load!
+    end
+
+    it "counts missing Crypto Exchange policy documents in the denominator" do
+      applicant.update!(sector: :crypto_exchange)
+
+      dim = calculator.dimensions.find { |dimension| dimension.key == :compliance_rules }
+
+      expect(dim.numerator).to eq(0)
+      expect(dim.denominator).to eq(2)
+    end
+
+    it "counts uploaded current Crypto Exchange policy documents in the numerator" do
+      applicant.update!(sector: :crypto_exchange)
+      create(:kyc_document, applicant: applicant, document_type: :vasp_registration)
+
+      dim = calculator.dimensions.find { |dimension| dimension.key == :compliance_rules }
+
+      expect(dim.numerator).to eq(1)
+      expect(dim.denominator).to eq(2)
+    end
+
+    it "retains an empty compliance dimension for a general applicant without entities" do
+      dim = calculator.dimensions.find { |dimension| dimension.key == :compliance_rules }
+
+      expect(dim.numerator).to eq(0)
+      expect(dim.denominator).to eq(0)
+    end
+  end
+
   describe "ownership resolution dimension" do
     let(:document) { create(:kyc_document, applicant: applicant, document_type: :group_structure_chart) }
 

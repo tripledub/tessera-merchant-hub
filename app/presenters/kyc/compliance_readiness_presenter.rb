@@ -49,9 +49,9 @@ module Kyc
       missing = assessment.unmet_results
       return nil if missing.empty?
 
-      missing.group_by { |r| r.entity.name }.map do |entity_name, results|
+      missing.group_by { |result| result_subject(result) }.map do |subject, results|
         items = results.flat_map(&:missing)
-        "#{entity_name}: #{items.map(&:humanize).join(', ')}"
+        "#{subject}: #{items.map(&:humanize).join(', ')}"
       end
     end
 
@@ -65,13 +65,17 @@ module Kyc
       awaiting = assessment.confirmation_required_results
       return nil if awaiting.empty?
 
-      awaiting.group_by { |r| r.entity.name }.map do |entity_name, results|
+      awaiting.group_by { |result| result_subject(result) }.map do |subject, results|
         items = results.flat_map(&:awaiting_confirmation)
-        "#{entity_name}: #{items.map(&:humanize).join(', ')}"
+        "#{subject}: #{items.map(&:humanize).join(', ')}"
       end
     end
 
     private
+
+    def result_subject(result)
+      result.entity&.name || result.title
+    end
 
     # True when every blocking result is confirmation_required — i.e.
     # nothing is outright unmet, so the overall picture is "awaiting staff
