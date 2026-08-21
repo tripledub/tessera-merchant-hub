@@ -83,6 +83,17 @@ production-ready).
   read-only models and internal API calls — it does not own shops, payments,
   credentials, audit events, or webhook data itself (see `docs/e2e.md`).
 
+## Data & Privacy
+
+- Never use real people's names (or other real PII — emails, phone numbers,
+  addresses) in test fixtures, seed data, ticket descriptions, commit
+  messages, code comments, or anywhere else in the repo or its tooling
+  output. This includes names captured incidentally in a screenshot used to
+  illustrate a bug — describe or redact the record instead of quoting the
+  name (e.g. "the applicant's document" rather than a real applicant's
+  name). Use clearly synthetic placeholders (`Test Applicant`,
+  `applicant@example.com`, existing factory/seed defaults) instead.
+
 ## Tooling / Working Files
 
 - This repo uses the Superpowers skill framework (Claude Code and compatible

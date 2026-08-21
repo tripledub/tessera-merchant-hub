@@ -79,4 +79,32 @@ RSpec.describe Applicant, type: :model do
     saved = create(:applicant)
     expect(saved.to_param).to eq(saved.id)
   end
+
+  describe "registry fields" do
+    it "allows company_number and registry_jurisdiction to be blank" do
+      applicant.company_number = nil
+      applicant.registry_jurisdiction = nil
+      expect(applicant).to be_valid
+    end
+
+    it "defines registry_jurisdiction as an enum limited to gb/mt/cy" do
+      expect(described_class.registry_jurisdictions).to eq(
+        "gb" => "gb", "mt" => "mt", "cy" => "cy"
+      )
+    end
+
+    it "rejects a registry_jurisdiction outside the enum" do
+      applicant.registry_jurisdiction = "us"
+
+      expect(applicant).not_to be_valid
+      expect(applicant.errors[:registry_jurisdiction]).not_to be_empty
+    end
+
+    it "persists a company_number and registry_jurisdiction" do
+      saved = create(:applicant, company_number: "12345678", registry_jurisdiction: "gb")
+
+      expect(saved.reload.company_number).to eq("12345678")
+      expect(saved.reload.registry_jurisdiction).to eq("gb")
+    end
+  end
 end
