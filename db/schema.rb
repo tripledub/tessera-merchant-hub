@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_28_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_21_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -219,6 +219,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_140000) do
     t.string "address_line1"
     t.string "city"
     t.string "company_name"
+    t.string "company_number"
     t.string "contact_email"
     t.string "country"
     t.string "country_code"
@@ -227,6 +228,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_140000) do
     t.datetime "executive_narrative_generated_at"
     t.string "merchant_id"
     t.string "name", null: false
+    t.string "registry_jurisdiction"
     t.string "status", default: "pending", null: false
     t.string "support_url"
     t.string "type"
