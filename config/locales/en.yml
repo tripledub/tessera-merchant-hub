@@ -381,6 +381,8 @@ en:
         source_of_wealth_questionnaire: Source of Wealth Questionnaire
         transaction_extract: Transaction Extract
         utility_bill: Utility Bill
+        vasp_registration: VASP Registration
+        wallet_custody_infrastructure_attestation: Wallet Custody Infrastructure Attestation
       match_method:
         exact: Exact match
         fuzzy: Fuzzy match
