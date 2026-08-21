@@ -25,7 +25,7 @@ RSpec.describe "Crypto Exchange policy", type: :request do
     expect(Kyc::Compliance::ReadinessAssessment.for(applicant)).not_to be_compliant
     expect(compliance_dimension_for(applicant)).to have_attributes(numerator: 0, denominator: 2)
 
-    upload_policy_documents(applicant)
+    create_policy_documents(applicant)
 
     get transcript_path(session)
 
@@ -55,7 +55,7 @@ RSpec.describe "Crypto Exchange policy", type: :request do
     Kyc::CompletenessCalculator.for(applicant).dimensions.find { |dimension| dimension.key == :compliance_rules }
   end
 
-  def upload_policy_documents(applicant)
+  def create_policy_documents(applicant)
     %i[vasp_registration wallet_custody_infrastructure_attestation].each do |document_type|
       create(:kyc_document, applicant: applicant, document_type: document_type,
                             classification_status: :confirmed, status: :complete)

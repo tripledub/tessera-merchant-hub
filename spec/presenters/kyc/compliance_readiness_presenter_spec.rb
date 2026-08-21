@@ -84,6 +84,14 @@ RSpec.describe Kyc::ComplianceReadinessPresenter, type: :presenter do
 
       expect(presenter.entity_summary).to eq("1 of 1 entities compliant")
     end
+
+    it "summarizes applicant policy requirements when there are no entities" do
+      applicant.update!(sector: :crypto_exchange)
+      assessment = Kyc::Compliance::ReadinessAssessment.for(applicant)
+      presenter = described_class.new(assessment, template)
+
+      expect(presenter.entity_summary).to eq("2 policy requirements evaluated")
+    end
   end
 
   describe "#missing_summary" do

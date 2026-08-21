@@ -22,7 +22,7 @@ RSpec.describe ExtractionData do
       )
     end
 
-    it "has all 26 document types registered" do
+    it "has every document type registered" do
       KycDocument.document_types.keys.each do |type|
         model = ExtractionData::Base.for(type)
         expect(model).not_to eq(ExtractionData::Generic), "Expected #{type} to have a registered ExtractionData model"
