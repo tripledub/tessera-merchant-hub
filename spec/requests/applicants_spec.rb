@@ -227,6 +227,33 @@ RSpec.describe "Applicants", type: :request do
         expect(response).to redirect_to(applicant_path(applicant_a))
         expect(applicant_a.reload.sector).to eq("gambling")
       end
+
+      it "rejects changing from general after document collection begins" do
+        locked_applicant = create(:applicant, name: "Locked General Applicant", sector: :general)
+        create(:onboarding_session, applicant: locked_applicant, current_stage: :document_collection)
+
+        patch applicant_path(locked_applicant), params: { applicant: { sector: "crypto_exchange" } }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Sector cannot be changed after document collection has begun")
+        expect(locked_applicant.reload.sector).to eq("general")
+      end
+
+      it "rejects changing from a policy sector when a collection checklist already exists" do
+        locked_applicant = create(:applicant, name: "Locked Policy Applicant", sector: :crypto_exchange)
+        create(
+          :onboarding_session,
+          applicant: locked_applicant,
+          current_stage: :jurisdictions,
+          document_checklist: [ { "category" => "sector_policy" } ]
+        )
+
+        patch applicant_path(locked_applicant), params: { applicant: { sector: "general" } }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Sector cannot be changed after document collection has begun")
+        expect(locked_applicant.reload.sector).to eq("crypto_exchange")
+      end
     end
 
     context "when signed in as psp_support" do
