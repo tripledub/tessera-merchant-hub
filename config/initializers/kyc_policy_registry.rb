@@ -1,5 +1,5 @@
 # frozen_string_literal: true
 
-Rails.application.config.after_initialize do
+Rails.application.config.to_prepare do
   Kyc::PolicyRegistry.instance = Kyc::PolicyRegistry.load!
 end

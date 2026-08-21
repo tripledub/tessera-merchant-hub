@@ -36,6 +36,10 @@ module Kyc
       def requirements_for(sector)
         instance.requirements_for(sector)
       end
+
+      def validity_applicable?(document_type)
+        instance.validity_applicable?(document_type)
+      end
     end
 
     def initialize(path:)
@@ -56,7 +60,7 @@ module Kyc
 
         seen_ids = {}
         @requirements_by_sector[sector] = policy.fetch("requirements").map do |attributes|
-          validate_requirement!(attributes, file, seen_ids)
+          validate_requirement!(attributes, file, seen_ids, sector)
           build_requirement(attributes)
         end.freeze
         @files_by_sector[sector] = file
@@ -74,6 +78,12 @@ module Kyc
       base = @requirements_by_sector.fetch(BASE_SECTOR, EMPTY_REQUIREMENTS)
       overlay = @requirements_by_sector.fetch(sector, EMPTY_REQUIREMENTS)
       (base + overlay).freeze
+    end
+
+    def validity_applicable?(document_type)
+      @requirements_by_sector.fetch(BASE_SECTOR, EMPTY_REQUIREMENTS).any? do |requirement|
+        requirement.rule == "document_validity" && requirement.parameters.fetch("document_type") == document_type
+      end
     end
 
     private
@@ -97,7 +107,7 @@ module Kyc
       invalid!(file, "requirements must be an array") unless policy["requirements"].is_a?(Array)
     end
 
-    def validate_requirement!(attributes, file, seen_ids)
+    def validate_requirement!(attributes, file, seen_ids, sector)
       invalid!(file, "each requirement must be a mapping") unless attributes.is_a?(Hash)
 
       id = attributes["id"]
@@ -107,7 +117,13 @@ module Kyc
 
       rule = attributes.fetch("rule")
       invalid!(file, "unsupported rule #{rule.inspect}", context) unless RULE_PARAMETERS.key?(rule)
+      if rule == "document_validity" && sector != BASE_SECTOR
+        invalid!(file, "document_validity requirements must be declared in the base policy", context)
+      end
       invalid!(file, "unsupported outcome #{attributes['outcome'].inspect}", context) unless OUTCOMES.include?(attributes["outcome"])
+      if rule == "document_validity" && attributes["outcome"] != "blocking"
+        invalid!(file, "document_validity outcome must be blocking", context)
+      end
       invalid!(file, "parameters must be a mapping", context) unless attributes["parameters"].is_a?(Hash)
 
       validate_parameters!(rule, attributes.fetch("parameters"), file, context)
@@ -169,13 +185,21 @@ module Kyc
       invalid!(file, "unsupported mode #{parameters['mode'].inspect}", context) unless VALIDITY_MODES.include?(parameters["mode"])
       validate_string_array!(parameters["required_dates"], "required_dates", file, context, allow_empty: false)
       validate_integer_array!(parameters["warning_thresholds"], "warning_thresholds", file, context)
-      invalid!(file, "blocking must be true or false", context) unless [ true, false ].include?(parameters["blocking"])
+      invalid!(file, "document_validity blocking must be true", context) unless parameters["blocking"] == true
 
       if parameters["mode"] == "freshness"
+        unless parameters["required_dates"].include?("issued")
+          invalid!(file, "freshness mode requires an issued date", context)
+        end
         max_age = parameters["max_age_months"]
         invalid!(file, "max_age_months must be a positive integer for freshness mode", context) unless max_age.is_a?(Integer) && max_age.positive?
-      elsif parameters.key?("max_age_months") && !parameters["max_age_months"].nil?
-        invalid!(file, "max_age_months is only supported for freshness mode", context)
+      else
+        unless parameters["required_dates"].include?("expiry")
+          invalid!(file, "expires mode requires an expiry date", context)
+        end
+        if parameters.key?("max_age_months") && !parameters["max_age_months"].nil?
+          invalid!(file, "max_age_months is only supported for freshness mode", context)
+        end
       end
 
       parse_effective_date!(parameters, file, context)

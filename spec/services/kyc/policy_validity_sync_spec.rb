@@ -25,36 +25,44 @@ RSpec.describe Kyc::PolicyValiditySync do
     )
   end
 
-  def registry_for(requirements_by_sector)
-    instance_double(Kyc::PolicyRegistry).tap do |registry|
-      allow(registry).to receive(:requirements_for) do |sector|
-        requirements_by_sector.fetch(sector, [])
-      end
-    end
-  end
-
-  def passport_validity(id:, warning_thresholds: [])
-    validity_requirement(
-      id: id,
+  def concurrent_registry
+    requirement = validity_requirement(
       document_type: "passport",
-      version: 2,
+      version: 212,
       effective_from: Date.new(2026, 8, 21),
       mode: "expires",
-      required_dates: [ "expiry" ],
-      warning_thresholds: warning_thresholds
+      required_dates: [ "expiry" ]
     )
+    Struct.new(:requirements) do
+      def requirements_for(*) = requirements
+    end.new([ requirement ])
   end
 
-  def utility_bill_validity(id:)
-    validity_requirement(
-      id: id,
-      document_type: "utility_bill",
-      version: 2,
-      effective_from: Date.new(2026, 8, 21),
-      mode: "freshness",
-      required_dates: [ "issued" ],
-      max_age_months: 3
-    )
+  def synchronize_simultaneously(registry)
+    ready = Queue.new
+    release = Queue.new
+    mutex = Mutex.new
+    results = []
+    errors = []
+    connection_ids = []
+    workers = 2.times.map do
+      Thread.new do
+        ActiveRecord::Base.connection_pool.with_connection do |connection|
+          mutex.synchronize { connection_ids << connection.object_id }
+          ready << true
+          release.pop
+          result = described_class.call(registry: registry)
+          mutex.synchronize { results << result }
+        end
+      rescue StandardError => e
+        mutex.synchronize { errors << e }
+      end
+    end
+    2.times { ready.pop }
+    2.times { release << true }
+    workers.each(&:join)
+
+    { connection_ids: connection_ids, errors: errors, results: results }
   end
 
   let(:passport_requirement) do
@@ -168,34 +176,27 @@ RSpec.describe Kyc::PolicyValiditySync do
     end.to raise_error(described_class::Conflict, /utility_bill.*version 2.*max_age_months/i)
   end
 
-  it "projects distinct sibling-overlay definitions that reuse a requirement ID" do
-    crypto_requirement = passport_validity(id: "shared.document_validity")
-    gambling_requirement = utility_bill_validity(id: "shared.document_validity")
-    sibling_registry = registry_for(
-      "crypto_exchange" => [ crypto_requirement ],
-      "gambling" => [ gambling_requirement ]
-    )
+  context "with simultaneous calls" do
+    self.use_transactional_tests = false
 
-    result = nil
-    expect { result = described_class.call(registry: sibling_registry) }
-      .to change(Kyc::DocumentValidityPolicy, :count).by(2)
-    expect(result).to eq(created: 2, unchanged: 0)
-    expect(Kyc::DocumentValidityPolicy.pluck(:document_type, :version)).to contain_exactly(
-      [ "passport", 2 ], [ "utility_bill", 2 ]
-    )
-  end
+    before do
+      Kyc::DocumentValidityPolicy.where(document_type: "passport", version: 212).delete_all
+    end
 
-  it "checks sibling-overlay definitions with a reused ID for immutable collisions" do
-    crypto_requirement = passport_validity(id: "shared.passport_validity", warning_thresholds: [ 90 ])
-    gambling_requirement = passport_validity(id: "shared.passport_validity", warning_thresholds: [ 30 ])
-    sibling_registry = registry_for(
-      "crypto_exchange" => [ crypto_requirement ],
-      "gambling" => [ gambling_requirement ]
-    )
+    after do
+      Kyc::DocumentValidityPolicy.where(document_type: "passport", version: 212).delete_all
+    end
 
-    expect do
-      described_class.call(registry: sibling_registry)
-    end.to raise_error(described_class::Conflict, /passport.*version 2.*warning_thresholds/i)
-    expect(Kyc::DocumentValidityPolicy.where(document_type: "passport", version: 2).count).to eq(1)
+    it "serializes synchronization on separate database connections" do
+      synchronization = synchronize_simultaneously(concurrent_registry)
+
+      expect(synchronization.fetch(:connection_ids).uniq.size).to eq(2)
+      expect(synchronization.fetch(:errors)).to be_empty
+      expect(synchronization.fetch(:results)).to contain_exactly(
+        { created: 1, unchanged: 0 },
+        { created: 0, unchanged: 1 }
+      )
+      expect(Kyc::DocumentValidityPolicy.where(document_type: "passport", version: 212).count).to eq(1)
+    end
   end
 end
