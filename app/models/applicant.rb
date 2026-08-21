@@ -22,6 +22,7 @@ class Applicant < Merchant
     allow_blank: true
 
   enum :status, { pending: "pending", approved: "approved", rejected: "rejected" }, default: "pending"
+  enum :registry_jurisdiction, { gb: "gb", mt: "mt", cy: "cy" }, validate: { allow_nil: true }
 
   def to_param
     id
