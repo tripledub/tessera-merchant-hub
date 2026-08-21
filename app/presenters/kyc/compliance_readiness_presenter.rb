@@ -31,6 +31,10 @@ module Kyc
     end
 
     def entity_summary
+      if assessment.entity_count.zero? && assessment.policy_results.any?
+        return "#{pluralize(assessment.policy_results.size, "policy requirement")} evaluated"
+      end
+
       "#{assessment.compliant_entity_count} of #{assessment.entity_count} entities compliant"
     end
 
