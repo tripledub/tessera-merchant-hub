@@ -71,6 +71,12 @@ RSpec.describe Applicant, type: :model do
       .with_foreign_key(:applicant_id)
   end
 
+  it "has many registry_profiles" do
+    expect(applicant).to have_many(:registry_profiles)
+      .class_name("Registry::Profile")
+      .dependent(:destroy)
+  end
+
   it "defaults status to pending" do
     expect(applicant.status).to eq("pending")
   end
