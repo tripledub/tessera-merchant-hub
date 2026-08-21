@@ -16,6 +16,11 @@
     <%= f.email_field :contact_email, class: "form-input" %>
   </div>
 
+  <div>
+    <%= f.label :sector, t("applicants.form.fields.sector"), class: "form-label" %>
+    <%= f.select :sector, Applicant.sectors.keys.map { |sector| [t("applicants.sectors.#{sector}"), sector] }, {}, class: "form-input", required: true %>
+  </div>
+
   <div class="grid grid-cols-2 gap-4">
     <div>
       <%= f.label :country, t("applicants.form.fields.country"), class: "form-label" %>

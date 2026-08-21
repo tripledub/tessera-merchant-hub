@@ -24,6 +24,13 @@ class Applicant < Merchant
 
   enum :status, { pending: "pending", approved: "approved", rejected: "rejected" }, default: "pending"
   enum :registry_jurisdiction, { gb: "gb", mt: "mt", cy: "cy" }, validate: { allow_nil: true }
+  enum :sector, {
+    general: "general",
+    crypto_exchange: "crypto_exchange",
+    gambling: "gambling",
+    forex_brokerage: "forex_brokerage",
+    proprietary_trading: "proprietary_trading"
+  }, default: "general", validate: true
 
   def to_param
     id

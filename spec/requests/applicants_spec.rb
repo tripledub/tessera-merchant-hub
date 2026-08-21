@@ -140,9 +140,10 @@ RSpec.describe "Applicants", type: :request do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
 
-      it "returns 200" do
+      it "returns 200 with a sector field" do
         get new_applicant_path
         expect(response).to have_http_status(:ok)
+        expect(response.body).to include('id="applicant_sector"')
       end
     end
 
@@ -160,12 +161,16 @@ RSpec.describe "Applicants", type: :request do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
 
-      it "creates applicant and redirects to show" do
+      it "creates an applicant with the selected sector and redirects to show" do
         post applicants_path, params: {
-          applicant: { name: "New Corp", company_name: "New Corp Ltd", contact_email: "info@new.com" }
+          applicant: {
+            name: "New Corp", company_name: "New Corp Ltd", contact_email: "info@new.com",
+            sector: "crypto_exchange"
+          }
         }
         created = Applicant.find_by!(name: "New Corp")
         expect(response).to redirect_to(applicant_path(created))
+        expect(created.sector).to eq("crypto_exchange")
       end
 
       it "re-renders new with 422 on invalid params" do
@@ -214,6 +219,13 @@ RSpec.describe "Applicants", type: :request do
         }
         expect(response).to redirect_to(applicant_path(applicant_a))
         expect(applicant_a.reload.contact_email).to eq("updated@acme.com")
+      end
+
+      it "updates the applicant sector" do
+        patch applicant_path(applicant_a), params: { applicant: { sector: "gambling" } }
+
+        expect(response).to redirect_to(applicant_path(applicant_a))
+        expect(applicant_a.reload.sector).to eq("gambling")
       end
     end
 
