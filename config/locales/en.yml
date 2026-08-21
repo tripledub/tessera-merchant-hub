@@ -1,5 +1,13 @@
 ---
 en:
+  activerecord:
+    errors:
+      models:
+        applicant:
+          attributes:
+            sector:
+              locked_after_document_collection: cannot be changed after document collection
+                has begun
   admin:
     users:
       index:
