@@ -89,6 +89,7 @@ en:
         country: Country
         country_code: Country code (ISO 3166-1 alpha-2, e.g. GB)
         name: Name
+        sector: Business sector
       submit: Save
     index:
       new_applicant: New applicant
@@ -111,6 +112,12 @@ en:
       page_title: New applicant
       subtitle: Start a KYC application for a new merchant.
       title: New applicant
+    sectors:
+      crypto_exchange: Crypto exchange
+      forex_brokerage: Forex brokerage
+      gambling: Gambling
+      general: General
+      proprietary_trading: Proprietary trading
     show:
       add_principal: Add principal
       back: "← Back to applicants"

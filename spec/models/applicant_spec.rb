@@ -81,6 +81,17 @@ RSpec.describe Applicant, type: :model do
     expect(applicant.status).to eq("pending")
   end
 
+  it "defines the supported sectors with a general default" do
+    expect(described_class.sectors).to eq(
+      "general" => "general",
+      "crypto_exchange" => "crypto_exchange",
+      "gambling" => "gambling",
+      "forex_brokerage" => "forex_brokerage",
+      "proprietary_trading" => "proprietary_trading"
+    )
+    expect(described_class.new.sector).to eq("general")
+  end
+
   it "uses id as to_param" do
     saved = create(:applicant)
     expect(saved.to_param).to eq(saved.id)

@@ -7,6 +7,7 @@ FactoryBot.define do
     contact_email { "#{SecureRandom.hex(4)}@example.com" }
     country { "GB" }
     country_code { "GB" }
+    sector { :general }
     status { :pending }
   end
 end
