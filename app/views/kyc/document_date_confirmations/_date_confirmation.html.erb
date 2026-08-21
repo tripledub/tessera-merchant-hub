@@ -35,19 +35,4 @@
     <%= submit_tag t("kyc.documents.date_confirmations.submit"),
           class: "self-start rounded-md bg-brand-500 px-3 py-1 text-xs font-medium text-white hover:bg-brand-600" %>
   <% end %>
-
-  <% history = presenter.history_for(date_role) %>
-  <% if history.any? %>
-    <ul class="mt-2 space-y-1 text-xs text-gray-500 dark:text-gray-400">
-      <% history.each do |entry| %>
-        <li>
-          <%= t("kyc.documents.date_confirmations.history_entry",
-                value: l(entry.confirmed_value),
-                actor: entry.confirmed_by.email,
-                timestamp: l(entry.created_at, format: :long),
-                reason: entry.reason.presence || t("kyc.documents.date_confirmations.no_reason")) %>
-        </li>
-      <% end %>
-    </ul>
-  <% end %>
 </div>
