@@ -20,6 +20,35 @@ RSpec.describe Kyc::DocumentExpiryMonitoringJob do
     Kyc::DocumentReplacementRequirement.current_for(document)
   end
 
+  def synchronized_expiry_requirement(reference_date)
+    Kyc::PolicyRequirement.new(
+      id: "test.driving_licence_validity",
+      rule: "document_validity",
+      outcome: "blocking",
+      title: "Driving licence validity",
+      guidance: "Confirm that the driving licence is current.",
+      source: "MH-212",
+      parameters: {
+        "document_type" => "driving_licence",
+        "version" => 1,
+        "effective_from" => reference_date,
+        "mode" => "expires",
+        "required_dates" => [ "expiry" ],
+        "warning_thresholds" => [ 60, 15 ],
+        "max_age_months" => nil,
+        "blocking" => true
+      }
+    )
+  end
+
+  def driving_licence_document(reference_date)
+    create(:kyc_document, document_type: :driving_licence, applicant: applicant, status: :complete,
+                           classification_status: :confirmed,
+                           validity_dates: {
+                             "expiry" => validity_dates_for(normalized: (reference_date + 45).iso8601)
+                           })
+  end
+
   before do
     Kyc::DocumentValidityPolicy.publish!(
       document_type: "passport", effective_from: Date.new(2025, 1, 1),
@@ -93,6 +122,25 @@ RSpec.describe Kyc::DocumentExpiryMonitoringJob do
 
       expect(Kyc::DocumentValidityAssessment.where(kyc_document: disabled_doc)).to be_empty
       expect(requirement_for(disabled_doc)).to be_nil
+    end
+
+    it "discovers a newly synchronized expires-mode document type without enqueueing an immediate run" do
+      reference_date = Date.new(2026, 8, 21)
+      registry = instance_double(
+        Kyc::PolicyRegistry, requirements_for: [ synchronized_expiry_requirement(reference_date) ]
+      )
+      document = driving_licence_document(reference_date)
+
+      expect {
+        Kyc::PolicyValiditySync.call(registry: registry)
+      }.not_to have_enqueued_job
+
+      synchronized_policy = Kyc::DocumentValidityPolicy.find_by!(document_type: "driving_licence", version: 1)
+      described_class.new.perform(reference_date: reference_date)
+
+      expect(Kyc::DocumentValidityAssessment.current_for(document))
+        .to have_attributes(kyc_document_validity_policy: synchronized_policy)
+      expect(requirement_for(document)).to be_warned
     end
   end
 

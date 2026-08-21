@@ -206,4 +206,23 @@ RSpec.describe "Applicant overview — document validity integration", type: :re
       }.not_to change(Kyc::DocumentValidityAssessment, :count)
     end
   end
+
+  context "when deployed YAML publishes a new policy version" do
+    it "preserves the historical assessment policy while resolving the new effective version" do
+      version_one = Kyc::DocumentValidityPolicy.find_by!(document_type: "passport", version: 1)
+      assessment = create(:kyc_document_validity_assessment, kyc_document: source_document,
+                                                             kyc_document_validity_policy: version_one,
+                                                             policy_version: 1)
+
+      Kyc::PolicyValiditySync.call(registry: Kyc::PolicyRegistry.load!)
+
+      expect(assessment.reload).to have_attributes(
+        kyc_document_validity_policy_id: version_one.id,
+        policy_version: 1
+      )
+      expect(Kyc::DocumentValidity::PolicyResolver.resolve(
+        document_type: "passport", reference_date: Date.new(2026, 8, 21)
+      )).to have_attributes(version: 2, effective_from: Date.new(2026, 8, 21))
+    end
+  end
 end
