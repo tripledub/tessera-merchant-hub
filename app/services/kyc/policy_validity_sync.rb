@@ -36,8 +36,8 @@ module Kyc
     def validity_requirements
       Applicant.sectors.keys
         .flat_map { |sector| registry.requirements_for(sector) }
-        .uniq(&:id)
         .select { |requirement| requirement.rule == "document_validity" }
+        .uniq { |requirement| policy_attributes(requirement.parameters) }
     end
 
     def synchronize(parameters)
