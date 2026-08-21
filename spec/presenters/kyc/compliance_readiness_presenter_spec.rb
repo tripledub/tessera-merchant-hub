@@ -133,6 +133,17 @@ RSpec.describe Kyc::ComplianceReadinessPresenter, type: :presenter do
 
       expect(presenter.missing_summary).to be_nil
     end
+
+    it "uses the policy title when an applicant-level result has no entity" do
+      applicant.update!(sector: :crypto_exchange)
+      assessment = Kyc::Compliance::ReadinessAssessment.for(applicant)
+      presenter = described_class.new(assessment, template)
+
+      expect(presenter.missing_summary).to include(
+        "VASP registration: Vasp registration",
+        "Wallet and custody infrastructure attestation: Wallet custody infrastructure attestation"
+      )
+    end
   end
 
   # MH-200: fixes the MH-198-flagged gap where a confirmation_required result
@@ -214,6 +225,26 @@ RSpec.describe Kyc::ComplianceReadinessPresenter, type: :presenter do
         presenter = described_class.new(assessment, template)
 
         expect(presenter.awaiting_confirmation_summary).to be_nil
+      end
+
+      it "uses the policy title when an applicant-level result has no entity" do
+        result = Kyc::Compliance::RuleResult.new(
+          rule_name: "Required document",
+          entity: nil,
+          status: :confirmation_required,
+          requirements: [ "aml_ctf_policy" ],
+          satisfied: [],
+          missing: [],
+          awaiting_confirmation: [ "aml_ctf_policy" ],
+          title: "AML/CTF policy"
+        )
+        assessment = instance_double(
+          Kyc::Compliance::ReadinessAssessment,
+          confirmation_required_results: [ result ]
+        )
+        presenter = described_class.new(assessment, template)
+
+        expect(presenter.awaiting_confirmation_summary).to eq([ "AML/CTF policy: Aml ctf policy" ])
       end
     end
   end

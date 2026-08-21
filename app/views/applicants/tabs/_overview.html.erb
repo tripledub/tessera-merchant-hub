@@ -52,7 +52,7 @@
 
   <%# Compliance readiness %>
   <% assessment = Kyc::Compliance::ReadinessAssessment.for(applicant) %>
-  <% if assessment.entity_count > 0 %>
+  <% if assessment.result_count > 0 %>
     <div class="mt-6">
       <h3 class="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
         <%= t('.compliance_readiness') %>
