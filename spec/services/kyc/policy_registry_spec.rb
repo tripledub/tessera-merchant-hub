@@ -57,6 +57,27 @@ RSpec.describe Kyc::PolicyRegistry do
     YAML
   end
 
+  def freshness_requirement(required_date: "issued")
+    <<~YAML
+      - id: base.utility_bill_freshness
+        rule: document_validity
+        outcome: blocking
+        title: Utility bill freshness
+        guidance: Use the latest utility bill freshness policy.
+        source: MH-193
+        parameters:
+          document_type: utility_bill
+          version: 2
+          effective_from: "2026-08-21"
+          mode: freshness
+          required_dates:
+            - #{required_date}
+          warning_thresholds: []
+          max_age_months: 3
+          blocking: true
+    YAML
+  end
+
   describe ".load!" do
     it "loads requirements into deeply immutable value objects" do
       write_policy("crypto_exchange.yml", policy_yaml)
@@ -202,6 +223,68 @@ RSpec.describe Kyc::PolicyRegistry do
         /subject\.yml.*crypto\.vasp_registration.*subject/i
       )
     end
+
+    it "rejects document-validity requirements outside the base policy" do
+      write_policy(
+        "crypto_exchange.yml",
+        policy_yaml(sector: "crypto_exchange", requirements: base_requirement(id: "crypto.passport_validity"))
+      )
+
+      expect do
+        described_class.load!(path: fixture_path)
+      end.to raise_error(
+        Kyc::PolicyRegistry::InvalidPolicy,
+        /crypto_exchange\.yml.*crypto\.passport_validity.*document_validity.*base/i
+      )
+    end
+
+    it "requires expires validity policies to declare the expiry date" do
+      requirement = base_requirement.sub("- expiry", "- issued")
+      write_policy("base.yml", policy_yaml(sector: "base", requirements: requirement))
+
+      expect do
+        described_class.load!(path: fixture_path)
+      end.to raise_error(
+        Kyc::PolicyRegistry::InvalidPolicy,
+        /base\.yml.*base\.passport_validity.*expires.*expiry/i
+      )
+    end
+
+    it "requires freshness validity policies to declare the issued date" do
+      requirement = freshness_requirement(required_date: "expiry")
+      write_policy("base.yml", policy_yaml(sector: "base", requirements: requirement))
+
+      expect do
+        described_class.load!(path: fixture_path)
+      end.to raise_error(
+        Kyc::PolicyRegistry::InvalidPolicy,
+        /base\.yml.*base\.utility_bill_freshness.*freshness.*issued/i
+      )
+    end
+
+    it "rejects warning outcomes for document-validity requirements" do
+      requirement = base_requirement.sub("outcome: blocking", "outcome: warning")
+      write_policy("base.yml", policy_yaml(sector: "base", requirements: requirement))
+
+      expect do
+        described_class.load!(path: fixture_path)
+      end.to raise_error(
+        Kyc::PolicyRegistry::InvalidPolicy,
+        /base\.yml.*base\.passport_validity.*document_validity.*outcome.*blocking/i
+      )
+    end
+
+    it "rejects nonblocking document-validity policies" do
+      requirement = base_requirement.sub("blocking: true", "blocking: false")
+      write_policy("base.yml", policy_yaml(sector: "base", requirements: requirement))
+
+      expect do
+        described_class.load!(path: fixture_path)
+      end.to raise_error(
+        Kyc::PolicyRegistry::InvalidPolicy,
+        /base\.yml.*base\.passport_validity.*document_validity.*blocking.*true/i
+      )
+    end
   end
 
   describe "#requirements_for" do
@@ -269,6 +352,18 @@ RSpec.describe Kyc::PolicyRegistry do
       expect(registry.requirements_for("gambling").map(&:id)).to eq(
         [ "base.passport_validity", "sector.registration" ]
       )
+    end
+  end
+
+  describe "Rails reloading" do
+    it "rebuilds the deployed registry during a reload preparation cycle" do
+      stale_registry = Object.new
+      described_class.instance = stale_registry
+
+      Rails.application.reloader.prepare!
+
+      expect(described_class.instance).to be_a(described_class)
+      expect(described_class.instance).not_to equal(stale_registry)
     end
   end
 end
