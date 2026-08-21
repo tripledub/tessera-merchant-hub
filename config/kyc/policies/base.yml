@@ -1,0 +1,36 @@
+schema_version: 1
+sector: base
+requirements:
+  - id: base.passport_validity
+    rule: document_validity
+    outcome: blocking
+    title: Passport validity
+    guidance: Confirm the passport is current and monitor its expiry date.
+    source: MH-193
+    parameters:
+      document_type: passport
+      version: 2
+      effective_from: "2026-08-21"
+      mode: expires
+      required_dates:
+        - expiry
+      warning_thresholds:
+        - 90
+        - 30
+      blocking: true
+  - id: base.utility_bill_freshness
+    rule: document_validity
+    outcome: blocking
+    title: Utility bill freshness
+    guidance: Confirm the utility bill was issued within the last three months.
+    source: MH-193
+    parameters:
+      document_type: utility_bill
+      version: 2
+      effective_from: "2026-08-21"
+      mode: freshness
+      required_dates:
+        - issued
+      warning_thresholds: []
+      max_age_months: 3
+      blocking: true
