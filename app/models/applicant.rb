@@ -59,7 +59,7 @@ class Applicant < Merchant
   end
 
   def sector_locked?
-    onboarding_session&.document_collection_started? || false
+    onboarding_session&.document_collection_started? || kyc_documents.exists?
   end
 
   private

@@ -169,9 +169,41 @@ RSpec.describe Kyc::PolicyRegistry do
   end
 
   describe ".load!" do
+    it "rejects a missing policy directory with its path" do
+      missing_path = fixture_path.join("missing")
+
+      expect do
+        described_class.load!(path: missing_path)
+      end.to raise_error(
+        Kyc::PolicyRegistry::InvalidPolicy,
+        /#{Regexp.escape(missing_path.to_s)}.*policy directory.*missing/i
+      )
+    end
+
+    it "rejects a policy directory containing no policy files" do
+      expect do
+        described_class.load!(path: fixture_path)
+      end.to raise_error(
+        Kyc::PolicyRegistry::InvalidPolicy,
+        /#{Regexp.escape(fixture_path.to_s)}.*no.*\.yml.*policy files/i
+      )
+    end
+
+    it "rejects policy files without a base policy" do
+      write_policy("crypto_exchange.yml", policy_yaml)
+
+      expect do
+        described_class.load!(path: fixture_path)
+      end.to raise_error(
+        Kyc::PolicyRegistry::InvalidPolicy,
+        /#{Regexp.escape(fixture_path.to_s)}.*sector:\s*base/i
+      )
+    end
+
     it "loads requirements into deeply immutable value objects" do
       I18n.available_locales = [ :en, :fr ]
       localized_vasp_translations.each { |locale, values| I18n.backend.store_translations(locale, values) }
+      write_policy("base.yml", policy_yaml(sector: "base", requirements: "[]"))
       write_policy("crypto_exchange.yml", policy_yaml)
 
       registry = described_class.load!(path: fixture_path)

@@ -49,7 +49,7 @@ module Kyc
     end
 
     def load!
-      @path.glob("*.yml").sort.each do |file|
+      policy_files.each do |file|
         policy = safely_load(file)
         validate_policy!(policy, file)
         sector = policy.fetch("sector")
@@ -66,6 +66,7 @@ module Kyc
         @files_by_sector[sector] = file
       end
 
+      validate_base_policy!
       validate_effective_compositions!
       @requirements_by_sector.freeze
       @files_by_sector.freeze
@@ -89,6 +90,23 @@ module Kyc
     private
 
     EMPTY_REQUIREMENTS = [].freeze
+
+    def policy_files
+      unless @path.directory?
+        raise InvalidPolicy, "#{@path}: policy directory is missing or is not a directory"
+      end
+
+      files = @path.glob("*.yml").sort
+      raise InvalidPolicy, "#{@path}: no .yml policy files found in policy directory" if files.empty?
+
+      files
+    end
+
+    def validate_base_policy!
+      return if @requirements_by_sector.key?(BASE_SECTOR)
+
+      raise InvalidPolicy, "#{@path}: policy directory must include a policy declaring sector: base"
+    end
 
     def safely_load(file)
       YAML.safe_load_file(file, permitted_classes: [], permitted_symbols: [], aliases: false)

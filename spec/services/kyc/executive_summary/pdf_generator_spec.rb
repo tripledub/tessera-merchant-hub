@@ -26,6 +26,30 @@ RSpec.describe Kyc::ExecutiveSummary::PdfGenerator, type: :service do
     expect(text).to include("Document Status")
   end
 
+  context "with unmet Crypto Exchange policy evidence" do
+    let(:applicant) { create(:applicant, sector: :crypto_exchange) }
+
+    before do
+      source_document = create(:kyc_document, applicant: applicant, document_type: :group_structure_chart)
+      create(
+        :kyc_corporate_entity,
+        applicant: applicant,
+        kyc_document: source_document,
+        name: "Test Crypto Entity"
+      )
+    end
+
+    it "explains applicant policy failures alongside entity results" do
+      pdf_data = described_class.call(applicant)
+      text = PDF::Inspector::Text.analyze(pdf_data).strings.join(" ")
+
+      expect(text).to include("Test Crypto Entity")
+      expect(text).to include("Wallet and custody infrastructure attestation")
+      expect(text).to include("Upload an attestation describing the applicant's wallet and custody infrastructure.")
+      expect(text).to include("Unmet")
+    end
+  end
+
   context "with narrative data" do
     before do
       applicant.update!(

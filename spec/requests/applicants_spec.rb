@@ -264,6 +264,19 @@ RSpec.describe "Applicants", type: :request do
         expect(response.body).to include("Sector cannot be changed after document collection has begun")
         expect(locked_applicant.reload.sector).to eq("crypto_exchange")
       end
+
+      it "rejects changing sector after a direct document upload without an onboarding session" do
+        locked_applicant = create(:applicant, name: "Direct Upload Applicant", sector: :crypto_exchange)
+        create(:kyc_document, applicant: locked_applicant)
+
+        expect(locked_applicant.onboarding_session).to be_nil
+
+        patch applicant_path(locked_applicant), params: { applicant: { sector: "general" } }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Sector cannot be changed after document collection has begun")
+        expect(locked_applicant.reload.sector).to eq("crypto_exchange")
+      end
     end
 
     context "when signed in as psp_support" do
@@ -346,6 +359,24 @@ RSpec.describe "Applicants", type: :request do
       it "does not render a portal users table when there is none" do
         get tab_applicant_path(applicant, tab: "summary")
         expect(response.body).not_to include("Portal Users")
+      end
+
+      it "explains unmet Crypto Exchange policy evidence alongside entity results" do
+        policy_applicant = create(:applicant, sector: :crypto_exchange)
+        source_document = create(:kyc_document, applicant: policy_applicant, document_type: :group_structure_chart)
+        create(
+          :kyc_corporate_entity,
+          applicant: policy_applicant,
+          kyc_document: source_document,
+          name: "Test Crypto Entity"
+        )
+
+        get tab_applicant_path(policy_applicant, tab: "summary")
+
+        expect(response.body).to include("Test Crypto Entity")
+        expect(response.body).to include("Wallet and custody infrastructure attestation")
+        expect(response.body).to include("Upload an attestation describing the applicant")
+        expect(response.body).to include("Unmet")
       end
 
       it "renders the portal user's email and a remove button when one exists" do

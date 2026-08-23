@@ -130,6 +130,21 @@ RSpec.describe Applicant, type: :model do
       expect(saved.save).to be(false)
       expect(saved.reload.sector).to eq("crypto_exchange")
     end
+
+    it "rejects a sector change when a KYC document exists without an onboarding session" do
+      saved = create(:applicant, sector: :crypto_exchange)
+      create(:kyc_document, applicant: saved)
+
+      expect(saved.onboarding_session).to be_nil
+      expect(saved.sector_locked?).to be true
+
+      saved.sector = :general
+
+      expect(saved).not_to be_valid
+      expect(saved.errors.details.fetch(:sector)).to include(error: :locked_after_document_collection)
+      expect(saved.save).to be(false)
+      expect(saved.reload.sector).to eq("crypto_exchange")
+    end
   end
 
   it "uses id as to_param" do

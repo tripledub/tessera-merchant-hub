@@ -80,13 +80,14 @@ module Onboarding
       unreceived_items.select { |item| item["deferred"] }
     end
 
-    # Compliance-complete gate: true only when every item is truly received, deferred
-    # or not. Deliberately unaffected by #defer_item! — deferring never satisfies this.
+    # Compliance-complete gate: true only when every blocking item is truly received,
+    # deferred or not. Warning policy items stay visible without blocking completion.
+    # Deliberately unaffected by #defer_item! — deferring never satisfies a blocking item.
     def all_received?
       checklist = @session.document_checklist
       return false if checklist.blank?
 
-      unreceived_items.empty?
+      unreceived_items.none? { |item| item.fetch("outcome", "blocking") == "blocking" }
     end
 
     # True once every item is received or deferred — lets the conversation stop
@@ -195,7 +196,8 @@ module Onboarding
             "subject" => requirement.parameters.fetch("subject"),
             "document_types" => [ requirement.parameters.fetch("document_type") ],
             "label" => requirement.title,
-            "guidance" => requirement.guidance
+            "guidance" => requirement.guidance,
+            "outcome" => requirement.outcome
           }
         end
     end
