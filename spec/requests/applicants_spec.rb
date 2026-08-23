@@ -197,6 +197,16 @@ RSpec.describe "Applicants", type: :request do
         get edit_applicant_path(applicant_a)
         expect(response).to have_http_status(:ok)
       end
+
+      it "disables sector editing once document collection has begun" do
+        create(:onboarding_session, applicant: applicant_a, current_stage: :document_collection)
+
+        get edit_applicant_path(applicant_a)
+
+        expect(response.body).to include('id="applicant_sector"')
+        expect(response.body).to include('disabled="disabled"')
+        expect(response.body).to include("The business sector cannot be changed after document collection has begun.")
+      end
     end
 
     context "when signed in as psp_support" do

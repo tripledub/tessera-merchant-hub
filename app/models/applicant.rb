@@ -58,6 +58,10 @@ class Applicant < Merchant
     created_at.to_date
   end
 
+  def sector_locked?
+    onboarding_session&.document_collection_started? || false
+  end
+
   private
 
   def persisted_sector_change?
@@ -65,18 +69,9 @@ class Applicant < Merchant
   end
 
   def sector_unchanged_after_document_collection
-    session = OnboardingSession.find_by(applicant_id: id)
-    return unless document_collection_started?(session)
+    return unless sector_locked?
 
     # i18n-tasks-use t("activerecord.errors.models.applicant.attributes.sector.locked_after_document_collection")
     errors.add(:sector, :locked_after_document_collection)
-  end
-
-  def document_collection_started?(session)
-    session && (
-      session.document_collection? ||
-      session.completed_stages.include?("document_collection") ||
-      session.document_checklist.is_a?(Array)
-    )
   end
 end
