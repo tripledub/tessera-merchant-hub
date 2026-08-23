@@ -163,7 +163,7 @@ module Kyc
       I18n.available_locales.each do |locale|
         %i[title guidance].each do |attribute|
           key = Kyc::PolicyRequirement.translation_key(id, attribute)
-          next if I18n.exists?(key, locale)
+          next if I18n.exists?(key, locale, fallback: false)
 
           invalid!(file, "missing translation for locale #{locale.inspect}: #{key}", context)
         end

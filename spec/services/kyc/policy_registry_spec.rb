@@ -67,6 +67,7 @@ RSpec.describe Kyc::PolicyRegistry do
       original_backend = I18n.backend
       original_load_path = I18n.load_path
       original_available_locales = I18n.available_locales
+      original_fallbacks = I18n.fallbacks
       I18n.load_path = []
       I18n.backend = I18n::Backend::Simple.new
       begin
@@ -75,6 +76,7 @@ RSpec.describe Kyc::PolicyRegistry do
         I18n.backend = original_backend
         I18n.load_path = original_load_path
         I18n.available_locales = original_available_locales
+        I18n.fallbacks = original_fallbacks
       end
     end
   end
@@ -149,6 +151,21 @@ RSpec.describe Kyc::PolicyRegistry do
           max_age_months: 3
           blocking: true
     YAML
+  end
+
+  def configure_english_fallback_with_french_requirement(french_requirement)
+    I18n.available_locales = [ :en, :fr ]
+    I18n.backend.store_translations(:en, {
+      kyc: { policy_requirements: { crypto: { vasp_registration: {
+        title: "VASP registration",
+        guidance: "Upload registration evidence."
+      } } } }
+    })
+    I18n.backend.store_translations(:fr, {
+      kyc: { policy_requirements: { crypto: { vasp_registration: french_requirement } } }
+    })
+    I18n.backend.extend(I18n::Backend::Fallbacks)
+    I18n.fallbacks = I18n::Locale::Fallbacks.new(fr: :en)
   end
 
   describe ".load!" do
@@ -240,6 +257,30 @@ RSpec.describe Kyc::PolicyRegistry do
         end.to raise_error(
           Kyc::PolicyRegistry::InvalidPolicy,
           /crypto_exchange\.yml.*crypto\.vasp_registration.*en.*kyc\.policy_requirements\.crypto\.vasp_registration\.guidance/i
+        )
+      end
+
+      it "rejects a missing exact French title even when English is a fallback" do
+        configure_english_fallback_with_french_requirement(guidance: "Téléversez la preuve d’enregistrement.")
+        write_policy("crypto_exchange.yml", policy_yaml)
+
+        expect do
+          described_class.load!(path: fixture_path)
+        end.to raise_error(
+          Kyc::PolicyRegistry::InvalidPolicy,
+          /crypto_exchange\.yml.*crypto\.vasp_registration.*fr.*kyc\.policy_requirements\.crypto\.vasp_registration\.title/i
+        )
+      end
+
+      it "rejects a missing exact French guidance even when English is a fallback" do
+        configure_english_fallback_with_french_requirement(title: "Enregistrement VASP")
+        write_policy("crypto_exchange.yml", policy_yaml)
+
+        expect do
+          described_class.load!(path: fixture_path)
+        end.to raise_error(
+          Kyc::PolicyRegistry::InvalidPolicy,
+          /crypto_exchange\.yml.*crypto\.vasp_registration.*fr.*kyc\.policy_requirements\.crypto\.vasp_registration\.guidance/i
         )
       end
     end
