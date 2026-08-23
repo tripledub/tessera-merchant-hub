@@ -443,6 +443,22 @@ en:
         empty: All documents are already linked.
         link: Link
         title: Link documents to entity
+    policy_requirements:
+      base:
+        passport_validity:
+          guidance: Confirm the passport is current and monitor its expiry date.
+          title: Passport validity
+        utility_bill_freshness:
+          guidance: Confirm the utility bill was issued within the last three months.
+          title: Utility bill freshness
+      crypto:
+        vasp_registration:
+          guidance: Upload evidence of the applicant's VASP registration or authorisation.
+          title: VASP registration
+        wallet_custody_infrastructure_attestation:
+          guidance: Upload an attestation describing the applicant's wallet and custody
+            infrastructure.
+          title: Wallet and custody infrastructure attestation
     principal_document_links:
       new:
         empty: All documents for this applicant are already linked.

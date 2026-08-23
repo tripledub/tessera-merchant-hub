@@ -9,7 +9,7 @@ module Kyc
     SCHEMA_VERSION = 1
     BASE_SECTOR = "base"
     TOP_LEVEL_KEYS = %w[schema_version sector requirements].freeze
-    REQUIREMENT_KEYS = %w[id rule outcome title guidance source parameters].freeze
+    REQUIREMENT_KEYS = %w[id rule outcome source parameters].freeze
     RULE_PARAMETERS = {
       "required_document" => %w[document_type subject],
       "document_validity" => %w[
@@ -132,6 +132,7 @@ module Kyc
         invalid!(file, "duplicate requirement ID; first defined in #{seen_ids.fetch(id)}", context)
       end
 
+      validate_requirement_translations!(id, file, context)
       seen_ids[id] = file.basename.to_s
     end
 
@@ -155,6 +156,17 @@ module Kyc
         next if attributes[key].is_a?(String) && attributes[key].present?
 
         invalid!(file, "#{key} must be a non-empty string", context)
+      end
+    end
+
+    def validate_requirement_translations!(id, file, context)
+      I18n.available_locales.each do |locale|
+        %i[title guidance].each do |attribute|
+          key = Kyc::PolicyRequirement.translation_key(id, attribute)
+          next if I18n.exists?(key, locale)
+
+          invalid!(file, "missing translation for locale #{locale.inspect}: #{key}", context)
+        end
       end
     end
 
@@ -241,8 +253,6 @@ module Kyc
         id: attributes.fetch("id").freeze,
         rule: attributes.fetch("rule").freeze,
         outcome: attributes.fetch("outcome").freeze,
-        title: attributes.fetch("title").freeze,
-        guidance: attributes.fetch("guidance").freeze,
         source: attributes.fetch("source").freeze,
         parameters: parameters
       )

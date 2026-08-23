@@ -29,8 +29,6 @@ RSpec.describe Kyc::DocumentExpiryMonitoringJob do
         - id: test.driving_licence_validity
           rule: document_validity
           outcome: blocking
-          title: Driving licence validity
-          guidance: Confirm that the driving licence is current.
           source: MH-212
           parameters:
             document_type: driving_licence
@@ -44,6 +42,16 @@ RSpec.describe Kyc::DocumentExpiryMonitoringJob do
               - 15
             blocking: true
     YAML
+  end
+
+  def store_driving_licence_validity_translations
+    I18n.backend.store_translations(
+      :en,
+      kyc: { policy_requirements: { test: { driving_licence_validity: {
+        title: "Driving licence validity",
+        guidance: "Confirm that the driving licence is current."
+      } } } }
+    )
   end
 
   def driving_licence_document(reference_date)
@@ -133,6 +141,7 @@ RSpec.describe Kyc::DocumentExpiryMonitoringJob do
       reference_date = Date.new(2026, 8, 21)
       document = driving_licence_document(reference_date)
       original_registry = Kyc::PolicyRegistry.instance
+      store_driving_licence_validity_translations
 
       Dir.mktmpdir("kyc-policies") do |directory|
         Pathname(directory).join("base.yml").write(synchronized_expiry_policy(reference_date))
@@ -151,6 +160,7 @@ RSpec.describe Kyc::DocumentExpiryMonitoringJob do
         expect(requirement_for(document)).to be_warned
       end
     ensure
+      I18n.backend.reload!
       Kyc::PolicyRegistry.instance = original_registry
     end
   end

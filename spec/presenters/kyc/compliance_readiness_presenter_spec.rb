@@ -159,13 +159,25 @@ RSpec.describe Kyc::ComplianceReadinessPresenter, type: :presenter do
   # rejection, with no detail at all (missing_summary only ever looked at
   # unmet_results).
   describe "confirmation_required handling" do
+    before do
+      I18n.backend.store_translations(
+        :en,
+        kyc: { policy_requirements: { test: { optional_policy: {
+          title: "Optional policy",
+          guidance: "Upload the optional policy when available."
+        } } } }
+      )
+    end
+
+    after do
+      I18n.backend.reload!
+    end
+
     let(:warning_requirement) do
       Kyc::PolicyRequirement.new(
         id: "test.optional_policy",
         rule: "required_document",
         outcome: "warning",
-        title: "Optional policy",
-        guidance: "Upload the optional policy when available.",
         source: "test",
         parameters: { "document_type" => "aml_ctf_policy", "subject" => "applicant" }
       )

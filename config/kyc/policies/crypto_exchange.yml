@@ -4,8 +4,6 @@ requirements:
   - id: crypto.vasp_registration
     rule: required_document
     outcome: blocking
-    title: VASP registration
-    guidance: Upload evidence of the applicant's VASP registration or authorisation.
     source: "1.1"
     parameters:
       document_type: vasp_registration
@@ -13,8 +11,6 @@ requirements:
   - id: crypto.wallet_custody_infrastructure_attestation
     rule: required_document
     outcome: blocking
-    title: Wallet and custody infrastructure attestation
-    guidance: Upload an attestation describing the applicant's wallet and custody infrastructure.
     source: "1.5"
     parameters:
       document_type: wallet_custody_infrastructure_attestation

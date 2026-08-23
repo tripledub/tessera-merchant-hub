@@ -74,16 +74,23 @@ RSpec.describe Kyc::Compliance::PolicyDocumentRequirements, type: :service do
         id: "test.optional_policy",
         rule: "required_document",
         outcome: "warning",
-        title: "Optional policy",
-        guidance: "Upload the optional policy when available.",
         source: "test",
         parameters: { "document_type" => "aml_ctf_policy", "subject" => "applicant" }
       )
     end
 
     before do
+      I18n.backend.store_translations(
+        :en,
+        kyc: { policy_requirements: { test: { optional_policy: {
+          title: "Optional policy",
+          guidance: "Upload the optional policy when available."
+        } } } }
+      )
       allow(Kyc::EffectivePolicy).to receive(:for).with(applicant).and_return([ warning_requirement ])
     end
+
+    after { I18n.backend.reload! }
 
     it "does not block automated completion when unmet" do
       expect(results.first).to be_unmet

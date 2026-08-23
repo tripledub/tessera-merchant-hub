@@ -5,6 +5,85 @@ require "tmpdir"
 
 RSpec.describe Kyc::PolicyRegistry do
   let(:fixture_path) { Pathname(Dir.mktmpdir("kyc-policies")) }
+  let(:translations) do
+    {
+      en: {
+        kyc: {
+          policy_requirements: {
+            base: {
+              passport_validity: {
+                title: "Passport validity",
+                guidance: "Use the latest passport validity policy."
+              },
+              utility_bill_freshness: {
+                title: "Utility bill freshness",
+                guidance: "Use the latest utility bill freshness policy."
+              }
+            },
+            crypto: {
+              vasp_registration: {
+                title: "VASP registration",
+                guidance: "Upload registration evidence."
+              },
+              wallet_custody_infrastructure_attestation: {
+                title: "Wallet and custody infrastructure attestation",
+                guidance: "Upload an attestation describing the applicant's wallet and custody infrastructure."
+              }
+            },
+            general: {
+              passport: {
+                title: "Passport",
+                guidance: "Upload the applicant's passport."
+              }
+            },
+            sector: {
+              registration: {
+                title: "Sector registration",
+                guidance: "Upload sector registration evidence."
+              }
+            }
+          }
+        }
+      }
+    }
+  end
+  let(:localized_vasp_translations) do
+    {
+      en: { kyc: { policy_requirements: { crypto: { vasp_registration: {
+        title: "VASP registration",
+        guidance: "Upload registration evidence."
+      } } } } },
+      fr: { kyc: { policy_requirements: { crypto: { vasp_registration: {
+        title: "Enregistrement VASP",
+        guidance: "Téléversez la preuve d’enregistrement."
+      } } } } }
+    }
+  end
+
+  around do |example|
+    if example.metadata[:deployed_registry]
+      example.run
+    else
+      original_backend = I18n.backend
+      original_load_path = I18n.load_path
+      original_available_locales = I18n.available_locales
+      I18n.load_path = []
+      I18n.backend = I18n::Backend::Simple.new
+      begin
+        example.run
+      ensure
+        I18n.backend = original_backend
+        I18n.load_path = original_load_path
+        I18n.available_locales = original_available_locales
+      end
+    end
+  end
+
+  before do |example|
+    unless example.metadata[:deployed_registry]
+      translations.each { |locale, values| I18n.backend.store_translations(locale, values) }
+    end
+  end
 
   after { FileUtils.remove_entry(fixture_path) if fixture_path.exist? }
 
@@ -17,8 +96,6 @@ RSpec.describe Kyc::PolicyRegistry do
       - id: #{id}
         rule: required_document
         outcome: blocking
-        title: VASP registration
-        guidance: Upload evidence of the applicant's VASP registration.
         source: "#{source}"
         parameters:
           document_type: #{document_type}
@@ -40,8 +117,6 @@ RSpec.describe Kyc::PolicyRegistry do
       - id: #{id}
         rule: document_validity
         outcome: blocking
-        title: Passport validity
-        guidance: Use the latest passport validity policy.
         source: MH-193
         parameters:
           document_type: passport
@@ -62,8 +137,6 @@ RSpec.describe Kyc::PolicyRegistry do
       - id: base.utility_bill_freshness
         rule: document_validity
         outcome: blocking
-        title: Utility bill freshness
-        guidance: Use the latest utility bill freshness policy.
         source: MH-193
         parameters:
           document_type: utility_bill
@@ -80,25 +153,95 @@ RSpec.describe Kyc::PolicyRegistry do
 
   describe ".load!" do
     it "loads requirements into deeply immutable value objects" do
+      I18n.available_locales = [ :en, :fr ]
+      localized_vasp_translations.each { |locale, values| I18n.backend.store_translations(locale, values) }
       write_policy("crypto_exchange.yml", policy_yaml)
 
       registry = described_class.load!(path: fixture_path)
-      requirement = registry.requirements_for("crypto_exchange").find do |entry|
-        entry.id == "crypto.vasp_registration"
-      end
+      requirement = registry.requirements_for("crypto_exchange").find { |entry| entry.id == "crypto.vasp_registration" }
 
       expect(requirement.rule).to eq("required_document")
       expect(requirement.outcome).to eq("blocking")
       expect(requirement.title).to eq("VASP registration")
-      expect(requirement.guidance).to eq("Upload evidence of the applicant's VASP registration.")
+      expect(requirement.guidance).to eq("Upload registration evidence.")
+      I18n.with_locale(:fr) do
+        expect(requirement.title).to eq("Enregistrement VASP")
+        expect(requirement.guidance).to eq("Téléversez la preuve d’enregistrement.")
+      end
       expect(requirement.source).to eq("1.1")
       expect(requirement.parameters).to eq(
         "document_type" => "vasp_registration",
         "subject" => "applicant"
       )
-      expect(requirement).to be_frozen
-      expect(requirement.parameters).to be_frozen
-      expect(registry.requirements_for("crypto_exchange")).to be_frozen
+      expect([ requirement, requirement.parameters, registry.requirements_for("crypto_exchange") ]).to all(be_frozen)
+    end
+
+    context "when derived translations are missing" do
+      it "rejects a requirement missing translations for an available locale" do
+        self_translations = {
+          en: { kyc: { policy_requirements: { crypto: { vasp_registration: {
+            title: "VASP registration",
+            guidance: "Upload registration evidence."
+          } } } } }
+        }
+        I18n.backend = I18n::Backend::Simple.new
+        self_translations.each { |locale, values| I18n.backend.store_translations(locale, values) }
+        allow(I18n).to receive(:available_locales).and_return([ :en, :fr ])
+        write_policy("crypto_exchange.yml", policy_yaml)
+
+        expect do
+          described_class.load!(path: fixture_path)
+        end.to raise_error(
+          Kyc::PolicyRegistry::InvalidPolicy,
+          /crypto_exchange\.yml.*crypto\.vasp_registration.*fr.*kyc\.policy_requirements\.crypto\.vasp_registration\.title/i
+        )
+      end
+
+      it "rejects a requirement missing its title translation" do
+        self_translations = {
+          en: { kyc: { policy_requirements: { crypto: { vasp_registration: {
+            guidance: "Upload registration evidence."
+          } } } } },
+          fr: { kyc: { policy_requirements: { crypto: { vasp_registration: {
+            title: "Enregistrement VASP",
+            guidance: "Téléversez la preuve d’enregistrement."
+          } } } } }
+        }
+        I18n.backend = I18n::Backend::Simple.new
+        self_translations.each { |locale, values| I18n.backend.store_translations(locale, values) }
+        allow(I18n).to receive(:available_locales).and_return([ :en ])
+        write_policy("crypto_exchange.yml", policy_yaml)
+
+        expect do
+          described_class.load!(path: fixture_path)
+        end.to raise_error(
+          Kyc::PolicyRegistry::InvalidPolicy,
+          /crypto_exchange\.yml.*crypto\.vasp_registration.*en.*kyc\.policy_requirements\.crypto\.vasp_registration\.title/i
+        )
+      end
+
+      it "rejects a requirement missing its guidance translation" do
+        self_translations = {
+          en: { kyc: { policy_requirements: { crypto: { vasp_registration: {
+            title: "VASP registration"
+          } } } } },
+          fr: { kyc: { policy_requirements: { crypto: { vasp_registration: {
+            title: "Enregistrement VASP",
+            guidance: "Téléversez la preuve d’enregistrement."
+          } } } } }
+        }
+        I18n.backend = I18n::Backend::Simple.new
+        self_translations.each { |locale, values| I18n.backend.store_translations(locale, values) }
+        allow(I18n).to receive(:available_locales).and_return([ :en ])
+        write_policy("crypto_exchange.yml", policy_yaml)
+
+        expect do
+          described_class.load!(path: fixture_path)
+        end.to raise_error(
+          Kyc::PolicyRegistry::InvalidPolicy,
+          /crypto_exchange\.yml.*crypto\.vasp_registration.*en.*kyc\.policy_requirements\.crypto\.vasp_registration\.guidance/i
+        )
+      end
     end
 
     it "parses quoted ISO effective dates after safe YAML loading" do
@@ -356,7 +499,7 @@ RSpec.describe Kyc::PolicyRegistry do
   end
 
   describe "Rails reloading" do
-    it "rebuilds the deployed registry during a reload preparation cycle" do
+    it "loads translated deployed requirements and rebuilds them during a reload preparation cycle", :deployed_registry do
       stale_registry = Object.new
       described_class.instance = stale_registry
 
@@ -364,6 +507,11 @@ RSpec.describe Kyc::PolicyRegistry do
 
       expect(described_class.instance).to be_a(described_class)
       expect(described_class.instance).not_to equal(stale_registry)
+      requirement = described_class.instance.requirements_for("crypto_exchange").find do |entry|
+        entry.id == "crypto.vasp_registration"
+      end
+      expect(requirement.title).to eq("VASP registration")
+      expect(requirement.guidance).to eq("Upload evidence of the applicant's VASP registration or authorisation.")
     end
   end
 end

@@ -3,14 +3,40 @@
 require "rails_helper"
 
 RSpec.describe Kyc::PolicyValiditySync do
+  around do |example|
+    original_backend = I18n.backend
+    original_load_path = I18n.load_path
+    I18n.load_path = []
+    I18n.backend = I18n::Backend::Simple.new
+    I18n.backend.store_translations(
+      :en,
+      kyc: {
+        policy_requirements: {
+          base: {
+            passport_validity: {
+              title: "Document validity",
+              guidance: "Apply the declared document validity policy."
+            },
+            utility_bill_validity: {
+              title: "Document validity",
+              guidance: "Apply the declared document validity policy."
+            }
+          }
+        }
+      }
+    )
+    example.run
+  ensure
+    I18n.backend = original_backend
+    I18n.load_path = original_load_path
+  end
+
   def validity_requirement(id: nil, document_type:, version:, effective_from:, mode:, required_dates:,
                            warning_thresholds: [], max_age_months: nil, blocking: true)
     Kyc::PolicyRequirement.new(
       id: id || "base.#{document_type}_validity",
       rule: "document_validity",
       outcome: "blocking",
-      title: "Document validity",
-      guidance: "Apply the declared document validity policy.",
       source: "MH-193",
       parameters: {
         "document_type" => document_type,

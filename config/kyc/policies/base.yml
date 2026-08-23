@@ -4,8 +4,6 @@ requirements:
   - id: base.passport_validity
     rule: document_validity
     outcome: blocking
-    title: Passport validity
-    guidance: Confirm the passport is current and monitor its expiry date.
     source: MH-193
     parameters:
       document_type: passport
@@ -21,8 +19,6 @@ requirements:
   - id: base.utility_bill_freshness
     rule: document_validity
     outcome: blocking
-    title: Utility bill freshness
-    guidance: Confirm the utility bill was issued within the last three months.
     source: MH-193
     parameters:
       document_type: utility_bill
