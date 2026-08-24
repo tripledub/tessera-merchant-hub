@@ -19,13 +19,16 @@ module Registry
     def fetch(company_number:)
       company = get("/company/#{company_number}")
       officers = get("/company/#{company_number}/officers")
+      pscs = get_pscs(company_number)
 
       FetchResult.success(
         company_name: company["company_name"],
         status: company["company_status"],
         incorporated_on: parse_date(company["date_of_creation"]),
         directors: map_directors(officers["items"]),
-        addresses: map_addresses(company["registered_office_address"])
+        addresses: map_addresses(company["registered_office_address"]),
+        people_with_significant_control: map_pscs(pscs["items"]),
+        raw_response: { "company" => company, "officers" => officers, "persons_with_significant_control" => pscs }
       )
     rescue Faraday::ResourceNotFound
       FetchResult.failure(error_type: :not_found)
@@ -41,6 +44,12 @@ module Registry
 
     def get(path)
       JSON.parse(@connection.get(path).body)
+    end
+
+    def get_pscs(company_number)
+      get("/company/#{company_number}/persons-with-significant-control")
+    rescue Faraday::ResourceNotFound
+      { "items" => [] }
     end
 
     def parse_date(value)
@@ -68,6 +77,28 @@ module Registry
         postcode: address["postal_code"],
         country: address["country"]
       } ]
+    end
+
+    def map_pscs(items)
+      Array(items).map do |item|
+        dob = item["date_of_birth"] || {}
+        address = item["address"] || {}
+
+        {
+          name: item["name"],
+          kind: item["kind"],
+          natures_of_control: Array(item["natures_of_control"]),
+          notified_on: parse_date(item["notified_on"]),
+          ceased_on: parse_date(item["ceased_on"]),
+          nationality: item["nationality"],
+          date_of_birth_month: dob["month"],
+          date_of_birth_year: dob["year"],
+          line1: address["address_line_1"],
+          city: address["locality"],
+          postcode: address["postal_code"],
+          country: address["country"]
+        }
+      end
     end
   end
 end
