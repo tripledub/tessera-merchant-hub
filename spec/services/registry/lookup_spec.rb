@@ -58,7 +58,16 @@ RSpec.describe Registry::Lookup do
           status: "active",
           incorporated_on: Date.new(2020, 1, 1),
           directors: [ { name: "Jane Doe", role: "director", appointed_on: Date.new(2020, 1, 1), resigned_on: nil } ],
-          addresses: [ { kind: "registered", line1: "10 Business Park", city: "Bristol", postcode: "BS1 1AA", country: "United Kingdom" } ]
+          addresses: [ { kind: "registered", line1: "10 Business Park", city: "Bristol", postcode: "BS1 1AA", country: "United Kingdom" } ],
+          people_with_significant_control: [
+            {
+              name: "Jane Doe", kind: "individual-person-with-significant-control",
+              natures_of_control: [ "ownership-of-shares-75-to-100-percent" ],
+              notified_on: Date.new(2020, 1, 1), ceased_on: nil,
+              nationality: "British", date_of_birth_month: 1, date_of_birth_year: 1980,
+              line1: "10 Business Park", city: "Bristol", postcode: "BS1 1AA", country: "United Kingdom"
+            }
+          ]
         )
       end
 
@@ -107,6 +116,16 @@ RSpec.describe Registry::Lookup do
         expect(profile.addresses.count).to eq(1)
         expect(profile.addresses.first.kind).to eq("registered")
         expect(profile.addresses.first.line1).to eq("10 Business Park")
+      end
+
+      it "persists the people_with_significant_control from the fetch result" do
+        call(applicant)
+
+        profile = applicant.registry_profiles.last
+        expect(profile.people_with_significant_control.count).to eq(1)
+        expect(profile.people_with_significant_control.first.name).to eq("Jane Doe")
+        expect(profile.people_with_significant_control.first.kind).to eq("individual-person-with-significant-control")
+        expect(profile.people_with_significant_control.first.natures_of_control).to eq([ "ownership-of-shares-75-to-100-percent" ])
       end
 
       it "creates a new profile row on a second fetch rather than updating the first" do

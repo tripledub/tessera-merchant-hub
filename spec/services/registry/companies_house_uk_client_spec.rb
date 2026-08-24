@@ -39,6 +39,44 @@ RSpec.describe Registry::CompaniesHouseUkClient do
     }
   end
 
+  let(:pscs_response) do
+    {
+      "items" => [
+        {
+          "name" => "Mr Albert Edward Short",
+          "kind" => "individual-person-with-significant-control",
+          "natures_of_control" => [ "ownership-of-shares-75-to-100-percent" ],
+          "notified_on" => "2016-05-01",
+          "nationality" => "British",
+          "date_of_birth" => { "month" => 7, "year" => 1975 },
+          "address" => {
+            "address_line_1" => "10 Business Park",
+            "locality" => "Bristol",
+            "postal_code" => "BS1 1AA",
+            "country" => "United Kingdom"
+          },
+          "ceased" => false
+        },
+        {
+          "name" => "Ms Jane Doe",
+          "kind" => "individual-person-with-significant-control",
+          "natures_of_control" => [ "voting-rights-75-to-100-percent" ],
+          "notified_on" => "2015-01-01",
+          "ceased_on" => "2019-01-01",
+          "nationality" => "British",
+          "date_of_birth" => { "month" => 3, "year" => 1960 },
+          "address" => {
+            "address_line_1" => "10 Business Park",
+            "locality" => "Bristol",
+            "postal_code" => "BS1 1AA",
+            "country" => "United Kingdom"
+          },
+          "ceased" => true
+        }
+      ]
+    }
+  end
+
   def stub_company(status: 200, body: company_response)
     stub_request(:get, company_url)
       .with(headers: { "Authorization" => expected_auth_header })
@@ -47,6 +85,12 @@ RSpec.describe Registry::CompaniesHouseUkClient do
 
   def stub_officers(status: 200, body: officers_response)
     stub_request(:get, officers_url)
+      .with(headers: { "Authorization" => expected_auth_header })
+      .to_return(status: status, body: body.to_json, headers: { "Content-Type" => "application/json" })
+  end
+
+  def stub_pscs(status: 200, body: pscs_response)
+    stub_request(:get, "#{base_url}/company/#{company_number}/persons-with-significant-control")
       .with(headers: { "Authorization" => expected_auth_header })
       .to_return(status: status, body: body.to_json, headers: { "Content-Type" => "application/json" })
   end
@@ -61,6 +105,9 @@ RSpec.describe Registry::CompaniesHouseUkClient do
       stub_request(:get, "https://api.company-information.service.gov.uk/company/#{company_number}/officers")
         .with(headers: { "Authorization" => "Basic #{Base64.strict_encode64("cred-key:")}" })
         .to_return(status: 200, body: officers_response.to_json, headers: { "Content-Type" => "application/json" })
+      stub_request(:get, "https://api.company-information.service.gov.uk/company/#{company_number}/persons-with-significant-control")
+        .with(headers: { "Authorization" => "Basic #{Base64.strict_encode64("cred-key:")}" })
+        .to_return(status: 200, body: pscs_response.to_json, headers: { "Content-Type" => "application/json" })
 
       result = described_class.new.fetch(company_number: company_number)
 
@@ -78,6 +125,9 @@ RSpec.describe Registry::CompaniesHouseUkClient do
       stub_request(:get, "https://api.company-information.service.gov.uk/company/#{company_number}/officers")
         .with(headers: { "Authorization" => "Basic #{Base64.strict_encode64("env-key:")}" })
         .to_return(status: 200, body: officers_response.to_json, headers: { "Content-Type" => "application/json" })
+      stub_request(:get, "https://api.company-information.service.gov.uk/company/#{company_number}/persons-with-significant-control")
+        .with(headers: { "Authorization" => "Basic #{Base64.strict_encode64("env-key:")}" })
+        .to_return(status: 200, body: pscs_response.to_json, headers: { "Content-Type" => "application/json" })
 
       result = described_class.new.fetch(company_number: company_number)
 
@@ -86,10 +136,11 @@ RSpec.describe Registry::CompaniesHouseUkClient do
   end
 
   describe "#fetch" do
-    context "when both requests succeed" do
+    context "when all three requests succeed" do
       before do
         stub_company
         stub_officers
+        stub_pscs
       end
 
       it "returns a successful FetchResult mapped from both responses" do
@@ -120,6 +171,95 @@ RSpec.describe Registry::CompaniesHouseUkClient do
       it "authenticates with HTTP basic auth using the API key as username and a blank password" do
         client.fetch(company_number: company_number)
         expect(a_request(:get, company_url).with(headers: { "Authorization" => expected_auth_header })).to have_been_made
+      end
+
+      it "maps an active PSC with no ceased_on" do
+        result = client.fetch(company_number: company_number)
+        psc = result.people_with_significant_control.first
+
+        expect(psc).to eq(
+          name: "Mr Albert Edward Short",
+          kind: "individual-person-with-significant-control",
+          natures_of_control: [ "ownership-of-shares-75-to-100-percent" ],
+          notified_on: Date.new(2016, 5, 1),
+          ceased_on: nil,
+          nationality: "British",
+          date_of_birth_month: 7,
+          date_of_birth_year: 1975,
+          line1: "10 Business Park",
+          city: "Bristol",
+          postcode: "BS1 1AA",
+          country: "United Kingdom"
+        )
+      end
+
+      it "maps a ceased PSC with its ceased_on date" do
+        result = client.fetch(company_number: company_number)
+        psc = result.people_with_significant_control.second
+
+        expect(psc).to eq(
+          name: "Ms Jane Doe",
+          kind: "individual-person-with-significant-control",
+          natures_of_control: [ "voting-rights-75-to-100-percent" ],
+          notified_on: Date.new(2015, 1, 1),
+          ceased_on: Date.new(2019, 1, 1),
+          nationality: "British",
+          date_of_birth_month: 3,
+          date_of_birth_year: 1960,
+          line1: "10 Business Park",
+          city: "Bristol",
+          postcode: "BS1 1AA",
+          country: "United Kingdom"
+        )
+      end
+    end
+
+    context "when the company has no PSCs registered" do
+      before do
+        stub_company
+        stub_officers
+        stub_pscs(status: 404, body: { "errors" => [ { "error" => "psc-list-not-found" } ] })
+      end
+
+      it "still succeeds, with an empty people_with_significant_control list" do
+        result = client.fetch(company_number: company_number)
+
+        expect(result.success).to be(true)
+        expect(result.people_with_significant_control).to eq([])
+      end
+    end
+
+    context "when a PSC is a corporate entity (no date_of_birth or nationality)" do
+      before do
+        stub_company
+        stub_officers
+        stub_pscs(body: {
+          "items" => [
+            {
+              "name" => "Acme Holdings Ltd",
+              "kind" => "corporate-entity-person-with-significant-control",
+              "natures_of_control" => [ "ownership-of-shares-75-to-100-percent" ],
+              "notified_on" => "2020-01-01",
+              "address" => {
+                "address_line_1" => "10 Business Park",
+                "locality" => "Bristol",
+                "postal_code" => "BS1 1AA",
+                "country" => "United Kingdom"
+              },
+              "ceased" => false
+            }
+          ]
+        })
+      end
+
+      it "maps the corporate PSC with blank individual-only fields" do
+        result = client.fetch(company_number: company_number)
+
+        psc = result.people_with_significant_control.first
+        expect(psc[:kind]).to eq("corporate-entity-person-with-significant-control")
+        expect(psc[:nationality]).to be_nil
+        expect(psc[:date_of_birth_month]).to be_nil
+        expect(psc[:date_of_birth_year]).to be_nil
       end
     end
 

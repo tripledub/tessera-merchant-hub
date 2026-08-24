@@ -8,6 +8,8 @@ module Registry
 
     has_many :directors, class_name: "Registry::Director", dependent: :destroy, inverse_of: :registry_profile
     has_many :addresses, class_name: "Registry::Address", dependent: :destroy, inverse_of: :registry_profile
+    has_many :people_with_significant_control, class_name: "Registry::PersonWithSignificantControl",
+             dependent: :destroy, inverse_of: :registry_profile
 
     validates :jurisdiction, presence: true
     validates :company_number, presence: true

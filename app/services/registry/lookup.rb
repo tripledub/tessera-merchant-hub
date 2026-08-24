@@ -53,6 +53,7 @@ module Registry
 
         fetch_result.directors.each { |director| profile.directors.create!(director) }
         fetch_result.addresses.each { |address| profile.addresses.create!(address) }
+        fetch_result.people_with_significant_control.each { |psc| profile.people_with_significant_control.create!(psc) }
 
         profile
       end
