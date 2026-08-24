@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_200000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -79,7 +79,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_160000) do
     t.datetime "created_at", null: false
     t.integer "entity_type", null: false
     t.string "jurisdiction"
-    t.uuid "kyc_document_id", null: false
+    t.uuid "kyc_document_id"
     t.string "name", null: false
     t.integer "source", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -205,7 +205,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_160000) do
     t.uuid "applicant_id", null: false
     t.uuid "corporate_entity_id"
     t.datetime "created_at", null: false
-    t.uuid "kyc_document_id", null: false
+    t.uuid "kyc_document_id"
     t.string "message", null: false
     t.jsonb "metadata", default: {}
     t.datetime "updated_at", null: false
@@ -298,6 +298,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_160000) do
     t.string "natures_of_control", default: [], null: false, array: true
     t.date "notified_on"
     t.string "postcode"
+    t.string "registration_number"
     t.uuid "registry_profile_id", null: false
     t.datetime "updated_at", null: false
     t.index ["registry_profile_id"], name: "index_registry_people_wsc_on_registry_profile_id"

@@ -97,6 +97,8 @@ class ApplicantsController < ApplicationController
     result = Registry::Lookup.call(applicant: target_applicant)
     if result.success
       target_applicant.update(company_name: result.registry_profile.company_name)
+      Kyc::PrincipalsFromRegistry.call(result.registry_profile)
+      Kyc::OwnershipFromRegistry.call(result.registry_profile)
       redirect_to applicant_path(target_applicant), notice: t("flash.applicants.registry_lookup_success")
     else
       redirect_to applicant_path(target_applicant), alert: t("flash.applicants.registry_lookup_failed")

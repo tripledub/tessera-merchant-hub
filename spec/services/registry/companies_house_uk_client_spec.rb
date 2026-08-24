@@ -199,7 +199,8 @@ RSpec.describe Registry::CompaniesHouseUkClient do
           line1: "10 Business Park",
           city: "Bristol",
           postcode: "BS1 1AA",
-          country: "United Kingdom"
+          country: "United Kingdom",
+          registration_number: nil
         )
       end
 
@@ -219,7 +220,8 @@ RSpec.describe Registry::CompaniesHouseUkClient do
           line1: "10 Business Park",
           city: "Bristol",
           postcode: "BS1 1AA",
-          country: "United Kingdom"
+          country: "United Kingdom",
+          registration_number: nil
         )
       end
     end
@@ -250,6 +252,10 @@ RSpec.describe Registry::CompaniesHouseUkClient do
               "kind" => "corporate-entity-person-with-significant-control",
               "natures_of_control" => [ "ownership-of-shares-75-to-100-percent" ],
               "notified_on" => "2020-01-01",
+              "identification" => {
+                "registration_number" => "10925687",
+                "country_registered" => "England"
+              },
               "address" => {
                 "address_line_1" => "10 Business Park",
                 "locality" => "Bristol",
@@ -270,6 +276,7 @@ RSpec.describe Registry::CompaniesHouseUkClient do
         expect(psc[:nationality]).to be_nil
         expect(psc[:date_of_birth_month]).to be_nil
         expect(psc[:date_of_birth_year]).to be_nil
+        expect(psc[:registration_number]).to eq("10925687")
       end
     end
 

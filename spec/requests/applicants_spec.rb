@@ -180,7 +180,17 @@ RSpec.describe "Applicants", type: :request do
       let(:fetch_result) do
         Registry::FetchResult.success(
           company_name: "New Corp Ltd", status: "active", incorporated_on: Date.new(2020, 1, 1),
-          directors: [], addresses: []
+          directors: [ { name: "DOE, Jane", role: "director", appointed_on: Date.new(2020, 1, 1), resigned_on: nil } ],
+          addresses: [],
+          people_with_significant_control: [
+            {
+              name: "Mr John Smith", kind: "individual-person-with-significant-control",
+              natures_of_control: [ "ownership-of-shares-75-to-100-percent" ],
+              notified_on: Date.new(2020, 1, 1), ceased_on: nil, nationality: "British",
+              date_of_birth_month: 1, date_of_birth_year: 1980,
+              line1: nil, city: nil, postcode: nil, country: nil, registration_number: nil
+            }
+          ]
         )
       end
 
@@ -199,6 +209,21 @@ RSpec.describe "Applicants", type: :request do
         expect(created.registry_jurisdiction).to eq("gb")
         expect(created.company_name).to eq("New Corp Ltd")
         expect(created.registry_profiles.count).to eq(1)
+      end
+
+      it "promotes active directors, but not PSCs, to kyc_principals" do
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678" } }
+
+        created = Applicant.find_by!(name: "New Corp")
+        expect(created.kyc_principals.pluck(:name)).to contain_exactly("DOE, Jane")
+      end
+
+      it "flags the PSC as a UBO without creating any corporate entities" do
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678" } }
+
+        created = Applicant.find_by!(name: "New Corp")
+        expect(created.corporate_entities).to be_empty
+        expect(Kyc::ValidationWarning.where(applicant: created, warning_type: :ubo_threshold_exceeded).count).to eq(1)
       end
     end
 
@@ -310,7 +335,17 @@ RSpec.describe "Applicants", type: :request do
       let(:fetch_result) do
         Registry::FetchResult.success(
           company_name: "Acme Ltd", status: "active", incorporated_on: Date.new(2020, 1, 1),
-          directors: [], addresses: []
+          directors: [ { name: "DOE, Jane", role: "director", appointed_on: Date.new(2020, 1, 1), resigned_on: nil } ],
+          addresses: [],
+          people_with_significant_control: [
+            {
+              name: "Mr John Smith", kind: "individual-person-with-significant-control",
+              natures_of_control: [ "ownership-of-shares-75-to-100-percent" ],
+              notified_on: Date.new(2020, 1, 1), ceased_on: nil, nationality: "British",
+              date_of_birth_month: 1, date_of_birth_year: 1980,
+              line1: nil, city: nil, postcode: nil, country: nil, registration_number: nil
+            }
+          ]
         )
       end
 
@@ -326,6 +361,36 @@ RSpec.describe "Applicants", type: :request do
 
         expect(response).to redirect_to(applicant_path(applicant))
         expect(flash[:notice]).to be_present
+      end
+
+      it "promotes active directors, but not PSCs, to kyc_principals" do
+        expect { post registry_lookup_applicant_path(applicant) }
+          .to change { applicant.kyc_principals.count }.by(1)
+
+        expect(applicant.kyc_principals.pluck(:name)).to contain_exactly("DOE, Jane")
+      end
+
+      it "flags the PSC as a UBO without creating any corporate entities" do
+        post registry_lookup_applicant_path(applicant)
+
+        expect(applicant.corporate_entities).to be_empty
+        expect(Kyc::ValidationWarning.where(applicant: applicant, warning_type: :ubo_threshold_exceeded).count).to eq(1)
+      end
+
+      it "renders the PSC on the Ownership tab" do
+        post registry_lookup_applicant_path(applicant)
+
+        get tab_applicant_path(applicant, tab: "ownership")
+
+        expect(response.body).to include("Mr John Smith")
+        expect(response.body).to include("75%+")
+      end
+
+      it "does not create duplicate principals when retried again" do
+        post registry_lookup_applicant_path(applicant)
+
+        expect { post registry_lookup_applicant_path(applicant) }
+          .not_to change { applicant.kyc_principals.count }
       end
     end
 

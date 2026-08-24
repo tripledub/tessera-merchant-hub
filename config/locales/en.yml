@@ -152,6 +152,7 @@ en:
           director: Director
           director_and_psc: Director & PSC
           psc: PSC
+          secretary: Secretary
           shareholder: Shareholder
         table:
           actions: Actions
@@ -203,6 +204,10 @@ en:
         entities_heading: Entities
         individuals: Individuals
         ownership_of: Ownership of %{entity}
+        registry_pscs_heading: Persons with Significant Control (Companies House)
+        registry_pscs_table:
+          control: Control
+          notified_on: Notified on
         relationships: Relationships
         table:
           child: Child
@@ -505,6 +510,7 @@ en:
     source:
       applicant_declared: Declared
       document_extracted: Extracted
+      registry_fetched: Companies House
   layouts:
     navigation:
       admin: Admin

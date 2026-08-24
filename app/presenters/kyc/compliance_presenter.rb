@@ -63,7 +63,11 @@ module Kyc
       when "unresolved_chain"
         "Corporate entity with no traced individual owner"
       when "ubo_threshold_exceeded"
-        "#{meta.effective_percentage}% effective ownership (threshold: #{meta.threshold}%)"
+        if meta.effective_percentage.nil?
+          "Significant control identified (no ownership percentage disclosed)"
+        else
+          "#{meta.effective_percentage}% effective ownership (threshold: #{meta.threshold}%)"
+        end
       when "cross_reference_discrepancy"
         parts = [ "Type: #{meta.discrepancy_type.humanize}" ]
         parts << "Chart: #{meta.chart_percentage}%" if meta.chart_percentage.present?
