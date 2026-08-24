@@ -13,13 +13,68 @@ RSpec.describe Kyc::OwnershipPresenter, type: :presenter do
   let(:presenter) { described_class.new(applicant, template) }
 
   describe "#has_data?" do
-    it "returns false when no entities exist" do
+    it "returns false when no entities or registry PSCs exist" do
       expect(presenter.has_data?).to be false
     end
 
     it "returns true when entities exist" do
       create(:kyc_corporate_entity, applicant: applicant, kyc_document: document)
       expect(presenter.has_data?).to be true
+    end
+
+    it "returns true when there are active registry PSCs, even with no document-extracted entities" do
+      registry_profile = create(:registry_profile, applicant: applicant)
+      create(:registry_person_with_significant_control, registry_profile: registry_profile, ceased_on: nil)
+
+      expect(presenter.has_data?).to be true
+    end
+  end
+
+  describe "#registry_pscs" do
+    it "returns active PSCs from the applicant's latest registry profile" do
+      registry_profile = create(:registry_profile, applicant: applicant)
+      active = create(:registry_person_with_significant_control, registry_profile: registry_profile, name: "Active PSC", ceased_on: nil)
+      create(:registry_person_with_significant_control, registry_profile: registry_profile, name: "Ceased PSC", ceased_on: Date.new(2020, 1, 1))
+
+      expect(presenter.registry_pscs).to contain_exactly(active)
+    end
+
+    it "returns an empty relation when the applicant has no registry profile" do
+      expect(presenter.registry_pscs).to be_empty
+    end
+  end
+
+  describe "#formatted_registry_percentage" do
+    it "formats a percentage with a % sign and an 'at least' qualifier" do
+      registry_profile = create(:registry_profile, applicant: applicant)
+      psc = create(:registry_person_with_significant_control,
+        registry_profile: registry_profile, natures_of_control: [ "ownership-of-shares-75-to-100-percent" ])
+
+      expect(presenter.formatted_registry_percentage(psc)).to eq("75%+")
+    end
+
+    it "humanizes the nature of control when no numeric band is present" do
+      registry_profile = create(:registry_profile, applicant: applicant)
+      psc = create(:registry_person_with_significant_control,
+        registry_profile: registry_profile, natures_of_control: [ "significant-influence-or-control" ])
+
+      expect(presenter.formatted_registry_percentage(psc)).to eq("Significant influence or control")
+    end
+
+    it "humanizes and joins multiple non-numeric natures of control" do
+      registry_profile = create(:registry_profile, applicant: applicant)
+      psc = create(:registry_person_with_significant_control,
+        registry_profile: registry_profile,
+        natures_of_control: [ "significant-influence-or-control", "right-to-appoint-and-remove-directors" ])
+
+      expect(presenter.formatted_registry_percentage(psc)).to eq("Significant influence or control, Right to appoint and remove directors")
+    end
+
+    it "returns a dash when there are no natures of control at all" do
+      registry_profile = create(:registry_profile, applicant: applicant)
+      psc = create(:registry_person_with_significant_control, registry_profile: registry_profile, natures_of_control: [])
+
+      expect(presenter.formatted_registry_percentage(psc)).to eq("—")
     end
   end
 

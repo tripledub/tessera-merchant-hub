@@ -23,5 +23,14 @@ RSpec.describe KycPrincipal, type: :model do
     expect(principal).to be_valid
   end
 
-  it { is_expected.to define_enum_for(:source).with_values(document_extracted: 0, applicant_declared: 1).with_default(:document_extracted) }
+  it "allows secretary role" do
+    principal.role = :secretary
+    expect(principal).to be_valid
+  end
+
+  it {
+    expect(principal).to define_enum_for(:source)
+      .with_values(document_extracted: 0, applicant_declared: 1, registry_fetched: 2)
+      .with_default(:document_extracted)
+  }
 end

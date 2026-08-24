@@ -38,6 +38,26 @@ RSpec.describe ContentTags, type: :presenter do
     end
   end
 
+  describe "#source_badge" do
+    it "renders 'Declared' for an applicant-declared record" do
+      record = instance_double(Kyc::CorporateEntity, applicant_declared?: true, registry_fetched?: false)
+      html = presenter.source_badge(record)
+      expect(html).to include("Declared")
+    end
+
+    it "renders 'Extracted' for a document-extracted record" do
+      record = instance_double(Kyc::CorporateEntity, applicant_declared?: false, registry_fetched?: false)
+      html = presenter.source_badge(record)
+      expect(html).to include("Extracted")
+    end
+
+    it "renders 'Companies House' for a registry-fetched record" do
+      record = instance_double(Kyc::CorporateEntity, applicant_declared?: false, registry_fetched?: true)
+      html = presenter.source_badge(record)
+      expect(html).to include("Companies House")
+    end
+  end
+
   describe "#status_dot" do
     it "renders a coloured dot with label" do
       html = presenter.status_dot("Online", :green)

@@ -83,6 +83,7 @@ module Registry
       Array(items).map do |item|
         dob = item["date_of_birth"] || {}
         address = item["address"] || {}
+        identification = item["identification"] || {}
 
         {
           name: item["name"],
@@ -96,7 +97,8 @@ module Registry
           line1: address["address_line_1"],
           city: address["locality"],
           postcode: address["postal_code"],
-          country: address["country"]
+          country: address["country"],
+          registration_number: identification["registration_number"]
         }
       end
     end
