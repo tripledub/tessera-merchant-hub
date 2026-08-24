@@ -51,6 +51,40 @@ RSpec.describe Registry::CompaniesHouseUkClient do
       .to_return(status: status, body: body.to_json, headers: { "Content-Type" => "application/json" })
   end
 
+  describe "#initialize" do
+    it "defaults api_key to the companies_house Rails credential" do
+      allow(Rails.application.credentials).to receive(:dig).with(:companies_house, :api_key).and_return("cred-key")
+
+      stub_request(:get, "https://api.company-information.service.gov.uk/company/#{company_number}")
+        .with(headers: { "Authorization" => "Basic #{Base64.strict_encode64("cred-key:")}" })
+        .to_return(status: 200, body: company_response.to_json, headers: { "Content-Type" => "application/json" })
+      stub_request(:get, "https://api.company-information.service.gov.uk/company/#{company_number}/officers")
+        .with(headers: { "Authorization" => "Basic #{Base64.strict_encode64("cred-key:")}" })
+        .to_return(status: 200, body: officers_response.to_json, headers: { "Content-Type" => "application/json" })
+
+      result = described_class.new.fetch(company_number: company_number)
+
+      expect(result.success).to be(true)
+    end
+
+    it "falls back to COMPANIES_HOUSE_API_KEY when no credential is set" do
+      allow(Rails.application.credentials).to receive(:dig).with(:companies_house, :api_key).and_return(nil)
+      allow(ENV).to receive(:fetch).and_call_original
+      allow(ENV).to receive(:fetch).with("COMPANIES_HOUSE_API_KEY").and_return("env-key")
+
+      stub_request(:get, "https://api.company-information.service.gov.uk/company/#{company_number}")
+        .with(headers: { "Authorization" => "Basic #{Base64.strict_encode64("env-key:")}" })
+        .to_return(status: 200, body: company_response.to_json, headers: { "Content-Type" => "application/json" })
+      stub_request(:get, "https://api.company-information.service.gov.uk/company/#{company_number}/officers")
+        .with(headers: { "Authorization" => "Basic #{Base64.strict_encode64("env-key:")}" })
+        .to_return(status: 200, body: officers_response.to_json, headers: { "Content-Type" => "application/json" })
+
+      result = described_class.new.fetch(company_number: company_number)
+
+      expect(result.success).to be(true)
+    end
+  end
+
   describe "#fetch" do
     context "when both requests succeed" do
       before do

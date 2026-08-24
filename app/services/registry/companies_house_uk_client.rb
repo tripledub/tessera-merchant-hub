@@ -7,7 +7,7 @@ module Registry
   class CompaniesHouseUkClient < Client
     def initialize(
       base_url: ENV.fetch("COMPANIES_HOUSE_URL", "https://api.company-information.service.gov.uk"),
-      api_key: ENV.fetch("COMPANIES_HOUSE_API_KEY")
+      api_key: Rails.application.credentials.dig(:companies_house, :api_key) || ENV.fetch("COMPANIES_HOUSE_API_KEY")
     )
       @connection = Faraday.new(url: base_url) do |f|
         f.request :authorization, :basic, api_key, ""
