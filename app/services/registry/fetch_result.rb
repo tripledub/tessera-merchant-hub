@@ -4,13 +4,19 @@ module Registry
   FetchResult = Data.define(
     :success, :error_type, :error_message,
     :company_name, :status, :incorporated_on,
-    :directors, :addresses
+    :directors, :addresses, :people_with_significant_control,
+    :raw_response
   ) do
-    def self.success(company_name:, status:, incorporated_on:, directors:, addresses:)
+    def self.success(
+      company_name:, status:, incorporated_on:, directors:, addresses:,
+      people_with_significant_control: [], raw_response: {}
+    )
       new(
         success: true, error_type: nil, error_message: nil,
         company_name: company_name, status: status, incorporated_on: incorporated_on,
-        directors: directors, addresses: addresses
+        directors: directors, addresses: addresses,
+        people_with_significant_control: people_with_significant_control,
+        raw_response: raw_response
       )
     end
 
@@ -18,7 +24,8 @@ module Registry
       new(
         success: false, error_type: error_type, error_message: error_message,
         company_name: nil, status: nil, incorporated_on: nil,
-        directors: [], addresses: []
+        directors: [], addresses: [], people_with_significant_control: [],
+        raw_response: {}
       )
     end
   end

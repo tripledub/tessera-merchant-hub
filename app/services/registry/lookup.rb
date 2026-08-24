@@ -12,7 +12,9 @@ module Registry
       end
     end
 
-    CLIENTS = {}.freeze
+    CLIENTS = {
+      "gb" => Registry::CompaniesHouseUkClient
+    }.freeze
 
     def self.call(applicant:)
       new(applicant: applicant).call
@@ -46,11 +48,13 @@ module Registry
           company_name: fetch_result.company_name,
           status: fetch_result.status,
           incorporated_on: fetch_result.incorporated_on,
-          fetched_at: Time.current
+          fetched_at: Time.current,
+          raw_response: fetch_result.raw_response
         )
 
         fetch_result.directors.each { |director| profile.directors.create!(director) }
         fetch_result.addresses.each { |address| profile.addresses.create!(address) }
+        fetch_result.people_with_significant_control.each { |psc| profile.people_with_significant_control.create!(psc) }
 
         profile
       end

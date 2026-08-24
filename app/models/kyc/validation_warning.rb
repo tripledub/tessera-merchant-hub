@@ -5,7 +5,7 @@ module Kyc
     self.table_name = "kyc_validation_warnings"
 
     belongs_to :applicant
-    belongs_to :kyc_document
+    belongs_to :kyc_document, optional: true
     belongs_to :corporate_entity, class_name: "Kyc::CorporateEntity", optional: true
 
     enum :warning_type, { percentage_deviation: 0, nominee_detected: 1, unresolved_chain: 2, ubo_threshold_exceeded: 3, cross_reference_discrepancy: 4 }

@@ -39,6 +39,8 @@ Rails.application.routes.draw do
 
   resources :applicants, only: %i[new create index show edit update destroy] do
     get "tab/:tab", action: :tab, as: :tab, on: :member
+    post "registry_preview", action: :registry_preview, on: :collection
+    post "registry_lookup", action: :registry_lookup, on: :member
     namespace :kyc do
       resource :executive_narrative, only: %i[show create]
       resource :extraction_run, only: :create

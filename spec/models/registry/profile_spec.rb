@@ -9,6 +9,12 @@ RSpec.describe Registry::Profile, type: :model do
     it { is_expected.to belong_to(:applicant) }
     it { is_expected.to have_many(:directors).class_name("Registry::Director").dependent(:destroy) }
     it { is_expected.to have_many(:addresses).class_name("Registry::Address").dependent(:destroy) }
+
+    it {
+      expect(profile).to have_many(:people_with_significant_control)
+        .class_name("Registry::PersonWithSignificantControl")
+        .dependent(:destroy)
+    }
   end
 
   describe "validations" do
