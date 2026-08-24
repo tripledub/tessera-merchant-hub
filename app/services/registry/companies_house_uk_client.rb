@@ -32,15 +32,22 @@ module Registry
       )
     rescue Faraday::ResourceNotFound
       FetchResult.failure(error_type: :not_found)
-    rescue Faraday::UnauthorizedError
+    rescue Faraday::UnauthorizedError => e
+      notify_honeybadger(e, company_number)
       FetchResult.failure(error_type: :unauthorized)
-    rescue Faraday::TooManyRequestsError
+    rescue Faraday::TooManyRequestsError => e
+      notify_honeybadger(e, company_number)
       FetchResult.failure(error_type: :rate_limited)
-    rescue Faraday::ServerError, Faraday::Error
+    rescue Faraday::ServerError, Faraday::Error => e
+      notify_honeybadger(e, company_number)
       FetchResult.failure(error_type: :unavailable)
     end
 
     private
+
+    def notify_honeybadger(exception, company_number)
+      Honeybadger.notify(exception, context: { company_number: company_number })
+    end
 
     def get(path)
       JSON.parse(@connection.get(path).body)
