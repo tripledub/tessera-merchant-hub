@@ -67,7 +67,8 @@ RSpec.describe Registry::Lookup do
               nationality: "British", date_of_birth_month: 1, date_of_birth_year: 1980,
               line1: "10 Business Park", city: "Bristol", postcode: "BS1 1AA", country: "United Kingdom"
             }
-          ]
+          ],
+          raw_response: { "company" => { "company_name" => "Acme Ltd" } }
         )
       end
 
@@ -98,6 +99,13 @@ RSpec.describe Registry::Lookup do
         expect(profile.company_name).to eq("Acme Ltd")
         expect(profile.status).to eq("active")
         expect(profile.incorporated_on).to eq(Date.new(2020, 1, 1))
+      end
+
+      it "persists the raw_response from the fetch result" do
+        call(applicant)
+
+        profile = applicant.registry_profiles.last
+        expect(profile.raw_response).to eq("company" => { "company_name" => "Acme Ltd" })
       end
 
       it "persists the directors from the fetch result" do

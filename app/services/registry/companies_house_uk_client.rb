@@ -27,7 +27,8 @@ module Registry
         incorporated_on: parse_date(company["date_of_creation"]),
         directors: map_directors(officers["items"]),
         addresses: map_addresses(company["registered_office_address"]),
-        people_with_significant_control: map_pscs(pscs["items"])
+        people_with_significant_control: map_pscs(pscs["items"]),
+        raw_response: { "company" => company, "officers" => officers, "persons_with_significant_control" => pscs }
       )
     rescue Faraday::ResourceNotFound
       FetchResult.failure(error_type: :not_found)

@@ -48,7 +48,8 @@ module Registry
           company_name: fetch_result.company_name,
           status: fetch_result.status,
           incorporated_on: fetch_result.incorporated_on,
-          fetched_at: Time.current
+          fetched_at: Time.current,
+          raw_response: fetch_result.raw_response
         )
 
         fetch_result.directors.each { |director| profile.directors.create!(director) }

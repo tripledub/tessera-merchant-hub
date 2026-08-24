@@ -26,6 +26,24 @@ RSpec.describe Registry::FetchResult do
         { name: "Jane Doe", kind: "individual-person-with-significant-control", natures_of_control: [ "ownership-of-shares-75-to-100-percent" ], notified_on: Date.new(2020, 1, 1), ceased_on: nil, nationality: "British", date_of_birth_month: 1, date_of_birth_year: 1980, line1: "10 Business Park", city: "Bristol", postcode: "BS1 1AA", country: "United Kingdom" }
       ])
     end
+
+    it "carries the given raw_response" do
+      result = described_class.success(
+        company_name: "Acme Ltd", status: "active", incorporated_on: Date.new(2020, 1, 1),
+        directors: [], addresses: [], raw_response: { "company" => { "company_name" => "Acme Ltd" } }
+      )
+
+      expect(result.raw_response).to eq("company" => { "company_name" => "Acme Ltd" })
+    end
+
+    it "defaults raw_response to an empty hash" do
+      result = described_class.success(
+        company_name: "Acme Ltd", status: "active", incorporated_on: Date.new(2020, 1, 1),
+        directors: [], addresses: []
+      )
+
+      expect(result.raw_response).to eq({})
+    end
   end
 
   describe ".failure" do
@@ -39,6 +57,7 @@ RSpec.describe Registry::FetchResult do
       expect(result.directors).to eq([])
       expect(result.addresses).to eq([])
       expect(result.people_with_significant_control).to eq([])
+      expect(result.raw_response).to eq({})
     end
 
     it "defaults error_message to nil" do

@@ -143,6 +143,16 @@ RSpec.describe Registry::CompaniesHouseUkClient do
         stub_pscs
       end
 
+      it "captures the raw company, officers, and PSC responses" do
+        result = client.fetch(company_number: company_number)
+
+        expect(result.raw_response).to eq(
+          "company" => company_response,
+          "officers" => officers_response,
+          "persons_with_significant_control" => pscs_response
+        )
+      end
+
       it "returns a successful FetchResult mapped from both responses" do
         result = client.fetch(company_number: company_number)
 
