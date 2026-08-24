@@ -47,14 +47,25 @@ class ApplicantsController < ApplicationController
     @applicant = Applicant.new
   end
 
+  def registry_preview
+    authorize Applicant, :new?
+    @company_number = params.dig(:applicant, :company_number).to_s.strip
+    @preview_result = Registry::CompaniesHouseUkClient.new.fetch(company_number: @company_number) if @company_number.present?
+  end
+
   def create
     authorize Applicant, :create?
-    @applicant = Applicant.new(applicant_params)
+    @applicant = Applicant.new(new_applicant_params)
     if @applicant.save
-      redirect_to applicant_path(@applicant), notice: t("flash.applicants.create_success")
+      run_registry_lookup(@applicant)
     else
       render :new, status: :unprocessable_content
     end
+  end
+
+  def registry_lookup
+    authorize applicant, :update?
+    run_registry_lookup(applicant)
   end
 
   def edit
@@ -81,6 +92,22 @@ class ApplicantsController < ApplicationController
   end
 
   private
+
+  def run_registry_lookup(target_applicant)
+    result = Registry::Lookup.call(applicant: target_applicant)
+    if result.success
+      target_applicant.update(company_name: result.registry_profile.company_name)
+      Kyc::PrincipalsFromRegistry.call(result.registry_profile)
+      Kyc::OwnershipFromRegistry.call(result.registry_profile)
+      redirect_to applicant_path(target_applicant), notice: t("flash.applicants.registry_lookup_success")
+    else
+      redirect_to applicant_path(target_applicant), alert: t("flash.applicants.registry_lookup_failed")
+    end
+  end
+
+  def new_applicant_params
+    params.require(:applicant).permit(:name, :company_number).merge(registry_jurisdiction: "gb")
+  end
 
   def applicant_params
     params.require(:applicant).permit(:name, :company_name, :contact_email, :country, :country_code, :address_line1, :city, :support_url)

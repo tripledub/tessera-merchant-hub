@@ -32,6 +32,8 @@ module ContentTags
   def source_badge(record)
     if record.applicant_declared?
       badge(I18n.t("kyc.source.applicant_declared"), :amber)
+    elsif record.registry_fetched?
+      badge(I18n.t("kyc.source.registry_fetched"), :green)
     else
       badge(I18n.t("kyc.source.document_extracted"), :blue)
     end

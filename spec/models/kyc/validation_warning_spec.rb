@@ -5,7 +5,7 @@ require "rails_helper"
 RSpec.describe Kyc::ValidationWarning, type: :model do
   describe "associations" do
     it { is_expected.to belong_to(:applicant) }
-    it { is_expected.to belong_to(:kyc_document) }
+    it { is_expected.to belong_to(:kyc_document).optional }
     it { is_expected.to belong_to(:corporate_entity).class_name("Kyc::CorporateEntity").optional }
   end
 
@@ -81,6 +81,18 @@ RSpec.describe Kyc::ValidationWarning, type: :model do
         expect(typed.jurisdiction).to eq("CY")
       end
     end
+  end
+
+  it "can be created without a kyc_document" do
+    applicant = create(:applicant)
+    entity = create(:kyc_corporate_entity, applicant: applicant, kyc_document: nil, source: :registry_fetched)
+
+    warning = described_class.new(
+      applicant: applicant, kyc_document: nil, corporate_entity: entity,
+      warning_type: :ubo_threshold_exceeded, message: "UBO identified"
+    )
+
+    expect(warning).to be_valid
   end
 
   describe "acknowledged" do

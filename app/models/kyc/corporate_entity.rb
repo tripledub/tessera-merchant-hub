@@ -5,7 +5,7 @@ module Kyc
     self.table_name = "kyc_corporate_entities"
 
     belongs_to :applicant
-    belongs_to :kyc_document
+    belongs_to :kyc_document, optional: true
 
     has_many :child_edges, class_name: "Kyc::OwnershipEdge", foreign_key: :parent_entity_id,
              dependent: :destroy, inverse_of: :parent_entity
@@ -17,7 +17,7 @@ module Kyc
              dependent: :nullify, inverse_of: :corporate_entity
 
     enum :entity_type, { individual: 0, corporate: 1 }
-    enum :source, { document_extracted: 0, applicant_declared: 1 }, default: :document_extracted
+    enum :source, { document_extracted: 0, applicant_declared: 1, registry_fetched: 2 }, default: :document_extracted
 
     validates :name, presence: true
     validates :entity_type, presence: true

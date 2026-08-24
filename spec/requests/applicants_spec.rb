@@ -160,12 +160,13 @@ RSpec.describe "Applicants", type: :request do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
 
-      it "creates applicant and redirects to show" do
-        post applicants_path, params: {
-          applicant: { name: "New Corp", company_name: "New Corp Ltd", contact_email: "info@new.com" }
-        }
+      it "creates the applicant with a blank company_number, and redirects to show with a retry alert" do
+        post applicants_path, params: { applicant: { name: "New Corp" } }
+
         created = Applicant.find_by!(name: "New Corp")
         expect(response).to redirect_to(applicant_path(created))
+        expect(flash[:alert]).to be_present
+        expect(created.registry_profiles).to be_empty
       end
 
       it "re-renders new with 422 on invalid params" do
@@ -174,11 +175,249 @@ RSpec.describe "Applicants", type: :request do
       end
     end
 
+    context "when signed in as psp_admin, and the registry lookup succeeds" do
+      let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
+      let(:fetch_result) do
+        Registry::FetchResult.success(
+          company_name: "New Corp Ltd", status: "active", incorporated_on: Date.new(2020, 1, 1),
+          directors: [ { name: "DOE, Jane", role: "director", appointed_on: Date.new(2020, 1, 1), resigned_on: nil } ],
+          addresses: [],
+          people_with_significant_control: [
+            {
+              name: "Mr John Smith", kind: "individual-person-with-significant-control",
+              natures_of_control: [ "ownership-of-shares-75-to-100-percent" ],
+              notified_on: Date.new(2020, 1, 1), ceased_on: nil, nationality: "British",
+              date_of_birth_month: 1, date_of_birth_year: 1980,
+              line1: nil, city: nil, postcode: nil, country: nil, registration_number: nil
+            }
+          ]
+        )
+      end
+
+      before do
+        sign_in psp_admin
+        allow(Registry::CompaniesHouseUkClient).to receive(:new).and_return(fake_client)
+        allow(fake_client).to receive(:fetch).with(company_number: "12345678").and_return(fetch_result)
+      end
+
+      it "creates the applicant, persists the registry snapshot, and redirects to show with a success notice" do
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678" } }
+
+        created = Applicant.find_by!(name: "New Corp")
+        expect(response).to redirect_to(applicant_path(created))
+        expect(flash[:notice]).to be_present
+        expect(created.registry_jurisdiction).to eq("gb")
+        expect(created.company_name).to eq("New Corp Ltd")
+        expect(created.registry_profiles.count).to eq(1)
+      end
+
+      it "promotes active directors, but not PSCs, to kyc_principals" do
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678" } }
+
+        created = Applicant.find_by!(name: "New Corp")
+        expect(created.kyc_principals.pluck(:name)).to contain_exactly("DOE, Jane")
+      end
+
+      it "flags the PSC as a UBO without creating any corporate entities" do
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678" } }
+
+        created = Applicant.find_by!(name: "New Corp")
+        expect(created.corporate_entities).to be_empty
+        expect(Kyc::ValidationWarning.where(applicant: created, warning_type: :ubo_threshold_exceeded).count).to eq(1)
+      end
+    end
+
+    context "when signed in as psp_admin, and the registry lookup fails" do
+      let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
+      let(:fetch_result) { Registry::FetchResult.failure(error_type: :not_found) }
+
+      before do
+        sign_in psp_admin
+        allow(Registry::CompaniesHouseUkClient).to receive(:new).and_return(fake_client)
+        allow(fake_client).to receive(:fetch).with(company_number: "00000000").and_return(fetch_result)
+      end
+
+      it "still creates the applicant, and redirects to show with a retry alert" do
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: "00000000" } }
+
+        created = Applicant.find_by!(name: "New Corp")
+        expect(response).to redirect_to(applicant_path(created))
+        expect(flash[:alert]).to be_present
+        expect(created.registry_profiles).to be_empty
+      end
+    end
+
     context "when signed in as psp_support" do
       before { sign_in psp_support }
 
       it "returns 403" do
         post applicants_path, params: { applicant: { name: "X" } }
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe "POST /applicants/registry_preview" do
+    context "when signed in as psp_admin, and the company number is blank" do
+      before { sign_in psp_admin }
+
+      it "renders an inline validation message via turbo_stream" do
+        post registry_preview_applicants_path, params: { applicant: { company_number: "" } },
+          as: :turbo_stream
+
+        expect(response).to have_http_status(:ok)
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+      end
+    end
+
+    context "when signed in as psp_admin, and the lookup succeeds" do
+      let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
+      let(:fetch_result) do
+        Registry::FetchResult.success(
+          company_name: "Preview Corp Ltd", status: "active", incorporated_on: Date.new(2020, 1, 1),
+          directors: [], addresses: []
+        )
+      end
+
+      before do
+        sign_in psp_admin
+        allow(Registry::CompaniesHouseUkClient).to receive(:new).and_return(fake_client)
+        allow(fake_client).to receive(:fetch).with(company_number: "12345678").and_return(fetch_result)
+      end
+
+      it "renders the company preview via turbo_stream without persisting anything" do
+        expect {
+          post registry_preview_applicants_path, params: { applicant: { company_number: "12345678" } },
+            as: :turbo_stream
+        }.not_to change(Applicant, :count)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Preview Corp Ltd")
+      end
+    end
+
+    context "when signed in as psp_admin, and the lookup fails" do
+      let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
+      let(:fetch_result) { Registry::FetchResult.failure(error_type: :not_found) }
+
+      before do
+        sign_in psp_admin
+        allow(Registry::CompaniesHouseUkClient).to receive(:new).and_return(fake_client)
+        allow(fake_client).to receive(:fetch).with(company_number: "00000000").and_return(fetch_result)
+      end
+
+      it "renders an error message via turbo_stream without persisting anything" do
+        expect {
+          post registry_preview_applicants_path, params: { applicant: { company_number: "00000000" } },
+            as: :turbo_stream
+        }.not_to change(Applicant, :count)
+
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "returns 403" do
+        post registry_preview_applicants_path, params: { applicant: { company_number: "12345678" } },
+          as: :turbo_stream
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe "POST /applicants/:id/registry_lookup" do
+    let(:applicant) { create(:applicant, company_number: "12345678", registry_jurisdiction: "gb") }
+
+    context "when signed in as psp_admin, and the lookup succeeds" do
+      let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
+      let(:fetch_result) do
+        Registry::FetchResult.success(
+          company_name: "Acme Ltd", status: "active", incorporated_on: Date.new(2020, 1, 1),
+          directors: [ { name: "DOE, Jane", role: "director", appointed_on: Date.new(2020, 1, 1), resigned_on: nil } ],
+          addresses: [],
+          people_with_significant_control: [
+            {
+              name: "Mr John Smith", kind: "individual-person-with-significant-control",
+              natures_of_control: [ "ownership-of-shares-75-to-100-percent" ],
+              notified_on: Date.new(2020, 1, 1), ceased_on: nil, nationality: "British",
+              date_of_birth_month: 1, date_of_birth_year: 1980,
+              line1: nil, city: nil, postcode: nil, country: nil, registration_number: nil
+            }
+          ]
+        )
+      end
+
+      before do
+        sign_in psp_admin
+        allow(Registry::CompaniesHouseUkClient).to receive(:new).and_return(fake_client)
+        allow(fake_client).to receive(:fetch).with(company_number: "12345678").and_return(fetch_result)
+      end
+
+      it "persists the registry snapshot and redirects to show with a success notice" do
+        expect { post registry_lookup_applicant_path(applicant) }
+          .to change { applicant.registry_profiles.count }.by(1)
+
+        expect(response).to redirect_to(applicant_path(applicant))
+        expect(flash[:notice]).to be_present
+      end
+
+      it "promotes active directors, but not PSCs, to kyc_principals" do
+        expect { post registry_lookup_applicant_path(applicant) }
+          .to change { applicant.kyc_principals.count }.by(1)
+
+        expect(applicant.kyc_principals.pluck(:name)).to contain_exactly("DOE, Jane")
+      end
+
+      it "flags the PSC as a UBO without creating any corporate entities" do
+        post registry_lookup_applicant_path(applicant)
+
+        expect(applicant.corporate_entities).to be_empty
+        expect(Kyc::ValidationWarning.where(applicant: applicant, warning_type: :ubo_threshold_exceeded).count).to eq(1)
+      end
+
+      it "renders the PSC on the Ownership tab" do
+        post registry_lookup_applicant_path(applicant)
+
+        get tab_applicant_path(applicant, tab: "ownership")
+
+        expect(response.body).to include("Mr John Smith")
+        expect(response.body).to include("75%+")
+      end
+
+      it "does not create duplicate principals when retried again" do
+        post registry_lookup_applicant_path(applicant)
+
+        expect { post registry_lookup_applicant_path(applicant) }
+          .not_to change { applicant.kyc_principals.count }
+      end
+    end
+
+    context "when signed in as psp_admin, and the lookup fails" do
+      let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
+      let(:fetch_result) { Registry::FetchResult.failure(error_type: :unavailable) }
+
+      before do
+        sign_in psp_admin
+        allow(Registry::CompaniesHouseUkClient).to receive(:new).and_return(fake_client)
+        allow(fake_client).to receive(:fetch).with(company_number: "12345678").and_return(fetch_result)
+      end
+
+      it "redirects to show with a retry alert and persists nothing" do
+        expect { post registry_lookup_applicant_path(applicant) }
+          .not_to change { applicant.registry_profiles.count }
+
+        expect(response).to redirect_to(applicant_path(applicant))
+        expect(flash[:alert]).to be_present
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "returns 403" do
+        post registry_lookup_applicant_path(applicant)
         expect(response).to have_http_status(:forbidden)
       end
     end
