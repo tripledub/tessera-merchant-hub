@@ -12,7 +12,9 @@ module Registry
       end
     end
 
-    CLIENTS = {}.freeze
+    CLIENTS = {
+      "gb" => Registry::CompaniesHouseUkClient
+    }.freeze
 
     def self.call(applicant:)
       new(applicant: applicant).call
