@@ -289,6 +289,12 @@ RSpec.describe Registry::CompaniesHouseUkClient do
         expect(result.success).to be(false)
         expect(result.error_type).to eq(:not_found)
       end
+
+      it "does not notify Honeybadger — a company simply not existing is expected business variance" do
+        allow(Honeybadger).to receive(:notify)
+        client.fetch(company_number: company_number)
+        expect(Honeybadger).not_to have_received(:notify)
+      end
     end
 
     context "when the API key is rejected" do
@@ -299,6 +305,14 @@ RSpec.describe Registry::CompaniesHouseUkClient do
 
         expect(result.success).to be(false)
         expect(result.error_type).to eq(:unauthorized)
+      end
+
+      it "notifies Honeybadger with the real exception and company_number context" do
+        allow(Honeybadger).to receive(:notify)
+        client.fetch(company_number: company_number)
+        expect(Honeybadger).to have_received(:notify).with(
+          instance_of(Faraday::UnauthorizedError), context: { company_number: company_number }
+        )
       end
     end
 
@@ -311,6 +325,14 @@ RSpec.describe Registry::CompaniesHouseUkClient do
         expect(result.success).to be(false)
         expect(result.error_type).to eq(:rate_limited)
       end
+
+      it "notifies Honeybadger with the real exception and company_number context" do
+        allow(Honeybadger).to receive(:notify)
+        client.fetch(company_number: company_number)
+        expect(Honeybadger).to have_received(:notify).with(
+          instance_of(Faraday::TooManyRequestsError), context: { company_number: company_number }
+        )
+      end
     end
 
     context "when the registry has a server error" do
@@ -321,6 +343,14 @@ RSpec.describe Registry::CompaniesHouseUkClient do
 
         expect(result.success).to be(false)
         expect(result.error_type).to eq(:unavailable)
+      end
+
+      it "notifies Honeybadger with the real exception and company_number context" do
+        allow(Honeybadger).to receive(:notify)
+        client.fetch(company_number: company_number)
+        expect(Honeybadger).to have_received(:notify).with(
+          instance_of(Faraday::ServerError), context: { company_number: company_number }
+        )
       end
     end
 
