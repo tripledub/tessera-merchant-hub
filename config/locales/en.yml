@@ -111,6 +111,27 @@ en:
       page_title: New applicant
       subtitle: Start a KYC application for a new merchant.
       title: New applicant
+    new_form:
+      fields:
+        company_number: Company number
+        company_number_placeholder: e.g. 12345678
+      lookup_button: Look up company
+      submit: Confirm & Create
+    registry_preview:
+      blank_company_number: Enter a company number to look it up.
+      card:
+        confirm_hint: Confirm & Create below to save this applicant and the full registry
+          data.
+        incorporated_on: Incorporated
+        registered_address: Registered address
+        status: Status
+      errors:
+        invalid_number: Enter a company number before looking it up.
+        not_found: No company found with that number.
+        not_supported: This jurisdiction isn't supported yet.
+        rate_limited: Companies House rate limit reached — try again shortly.
+        unauthorized: Companies House rejected our API key.
+        unavailable: Companies House is unavailable right now — try again shortly.
     show:
       add_principal: Add principal
       back: "← Back to applicants"
@@ -167,6 +188,9 @@ en:
         documents_count: Documents
         entities_count: Entities
         principals_count: Principals
+        registry_lookup_missing: Company was found, but the full registry data fetch
+          didn't complete.
+        registry_lookup_retry: Retry registry lookup
         status: Status
         summary: Summary
         warnings_count: Warnings
@@ -252,8 +276,10 @@ en:
     applicant_users:
       destroy_success: Portal user removed.
     applicants:
-      create_success: Applicant created.
       destroy_success: Applicant deleted.
+      registry_lookup_failed: Registry data fetch failed. You can retry from this
+        page.
+      registry_lookup_success: Registry data fetched.
       update_success: Applicant updated.
     executive_narrative:
       failed: Could not generate the executive summary. Please try again.
