@@ -15,6 +15,8 @@ class Applicant < Merchant
   has_one :primary_business_address, -> { where(type: "Address::Business", primary: true) },
           class_name: "Address", as: :addressable
 
+  before_validation :strip_company_number
+
   validates :merchant_id, absence: true
   validates :name, presence: true
   validates :name, uniqueness: { scope: :type, case_sensitive: false }
@@ -48,5 +50,11 @@ class Applicant < Merchant
   # repoint.
   def validity_reference_date
     created_at.to_date
+  end
+
+  private
+
+  def strip_company_number
+    self.company_number = company_number.strip if company_number.present?
   end
 end

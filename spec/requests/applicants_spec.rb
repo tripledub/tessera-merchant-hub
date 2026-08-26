@@ -386,11 +386,52 @@ RSpec.describe "Applicants", type: :request do
         expect(response.body).to include("75%+")
       end
 
+      it "does not show a trace-chain button for an individual PSC" do
+        post registry_lookup_applicant_path(applicant)
+
+        get tab_applicant_path(applicant, tab: "ownership")
+
+        expect(response.body).not_to include(I18n.t("applicants.tabs.ownership.registry_pscs_table.trace_chain"))
+      end
+
       it "does not create duplicate principals when retried again" do
         post registry_lookup_applicant_path(applicant)
 
         expect { post registry_lookup_applicant_path(applicant) }
           .not_to change { applicant.kyc_principals.count }
+      end
+    end
+
+    context "when signed in as psp_admin, and the lookup succeeds with a corporate PSC" do
+      let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
+      let(:fetch_result) do
+        Registry::FetchResult.success(
+          company_name: "Acme Ltd", status: "active", incorporated_on: Date.new(2020, 1, 1),
+          directors: [], addresses: [],
+          people_with_significant_control: [
+            {
+              name: "Example Holdings Ltd", kind: "corporate-entity-person-with-significant-control",
+              natures_of_control: [ "ownership-of-shares-75-to-100-percent" ],
+              notified_on: Date.new(2020, 1, 1), ceased_on: nil, nationality: nil,
+              date_of_birth_month: nil, date_of_birth_year: nil,
+              line1: nil, city: nil, postcode: nil, country: nil, registration_number: "99999999"
+            }
+          ]
+        )
+      end
+
+      before do
+        sign_in psp_admin
+        allow(Registry::CompaniesHouseUkClient).to receive(:new).and_return(fake_client)
+        allow(fake_client).to receive(:fetch).with(company_number: "12345678").and_return(fetch_result)
+      end
+
+      it "shows a trace-chain button for a corporate PSC" do
+        post registry_lookup_applicant_path(applicant)
+
+        get tab_applicant_path(applicant, tab: "ownership")
+
+        expect(response.body).to include(I18n.t("applicants.tabs.ownership.registry_pscs_table.trace_chain"))
       end
     end
 
@@ -418,6 +459,67 @@ RSpec.describe "Applicants", type: :request do
 
       it "returns 403" do
         post registry_lookup_applicant_path(applicant)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe "POST /applicants/:id/trace_psc_chain/:psc_id" do
+    let(:applicant) { create(:applicant, company_number: "12345678", registry_jurisdiction: "gb", company_name: "Acme Ltd") }
+    let(:registry_profile) { create(:registry_profile, applicant: applicant, company_number: "12345678") }
+    let(:psc) do
+      create(:registry_person_with_significant_control,
+        registry_profile: registry_profile, name: "Intermediate Holdings Ltd",
+        kind: "corporate-entity-person-with-significant-control", registration_number: "99999999")
+    end
+
+    context "when signed in as psp_admin, and the chain follower succeeds" do
+      let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
+
+      before do
+        sign_in psp_admin
+        psc
+        allow(Registry::CompaniesHouseUkClient).to receive(:new).and_return(fake_client)
+        allow(fake_client).to receive(:fetch).with(company_number: "99999999").and_return(
+          Registry::FetchResult.success(
+            company_name: "Intermediate Holdings Ltd", status: "active", incorporated_on: Date.new(2018, 1, 1),
+            directors: [], addresses: [], people_with_significant_control: []
+          )
+        )
+      end
+
+      it "persists a new registry profile and redirects to show with a success notice" do
+        expect { post trace_psc_chain_applicant_path(applicant, psc_id: psc.id) }
+          .to change { applicant.registry_profiles.count }.by(1)
+
+        expect(response).to redirect_to(applicant_path(applicant))
+        expect(flash[:notice]).to be_present
+      end
+    end
+
+    context "when signed in as psp_admin, and the chain follower fails" do
+      before do
+        sign_in psp_admin
+        psc.update!(registration_number: nil)
+      end
+
+      it "redirects to show with an alert and persists nothing" do
+        expect { post trace_psc_chain_applicant_path(applicant, psc_id: psc.id) }
+          .not_to change { applicant.registry_profiles.count }
+
+        expect(response).to redirect_to(applicant_path(applicant))
+        expect(flash[:alert]).to be_present
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before do
+        sign_in psp_support
+        psc
+      end
+
+      it "returns 403" do
+        post trace_psc_chain_applicant_path(applicant, psc_id: psc.id)
         expect(response).to have_http_status(:forbidden)
       end
     end

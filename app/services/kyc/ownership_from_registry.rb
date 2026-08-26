@@ -35,18 +35,23 @@ module Kyc
     def flag_ubo(psc)
       company_name = @applicant.company_name.presence || @applicant.name
       percentage = percentage_for(psc)
+      psc_kind = corporate?(psc) ? "company" : "person"
 
       Kyc::ValidationWarning.create!(
         applicant: @applicant,
         warning_type: :ubo_threshold_exceeded,
         message: "UBO identified via Companies House PSC register: #{psc.name} is a " \
-                 "person with significant control of #{company_name}",
+                 "#{psc_kind} with significant control of #{company_name}",
         metadata: {
           individual_name: psc.name,
           effective_percentage: percentage,
           threshold: UBO_THRESHOLD
         }
       )
+    end
+
+    def corporate?(psc)
+      !psc.kind.start_with?("individual-")
     end
 
     def percentage_for(psc)

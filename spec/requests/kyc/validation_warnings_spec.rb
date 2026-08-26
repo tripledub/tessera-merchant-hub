@@ -25,6 +25,12 @@ RSpec.describe "Kyc::ValidationWarnings", type: :request do
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
       end
 
+      it "includes a turbo_stream update for the unacknowledged summary count" do
+        patch kyc_validation_warning_path(warning), headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).to include('target="compliance_unacknowledged_count"')
+      end
+
       it "redirects for HTML requests" do
         patch kyc_validation_warning_path(warning), headers: { "HTTP_REFERER" => applicant_path(applicant) }
         expect(response).to redirect_to(applicant_path(applicant))

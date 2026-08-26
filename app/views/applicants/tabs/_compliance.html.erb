@@ -7,11 +7,8 @@
         <p class="text-2xl font-semibold text-gray-800 dark:text-white/90"><%= p.total_count %></p>
         <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.total') %></p>
       </div>
-      <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
-        <p class="text-2xl font-semibold <%= p.unacknowledged_count > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-white/90' %>">
-          <%= p.unacknowledged_count %>
-        </p>
-        <p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.unacknowledged') %></p>
+      <div id="compliance_unacknowledged_count" class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+        <%= render "applicants/tabs/compliance/unacknowledged_count", presenter: p %>
       </div>
       <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
         <p class="text-2xl font-semibold text-amber-600 dark:text-amber-400"><%= p.count_by_type(:percentage_deviation) %></p>
