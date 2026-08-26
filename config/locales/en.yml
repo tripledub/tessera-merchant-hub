@@ -208,6 +208,7 @@ en:
         registry_pscs_table:
           control: Control
           notified_on: Notified on
+          trace_chain: Trace ownership chain
         relationships: Relationships
         table:
           child: Child
@@ -285,6 +286,8 @@ en:
       registry_lookup_failed: Registry data fetch failed. You can retry from this
         page.
       registry_lookup_success: Registry data fetched.
+      trace_psc_chain_failed: Could not trace this ownership chain further.
+      trace_psc_chain_success: Ownership chain traced.
       update_success: Applicant updated.
     executive_narrative:
       failed: Could not generate the executive summary. Please try again.

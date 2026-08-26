@@ -1,0 +1,4 @@
+<p class="text-2xl font-semibold <%= presenter.unacknowledged_count > 0 ? 'text-red-600 dark:text-red-400' : 'text-gray-800 dark:text-white/90' %>">
+  <%= presenter.unacknowledged_count %>
+</p>
+<p class="text-theme-sm text-gray-500 dark:text-gray-400"><%= t('applicants.tabs.compliance.unacknowledged') %></p>

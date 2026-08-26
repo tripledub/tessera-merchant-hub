@@ -68,6 +68,19 @@ class ApplicantsController < ApplicationController
     run_registry_lookup(applicant)
   end
 
+  def trace_psc_chain
+    authorize applicant, :update?
+    psc = Registry::PersonWithSignificantControl.joins(:registry_profile)
+      .where(registry_profiles: { applicant_id: applicant.id }).find(params[:psc_id])
+    result = Kyc::PscChainFollower.call(psc)
+
+    if result.success
+      redirect_to applicant_path(applicant), notice: t("flash.applicants.trace_psc_chain_success")
+    else
+      redirect_to applicant_path(applicant), alert: t("flash.applicants.trace_psc_chain_failed")
+    end
+  end
+
   def edit
     authorize applicant
   end

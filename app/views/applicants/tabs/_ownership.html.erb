@@ -54,6 +54,7 @@
               <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.type') %></th>
               <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.registry_pscs_table.control') %></th>
               <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.registry_pscs_table.notified_on') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"></th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
@@ -63,6 +64,12 @@
                 <td class="px-4 py-2"><%= p.registry_psc_kind_badge(psc) %></td>
                 <td class="px-4 py-2 text-gray-800 dark:text-white/90"><%= p.formatted_registry_percentage(psc) %></td>
                 <td class="px-4 py-2 text-gray-500 dark:text-gray-400"><%= psc.notified_on&.strftime("%-d %b %Y") || "—" %></td>
+                <td class="px-4 py-2">
+                  <% unless psc.kind.start_with?("individual-") %>
+                    <%= button_to t('.registry_pscs_table.trace_chain'), trace_psc_chain_applicant_path(applicant, psc_id: psc.id),
+                          method: :post, class: "text-brand-600 hover:text-brand-700" %>
+                  <% end %>
+                </td>
               </tr>
             <% end %>
           </tbody>
