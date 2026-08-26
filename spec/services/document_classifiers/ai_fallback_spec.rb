@@ -99,6 +99,16 @@ RSpec.describe DocumentClassifiers::AiFallback do
       end
     end
 
+    context "when the attachment type is unsupported by the model" do
+      before do
+        allow(mock_chat).to receive(:ask).and_raise(RubyLLM::UnsupportedAttachmentError.new("application/x-not-a-real-format"))
+      end
+
+      it "raises an AiFallback::Error instead of propagating the RubyLLM error" do
+        expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /unsupported/i)
+      end
+    end
+
     context "when the file blob cannot be downloaded" do
       before do
         allow(document.file.blob).to receive(:download).and_raise(ActiveStorage::FileNotFoundError)

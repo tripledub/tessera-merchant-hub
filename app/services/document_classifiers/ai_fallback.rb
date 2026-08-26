@@ -73,6 +73,8 @@ module DocumentClassifiers
         raise Error, "AI classifier returned invalid JSON: #{e.message}"
       rescue RubyLLM::Error => e
         raise Error, "AI classifier API error: #{e.message}"
+      rescue RubyLLM::UnsupportedAttachmentError => e
+        raise Error, "AI classifier does not support this attachment type: #{e.message}"
       end
     end
 

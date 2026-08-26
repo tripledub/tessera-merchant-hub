@@ -153,5 +153,25 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         expect(document.result["error"]).to include("API error")
       end
     end
+
+    context "when the attachment type is unsupported by the AI model" do
+      let(:mock_chat) { instance_double(RubyLLM::Chat) }
+
+      before do
+        allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("mystery_file.xyz"))
+        allow(KycDocument).to receive(:find).with(document.id).and_return(document)
+        allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+        allow(mock_chat).to receive(:ask).and_raise(
+          RubyLLM::UnsupportedAttachmentError.new("application/x-not-a-real-format")
+        )
+      end
+
+      it "transitions the document to error instead of leaving it stuck in processing" do
+        described_class.new.perform(document.id)
+        document.reload
+        expect(document.status).to eq("error")
+        expect(document.result["error"]).to match(/unsupported/i)
+      end
+    end
   end
 end
