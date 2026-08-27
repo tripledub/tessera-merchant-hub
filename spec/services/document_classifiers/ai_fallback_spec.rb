@@ -124,19 +124,55 @@ RSpec.describe DocumentClassifiers::AiFallback do
     # which the Anthropic provider's media formatter doesn't handle at all —
     # every such upload was guaranteed to raise RubyLLM::UnsupportedAttachmentError
     # after burning an API call and a worker slot. Reject before calling out.
-    context "when the document's content type is not supported for AI classification" do
-      let(:document) do
-        create(:kyc_document).tap do |doc|
-          doc.file.attach(io: StringIO.new("fake xlsx content"), filename: "export.xlsx",
-                           content_type: "application/vnd.ms-excel")
-        end
-      end
-
-      it "raises an AiFallback::Error without calling the AI model" do
+    context "when the document's content type is a spreadsheet MIME type" do
+      it "raises an AiFallback::Error without calling the AI model, for both xlsx and legacy xls" do
         allow(mock_chat).to receive(:ask)
 
-        expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /not supported/i)
+        [
+          [ "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "export.xlsx" ],
+          [ "application/vnd.ms-excel", "export.xls" ]
+        ].each do |content_type, filename|
+          doc = create(:kyc_document).tap do |d|
+            d.file.attach(io: StringIO.new("fake spreadsheet content"), filename: filename, content_type: content_type)
+          end
+          spreadsheet_handler = described_class.new(
+            DocumentClassifiers::Condition.new(filename: filename, content_type: content_type, document: doc)
+          )
+
+          expect { spreadsheet_handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /not supported/i)
+        end
+
         expect(mock_chat).not_to have_received(:ask)
+      end
+    end
+
+    # Protects the other direction of the allowlist boundary: every content
+    # type KycDocument accepts at upload time (KycDocument::ALLOWED_CONTENT_TYPES)
+    # that AiFallback is actually expected to handle should still reach the
+    # AI model, not get caught by the same guard.
+    context "with every content type KycDocument accepts at upload time" do
+      it "calls the AI model only for the types AiFallback declares as supported" do
+        response = instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.85}')
+        allow(mock_chat).to receive(:ask).and_return(response)
+        called_for = []
+
+        KycDocument::ALLOWED_CONTENT_TYPES.each do |content_type|
+          doc = create(:kyc_document).tap do |d|
+            d.file.attach(io: StringIO.new("fake content"), filename: "upload.bin", content_type: content_type)
+          end
+          matrix_handler = described_class.new(
+            DocumentClassifiers::Condition.new(filename: "upload.bin", content_type: content_type, document: doc)
+          )
+
+          begin
+            matrix_handler.classify
+            called_for << content_type
+          rescue DocumentClassifiers::AiFallback::Error
+            nil
+          end
+        end
+
+        expect(called_for.sort).to eq(DocumentClassifiers::AiFallback::SUPPORTED_CONTENT_TYPES.sort)
       end
     end
 
@@ -152,15 +188,19 @@ RSpec.describe DocumentClassifiers::AiFallback do
   end
 
   describe "request timeout" do
-    it "scopes a request timeout to this chat call rather than the global RubyLLM config" do
-      config = RubyLLM::Configuration.new
-      allow(RubyLLM).to receive(:context).and_yield(config).and_return(mock_context)
-      response = instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.85}')
-      allow(mock_chat).to receive(:ask).and_return(response)
+    # Exercises the real RubyLLM.context (RubyLLM.config.dup + yield) instead
+    # of stubbing it, so an implementation that mutated the global
+    # RubyLLM.config directly — rather than the per-call context — would
+    # fail this, not just an assertion against our own stand-in object.
+    it "scopes a request timeout to this chat call without mutating the global RubyLLM config" do
+      allow(RubyLLM).to receive(:context).and_call_original
+      original_global_timeout = RubyLLM.config.request_timeout
 
-      handler.classify
+      chat = handler.send(:chat)
 
-      expect(config.request_timeout).to eq(DocumentClassifiers::AiFallback::REQUEST_TIMEOUT)
+      expect(chat.instance_variable_get(:@config).request_timeout)
+        .to eq(DocumentClassifiers::AiFallback::REQUEST_TIMEOUT)
+      expect(RubyLLM.config.request_timeout).to eq(original_global_timeout)
     end
   end
 

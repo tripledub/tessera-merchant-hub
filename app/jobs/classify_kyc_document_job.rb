@@ -30,11 +30,31 @@ class ClassifyKycDocumentJob < ApplicationJob
     auto_confirm_for_onboarding(document)
   rescue DocumentClassifiers::AiFallback::Error, HandlerRegisterable::NoHandlerAccepted => e
     document&.update!(status: :error, result: { "error" => e.message })
+    notify_honeybadger(e, kyc_document_id, document)
     broadcast_document(document) if document
-    Honeybadger.notify(e, context: { kyc_document_id: kyc_document_id, content_type: document&.file&.content_type })
   end
 
   private
+
+  # Deliberately does not pass the exception (or its #message) to
+  # Honeybadger: JSON::ParserError and RubyLLM::Error messages can echo back
+  # fragments of the AI model's response or the underlying API error body,
+  # which is derived from the KYC document's own content — not safe to hand
+  # to a third-party service. Only our own controlled, pre-known-safe values
+  # go in the report.
+  #
+  # Runs before broadcast_document so a Turbo/ActionCable failure there
+  # can't suppress the alert.
+  def notify_honeybadger(exception, kyc_document_id, document)
+    Honeybadger.notify(
+      "KYC document classification failed",
+      context: {
+        kyc_document_id: kyc_document_id,
+        content_type: document&.file&.content_type,
+        error_class: exception.class.name
+      }
+    )
+  end
 
   def auto_confirm_for_onboarding(document)
     return unless document.classification_auto_classified?

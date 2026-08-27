@@ -153,15 +153,53 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         expect(document.result["error"]).to include("API error")
       end
 
-      it "notifies Honeybadger with document context" do
+      it "notifies Honeybadger with document context but not the raw exception" do
         allow(Honeybadger).to receive(:notify)
 
         described_class.new.perform(document.id)
 
         expect(Honeybadger).to have_received(:notify).with(
-          instance_of(DocumentClassifiers::AiFallback::Error),
-          context: { kyc_document_id: document.id, content_type: document.file.content_type }
+          "KYC document classification failed",
+          context: {
+            kyc_document_id: document.id,
+            content_type: document.file.content_type,
+            error_class: "DocumentClassifiers::AiFallback::Error"
+          }
         )
+      end
+
+      # The exception's own #message can echo back fragments of the AI
+      # model's response or the underlying API error body, which is derived
+      # from the KYC document's own content. Prove a marker planted in that
+      # message never reaches the third-party Honeybadger report.
+      it "never includes the underlying error message in the Honeybadger report" do
+        sensitive_marker = "SENSITIVE_PASSPORT_NUMBER_998877"
+        allow(mock_chat).to receive(:ask).and_raise(RubyLLM::Error.new(sensitive_marker))
+        reported = []
+        allow(Honeybadger).to receive(:notify) { |*args| reported << args }
+
+        described_class.new.perform(document.id)
+
+        expect(reported).not_to be_empty
+        expect(reported.flatten.map(&:to_s).join).not_to include(sensitive_marker)
+      end
+
+      it "notifies Honeybadger even when the subsequent broadcast fails" do
+        allow(Honeybadger).to receive(:notify)
+        # The first broadcast_document call (status: processing, at the top
+        # of #perform) must still succeed — only the one after the rescue
+        # sets status: error should fail, to prove Honeybadger.notify (which
+        # now runs before it) isn't skipped by that failure.
+        call_count = 0
+        allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to) do
+          call_count += 1
+          raise StandardError, "actioncable down" if call_count > 1
+        end
+
+        expect { described_class.new.perform(document.id) }.to raise_error(StandardError, "actioncable down")
+
+        expect(Honeybadger).to have_received(:notify)
+        expect(document.reload.status).to eq("error")
       end
     end
 
