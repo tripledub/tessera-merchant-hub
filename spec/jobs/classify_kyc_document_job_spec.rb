@@ -39,7 +39,7 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
       before do
         allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("mystery_doc.pdf"))
         allow(KycDocument).to receive(:find).with(document.id).and_return(document)
-        allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+        allow(RubyLLM).to receive(:context).and_return(instance_double(RubyLLM::Context, chat: mock_chat))
         allow(mock_chat).to receive(:ask).and_return(
           instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.75}')
         )
@@ -104,7 +104,7 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
         allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("mystery_doc.pdf"))
         allow(KycDocument).to receive(:find).with(document.id).and_return(document)
-        allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+        allow(RubyLLM).to receive(:context).and_return(instance_double(RubyLLM::Context, chat: mock_chat))
         allow(mock_chat).to receive(:ask).and_return(
           instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.75}')
         )
@@ -142,7 +142,7 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
       before do
         allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("mystery_doc.pdf"))
         allow(KycDocument).to receive(:find).with(document.id).and_return(document)
-        allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+        allow(RubyLLM).to receive(:context).and_return(instance_double(RubyLLM::Context, chat: mock_chat))
         allow(mock_chat).to receive(:ask).and_raise(RubyLLM::Error.new("server error"))
       end
 
@@ -152,6 +152,17 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         expect(document.status).to eq("error")
         expect(document.result["error"]).to include("API error")
       end
+
+      it "notifies Honeybadger with document context" do
+        allow(Honeybadger).to receive(:notify)
+
+        described_class.new.perform(document.id)
+
+        expect(Honeybadger).to have_received(:notify).with(
+          instance_of(DocumentClassifiers::AiFallback::Error),
+          context: { kyc_document_id: document.id, content_type: document.file.content_type }
+        )
+      end
     end
 
     context "when the attachment type is unsupported by the AI model" do
@@ -160,7 +171,7 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
       before do
         allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("mystery_file.xyz"))
         allow(KycDocument).to receive(:find).with(document.id).and_return(document)
-        allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+        allow(RubyLLM).to receive(:context).and_return(instance_double(RubyLLM::Context, chat: mock_chat))
         allow(mock_chat).to receive(:ask).and_raise(
           RubyLLM::UnsupportedAttachmentError.new("application/x-not-a-real-format")
         )

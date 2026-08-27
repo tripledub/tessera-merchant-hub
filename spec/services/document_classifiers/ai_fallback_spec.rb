@@ -8,9 +8,10 @@ RSpec.describe DocumentClassifiers::AiFallback do
   let(:handler) { described_class.new(condition) }
 
   let(:mock_chat) { instance_double(RubyLLM::Chat) }
+  let(:mock_context) { instance_double(RubyLLM::Context, chat: mock_chat) }
 
   before do
-    allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+    allow(RubyLLM).to receive(:context).and_return(mock_context)
   end
 
   describe "#classify" do
@@ -117,6 +118,49 @@ RSpec.describe DocumentClassifiers::AiFallback do
       it "raises an AiFallback::Error instead of propagating the storage error" do
         expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /file/i)
       end
+    end
+
+    # MH-233: xlsx/xls always resolve to RubyLLM's :document attachment type,
+    # which the Anthropic provider's media formatter doesn't handle at all —
+    # every such upload was guaranteed to raise RubyLLM::UnsupportedAttachmentError
+    # after burning an API call and a worker slot. Reject before calling out.
+    context "when the document's content type is not supported for AI classification" do
+      let(:document) do
+        create(:kyc_document).tap do |doc|
+          doc.file.attach(io: StringIO.new("fake xlsx content"), filename: "export.xlsx",
+                           content_type: "application/vnd.ms-excel")
+        end
+      end
+
+      it "raises an AiFallback::Error without calling the AI model" do
+        allow(mock_chat).to receive(:ask)
+
+        expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /not supported/i)
+        expect(mock_chat).not_to have_received(:ask)
+      end
+    end
+
+    context "when the AI request times out" do
+      before do
+        allow(mock_chat).to receive(:ask).and_raise(Faraday::TimeoutError.new("execution expired"))
+      end
+
+      it "raises an AiFallback::Error instead of propagating the timeout" do
+        expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /time(d)? out/i)
+      end
+    end
+  end
+
+  describe "request timeout" do
+    it "scopes a request timeout to this chat call rather than the global RubyLLM config" do
+      config = RubyLLM::Configuration.new
+      allow(RubyLLM).to receive(:context).and_yield(config).and_return(mock_context)
+      response = instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.85}')
+      allow(mock_chat).to receive(:ask).and_return(response)
+
+      handler.classify
+
+      expect(config.request_timeout).to eq(DocumentClassifiers::AiFallback::REQUEST_TIMEOUT)
     end
   end
 

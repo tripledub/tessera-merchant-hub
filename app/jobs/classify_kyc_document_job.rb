@@ -31,6 +31,7 @@ class ClassifyKycDocumentJob < ApplicationJob
   rescue DocumentClassifiers::AiFallback::Error, HandlerRegisterable::NoHandlerAccepted => e
     document&.update!(status: :error, result: { "error" => e.message })
     broadcast_document(document) if document
+    Honeybadger.notify(e, context: { kyc_document_id: kyc_document_id, content_type: document&.file&.content_type })
   end
 
   private
