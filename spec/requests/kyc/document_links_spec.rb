@@ -38,6 +38,55 @@ RSpec.describe "Kyc::DocumentLinks", type: :request do
       end
     end
 
+    # Honeybadger 133725885: KycDocumentBroadcaster renders a kyc_document
+    # fragment via Turbo::StreamsChannel.broadcast_replace_to, which uses
+    # ActionController::Renderer and so has no Warden::Proxy on its request
+    # env. Calling policy(document) there raised Devise::MissingWarden
+    # whenever the document had validity_dates — but every other spec here
+    # stubs Turbo::StreamsChannel.broadcast_replace_to entirely, which skips
+    # the real render and would never catch this. Stub only the ActionCable
+    # publish step so the render (and its bug) actually executes.
+    context "when the broadcast partial renders for real" do
+      let!(:document) do
+        create(:kyc_document, applicant: applicant, kyc_principal: principal,
+               match_method: "fuzzy", match_confidence: 0.95,
+               validity_dates: { "expiry" => { "raw" => "x", "normalized" => "2030-01-01",
+                 "confidence" => 0.95, "provenance" => "ai_extraction" } })
+      end
+
+      before { sign_in psp_admin }
+
+      it "does not raise Devise::MissingWarden and actually broadcasts (not a silent no-op)" do
+        broadcasts = []
+        allow(ActionCable.server).to receive(:broadcast) { |_streamable, payload| broadcasts << payload }
+
+        expect { patch kyc_document_link_path(document) }.not_to raise_error
+
+        expect(response).to have_http_status(:ok)
+        expect(broadcasts).not_to be_empty
+      end
+
+      # The confirm/correct-dates section is gated on a Pundit policy check
+      # that needs a real signed-in viewer (see ApplicationController#viewer_can?).
+      # A broadcast has no such viewer, so it must never attempt to render
+      # that section — not even to correctly hide it — because the broadcast
+      # target scopes only the document metadata (see
+      # KycDocumentBroadcaster#broadcast_document): rendering the full
+      # document fragment here would blank out the confirmation section for
+      # every connected viewer, including an admin who already had it open
+      # from a real, correctly-authorized render.
+      it "broadcasts only the user-independent metadata fragment, not the date-confirmation section" do
+        broadcasts = []
+        allow(ActionCable.server).to receive(:broadcast) { |_streamable, payload| broadcasts << payload }
+
+        patch kyc_document_link_path(document)
+
+        expect(broadcasts.size).to eq(1)
+        expect(broadcasts.first).to include("kyc_document_#{document.id}_metadata")
+        expect(broadcasts.first).not_to include("date_confirmation_")
+      end
+    end
+
     context "when signed in as psp_support" do
       before { sign_in psp_support }
 
