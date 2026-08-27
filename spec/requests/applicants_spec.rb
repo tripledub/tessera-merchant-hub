@@ -225,6 +225,15 @@ RSpec.describe "Applicants", type: :request do
         expect(created.corporate_entities).to be_empty
         expect(Kyc::ValidationWarning.where(applicant: created, warning_type: :ubo_threshold_exceeded).count).to eq(1)
       end
+
+      it "strips whitespace from company_number before the registry lookup (MH-228)" do
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: " 12345678 " } }
+
+        created = Applicant.find_by!(name: "New Corp")
+        expect(response).to redirect_to(applicant_path(created))
+        expect(created.company_number).to eq("12345678")
+        expect(fake_client).to have_received(:fetch).with(company_number: "12345678")
+      end
     end
 
     context "when signed in as psp_admin, and the registry lookup fails" do

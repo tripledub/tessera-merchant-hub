@@ -25,6 +25,8 @@ class Applicant < Merchant
   enum :status, { pending: "pending", approved: "approved", rejected: "rejected" }, default: "pending"
   enum :registry_jurisdiction, { gb: "gb", mt: "mt", cy: "cy" }, validate: { allow_nil: true }
 
+  before_validation :strip_company_number
+
   def to_param
     id
   end
@@ -48,5 +50,11 @@ class Applicant < Merchant
   # repoint.
   def validity_reference_date
     created_at.to_date
+  end
+
+  private
+
+  def strip_company_number
+    self.company_number = company_number&.strip
   end
 end

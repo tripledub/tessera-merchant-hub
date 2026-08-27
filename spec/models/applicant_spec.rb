@@ -112,5 +112,19 @@ RSpec.describe Applicant, type: :model do
       expect(saved.reload.company_number).to eq("12345678")
       expect(saved.reload.registry_jurisdiction).to eq("gb")
     end
+
+    it "strips leading and trailing whitespace from company_number" do
+      applicant.company_number = " 12345678 "
+      applicant.valid?
+
+      expect(applicant.company_number).to eq("12345678")
+    end
+
+    it "leaves a nil company_number as nil" do
+      applicant.company_number = nil
+      applicant.valid?
+
+      expect(applicant.company_number).to be_nil
+    end
   end
 end
