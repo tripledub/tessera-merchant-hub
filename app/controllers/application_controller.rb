@@ -12,6 +12,19 @@ class ApplicationController < ActionController::Base
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
+  # Safe alternative to `policy(record).query` for partials that may be
+  # rendered outside a real request — e.g. a KycDocumentBroadcaster /
+  # Turbo::StreamsChannel.broadcast_*_to render, which uses
+  # ActionController::Renderer and has no Warden::Proxy on its request env.
+  # Devise's `current_user` raises Devise::MissingWarden in that context, so
+  # we treat "no warden" as unauthorized rather than let it raise.
+  def viewer_can?(record, query)
+    return false unless request.env["warden"]
+
+    policy(record).public_send(query)
+  end
+  helper_method :viewer_can?
+
   private
 
   def user_not_authorized

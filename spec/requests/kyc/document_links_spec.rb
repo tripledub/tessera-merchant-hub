@@ -38,6 +38,34 @@ RSpec.describe "Kyc::DocumentLinks", type: :request do
       end
     end
 
+    # Honeybadger 133725885: KycDocumentBroadcaster renders the
+    # kyc/documents/kyc_document partial via Turbo::StreamsChannel.broadcast_replace_to,
+    # which uses ActionController::Renderer and so has no Warden::Proxy on its
+    # request env. Calling policy(document) there raised Devise::MissingWarden
+    # whenever the document had validity_dates — but every other spec here
+    # stubs Turbo::StreamsChannel.broadcast_replace_to entirely, which skips
+    # the real render and would never catch this. Stub only the ActionCable
+    # publish step so the render (and its bug) actually executes.
+    context "when the broadcast partial renders for real" do
+      let!(:document) do
+        create(:kyc_document, applicant: applicant, kyc_principal: principal,
+               match_method: "fuzzy", match_confidence: 0.95,
+               validity_dates: { "expiry" => { "raw" => "x", "normalized" => "2030-01-01",
+                 "confidence" => 0.95, "provenance" => "ai_extraction" } })
+      end
+
+      before do
+        sign_in psp_admin
+        allow(ActionCable.server).to receive(:broadcast)
+      end
+
+      it "does not raise Devise::MissingWarden" do
+        expect { patch kyc_document_link_path(document) }.not_to raise_error
+
+        expect(response).to have_http_status(:ok)
+      end
+    end
+
     context "when signed in as psp_support" do
       before { sign_in psp_support }
 
