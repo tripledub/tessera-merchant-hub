@@ -1,0 +1,23 @@
+<% content_for :title, t('.title') %>
+
+<div class="mb-4">
+  <%= link_to t('.back'), applicant_processing_statements_path(applicant), class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<div class="mb-6">
+  <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= t('.title') %></h1>
+</div>
+
+<div class="card max-w-xl">
+  <%= form_with url: applicant_processing_statements_path(applicant), method: :post,
+        multipart: true, class: "space-y-4" do |f| %>
+    <div>
+      <%= label_tag "processing_statement[file]", t('.file_label'), class: "form-label" %>
+      <%= file_field_tag "processing_statement[file]", class: "form-input", required: true %>
+    </div>
+
+    <div class="pt-2">
+      <%= f.submit t('.submit'), class: "btn-primary" %>
+    </div>
+  <% end %>
+</div>
