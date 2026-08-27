@@ -8,9 +8,10 @@ RSpec.describe DocumentClassifiers::AiFallback do
   let(:handler) { described_class.new(condition) }
 
   let(:mock_chat) { instance_double(RubyLLM::Chat) }
+  let(:mock_context) { instance_double(RubyLLM::Context, chat: mock_chat) }
 
   before do
-    allow(RubyLLM).to receive(:chat).and_return(mock_chat)
+    allow(RubyLLM).to receive(:context).and_return(mock_context)
   end
 
   describe "#classify" do
@@ -117,6 +118,87 @@ RSpec.describe DocumentClassifiers::AiFallback do
       it "raises an AiFallback::Error instead of propagating the storage error" do
         expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /file/i)
       end
+    end
+
+    context "when the document's content type is a spreadsheet MIME type" do
+      it "raises an AiFallback::Error without calling the AI model, for both xlsx and legacy xls" do
+        allow(mock_chat).to receive(:ask)
+
+        [
+          [ "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "export.xlsx" ],
+          [ "application/vnd.ms-excel", "export.xls" ]
+        ].each do |content_type, filename|
+          doc = create(:kyc_document).tap do |d|
+            d.file.attach(io: StringIO.new("fake spreadsheet content"), filename: filename, content_type: content_type)
+          end
+          spreadsheet_handler = described_class.new(
+            DocumentClassifiers::Condition.new(filename: filename, content_type: content_type, document: doc)
+          )
+
+          expect { spreadsheet_handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /not supported/i)
+        end
+
+        expect(mock_chat).not_to have_received(:ask)
+      end
+    end
+
+    context "with every content type KycDocument accepts at upload time" do
+      it "calls the AI model only for the types AiFallback declares as supported" do
+        response = instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.85}')
+        allow(mock_chat).to receive(:ask).and_return(response)
+        called_for = []
+
+        KycDocument::ALLOWED_CONTENT_TYPES.each do |content_type|
+          doc = create(:kyc_document).tap do |d|
+            d.file.attach(io: StringIO.new("fake content"), filename: "upload.bin", content_type: content_type)
+          end
+          matrix_handler = described_class.new(
+            DocumentClassifiers::Condition.new(filename: "upload.bin", content_type: content_type, document: doc)
+          )
+
+          begin
+            matrix_handler.classify
+            called_for << content_type
+          rescue DocumentClassifiers::AiFallback::Error
+            nil
+          end
+        end
+
+        expect(called_for.sort).to eq(DocumentClassifiers::AiFallback::SUPPORTED_CONTENT_TYPES.sort)
+      end
+    end
+
+    context "when the AI request times out" do
+      before do
+        allow(mock_chat).to receive(:ask).and_raise(Faraday::TimeoutError.new("execution expired"))
+      end
+
+      it "raises an AiFallback::Error instead of propagating the timeout" do
+        expect { handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /time(d)? out/i)
+      end
+    end
+  end
+
+  describe "request timeout" do
+    # Exercises the real RubyLLM.context so mutating RubyLLM.config directly
+    # (instead of the per-call context) would fail this. Needs a real (fake)
+    # api key since RubyLLM.config.dup copies state, not RSpec stubs.
+    around do |example|
+      original_key = RubyLLM.config.anthropic_api_key
+      RubyLLM.config.anthropic_api_key = "test-anthropic-key"
+      example.run
+      RubyLLM.config.anthropic_api_key = original_key
+    end
+
+    it "scopes a request timeout to this chat call without mutating the global RubyLLM config" do
+      allow(RubyLLM).to receive(:context).and_call_original
+      original_global_timeout = RubyLLM.config.request_timeout
+
+      chat = handler.send(:chat)
+
+      expect(chat.instance_variable_get(:@config).request_timeout)
+        .to eq(DocumentClassifiers::AiFallback::REQUEST_TIMEOUT)
+      expect(RubyLLM.config.request_timeout).to eq(original_global_timeout)
     end
   end
 
