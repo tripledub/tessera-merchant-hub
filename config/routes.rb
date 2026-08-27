@@ -52,6 +52,9 @@ Rails.application.routes.draw do
         member { post :retry }
       end
     end
+    resources :processing_statements, only: %i[index new create show edit update], shallow: true do
+      member { get :export }
+    end
   end
 
   # RESTful link management: PATCH to confirm a link, DELETE to reject/unlink

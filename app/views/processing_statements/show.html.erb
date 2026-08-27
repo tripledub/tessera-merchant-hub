@@ -1,0 +1,13 @@
+<% content_for :title, t('.title') %>
+
+<%= turbo_stream_from "processing_statement_#{processing_statement.id}" %>
+
+<div class="mb-4">
+  <%= link_to t('.back'), applicant_processing_statements_path(processing_statement.applicant), class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<div class="mb-6">
+  <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= t('.title') %></h1>
+</div>
+
+<%= render "processing_statements/result", processing_statement: processing_statement %>

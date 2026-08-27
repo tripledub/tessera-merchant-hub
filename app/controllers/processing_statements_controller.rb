@@ -1,0 +1,90 @@
+# frozen_string_literal: true
+
+class ProcessingStatementsController < ApplicationController
+  expose(:processing_statement) { ProcessingStatement.find(params[:id]) }
+
+  helper_method :applicant
+
+  def index
+    authorize ProcessingStatement, :index?
+    @processing_statements = applicant.processing_statements.order(created_at: :desc)
+  end
+
+  def new
+    authorize ProcessingStatement, :create?
+  end
+
+  def create
+    authorize ProcessingStatement, :create?
+
+    file = params.dig(:processing_statement, :file)
+    if file.blank?
+      redirect_to new_applicant_processing_statement_path(applicant), alert: t(".no_file")
+      return
+    end
+
+    statement = applicant.processing_statements.new
+
+    begin
+      statement.file.attach(file)
+    rescue ArgumentError, ActiveRecord::RecordNotFound, ActiveSupport::MessageVerifier::InvalidSignature => e
+      Rails.logger.warn("ProcessingStatementsController: skipping unattachable file — #{e.message}")
+      redirect_to new_applicant_processing_statement_path(applicant), alert: t(".no_file")
+      return
+    end
+
+    unless statement.file.attached? && statement.save
+      redirect_to new_applicant_processing_statement_path(applicant),
+        alert: statement.errors.full_messages.to_sentence.presence || t(".no_file")
+      return
+    end
+
+    redirect_to edit_processing_statement_path(statement)
+  end
+
+  def edit
+    authorize processing_statement, :update?
+    @headers = Statements::SpreadsheetReader.new(processing_statement).headers
+  rescue StandardError => e
+    processing_statement.update!(status: :error, error_message: "Could not read this file: #{e.message}")
+    redirect_to processing_statement_path(processing_statement), alert: t(".read_error")
+  end
+
+  def update
+    authorize processing_statement, :update?
+
+    mapping = params.require(:processing_statement).permit(:date, :amount, :currency, :outcome).to_h.compact_blank
+    missing = ProcessingStatement::REQUIRED_FIELDS.map(&:to_s) - mapping.keys
+
+    if missing.any?
+      @headers = Statements::SpreadsheetReader.new(processing_statement).headers
+      flash.now[:alert] = t(".missing_fields", fields: missing.join(", "))
+      render :edit, status: :unprocessable_content
+      return
+    end
+
+    processing_statement.update!(status: :mapped, column_mapping: mapping)
+    ImportProcessingStatementJob.perform_later(processing_statement.id, mapping)
+    redirect_to processing_statement_path(processing_statement), notice: t(".success")
+  end
+
+  def show
+    authorize processing_statement
+  end
+
+  def export
+    authorize processing_statement, :export?
+    send_data Statements::ReportExporter.new(processing_statement).to_csv,
+      filename: "processing-statement-#{processing_statement.id}.csv", type: "text/csv"
+  end
+
+  private
+
+  def applicant
+    @applicant ||= if params[:applicant_id]
+      Applicant.find(params[:applicant_id])
+    else
+      processing_statement.applicant
+    end
+  end
+end

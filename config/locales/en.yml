@@ -158,6 +158,7 @@ en:
           actions: Actions
           name: Name
           role: Role
+      processing_statements: Processing statements
       sections:
         documents: KYC Documents
         principals: Principals
@@ -709,6 +710,53 @@ en:
         welcome: Welcome, %{name}!
     sign_out: Sign out
     title: Kynetic Portal
+  processing_statements:
+    create:
+      no_file: Please choose a file to upload.
+    edit:
+      amount_label: Amount column
+      currency_label: Currency column
+      date_label: Transaction date column
+      intro: Match each column from your file to the fields we need, then import.
+      outcome_label: Status/outcome column
+      read_error: Could not read this file.
+      submit: Import and calculate metrics
+      title: Map statement columns
+      unmapped: "— Not mapped —"
+    export:
+      button: Export CSV
+    index:
+      back: "← Back to applicant"
+      empty: No processing statements uploaded yet.
+      table:
+        status: Status
+        uploaded: Uploaded
+        view: View
+      title: Processing statements
+      upload_new: Upload new statement
+    new:
+      back: "← Back to statements"
+      file_label: Statement file (.xlsx, .xls or .csv)
+      submit: Upload
+      title: Upload processing statement
+    show:
+      approved_volume: Approved volume
+      back: "← Back to statements"
+      chargebacks: Chargebacks
+      currencies_used: Currencies used
+      declined_volume: Declined volume
+      map_columns: Map columns to import this statement
+      month: Month
+      no_data: "—"
+      overall: Overall
+      processing: Import queued — this page will update automatically once metrics
+        have been calculated.
+      refunds: Refunds
+      title: Processing statement overview
+      total_volume: Total volume
+    update:
+      missing_fields: 'Missing required field mapping: %{fields}'
+      success: Statement queued for import.
   shared:
     error_messages:
       header:
