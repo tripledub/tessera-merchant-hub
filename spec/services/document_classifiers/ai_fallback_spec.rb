@@ -120,10 +120,6 @@ RSpec.describe DocumentClassifiers::AiFallback do
       end
     end
 
-    # MH-233: xlsx/xls always resolve to RubyLLM's :document attachment type,
-    # which the Anthropic provider's media formatter doesn't handle at all —
-    # every such upload was guaranteed to raise RubyLLM::UnsupportedAttachmentError
-    # after burning an API call and a worker slot. Reject before calling out.
     context "when the document's content type is a spreadsheet MIME type" do
       it "raises an AiFallback::Error without calling the AI model, for both xlsx and legacy xls" do
         allow(mock_chat).to receive(:ask)
@@ -146,10 +142,6 @@ RSpec.describe DocumentClassifiers::AiFallback do
       end
     end
 
-    # Protects the other direction of the allowlist boundary: every content
-    # type KycDocument accepts at upload time (KycDocument::ALLOWED_CONTENT_TYPES)
-    # that AiFallback is actually expected to handle should still reach the
-    # AI model, not get caught by the same guard.
     context "with every content type KycDocument accepts at upload time" do
       it "calls the AI model only for the types AiFallback declares as supported" do
         response = instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.85}')
@@ -188,15 +180,9 @@ RSpec.describe DocumentClassifiers::AiFallback do
   end
 
   describe "request timeout" do
-    # Exercises the real RubyLLM.context (RubyLLM.config.dup + yield) instead
-    # of stubbing it, so an implementation that mutated the global
-    # RubyLLM.config directly — rather than the per-call context — would
-    # fail this, not just an assertion against our own stand-in object.
-    #
-    # RubyLLM.config.dup copies real instance state, not RSpec method
-    # stubs, so building a real Chat needs a real (if fake) api key present
-    # on the global config independent of whatever this environment's
-    # actual Anthropic credentials happen to be — CI has none configured.
+    # Exercises the real RubyLLM.context so mutating RubyLLM.config directly
+    # (instead of the per-call context) would fail this. Needs a real (fake)
+    # api key since RubyLLM.config.dup copies state, not RSpec stubs.
     around do |example|
       original_key = RubyLLM.config.anthropic_api_key
       RubyLLM.config.anthropic_api_key = "test-anthropic-key"

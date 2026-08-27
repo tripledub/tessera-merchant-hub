@@ -3,6 +3,12 @@
 class ClassifyKycDocumentJob < ApplicationJob
   include KycDocumentBroadcaster
 
+  # Deliberately not a re-raise of the original broadcast error: some
+  # exception classes (e.g. ActionView::Template::Error) override #cause to
+  # return an ivar set from $! in their own #initialize, which raise(...,
+  # cause: nil) cannot suppress.
+  class BroadcastAfterClassificationFailureError < StandardError; end
+
   queue_as :default
 
   def perform(kyc_document_id)
@@ -36,21 +42,10 @@ class ClassifyKycDocumentJob < ApplicationJob
 
   private
 
-  # Deliberately does not pass the exception (or its #message) to
-  # Honeybadger: JSON::ParserError and RubyLLM::Error messages can echo back
-  # fragments of the AI model's response or the underlying API error body,
-  # which is derived from the KYC document's own content — not safe to hand
-  # to a third-party service. Only our own controlled, pre-known-safe values
-  # go in the report.
-  #
-  # cause: nil is required, not just omitted: Honeybadger::Notice falls back
-  # to Ruby's $! (the exception currently being handled — i.e. `e` itself)
-  # whenever no :cause is given and no :exception object was passed, so
-  # without this the "sanitized" report would still get the original
-  # exception silently reattached as its cause/backtrace chain.
-  #
-  # Runs before broadcast_after_classification_failure so a Turbo/ActionCable
-  # failure there can't suppress the alert.
+  # error/message deliberately excluded: both can echo back document-derived
+  # content (e.g. JSON::ParserError quoting the AI's raw response). cause:
+  # nil is required, not just omitted — Honeybadger::Notice otherwise falls
+  # back to $! (== exception, inside this rescue) and reattaches it anyway.
   def notify_honeybadger(exception, kyc_document_id, document)
     Honeybadger.notify(
       "KYC document classification failed",
@@ -63,21 +58,20 @@ class ClassifyKycDocumentJob < ApplicationJob
     )
   end
 
-  # We're still inside the `rescue ... => e` handler here, so Ruby's
-  # implicit exception chaining would otherwise attach the original
-  # (potentially sensitive) classification error as this new exception's
-  # #cause — which could then reach a generic job-failure reporter (e.g. an
-  # ActiveJob/Sidekiq Honeybadger integration serializing the raised error's
-  # full cause chain) even though notify_honeybadger above was careful not
-  # to. Re-raise a fresh exception instance with cause: nil explicitly:
-  # re-raising the same already-raised object doesn't work here, since Ruby
-  # only assigns #cause the first time an exception is raised.
+  # Wraps in a plain error we control rather than re-raising broadcast_error
+  # (or `broadcast_error.class.new(...)`): still inside the outer rescue, so
+  # the original classification exception would otherwise reach whatever
+  # reports this job's raised errors via #cause.
   def broadcast_after_classification_failure(document)
     return unless document
 
     broadcast_document(document)
   rescue => broadcast_error
-    raise broadcast_error.class.new(broadcast_error.message), cause: nil
+    sanitized = BroadcastAfterClassificationFailureError.new(
+      "KYC document error-state broadcast failed (#{broadcast_error.class.name})"
+    )
+    sanitized.set_backtrace(broadcast_error.backtrace)
+    raise sanitized, cause: nil
   end
 
   def auto_confirm_for_onboarding(document)

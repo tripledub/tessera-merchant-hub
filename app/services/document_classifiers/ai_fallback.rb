@@ -6,19 +6,16 @@ module DocumentClassifiers
 
     VALID_TYPES = KycDocument.document_types.keys.freeze
 
-    # xlsx/xls always resolve to RubyLLM's :document attachment type, which
-    # the Anthropic provider's media formatter doesn't handle at all — every
-    # such upload is guaranteed to raise RubyLLM::UnsupportedAttachmentError.
-    # Reject before spending an API call and a worker slot on it.
+    # xlsx/xls resolve to RubyLLM's :document type, which Anthropic's media
+    # formatter can't handle — always raises UnsupportedAttachmentError.
     SUPPORTED_CONTENT_TYPES = %w[
       image/jpeg image/png image/webp image/gif
       application/pdf
       text/csv
     ].freeze
 
-    # Scoped via RubyLLM.context rather than the global RubyLLM.configure, so
-    # it doesn't affect the other RubyLLM.chat call sites (ClaudeOcrAdapter,
-    # Kyc::Inference::ClaudeAdapter) that share the global config.
+    # Scoped per-call via RubyLLM.context, not the global RubyLLM.configure
+    # shared with ClaudeOcrAdapter / Kyc::Inference::ClaudeAdapter.
     REQUEST_TIMEOUT = 30
 
     PROMPT = <<~PROMPT.freeze

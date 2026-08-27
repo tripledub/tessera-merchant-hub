@@ -169,10 +169,6 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         )
       end
 
-      # The exception's own #message can echo back fragments of the AI
-      # model's response or the underlying API error body, which is derived
-      # from the KYC document's own content. Prove a marker planted in that
-      # message never reaches the third-party Honeybadger report.
       it "never includes the underlying error message in the Honeybadger report" do
         sensitive_marker = "SENSITIVE_PASSPORT_NUMBER_998877"
         allow(mock_chat).to receive(:ask).and_raise(RubyLLM::Error.new(sensitive_marker))
@@ -185,17 +181,9 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         expect(reported.flatten.map(&:to_s).join).not_to include(sensitive_marker)
       end
 
-      # Honeybadger::Notice falls back to Ruby's $! (the exception currently
-      # being handled) as its cause whenever no :cause is given and no
-      # :exception object was passed. That fallback only kicks in if the
-      # Notice is actually built while $! is still set — i.e. synchronously,
-      # inside the live rescue block — so mocking Honeybadger.notify and
-      # reconstructing a Notice from the captured args afterwards would NOT
-      # reproduce it ($! is no longer set by then). Use Honeybadger's own
-      # Test backend with synchronous delivery instead, so the real
-      # Honeybadger.notify → Notice.new path runs for real, inside the
-      # actual rescue, and inspect what it actually built and would have
-      # serialized.
+      # Mocking notify only proves what we sent, not what Honeybadger would
+      # build ($! fallback only applies live, inside this rescue) — use the
+      # real Notice pipeline via Honeybadger's Test backend, sync delivery.
       it "produces a Honeybadger notice with an empty cause chain and no sensitive content in its serialized payload" do
         original_backend = Honeybadger.config[:backend]
         original_sync = Honeybadger.config[:sync]
@@ -217,45 +205,44 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
 
       it "notifies Honeybadger even when the subsequent broadcast fails" do
         allow(Honeybadger).to receive(:notify)
-        # The first broadcast_document call (status: processing, at the top
-        # of #perform) must still succeed — only the one after the rescue
-        # sets status: error should fail, to prove Honeybadger.notify (which
-        # now runs before it) isn't skipped by that failure.
-        call_count = 0
-        allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to) do
-          call_count += 1
-          raise StandardError, "actioncable down" if call_count > 1
-        end
+        raise_on_second_broadcast { raise StandardError, "actioncable down" }
 
-        expect { described_class.new.perform(document.id) }.to raise_error(StandardError, "actioncable down")
+        expect { described_class.new.perform(document.id) }
+          .to raise_error(ClassifyKycDocumentJob::BroadcastAfterClassificationFailureError)
 
         expect(Honeybadger).to have_received(:notify)
         expect(document.reload.status).to eq("error")
       end
 
-      # Ruby auto-attaches the exception currently being handled (the
-      # sensitive classification error) as the #cause of any new exception
-      # raised while still inside that rescue block — which would let it
-      # reach a generic job-failure reporter even though notify_honeybadger
-      # deliberately avoids it. Prove the exception that actually escapes
-      # #perform doesn't carry that cause.
       it "does not let a broadcast failure escape carrying the original classification exception as its cause" do
         allow(Honeybadger).to receive(:notify)
-        call_count = 0
-        allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to) do
-          call_count += 1
-          raise StandardError, "actioncable down" if call_count > 1
-        end
+        raise_on_second_broadcast { raise StandardError, "actioncable down" }
 
-        escaped = nil
-        begin
-          described_class.new.perform(document.id)
-        rescue StandardError => e
-          escaped = e
-        end
+        escaped = perform_and_capture_escaped_error
 
-        expect(escaped).not_to be_nil
+        expect(escaped).to be_a(ClassifyKycDocumentJob::BroadcastAfterClassificationFailureError)
         expect(escaped.cause).to be_nil
+      end
+
+      # ActionView::Template::Error overrides #cause with an ivar set from $!
+      # in its own #initialize — raise(..., cause: nil) can't suppress that.
+      it "does not leak sensitive content from a real ActionView::Template::Error broadcast failure" do
+        classification_marker = "SENSITIVE_CLASSIFICATION_MARKER"
+        broadcast_marker = "SENSITIVE_BROADCAST_MARKER"
+        allow(mock_chat).to receive(:ask).and_raise(RubyLLM::Error.new(classification_marker))
+        allow(Honeybadger).to receive(:notify)
+        raise_on_second_broadcast do
+          raise broadcast_marker
+        rescue StandardError
+          raise ActionView::Template::Error.new(nil)
+        end
+
+        escaped = perform_and_capture_escaped_error
+
+        expect(escaped).to be_a(ClassifyKycDocumentJob::BroadcastAfterClassificationFailureError)
+        expect(escaped.cause).to be_nil
+        expect(escaped.message).not_to include(classification_marker)
+        expect(escaped.message).not_to include(broadcast_marker)
       end
     end
 
@@ -278,5 +265,20 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         expect(document.result["error"]).to match(/unsupported/i)
       end
     end
+  end
+
+  def raise_on_second_broadcast(&block)
+    call_count = 0
+    allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to) do
+      call_count += 1
+      block.call if call_count > 1
+    end
+  end
+
+  def perform_and_capture_escaped_error
+    described_class.new.perform(document.id)
+    nil
+  rescue StandardError => e
+    e
   end
 end
