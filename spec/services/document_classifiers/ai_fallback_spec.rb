@@ -192,6 +192,18 @@ RSpec.describe DocumentClassifiers::AiFallback do
     # of stubbing it, so an implementation that mutated the global
     # RubyLLM.config directly — rather than the per-call context — would
     # fail this, not just an assertion against our own stand-in object.
+    #
+    # RubyLLM.config.dup copies real instance state, not RSpec method
+    # stubs, so building a real Chat needs a real (if fake) api key present
+    # on the global config independent of whatever this environment's
+    # actual Anthropic credentials happen to be — CI has none configured.
+    around do |example|
+      original_key = RubyLLM.config.anthropic_api_key
+      RubyLLM.config.anthropic_api_key = "test-anthropic-key"
+      example.run
+      RubyLLM.config.anthropic_api_key = original_key
+    end
+
     it "scopes a request timeout to this chat call without mutating the global RubyLLM config" do
       allow(RubyLLM).to receive(:context).and_call_original
       original_global_timeout = RubyLLM.config.request_timeout
