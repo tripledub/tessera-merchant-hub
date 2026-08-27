@@ -17,9 +17,13 @@ class ApplicationController < ActionController::Base
   # Turbo::StreamsChannel.broadcast_*_to render, which uses
   # ActionController::Renderer and has no Warden::Proxy on its request env.
   # Devise's `current_user` raises Devise::MissingWarden in that context, so
-  # we treat "no warden" as unauthorized rather than let it raise.
+  # we treat "no warden" as unauthorized rather than let it raise. A truthy
+  # `warden` doesn't by itself guarantee a signed-in user (e.g. an
+  # unauthenticated real request) and most ApplicationPolicy predicates call
+  # `user.some_role?` with no nil guard, so check current_user too rather
+  # than let that raise NoMethodError on a nil user.
   def viewer_can?(record, query)
-    return false unless request.env["warden"]
+    return false unless request.env["warden"] && current_user
 
     policy(record).public_send(query)
   end
