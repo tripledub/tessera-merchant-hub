@@ -31,7 +31,7 @@ class ClassifyKycDocumentJob < ApplicationJob
   rescue DocumentClassifiers::AiFallback::Error, HandlerRegisterable::NoHandlerAccepted => e
     document&.update!(status: :error, result: { "error" => e.message })
     notify_honeybadger(e, kyc_document_id, document)
-    broadcast_document(document) if document
+    broadcast_after_classification_failure(document)
   end
 
   private
@@ -43,17 +43,41 @@ class ClassifyKycDocumentJob < ApplicationJob
   # to a third-party service. Only our own controlled, pre-known-safe values
   # go in the report.
   #
-  # Runs before broadcast_document so a Turbo/ActionCable failure there
-  # can't suppress the alert.
+  # cause: nil is required, not just omitted: Honeybadger::Notice falls back
+  # to Ruby's $! (the exception currently being handled — i.e. `e` itself)
+  # whenever no :cause is given and no :exception object was passed, so
+  # without this the "sanitized" report would still get the original
+  # exception silently reattached as its cause/backtrace chain.
+  #
+  # Runs before broadcast_after_classification_failure so a Turbo/ActionCable
+  # failure there can't suppress the alert.
   def notify_honeybadger(exception, kyc_document_id, document)
     Honeybadger.notify(
       "KYC document classification failed",
+      cause: nil,
       context: {
         kyc_document_id: kyc_document_id,
         content_type: document&.file&.content_type,
         error_class: exception.class.name
       }
     )
+  end
+
+  # We're still inside the `rescue ... => e` handler here, so Ruby's
+  # implicit exception chaining would otherwise attach the original
+  # (potentially sensitive) classification error as this new exception's
+  # #cause — which could then reach a generic job-failure reporter (e.g. an
+  # ActiveJob/Sidekiq Honeybadger integration serializing the raised error's
+  # full cause chain) even though notify_honeybadger above was careful not
+  # to. Re-raise a fresh exception instance with cause: nil explicitly:
+  # re-raising the same already-raised object doesn't work here, since Ruby
+  # only assigns #cause the first time an exception is raised.
+  def broadcast_after_classification_failure(document)
+    return unless document
+
+    broadcast_document(document)
+  rescue => broadcast_error
+    raise broadcast_error.class.new(broadcast_error.message), cause: nil
   end
 
   def auto_confirm_for_onboarding(document)

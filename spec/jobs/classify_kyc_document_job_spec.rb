@@ -153,13 +153,14 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         expect(document.result["error"]).to include("API error")
       end
 
-      it "notifies Honeybadger with document context but not the raw exception" do
+      it "notifies Honeybadger with document context, cause: nil, but not the raw exception" do
         allow(Honeybadger).to receive(:notify)
 
         described_class.new.perform(document.id)
 
         expect(Honeybadger).to have_received(:notify).with(
           "KYC document classification failed",
+          cause: nil,
           context: {
             kyc_document_id: document.id,
             content_type: document.file.content_type,
@@ -176,12 +177,42 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         sensitive_marker = "SENSITIVE_PASSPORT_NUMBER_998877"
         allow(mock_chat).to receive(:ask).and_raise(RubyLLM::Error.new(sensitive_marker))
         reported = []
-        allow(Honeybadger).to receive(:notify) { |*args| reported << args }
+        allow(Honeybadger).to receive(:notify) { |*args, **kwargs| reported << [ args, kwargs ] }
 
         described_class.new.perform(document.id)
 
         expect(reported).not_to be_empty
         expect(reported.flatten.map(&:to_s).join).not_to include(sensitive_marker)
+      end
+
+      # Honeybadger::Notice falls back to Ruby's $! (the exception currently
+      # being handled) as its cause whenever no :cause is given and no
+      # :exception object was passed. That fallback only kicks in if the
+      # Notice is actually built while $! is still set — i.e. synchronously,
+      # inside the live rescue block — so mocking Honeybadger.notify and
+      # reconstructing a Notice from the captured args afterwards would NOT
+      # reproduce it ($! is no longer set by then). Use Honeybadger's own
+      # Test backend with synchronous delivery instead, so the real
+      # Honeybadger.notify → Notice.new path runs for real, inside the
+      # actual rescue, and inspect what it actually built and would have
+      # serialized.
+      it "produces a Honeybadger notice with an empty cause chain and no sensitive content in its serialized payload" do
+        original_backend = Honeybadger.config[:backend]
+        original_sync = Honeybadger.config[:sync]
+        Honeybadger.config[:backend] = "test"
+        Honeybadger.config[:sync] = true
+        sensitive_marker = "SENSITIVE_PASSPORT_NUMBER_998877"
+        allow(mock_chat).to receive(:ask).and_raise(RubyLLM::Error.new(sensitive_marker))
+
+        described_class.new.perform(document.id)
+
+        notice = Honeybadger::Backend::Test.notifications[:notices].last
+        expect(notice.causes).to be_empty
+        expect(notice.to_json).not_to include(sensitive_marker)
+      ensure
+        Honeybadger.config[:backend] = original_backend
+        Honeybadger.config[:sync] = original_sync
+        Honeybadger::Backend::Test.notifications[:notices].clear
       end
 
       it "notifies Honeybadger even when the subsequent broadcast fails" do
@@ -200,6 +231,31 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
 
         expect(Honeybadger).to have_received(:notify)
         expect(document.reload.status).to eq("error")
+      end
+
+      # Ruby auto-attaches the exception currently being handled (the
+      # sensitive classification error) as the #cause of any new exception
+      # raised while still inside that rescue block — which would let it
+      # reach a generic job-failure reporter even though notify_honeybadger
+      # deliberately avoids it. Prove the exception that actually escapes
+      # #perform doesn't carry that cause.
+      it "does not let a broadcast failure escape carrying the original classification exception as its cause" do
+        allow(Honeybadger).to receive(:notify)
+        call_count = 0
+        allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to) do
+          call_count += 1
+          raise StandardError, "actioncable down" if call_count > 1
+        end
+
+        escaped = nil
+        begin
+          described_class.new.perform(document.id)
+        rescue StandardError => e
+          escaped = e
+        end
+
+        expect(escaped).not_to be_nil
+        expect(escaped.cause).to be_nil
       end
     end
 
