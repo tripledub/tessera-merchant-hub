@@ -40,4 +40,16 @@ RSpec.describe KycDocument, type: :model do
     document = build(:kyc_document, kyc_principal: nil)
     expect(document).to be_valid
   end
+
+  describe ".ordered_by_review_priority" do
+    it "orders processing, pending, error, then complete, oldest first within each status" do
+      applicant = create(:applicant)
+      complete   = create(:kyc_document, applicant: applicant, status: :complete)
+      pending    = create(:kyc_document, applicant: applicant, status: :pending)
+      error      = create(:kyc_document, applicant: applicant, status: :error)
+      processing = create(:kyc_document, applicant: applicant, status: :processing)
+
+      expect(applicant.kyc_documents.ordered_by_review_priority).to eq([ processing, pending, error, complete ])
+    end
+  end
 end
