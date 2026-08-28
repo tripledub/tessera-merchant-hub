@@ -57,7 +57,7 @@ class ApplicantsController < ApplicationController
     authorize Applicant, :create?
     @applicant = Applicant.new(new_applicant_params)
     if @applicant.save
-      run_registry_lookup(@applicant)
+      redirect_after_registry_lookup(Applicants::RegistryLookup.call(@applicant))
     else
       render :new, status: :unprocessable_content
     end
@@ -65,7 +65,7 @@ class ApplicantsController < ApplicationController
 
   def registry_lookup
     authorize applicant, :update?
-    run_registry_lookup(applicant)
+    redirect_after_registry_lookup(Applicants::RegistryLookup.call(applicant))
   end
 
   def trace_psc_chain
@@ -106,15 +106,11 @@ class ApplicantsController < ApplicationController
 
   private
 
-  def run_registry_lookup(target_applicant)
-    result = Registry::Lookup.call(applicant: target_applicant)
+  def redirect_after_registry_lookup(result)
     if result.success
-      target_applicant.update(company_name: result.registry_profile.company_name)
-      Kyc::PrincipalsFromRegistry.call(result.registry_profile)
-      Kyc::OwnershipFromRegistry.call(result.registry_profile)
-      redirect_to applicant_path(target_applicant), notice: t("flash.applicants.registry_lookup_success")
+      redirect_to applicant_path(result.applicant), notice: t("flash.applicants.registry_lookup_success")
     else
-      redirect_to applicant_path(target_applicant), alert: t("flash.applicants.registry_lookup_failed")
+      redirect_to applicant_path(result.applicant), alert: t("flash.applicants.registry_lookup_failed")
     end
   end
 
