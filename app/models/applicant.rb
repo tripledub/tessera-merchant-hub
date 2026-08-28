@@ -24,9 +24,17 @@ class Applicant < Merchant
   validates :contact_email,
     format: { with: URI::MailTo::EMAIL_REGEXP },
     allow_blank: true
+  validate :sector_unchanged_after_document_collection, if: :persisted_sector_change?
 
   enum :status, { pending: "pending", approved: "approved", rejected: "rejected" }, default: "pending"
   enum :registry_jurisdiction, { gb: "gb", mt: "mt", cy: "cy" }, validate: { allow_nil: true }
+  enum :sector, {
+    general: "general",
+    crypto_exchange: "crypto_exchange",
+    gambling: "gambling",
+    forex_brokerage: "forex_brokerage",
+    proprietary_trading: "proprietary_trading"
+  }, default: "general", validate: true
 
   def to_param
     id
@@ -53,9 +61,24 @@ class Applicant < Merchant
     created_at.to_date
   end
 
+  def sector_locked?
+    onboarding_session&.document_collection_started? || kyc_documents.exists?
+  end
+
   private
 
   def strip_company_number
     self.company_number = company_number.strip if company_number.present?
+  end
+
+  def persisted_sector_change?
+    persisted? && will_save_change_to_sector?
+  end
+
+  def sector_unchanged_after_document_collection
+    return unless sector_locked?
+
+    # i18n-tasks-use t("activerecord.errors.models.applicant.attributes.sector.locked_after_document_collection")
+    errors.add(:sector, :locked_after_document_collection)
   end
 end

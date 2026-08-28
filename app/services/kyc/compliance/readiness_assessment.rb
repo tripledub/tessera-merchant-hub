@@ -3,7 +3,7 @@
 module Kyc
   module Compliance
     class ReadinessAssessment
-      attr_reader :applicant, :entity_results
+      attr_reader :applicant, :entity_results, :policy_results
 
       def self.for(applicant)
         new(applicant)
@@ -11,11 +11,12 @@ module Kyc
 
       def initialize(applicant)
         @applicant = applicant
+        @policy_results = PolicyDocumentRequirements.evaluate(applicant)
         @entity_results = build_entity_results
       end
 
       def compliant?
-        entity_results.all? { |er| er[:results].none?(&:blocks_automated_completion?) }
+        all_results.none?(&:blocks_automated_completion?)
       end
 
       def entity_count
@@ -27,7 +28,11 @@ module Kyc
       end
 
       def all_results
-        entity_results.flat_map { |er| er[:results] }
+        policy_results + entity_results.flat_map { |er| er[:results] }
+      end
+
+      def result_count
+        all_results.size
       end
 
       def results_for(entity)

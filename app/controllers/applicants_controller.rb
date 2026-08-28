@@ -113,11 +113,11 @@ class ApplicantsController < ApplicationController
   end
 
   def new_applicant_params
-    params.require(:applicant).permit(:name, :company_number).merge(registry_jurisdiction: "gb")
+    params.require(:applicant).permit(:name, :company_number, :sector).merge(registry_jurisdiction: "gb")
   end
 
   def applicant_params
-    params.require(:applicant).permit(:name, :company_name, :contact_email, :country, :country_code, :address_line1, :city, :support_url)
+    params.require(:applicant).permit(:name, :company_name, :contact_email, :country, :country_code, :address_line1, :city, :support_url, :sector)
   end
 
   def ensure_applicant_delete_enabled!

@@ -3,6 +3,13 @@
 require "rails_helper"
 
 RSpec.describe Kyc::DocumentValidity::PolicyResolver do
+  around do |example|
+    original_registry = Kyc::PolicyRegistry.instance
+    example.run
+  ensure
+    Kyc::PolicyRegistry.instance = original_registry
+  end
+
   describe ".resolve" do
     it "returns nil when no policy exists for the document type" do
       expect(described_class.resolve(document_type: "passport", reference_date: Date.current)).to be_nil
@@ -91,6 +98,29 @@ RSpec.describe Kyc::DocumentValidity::PolicyResolver do
       resolved = described_class.resolve(document_type: "utility_bill", reference_date: Date.current)
 
       expect(resolved).to be_nil
+    end
+
+    it "keeps historical rows but stops resolving a validity policy removed from active YAML" do
+      historical_policy = Kyc::DocumentValidityPolicy.publish!(
+        document_type: "passport",
+        effective_from: Date.new(2026, 1, 1),
+        mode: :expires,
+        required_dates: [ "expiry" ]
+      )
+
+      Dir.mktmpdir("kyc-policies") do |directory|
+        Pathname(directory).join("base.yml").write(<<~YAML)
+          schema_version: 1
+          sector: base
+          requirements: []
+        YAML
+        Kyc::PolicyRegistry.instance = Kyc::PolicyRegistry.load!(path: directory)
+
+        resolved = described_class.resolve(document_type: "passport", reference_date: Date.new(2026, 6, 1))
+
+        expect(resolved).to be_nil
+        expect(Kyc::DocumentValidityPolicy.find(historical_policy.id)).to eq(historical_policy)
+      end
     end
   end
 end

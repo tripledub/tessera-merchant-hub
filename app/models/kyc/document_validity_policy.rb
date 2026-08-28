@@ -20,6 +20,8 @@ module Kyc
 
     before_update :guard_immutable_attributes
 
+    # Publishing preserves immutable policy history, but resolution is separately
+    # gated by the active Git-backed YAML declaration for the document type.
     def self.publish!(document_type:, effective_from:, mode:, required_dates:, warning_thresholds: [],
                        max_age_months: nil, blocking: true, enabled: true)
       next_version = where(document_type: document_type).maximum(:version).to_i + 1

@@ -10,9 +10,17 @@ module Kyc
     # "rejected" for callers such as MH-200 that need to render it
     # differently (e.g. "awaiting staff review" rather than a rejection).
     RuleResult = Data.define(:rule_name, :entity, :status, :requirements, :satisfied, :missing,
-                             :awaiting_confirmation) do
-      def initialize(awaiting_confirmation: [], **kwargs)
-        super(awaiting_confirmation: awaiting_confirmation, **kwargs)
+                             :awaiting_confirmation, :requirement_id, :title, :guidance, :outcome) do
+      def initialize(awaiting_confirmation: [], requirement_id: nil, title: nil, guidance: nil,
+                     outcome: :blocking, **kwargs)
+        super(
+          awaiting_confirmation: awaiting_confirmation,
+          requirement_id: requirement_id,
+          title: title,
+          guidance: guidance,
+          outcome: outcome,
+          **kwargs
+        )
       end
 
       def met?
@@ -31,13 +39,11 @@ module Kyc
         status == :confirmation_required
       end
 
-      # True for any status that should stop an Applicant completing
-      # automated review without staff involvement — i.e. everything except
-      # `met` and `not_applicable`. `confirmation_required` still blocks
-      # here; the distinction it carries is *how* it should be labelled
-      # (awaiting staff review), not *whether* it blocks.
+      # Blocking outcomes stop automated review when unmet or awaiting staff
+      # confirmation. Warning outcomes remain visible without preventing
+      # completion.
       def blocks_automated_completion?
-        unmet? || confirmation_required?
+        outcome.to_sym == :blocking && (unmet? || confirmation_required?)
       end
     end
   end

@@ -140,9 +140,10 @@ RSpec.describe "Applicants", type: :request do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
 
-      it "returns 200" do
+      it "returns 200 with a sector field" do
         get new_applicant_path
         expect(response).to have_http_status(:ok)
+        expect(response.body).to include('id="applicant_sector"')
       end
     end
 
@@ -159,6 +160,18 @@ RSpec.describe "Applicants", type: :request do
   describe "POST /applicants" do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
+
+      it "creates an applicant with the selected sector and redirects to show" do
+        post applicants_path, params: {
+          applicant: {
+            name: "New Corp", company_name: "New Corp Ltd", contact_email: "info@new.com",
+            sector: "crypto_exchange"
+          }
+        }
+        created = Applicant.find_by!(name: "New Corp")
+        expect(response).to redirect_to(applicant_path(created))
+        expect(created.sector).to eq("crypto_exchange")
+      end
 
       it "creates the applicant with a blank company_number, and redirects to show with a retry alert" do
         post applicants_path, params: { applicant: { name: "New Corp" } }
@@ -533,6 +546,16 @@ RSpec.describe "Applicants", type: :request do
         get edit_applicant_path(applicant_a)
         expect(response).to have_http_status(:ok)
       end
+
+      it "disables sector editing once document collection has begun" do
+        create(:onboarding_session, applicant: applicant_a, current_stage: :document_collection)
+
+        get edit_applicant_path(applicant_a)
+
+        expect(response.body).to include('id="applicant_sector"')
+        expect(response.body).to include('disabled="disabled"')
+        expect(response.body).to include("The business sector cannot be changed after document collection has begun.")
+      end
     end
 
     context "when signed in as psp_support" do
@@ -555,6 +578,53 @@ RSpec.describe "Applicants", type: :request do
         }
         expect(response).to redirect_to(applicant_path(applicant_a))
         expect(applicant_a.reload.contact_email).to eq("updated@acme.com")
+      end
+
+      it "updates the applicant sector" do
+        patch applicant_path(applicant_a), params: { applicant: { sector: "gambling" } }
+
+        expect(response).to redirect_to(applicant_path(applicant_a))
+        expect(applicant_a.reload.sector).to eq("gambling")
+      end
+
+      it "rejects changing from general after document collection begins" do
+        locked_applicant = create(:applicant, name: "Locked General Applicant", sector: :general)
+        create(:onboarding_session, applicant: locked_applicant, current_stage: :document_collection)
+
+        patch applicant_path(locked_applicant), params: { applicant: { sector: "crypto_exchange" } }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Sector cannot be changed after document collection has begun")
+        expect(locked_applicant.reload.sector).to eq("general")
+      end
+
+      it "rejects changing from a policy sector when a collection checklist already exists" do
+        locked_applicant = create(:applicant, name: "Locked Policy Applicant", sector: :crypto_exchange)
+        create(
+          :onboarding_session,
+          applicant: locked_applicant,
+          current_stage: :jurisdictions,
+          document_checklist: [ { "category" => "sector_policy" } ]
+        )
+
+        patch applicant_path(locked_applicant), params: { applicant: { sector: "general" } }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Sector cannot be changed after document collection has begun")
+        expect(locked_applicant.reload.sector).to eq("crypto_exchange")
+      end
+
+      it "rejects changing sector after a direct document upload without an onboarding session" do
+        locked_applicant = create(:applicant, name: "Direct Upload Applicant", sector: :crypto_exchange)
+        create(:kyc_document, applicant: locked_applicant)
+
+        expect(locked_applicant.onboarding_session).to be_nil
+
+        patch applicant_path(locked_applicant), params: { applicant: { sector: "general" } }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Sector cannot be changed after document collection has begun")
+        expect(locked_applicant.reload.sector).to eq("crypto_exchange")
       end
     end
 
@@ -638,6 +708,24 @@ RSpec.describe "Applicants", type: :request do
       it "does not render a portal users table when there is none" do
         get tab_applicant_path(applicant, tab: "summary")
         expect(response.body).not_to include("Portal Users")
+      end
+
+      it "explains unmet Crypto Exchange policy evidence alongside entity results" do
+        policy_applicant = create(:applicant, sector: :crypto_exchange)
+        source_document = create(:kyc_document, applicant: policy_applicant, document_type: :group_structure_chart)
+        create(
+          :kyc_corporate_entity,
+          applicant: policy_applicant,
+          kyc_document: source_document,
+          name: "Test Crypto Entity"
+        )
+
+        get tab_applicant_path(policy_applicant, tab: "summary")
+
+        expect(response.body).to include("Test Crypto Entity")
+        expect(response.body).to include("Wallet and custody infrastructure attestation")
+        expect(response.body).to include("Upload an attestation describing the applicant")
+        expect(response.body).to include("Unmet")
       end
 
       it "renders the portal user's email and a remove button when one exists" do

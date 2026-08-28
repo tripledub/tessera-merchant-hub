@@ -81,6 +81,72 @@ RSpec.describe Applicant, type: :model do
     expect(applicant.status).to eq("pending")
   end
 
+  it "defines the supported sectors with a general default" do
+    expect(described_class.sectors).to eq(
+      "general" => "general",
+      "crypto_exchange" => "crypto_exchange",
+      "gambling" => "gambling",
+      "forex_brokerage" => "forex_brokerage",
+      "proprietary_trading" => "proprietary_trading"
+    )
+    expect(described_class.new.sector).to eq("general")
+  end
+
+  describe "sector changes" do
+    it "allows a sector change before document collection begins" do
+      saved = create(:applicant, sector: :general)
+      create(:onboarding_session, applicant: saved, current_stage: :jurisdictions)
+
+      expect { saved.update!(sector: :crypto_exchange) }
+        .to change { saved.reload.sector }
+        .from("general").to("crypto_exchange")
+    end
+
+    it "rejects changing from general once document collection begins" do
+      saved = create(:applicant, sector: :general)
+      create(:onboarding_session, applicant: saved, current_stage: :document_collection)
+
+      saved.sector = :crypto_exchange
+
+      expect(saved).not_to be_valid
+      expect(saved.errors.details.fetch(:sector)).to include(error: :locked_after_document_collection)
+      expect(saved.save).to be(false)
+      expect(saved.reload.sector).to eq("general")
+    end
+
+    it "rejects changing from a policy sector when a retained checklist proves collection already began" do
+      saved = create(:applicant, sector: :crypto_exchange)
+      create(
+        :onboarding_session,
+        applicant: saved,
+        current_stage: :jurisdictions,
+        document_checklist: [ { "category" => "sector_policy" } ]
+      )
+
+      saved.sector = :general
+
+      expect(saved).not_to be_valid
+      expect(saved.errors.details.fetch(:sector)).to include(error: :locked_after_document_collection)
+      expect(saved.save).to be(false)
+      expect(saved.reload.sector).to eq("crypto_exchange")
+    end
+
+    it "rejects a sector change when a KYC document exists without an onboarding session" do
+      saved = create(:applicant, sector: :crypto_exchange)
+      create(:kyc_document, applicant: saved)
+
+      expect(saved.onboarding_session).to be_nil
+      expect(saved.sector_locked?).to be true
+
+      saved.sector = :general
+
+      expect(saved).not_to be_valid
+      expect(saved.errors.details.fetch(:sector)).to include(error: :locked_after_document_collection)
+      expect(saved.save).to be(false)
+      expect(saved.reload.sector).to eq("crypto_exchange")
+    end
+  end
+
   it "uses id as to_param" do
     saved = create(:applicant)
     expect(saved.to_param).to eq(saved.id)

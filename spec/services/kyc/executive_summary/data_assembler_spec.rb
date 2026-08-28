@@ -163,6 +163,28 @@ RSpec.describe Kyc::ExecutiveSummary::DataAssembler, type: :service do
         expect(compliance).to have_key(:entity_results)
         expect(compliance[:entity_count]).to eq(3)
       end
+
+      it "includes localized applicant policy results alongside entity results" do
+        crypto_applicant = create(:applicant, sector: :crypto_exchange)
+        source_document = create(:kyc_document, applicant: crypto_applicant, document_type: :group_structure_chart)
+        entity = create(
+          :kyc_corporate_entity,
+          applicant: crypto_applicant,
+          kyc_document: source_document,
+          name: "Test Crypto Entity"
+        )
+
+        crypto_compliance = described_class.call(crypto_applicant).fetch(:compliance)
+
+        expect(crypto_compliance.fetch(:entity_results)).to include(a_hash_including(entity_id: entity.id))
+        expect(crypto_compliance.fetch(:policy_results)).to include(a_hash_including(
+          requirement_id: "crypto.vasp_registration",
+          title: "VASP registration",
+          guidance: "Upload evidence of the applicant's VASP registration or authorisation.",
+          status: :unmet,
+          outcome: "blocking"
+        ))
+      end
     end
 
     describe "cross_references section" do

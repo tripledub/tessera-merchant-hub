@@ -68,7 +68,9 @@ class KycDocument < ApplicationRecord
     aml_ctf_policy: 70,
     aml_kyc_requirements: 71,
     source_of_wealth_questionnaire: 72,
-    aml_ctf_questionnaire: 73
+    aml_ctf_questionnaire: 73,
+    vasp_registration: 74,
+    wallet_custody_infrastructure_attestation: 75
   }
 
   enum :classification_status, {

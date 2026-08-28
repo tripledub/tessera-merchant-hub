@@ -58,4 +58,28 @@ RSpec.describe OnboardingSession, type: :model do
     expect(duplicate).not_to be_valid
     expect(duplicate.errors[:applicant_id]).to include("has already been taken")
   end
+
+  describe "#document_collection_started?" do
+    it "is true at the document collection stage" do
+      onboarding_session.current_stage = :document_collection
+
+      expect(onboarding_session).to be_document_collection_started
+    end
+
+    it "is true when document collection was completed" do
+      onboarding_session.completed_stages = [ "document_collection" ]
+
+      expect(onboarding_session).to be_document_collection_started
+    end
+
+    it "is true when a document checklist has been generated" do
+      onboarding_session.document_checklist = []
+
+      expect(onboarding_session).to be_document_collection_started
+    end
+
+    it "is false before document collection begins" do
+      expect(onboarding_session).not_to be_document_collection_started
+    end
+  end
 end

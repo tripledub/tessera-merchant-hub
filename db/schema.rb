@@ -229,6 +229,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_160000) do
     t.string "merchant_id"
     t.string "name", null: false
     t.string "registry_jurisdiction"
+    t.string "sector", default: "general", null: false
     t.string "status", default: "pending", null: false
     t.string "support_url"
     t.string "type"

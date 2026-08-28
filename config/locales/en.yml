@@ -1,5 +1,13 @@
 ---
 en:
+  activerecord:
+    errors:
+      models:
+        applicant:
+          attributes:
+            sector:
+              locked_after_document_collection: cannot be changed after document collection
+                has begun
   admin:
     users:
       index:
@@ -89,6 +97,9 @@ en:
         country: Country
         country_code: Country code (ISO 3166-1 alpha-2, e.g. GB)
         name: Name
+        sector: Business sector
+      sector_locked_hint: The business sector cannot be changed after document collection
+        has begun.
       submit: Save
     index:
       new_applicant: New applicant
@@ -132,6 +143,12 @@ en:
         rate_limited: Companies House rate limit reached — try again shortly.
         unauthorized: Companies House rejected our API key.
         unavailable: Companies House is unavailable right now — try again shortly.
+    sectors:
+      crypto_exchange: Crypto exchange
+      forex_brokerage: Forex brokerage
+      gambling: Gambling
+      general: General
+      proprietary_trading: Proprietary trading
     show:
       add_principal: Add principal
       back: "← Back to applicants"
@@ -409,6 +426,8 @@ en:
         source_of_wealth_questionnaire: Source of Wealth Questionnaire
         transaction_extract: Transaction Extract
         utility_bill: Utility Bill
+        vasp_registration: VASP Registration
+        wallet_custody_infrastructure_attestation: Wallet Custody Infrastructure Attestation
       match_method:
         exact: Exact match
         fuzzy: Fuzzy match
@@ -459,6 +478,22 @@ en:
         empty: All documents are already linked.
         link: Link
         title: Link documents to entity
+    policy_requirements:
+      base:
+        passport_validity:
+          guidance: Confirm the passport is current and monitor its expiry date.
+          title: Passport validity
+        utility_bill_freshness:
+          guidance: Confirm the utility bill was issued within the last three months.
+          title: Utility bill freshness
+      crypto:
+        vasp_registration:
+          guidance: Upload evidence of the applicant's VASP registration or authorisation.
+          title: VASP registration
+        wallet_custody_infrastructure_attestation:
+          guidance: Upload an attestation describing the applicant's wallet and custody
+            infrastructure.
+          title: Wallet and custody infrastructure attestation
     principal_document_links:
       new:
         empty: All documents for this applicant are already linked.

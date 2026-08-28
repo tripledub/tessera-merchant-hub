@@ -40,6 +40,7 @@ module Kyc
     def compliant_entity_count = data[:compliance][:compliant_entity_count]
     def compliance_entity_count = data[:compliance][:entity_count]
     def entity_results = data[:compliance][:entity_results]
+    def policy_results = data[:compliance][:policy_results]
 
     # Cross-references
     def cross_reference_discrepancies = data[:cross_references]

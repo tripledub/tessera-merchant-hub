@@ -12,7 +12,17 @@ RSpec.describe ExtractionData do
       expect(ExtractionData::Base.for(:unknown)).to eq(ExtractionData::Generic)
     end
 
-    it "has all 26 document types registered" do
+    it "returns VaspRegistration model for vasp_registration type" do
+      expect(ExtractionData::Base.for(:vasp_registration)).to eq(ExtractionData::VaspRegistration)
+    end
+
+    it "returns WalletCustodyInfrastructureAttestation model for wallet custody attestation type" do
+      expect(ExtractionData::Base.for(:wallet_custody_infrastructure_attestation)).to eq(
+        ExtractionData::WalletCustodyInfrastructureAttestation
+      )
+    end
+
+    it "has every document type registered" do
       KycDocument.document_types.keys.each do |type|
         model = ExtractionData::Base.for(type)
         expect(model).not_to eq(ExtractionData::Generic), "Expected #{type} to have a registered ExtractionData model"
@@ -82,6 +92,32 @@ RSpec.describe ExtractionData do
         currency: "GBP"
       )
       expect(stmt).to be_valid
+    end
+  end
+
+  describe ExtractionData::VaspRegistration do
+    it "casts registration and authorisation dates" do
+      registration = described_class.new(
+        registration_date: "2024-01-15",
+        authorisation_date: "2024-02-01"
+      )
+
+      expect(registration.registration_date).to eq(Date.new(2024, 1, 15))
+      expect(registration.authorisation_date).to eq(Date.new(2024, 2, 1))
+    end
+  end
+
+  describe ExtractionData::WalletCustodyInfrastructureAttestation do
+    it "retains provider, custody, and storage descriptions" do
+      attestation = described_class.new(
+        provider_name: "Example Custody Provider",
+        custody_description: "Institutional custody",
+        storage_description: "Offline key storage"
+      )
+
+      expect(attestation.provider_name).to eq("Example Custody Provider")
+      expect(attestation.custody_description).to eq("Institutional custody")
+      expect(attestation.storage_description).to eq("Offline key storage")
     end
   end
 

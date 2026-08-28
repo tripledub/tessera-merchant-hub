@@ -61,6 +61,41 @@ RSpec.describe Kyc::Compliance::ReadinessAssessment, type: :service do
       assessment = described_class.for(applicant)
       expect(assessment).not_to be_compliant
     end
+
+    it "returns false when an applicant-level blocking document requirement is unmet" do
+      applicant.update!(sector: :crypto_exchange)
+
+      assessment = described_class.for(applicant)
+
+      expect(assessment.entity_count).to eq(0)
+      expect(assessment.policy_results.size).to eq(2)
+      expect(assessment).not_to be_compliant
+    end
+
+    it "returns true when applicant-level document requirements are met and there are no entities" do
+      applicant.update!(sector: :crypto_exchange)
+      create(:kyc_document, applicant: applicant, document_type: :vasp_registration)
+      create(:kyc_document, applicant: applicant, document_type: :wallet_custody_infrastructure_attestation)
+
+      assessment = described_class.for(applicant)
+
+      expect(assessment.entity_count).to eq(0)
+      expect(assessment).to be_compliant
+    end
+  end
+
+  describe "#all_results" do
+    it "includes policy and entity results while preserving entity count semantics" do
+      applicant.update!(sector: :crypto_exchange)
+      entity
+
+      assessment = described_class.for(applicant.reload)
+
+      expect(assessment.entity_count).to eq(1)
+      expect(assessment.policy_results.size).to eq(2)
+      expect(assessment.all_results).to contain_exactly(*assessment.policy_results, *assessment.results_for(entity))
+      expect(assessment.result_count).to eq(3)
+    end
   end
 
   describe "#compliant_entity_count" do

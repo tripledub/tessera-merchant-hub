@@ -11,6 +11,11 @@
     <%= f.text_field :company_number, class: "form-input", placeholder: t(".fields.company_number_placeholder") %>
   </div>
 
+  <div>
+    <%= f.label :sector, t("applicants.form.fields.sector"), class: "form-label" %>
+    <%= f.select :sector, Applicant.sectors.keys.map { |sector| [t("applicants.sectors.#{sector}"), sector] }, {}, class: "form-input" %>
+  </div>
+
   <div id="registry_preview"></div>
 
   <div class="flex gap-3 pt-2">
