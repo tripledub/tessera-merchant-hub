@@ -265,6 +265,51 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         expect(document.result["error"]).to match(/unsupported/i)
       end
     end
+
+    context "when the content type is structurally unsupported by the AI classifier (e.g. xlsx)" do
+      before do
+        document.file.attach(
+          io: StringIO.new("fake spreadsheet content"),
+          filename: "processing_statement.xlsx",
+          content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        allow(KycDocument).to receive(:find).with(document.id).and_return(document)
+      end
+
+      it "classifies as other and completes without an error, an AI call, or extraction" do
+        expect {
+          described_class.new.perform(document.id)
+        }.not_to have_enqueued_job(ExtractKycDocumentJob)
+
+        document.reload
+        expect(document.status).to eq("complete")
+        expect(document.document_type).to eq("other")
+        expect(document.classification_status).to eq("auto_classified")
+        expect(document.classification_method).to eq("unsupported_content_type")
+        expect(document.result).to be_nil
+      end
+    end
+
+    context "when the content type is unsupported and onboarding is in document_collection stage" do
+      before do
+        document.file.attach(
+          io: StringIO.new("fake spreadsheet content"),
+          filename: "processing_statement.xlsx",
+          content_type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+        allow(KycDocument).to receive(:find).with(document.id).and_return(document)
+        create(:onboarding_session, applicant: applicant, current_stage: :document_collection)
+      end
+
+      it "does not auto-confirm or enqueue extraction" do
+        expect {
+          described_class.new.perform(document.id)
+        }.not_to have_enqueued_job(ExtractKycDocumentJob)
+
+        document.reload
+        expect(document.classification_status).to eq("auto_classified")
+      end
+    end
   end
 
   def raise_on_second_broadcast(&block)

@@ -121,7 +121,7 @@ RSpec.describe DocumentClassifiers::AiFallback do
     end
 
     context "when the document's content type is a spreadsheet MIME type" do
-      it "raises an AiFallback::Error without calling the AI model, for both xlsx and legacy xls" do
+      it "classifies as other without calling the AI model, for both xlsx and legacy xls" do
         allow(mock_chat).to receive(:ask)
 
         [
@@ -135,7 +135,11 @@ RSpec.describe DocumentClassifiers::AiFallback do
             DocumentClassifiers::Condition.new(filename: filename, content_type: content_type, document: doc)
           )
 
-          expect { spreadsheet_handler.classify }.to raise_error(DocumentClassifiers::AiFallback::Error, /not supported/i)
+          expect(spreadsheet_handler.classify).to eq(
+            document_type: :other,
+            classification_method: :unsupported_content_type,
+            confidence: 0.0
+          )
         end
 
         expect(mock_chat).not_to have_received(:ask)
@@ -143,10 +147,9 @@ RSpec.describe DocumentClassifiers::AiFallback do
     end
 
     context "with every content type KycDocument accepts at upload time" do
-      it "calls the AI model only for the types AiFallback declares as supported" do
-        response = instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.85}')
-        allow(mock_chat).to receive(:ask).and_return(response)
+      def classify_each_allowed_content_type
         called_for = []
+        classified_other = []
 
         KycDocument::ALLOWED_CONTENT_TYPES.each do |content_type|
           doc = create(:kyc_document).tap do |d|
@@ -156,15 +159,31 @@ RSpec.describe DocumentClassifiers::AiFallback do
             DocumentClassifiers::Condition.new(filename: "upload.bin", content_type: content_type, document: doc)
           )
 
-          begin
-            matrix_handler.classify
-            called_for << content_type
-          rescue DocumentClassifiers::AiFallback::Error
-            nil
-          end
+          result = matrix_handler.classify
+          result[:document_type] == :other ? classified_other << content_type : called_for << content_type
         end
 
+        [ called_for, classified_other ]
+      end
+
+      before do
+        response = instance_double(RubyLLM::Message, content: '{"document_type": "passport", "confidence": 0.85}')
+        allow(mock_chat).to receive(:ask).and_return(response)
+      end
+
+      it "calls the AI model only for the types AiFallback declares as supported, classifying the rest as other" do
+        called_for, classified_other = classify_each_allowed_content_type
+
         expect(called_for.sort).to eq(DocumentClassifiers::AiFallback::SUPPORTED_CONTENT_TYPES.sort)
+        expect(classified_other.sort).to eq(
+          (KycDocument::ALLOWED_CONTENT_TYPES - DocumentClassifiers::AiFallback::SUPPORTED_CONTENT_TYPES).sort
+        )
+      end
+
+      it "never calls the AI model for a content type classified as other" do
+        called_for, = classify_each_allowed_content_type
+
+        expect(mock_chat).to have_received(:ask).exactly(called_for.size).times
       end
     end
 
