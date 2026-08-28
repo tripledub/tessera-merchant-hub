@@ -26,6 +26,12 @@ class KycDocument < ApplicationRecord
   # for) an applicant once a valid replacement is on file.
   scope :not_superseded, -> { where(superseded_by_kyc_document_id: nil) }
 
+  # Surfaces documents needing attention first: processing, then pending,
+  # then errored, with complete documents last.
+  scope :ordered_by_review_priority, -> {
+    order(Arel.sql("CASE status WHEN 1 THEN 0 WHEN 0 THEN 1 WHEN 3 THEN 2 WHEN 2 THEN 3 END"), :created_at)
+  }
+
   enum :status, { pending: 0, processing: 1, complete: 2, error: 3 }, default: :pending
 
   enum :document_type, {

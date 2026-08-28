@@ -22,8 +22,7 @@ class ApplicantsController < ApplicationController
   def show
     authorize applicant
     @kyc_principals = applicant.kyc_principals.order(:name)
-    @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal)
-                        .order(Arel.sql("CASE status WHEN 1 THEN 0 WHEN 0 THEN 1 WHEN 3 THEN 2 WHEN 2 THEN 3 END"), :created_at)
+    @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal).ordered_by_review_priority
   end
 
   def tab
@@ -33,8 +32,7 @@ class ApplicantsController < ApplicationController
     head(:not_found) and return unless allowed.include?(tab_name)
 
     @kyc_principals = applicant.kyc_principals.order(:name) if tab_name == "principals"
-    @kyc_documents = applicant.kyc_documents.includes(:kyc_principal)
-                       .order(Arel.sql("CASE status WHEN 1 THEN 0 WHEN 0 THEN 1 WHEN 3 THEN 2 WHEN 2 THEN 3 END"), :created_at) if tab_name == "documents"
+    @kyc_documents = applicant.kyc_documents.includes(:kyc_principal).ordered_by_review_priority if tab_name == "documents"
 
     locals = { applicant: applicant }
     locals[:calculator] = Kyc::CompletenessCalculator.for(applicant) if tab_name == "overview"
