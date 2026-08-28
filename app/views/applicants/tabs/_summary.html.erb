@@ -140,7 +140,7 @@
       <div class="flex flex-wrap gap-1.5">
         <% p.documents_by_type.each do |type, count| %>
           <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-500/10 dark:text-gray-400">
-            <%= t("kyc.documents.document_types.#{type}", default: type.humanize) %> (<%= count %>)
+            <%= type.nil? ? t("kyc.documents.classification.status.unclassified") : t("kyc.documents.document_types.#{type}", default: type.humanize) %> (<%= count %>)
           </span>
         <% end %>
       </div>

@@ -737,6 +737,15 @@ RSpec.describe "Applicants", type: :request do
         expect(response.body).to include("jane@example.com")
         expect(response.body).to include(applicant_user_path(applicant_user))
       end
+
+      it "renders an Unclassified badge instead of crashing when a document has no document_type (MH-271)" do
+        create(:kyc_document, applicant: applicant, document_type: nil, status: :pending)
+
+        get tab_applicant_path(applicant, tab: "summary")
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Unclassified")
+      end
     end
 
     context "when signed in as psp_support (cannot remove portal users)" do

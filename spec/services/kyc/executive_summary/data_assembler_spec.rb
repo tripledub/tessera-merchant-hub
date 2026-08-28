@@ -139,6 +139,12 @@ RSpec.describe Kyc::ExecutiveSummary::DataAssembler, type: :service do
           "passport" => 1
         )
       end
+
+      it "groups unclassified documents under a nil key (MH-271)" do
+        create(:kyc_document, applicant: applicant, document_type: nil, status: :pending)
+
+        expect(result[:documents][:by_type]).to include(nil => 1)
+      end
     end
 
     describe "principals section" do
