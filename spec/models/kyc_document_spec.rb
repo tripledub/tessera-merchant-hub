@@ -48,6 +48,20 @@ RSpec.describe KycDocument, type: :model do
     expect(document).to be_valid
   end
 
+  describe ".document_type_label" do
+    it "labels a nil type as Unclassified" do
+      expect(described_class.document_type_label(nil)).to eq("Unclassified")
+    end
+
+    it "translates a known document type" do
+      expect(described_class.document_type_label("passport")).to eq("Passport")
+    end
+
+    it "humanizes an unrecognized type as a fallback" do
+      expect(described_class.document_type_label("some_new_type")).to eq("Some new type")
+    end
+  end
+
   describe ".ordered_by_review_priority" do
     it "orders processing, pending, error, then complete, oldest first within each status" do
       applicant = create(:applicant)
