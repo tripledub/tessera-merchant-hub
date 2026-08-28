@@ -145,6 +145,15 @@ RSpec.describe "Applicants", type: :request do
         expect(response).to have_http_status(:ok)
         expect(response.body).to include('id="applicant_sector"')
       end
+
+      it "lets the Lookup button skip HTML5 validation so it works without a Name (MH-272)" do
+        get new_applicant_path
+
+        doc = Nokogiri::HTML(response.body)
+        lookup_button = doc.at_css("[formaction='#{registry_preview_applicants_path}']")
+
+        expect(lookup_button["formnovalidate"]).to be_present
+      end
     end
 
     context "when signed in as psp_support" do
@@ -173,12 +182,16 @@ RSpec.describe "Applicants", type: :request do
         expect(created.sector).to eq("crypto_exchange")
       end
 
-      it "creates the applicant with a blank company_number, and redirects to show with a retry alert" do
+      it "creates the applicant with a blank company_number, and redirects to show without attempting a registry lookup" do
+        allow(Applicants::RegistryLookup).to receive(:call)
+
         post applicants_path, params: { applicant: { name: "New Corp" } }
 
         created = Applicant.find_by!(name: "New Corp")
+        expect(Applicants::RegistryLookup).not_to have_received(:call)
         expect(response).to redirect_to(applicant_path(created))
-        expect(flash[:alert]).to be_present
+        expect(flash[:notice]).to be_present
+        expect(flash[:alert]).to be_nil
         expect(created.registry_profiles).to be_empty
       end
 
@@ -306,6 +319,17 @@ RSpec.describe "Applicants", type: :request do
 
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Preview Corp Ltd")
+      end
+
+      it "renders a 'Use these details' checkbox, checked by default (MH-272)" do
+        post registry_preview_applicants_path, params: { applicant: { company_number: "12345678" } },
+          as: :turbo_stream
+
+        doc = Nokogiri::HTML(response.body)
+        checkbox = doc.at_css("#registry_preview_use_these_details")
+
+        expect(checkbox["checked"]).to be_present
+        expect(response.body).to include(I18n.t("applicants.registry_preview.card.use_these_details"))
       end
     end
 

@@ -55,7 +55,11 @@ class ApplicantsController < ApplicationController
     authorize Applicant, :create?
     @applicant = Applicant.new(new_applicant_params)
     if @applicant.save
-      redirect_after_registry_lookup(Applicants::RegistryLookup.call(@applicant))
+      if @applicant.company_number.present?
+        redirect_after_registry_lookup(Applicants::RegistryLookup.call(@applicant))
+      else
+        redirect_to applicant_path(@applicant), notice: t("flash.applicants.create_success")
+      end
     else
       render :new, status: :unprocessable_content
     end
