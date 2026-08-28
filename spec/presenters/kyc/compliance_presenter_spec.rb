@@ -100,5 +100,12 @@ RSpec.describe Kyc::CompliancePresenter, type: :presenter do
       expect(detail).to include("30.0% effective ownership")
       expect(detail).to include("threshold: 25.0%")
     end
+
+    it "formats ubo_threshold_exceeded detail with no ownership percentage disclosed" do
+      warning = build(:kyc_validation_warning, warning_type: :ubo_threshold_exceeded,
+                      metadata: { effective_percentage: nil, threshold: 25.0, individual_name: "Test Person" })
+      detail = presenter.warning_detail(warning)
+      expect(detail).to eq("Significant control identified (no ownership percentage disclosed)")
+    end
   end
 end

@@ -41,37 +41,76 @@
       </div>
     <% end %>
 
-    <%# Entities table %>
-    <div class="mb-6">
-      <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
-        <%= t('.entities_heading') %>
-      </h3>
-      <table class="w-full text-left text-theme-sm">
-        <thead>
-          <tr class="border-b border-gray-200 dark:border-gray-800">
-            <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.name') %></th>
-            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.type') %></th>
-            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.jurisdiction') %></th>
-            <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.source') %></th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-          <% p.entities.each do |entity| %>
-            <tr>
-              <td class="py-2 pr-4">
-                <%= link_to entity.name, kyc_corporate_entity_path(entity),
-                      class: "text-brand-600 hover:text-brand-700" %>
-              </td>
-              <td class="px-4 py-2"><%= p.entity_type_badge(entity) %></td>
-              <td class="px-4 py-2 text-gray-500 dark:text-gray-400"><%= entity.jurisdiction || "—" %></td>
-              <td class="px-4 py-2"><%= p.source_badge(entity) %></td>
+    <%# Registry persons with significant control (Companies House) %>
+    <% if p.registry_pscs.any? %>
+      <div class="mb-6">
+        <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+          <%= t('.registry_pscs_heading') %>
+        </h3>
+        <table class="w-full text-left text-theme-sm">
+          <thead>
+            <tr class="border-b border-gray-200 dark:border-gray-800">
+              <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.name') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.type') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.registry_pscs_table.control') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.registry_pscs_table.notified_on') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"></th>
             </tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+            <% p.registry_pscs.each do |psc| %>
+              <tr>
+                <td class="py-2 pr-4 text-gray-800 dark:text-white/90"><%= psc.name %></td>
+                <td class="px-4 py-2"><%= p.registry_psc_kind_badge(psc) %></td>
+                <td class="px-4 py-2 text-gray-800 dark:text-white/90"><%= p.formatted_registry_percentage(psc) %></td>
+                <td class="px-4 py-2 text-gray-500 dark:text-gray-400"><%= psc.notified_on&.strftime("%-d %b %Y") || "—" %></td>
+                <td class="px-4 py-2">
+                  <% unless psc.kind.start_with?("individual-") %>
+                    <%= button_to t('.registry_pscs_table.trace_chain'), trace_psc_chain_applicant_path(applicant, psc_id: psc.id),
+                          method: :post, class: "text-brand-600 hover:text-brand-700" %>
+                  <% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+
+    <%# Entities table %>
+    <% if p.entities.any? %>
+      <div class="mb-6">
+        <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+          <%= t('.entities_heading') %>
+        </h3>
+        <table class="w-full text-left text-theme-sm">
+          <thead>
+            <tr class="border-b border-gray-200 dark:border-gray-800">
+              <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.name') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.type') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.jurisdiction') %></th>
+              <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.source') %></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+            <% p.entities.each do |entity| %>
+              <tr>
+                <td class="py-2 pr-4">
+                  <%= link_to entity.name, kyc_corporate_entity_path(entity),
+                        class: "text-brand-600 hover:text-brand-700" %>
+                </td>
+                <td class="px-4 py-2"><%= p.entity_type_badge(entity) %></td>
+                <td class="px-4 py-2 text-gray-500 dark:text-gray-400"><%= entity.jurisdiction || "—" %></td>
+                <td class="px-4 py-2"><%= p.source_badge(entity) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
 
     <%# Ownership edges table %>
+    <% if p.edges.any? %>
     <div>
       <h3 class="mb-3 text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
         <%= t('.edges_heading') %>
@@ -105,6 +144,7 @@
         </tbody>
       </table>
     </div>
+    <% end %>
   <% else %>
     <%# Empty state %>
     <div class="py-8 text-center">

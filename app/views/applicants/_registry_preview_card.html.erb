@@ -1,0 +1,22 @@
+<div class="rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+  <p class="text-theme-sm font-semibold text-gray-800 dark:text-white/90"><%= result.company_name %></p>
+  <dl class="mt-2 space-y-1 text-theme-sm text-gray-600 dark:text-gray-400">
+    <div class="flex justify-between">
+      <dt><%= t("applicants.registry_preview.card.status") %></dt>
+      <dd><%= result.status %></dd>
+    </div>
+    <% if result.incorporated_on.present? %>
+      <div class="flex justify-between">
+        <dt><%= t("applicants.registry_preview.card.incorporated_on") %></dt>
+        <dd><%= l(result.incorporated_on, format: :long) %></dd>
+      </div>
+    <% end %>
+    <% if (address = result.addresses.first) %>
+      <div class="flex justify-between">
+        <dt><%= t("applicants.registry_preview.card.registered_address") %></dt>
+        <dd><%= [ address[:line1], address[:city], address[:postcode], address[:country] ].compact_blank.join(", ") %></dd>
+      </div>
+    <% end %>
+  </dl>
+  <p class="mt-3 text-theme-sm text-success-600"><%= t("applicants.registry_preview.card.confirm_hint") %></p>
+</div>

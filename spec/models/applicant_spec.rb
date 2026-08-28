@@ -178,5 +178,11 @@ RSpec.describe Applicant, type: :model do
       expect(saved.reload.company_number).to eq("12345678")
       expect(saved.reload.registry_jurisdiction).to eq("gb")
     end
+
+    it "strips leading and trailing whitespace from company_number before saving" do
+      saved = create(:applicant, company_number: " 12345678 ", registry_jurisdiction: "gb")
+
+      expect(saved.reload.company_number).to eq("12345678")
+    end
   end
 end

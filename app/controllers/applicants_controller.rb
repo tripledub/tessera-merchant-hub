@@ -22,8 +22,7 @@ class ApplicantsController < ApplicationController
   def show
     authorize applicant
     @kyc_principals = applicant.kyc_principals.order(:name)
-    @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal)
-                        .order(Arel.sql("CASE status WHEN 1 THEN 0 WHEN 0 THEN 1 WHEN 3 THEN 2 WHEN 2 THEN 3 END"), :created_at)
+    @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal).ordered_by_review_priority
   end
 
   def tab
@@ -33,8 +32,7 @@ class ApplicantsController < ApplicationController
     head(:not_found) and return unless allowed.include?(tab_name)
 
     @kyc_principals = applicant.kyc_principals.order(:name) if tab_name == "principals"
-    @kyc_documents = applicant.kyc_documents.includes(:kyc_principal)
-                       .order(Arel.sql("CASE status WHEN 1 THEN 0 WHEN 0 THEN 1 WHEN 3 THEN 2 WHEN 2 THEN 3 END"), :created_at) if tab_name == "documents"
+    @kyc_documents = applicant.kyc_documents.includes(:kyc_principal).ordered_by_review_priority if tab_name == "documents"
 
     locals = { applicant: applicant }
     locals[:calculator] = Kyc::CompletenessCalculator.for(applicant) if tab_name == "overview"
@@ -47,13 +45,37 @@ class ApplicantsController < ApplicationController
     @applicant = Applicant.new
   end
 
+  def registry_preview
+    authorize Applicant, :new?
+    @company_number = params.dig(:applicant, :company_number).to_s.strip
+    @preview_result = Registry::CompaniesHouseUkClient.new.fetch(company_number: @company_number) if @company_number.present?
+  end
+
   def create
     authorize Applicant, :create?
-    @applicant = Applicant.new(applicant_params)
+    @applicant = Applicant.new(new_applicant_params)
     if @applicant.save
-      redirect_to applicant_path(@applicant), notice: t("flash.applicants.create_success")
+      redirect_after_registry_lookup(Applicants::RegistryLookup.call(@applicant))
     else
       render :new, status: :unprocessable_content
+    end
+  end
+
+  def registry_lookup
+    authorize applicant, :update?
+    redirect_after_registry_lookup(Applicants::RegistryLookup.call(applicant))
+  end
+
+  def trace_psc_chain
+    authorize applicant, :update?
+    psc = Registry::PersonWithSignificantControl.joins(:registry_profile)
+      .where(registry_profiles: { applicant_id: applicant.id }).find(params[:psc_id])
+    result = Kyc::PscChainFollower.call(psc)
+
+    if result.success
+      redirect_to applicant_path(applicant), notice: t("flash.applicants.trace_psc_chain_success")
+    else
+      redirect_to applicant_path(applicant), alert: t("flash.applicants.trace_psc_chain_failed")
     end
   end
 
@@ -81,6 +103,18 @@ class ApplicantsController < ApplicationController
   end
 
   private
+
+  def redirect_after_registry_lookup(result)
+    if result.success
+      redirect_to applicant_path(result.applicant), notice: t("flash.applicants.registry_lookup_success")
+    else
+      redirect_to applicant_path(result.applicant), alert: t("flash.applicants.registry_lookup_failed")
+    end
+  end
+
+  def new_applicant_params
+    params.require(:applicant).permit(:name, :company_number, :sector).merge(registry_jurisdiction: "gb")
+  end
 
   def applicant_params
     params.require(:applicant).permit(:name, :company_name, :contact_email, :country, :country_code, :address_line1, :city, :support_url, :sector)

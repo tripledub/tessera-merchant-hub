@@ -20,6 +20,9 @@ pre-commit:
     zeitwerk:
       run: bundle exec rails zeitwerk:check
 
+    archspec:
+      run: bundle exec archspec check
+
     i18n-tasks:
       run: bundle exec i18n-tasks health
 

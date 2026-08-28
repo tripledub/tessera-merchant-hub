@@ -1,0 +1,9 @@
+<%= turbo_stream.update "registry_preview" do %>
+  <% if @company_number.blank? %>
+    <p class="text-theme-sm text-error-600"><%= t(".blank_company_number") %></p>
+  <% elsif @preview_result.success %>
+    <%= render "registry_preview_card", result: @preview_result, company_number: @company_number %>
+  <% else %>
+    <%= render "registry_preview_error", result: @preview_result %>
+  <% end %>
+<% end %>

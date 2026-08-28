@@ -6,6 +6,18 @@ module DocumentClassifiers
 
     VALID_TYPES = KycDocument.document_types.keys.freeze
 
+    # xlsx/xls resolve to RubyLLM's :document type, which Anthropic's media
+    # formatter can't handle — always raises UnsupportedAttachmentError.
+    SUPPORTED_CONTENT_TYPES = %w[
+      image/jpeg image/png image/webp image/gif
+      application/pdf
+      text/csv
+    ].freeze
+
+    # Scoped per-call via RubyLLM.context, not the global RubyLLM.configure
+    # shared with ClaudeOcrAdapter / Kyc::Inference::ClaudeAdapter.
+    REQUEST_TIMEOUT = 30
+
     PROMPT = <<~PROMPT.freeze
       You are a KYC document classifier. Look at the attached document image or PDF and
       identify its document type. The filename is provided as a secondary hint only — do
@@ -52,10 +64,15 @@ module DocumentClassifiers
 
     def ai_classify
       @ai_classify ||= begin
-        blob_data  = condition.document.file.blob.download
         media_type = condition.document.file.content_type
-        extension  = Rack::Mime::MIME_TYPES.invert.fetch(media_type, ".bin").delete_prefix(".")
-        prompt     = format(PROMPT, valid_types: VALID_TYPES.join(", ")) +
+
+        unless SUPPORTED_CONTENT_TYPES.include?(media_type)
+          raise Error, "file type (#{media_type}) is not supported for automatic classification"
+        end
+
+        blob_data = condition.document.file.blob.download
+        extension = Rack::Mime::MIME_TYPES.invert.fetch(media_type, ".bin").delete_prefix(".")
+        prompt    = format(PROMPT, valid_types: VALID_TYPES.join(", ")) +
           "\n\nFilename (hint only): #{condition.filename}"
 
         response = Tempfile.create([ "kyc_classify", ".#{extension}" ]) do |f|
@@ -71,13 +88,18 @@ module DocumentClassifiers
         raise Error, "AI classifier could not read the document file: #{e.message}"
       rescue JSON::ParserError => e
         raise Error, "AI classifier returned invalid JSON: #{e.message}"
+      rescue Faraday::TimeoutError => e
+        raise Error, "AI classifier request timed out: #{e.message}"
       rescue RubyLLM::Error => e
         raise Error, "AI classifier API error: #{e.message}"
+      rescue RubyLLM::UnsupportedAttachmentError => e
+        raise Error, "AI classifier does not support this attachment type: #{e.message}"
       end
     end
 
     def chat
-      @chat ||= RubyLLM.chat(model: "claude-haiku-4-5-20251001")
+      @chat ||= RubyLLM.context { |config| config.request_timeout = REQUEST_TIMEOUT }
+        .chat(model: "claude-haiku-4-5-20251001")
     end
 
     def normalize_json_response(text)

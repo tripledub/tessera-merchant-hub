@@ -15,6 +15,9 @@
     <% end %>
   </div>
   <div class="flex items-center gap-2">
+    <% if policy(ProcessingStatement).index? %>
+      <%= link_to t('.processing_statements'), applicant_processing_statements_path(applicant), class: "btn-secondary" %>
+    <% end %>
     <% if policy(applicant).edit? %>
       <%= link_to t('.edit'), edit_applicant_path(applicant), class: "btn-secondary" %>
     <% end %>

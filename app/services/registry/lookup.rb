@@ -12,22 +12,26 @@ module Registry
       end
     end
 
-    CLIENTS = {}.freeze
+    CLIENTS = {
+      "gb" => Registry::CompaniesHouseUkClient
+    }.freeze
 
-    def self.call(applicant:)
-      new(applicant: applicant).call
+    def self.call(applicant:, company_number: applicant.company_number, jurisdiction: applicant.registry_jurisdiction)
+      new(applicant: applicant, company_number: company_number, jurisdiction: jurisdiction).call
     end
 
-    def initialize(applicant:)
+    def initialize(applicant:, company_number: applicant.company_number, jurisdiction: applicant.registry_jurisdiction)
       @applicant = applicant
+      @company_number = company_number
+      @jurisdiction = jurisdiction
     end
 
     def call
-      client_class = CLIENTS[@applicant.registry_jurisdiction]
+      client_class = CLIENTS[@jurisdiction]
       return Result.failure(:not_supported) unless client_class
-      return Result.failure(:invalid_number) if @applicant.company_number.blank?
+      return Result.failure(:invalid_number) if @company_number.blank?
 
-      fetch_result = client_class.new.fetch(company_number: @applicant.company_number)
+      fetch_result = client_class.new.fetch(company_number: @company_number)
 
       if fetch_result.success
         Result.success(persist(fetch_result))
@@ -41,16 +45,18 @@ module Registry
     def persist(fetch_result)
       ActiveRecord::Base.transaction do
         profile = @applicant.registry_profiles.create!(
-          jurisdiction: @applicant.registry_jurisdiction,
-          company_number: @applicant.company_number,
+          jurisdiction: @jurisdiction,
+          company_number: @company_number,
           company_name: fetch_result.company_name,
           status: fetch_result.status,
           incorporated_on: fetch_result.incorporated_on,
-          fetched_at: Time.current
+          fetched_at: Time.current,
+          raw_response: fetch_result.raw_response
         )
 
         fetch_result.directors.each { |director| profile.directors.create!(director) }
         fetch_result.addresses.each { |address| profile.addresses.create!(address) }
+        fetch_result.people_with_significant_control.each { |psc| profile.people_with_significant_control.create!(psc) }
 
         profile
       end

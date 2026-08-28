@@ -27,7 +27,7 @@ module Onboarding
         ActionCable.server.broadcast("onboarding:#{session.id}", {
           type:          "complete",
           stage_changed: result[:stage_changed],
-          bot_message:   MarkdownHelper.render_to_html(result[:bot_message])
+          bot_message:   MarkdownRenderer.call(result[:bot_message])
         })
       end
 
@@ -71,7 +71,7 @@ module Onboarding
       ActionCable.server.broadcast("onboarding:#{session.id}", {
         type:          "complete",
         stage_changed: result[:stage_changed],
-        bot_message:   MarkdownHelper.render_to_html(result[:bot_message])
+        bot_message:   MarkdownRenderer.call(result[:bot_message])
       })
 
       result

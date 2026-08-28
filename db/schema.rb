@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_21_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_26_160000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -79,7 +79,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_170000) do
     t.datetime "created_at", null: false
     t.integer "entity_type", null: false
     t.string "jurisdiction"
-    t.uuid "kyc_document_id", null: false
+    t.uuid "kyc_document_id"
     t.string "name", null: false
     t.integer "source", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -205,7 +205,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_170000) do
     t.uuid "applicant_id", null: false
     t.uuid "corporate_entity_id"
     t.datetime "created_at", null: false
-    t.uuid "kyc_document_id", null: false
+    t.uuid "kyc_document_id"
     t.string "message", null: false
     t.jsonb "metadata", default: {}
     t.datetime "updated_at", null: false
@@ -262,6 +262,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_170000) do
     t.index ["applicant_id"], name: "index_onboarding_sessions_on_applicant_id", unique: true
   end
 
+  create_table "processing_statements", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.jsonb "column_mapping", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.jsonb "metrics", default: {}, null: false
+    t.integer "row_count"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id"], name: "index_processing_statements_on_applicant_id"
+  end
+
   create_table "registry_addresses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "city"
     t.string "country"
@@ -283,6 +295,26 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_170000) do
     t.string "role", null: false
     t.datetime "updated_at", null: false
     t.index ["registry_profile_id"], name: "index_registry_directors_on_registry_profile_id"
+  end
+
+  create_table "registry_people_with_significant_control", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.date "ceased_on"
+    t.string "city"
+    t.string "country"
+    t.datetime "created_at", null: false
+    t.integer "date_of_birth_month"
+    t.integer "date_of_birth_year"
+    t.string "kind", null: false
+    t.string "line1"
+    t.string "name", null: false
+    t.string "nationality"
+    t.string "natures_of_control", default: [], null: false, array: true
+    t.date "notified_on"
+    t.string "postcode"
+    t.string "registration_number"
+    t.uuid "registry_profile_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["registry_profile_id"], name: "index_registry_people_wsc_on_registry_profile_id"
   end
 
   create_table "registry_profiles", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -365,7 +397,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_21_170000) do
   add_foreign_key "kyc_validation_warnings", "merchants", column: "applicant_id"
   add_foreign_key "onboarding_messages", "onboarding_sessions"
   add_foreign_key "onboarding_sessions", "merchants", column: "applicant_id"
+  add_foreign_key "processing_statements", "merchants", column: "applicant_id"
   add_foreign_key "registry_addresses", "registry_profiles"
   add_foreign_key "registry_directors", "registry_profiles"
+  add_foreign_key "registry_people_with_significant_control", "registry_profiles"
   add_foreign_key "registry_profiles", "merchants", column: "applicant_id"
 end
