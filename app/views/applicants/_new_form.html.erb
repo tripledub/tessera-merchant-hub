@@ -20,7 +20,7 @@
 
   <div class="flex gap-3 pt-2">
     <%= f.button t(".lookup_button"), formaction: registry_preview_applicants_path, formmethod: :post,
-          name: nil, class: "btn-secondary" %>
+          formnovalidate: true, name: nil, class: "btn-secondary" %>
     <%= f.submit t(".submit"), class: "btn-primary" %>
     <%= link_to t("applicants.form.cancel"), applicants_path, class: "btn-secondary" %>
   </div>

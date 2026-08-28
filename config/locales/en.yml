@@ -136,6 +136,7 @@ en:
         incorporated_on: Incorporated
         registered_address: Registered address
         status: Status
+        use_these_details: Use these details
       errors:
         invalid_number: Enter a company number before looking it up.
         not_found: No company found with that number.
@@ -300,6 +301,7 @@ en:
     applicant_users:
       destroy_success: Portal user removed.
     applicants:
+      create_success: Applicant created.
       destroy_success: Applicant deleted.
       registry_lookup_failed: Registry data fetch failed. You can retry from this
         page.
