@@ -90,6 +90,15 @@ class KycDocument < ApplicationRecord
   ].freeze
   MAX_FILE_SIZE = 10.megabytes
 
+  # document_type is nil until classification completes (or if it errors),
+  # so any UI/report grouping documents by type must label that case
+  # explicitly rather than calling #humanize on nil (MH-271).
+  def self.document_type_label(type)
+    return I18n.t("kyc.documents.classification.status.unclassified") if type.nil?
+
+    I18n.t("kyc.documents.document_types.#{type}", default: type.humanize)
+  end
+
   def extraction_schema
     ExtractionData::Base.for(document_type)
   end

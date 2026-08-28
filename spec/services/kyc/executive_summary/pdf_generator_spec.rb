@@ -50,6 +50,17 @@ RSpec.describe Kyc::ExecutiveSummary::PdfGenerator, type: :service do
     end
   end
 
+  context "with an unclassified document" do
+    before { create(:kyc_document, applicant: applicant, document_type: nil, status: :pending) }
+
+    it "labels it Unclassified instead of raising NoMethodError (MH-271)" do
+      pdf_data = described_class.call(applicant)
+      text = PDF::Inspector::Text.analyze(pdf_data).strings.join(" ")
+
+      expect(text).to include("Unclassified")
+    end
+  end
+
   context "with narrative data" do
     before do
       applicant.update!(

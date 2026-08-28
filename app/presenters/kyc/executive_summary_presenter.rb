@@ -31,6 +31,7 @@ module Kyc
     def confirmed_document_count = data[:documents][:confirmed_count]
     def extracted_document_count = data[:documents][:extracted_count]
     def documents_by_type = data[:documents][:by_type]
+    def document_type_label(type) = KycDocument.document_type_label(type)
 
     # Principals
     def principals = data[:principals]
