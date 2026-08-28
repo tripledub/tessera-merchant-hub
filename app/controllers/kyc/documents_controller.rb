@@ -12,11 +12,22 @@ class Kyc::DocumentsController < ApplicationController
     files = params[:kyc_document]&.fetch(:files, [])&.compact_blank
 
     if files.blank?
-      redirect_to applicant_path(applicant), alert: t("flash.kyc_documents.no_files")
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.append(
+            "toast-container",
+            partial: "shared/toast",
+            locals: { message: t("flash.kyc_documents.no_files"), type: :error }
+          )
+        end
+        format.html { redirect_to applicant_path(applicant), alert: t("flash.kyc_documents.no_files") }
+      end
       return
     end
 
-    saved = 0
+    had_no_documents = applicant.kyc_documents.none?
+    saved_documents = []
+
     files.each do |file|
       doc = KycDocument.new(applicant: applicant, status: :pending)
       # Save first so doc.id exists before Active Storage creates the attachment
@@ -38,19 +49,24 @@ class Kyc::DocumentsController < ApplicationController
       end
 
       ClassifyKycDocumentJob.perform_later(doc.id)
-      saved += 1
+      saved_documents << doc
     end
 
+    saved = saved_documents.size
     message = saved.zero? ? t("flash.kyc_documents.no_files") : t("flash.kyc_documents.upload_success", count: saved)
     type = saved.zero? ? :error : :success
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.append(
-          "toast-container",
-          partial: "shared/toast",
-          locals: { message: message, type: type }
-        )
+        streams = []
+        if saved_documents.any?
+          streams << turbo_stream.remove("kyc-documents-empty") if had_no_documents
+          streams.concat(saved_documents.map { |doc|
+            turbo_stream.append("kyc-documents-list", partial: "kyc/documents/kyc_document", locals: { document: doc })
+          })
+        end
+        streams << turbo_stream.append("toast-container", partial: "shared/toast", locals: { message: message, type: type })
+        render turbo_stream: streams
       end
       format.html do
         redirect_to applicant_path(applicant), saved.zero? ? { alert: message } : { notice: message }

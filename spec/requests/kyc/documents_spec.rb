@@ -35,6 +35,52 @@ RSpec.describe "KycDocuments", type: :request do
         expect(response).to redirect_to(applicant_path(applicant))
         expect(flash[:alert]).to be_present
       end
+
+      # MH-210: uploading must never trigger a full page reload — the tab
+      # the user is on (and the client-side dropzone form state) is only
+      # preserved if the response stays a turbo_stream.
+      it "appends the new document into the list instead of redirecting, when requesting turbo_stream" do
+        post applicant_kyc_documents_path(applicant),
+          params: { kyc_document: { files: [ file ] } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+
+        new_document = applicant.kyc_documents.last
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(new_document)}")).to be_present
+        expect(fragment.css("turbo-stream[action='append'][target='toast-container']")).to be_present
+      end
+
+      it "removes the empty-state placeholder when this is the applicant's first document" do
+        post applicant_kyc_documents_path(applicant),
+          params: { kyc_document: { files: [ file ] } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).to include('turbo-stream action="remove" target="kyc-documents-empty"')
+      end
+
+      it "does not try to remove the empty-state placeholder when the applicant already has documents" do
+        create(:kyc_document, applicant: applicant)
+
+        post applicant_kyc_documents_path(applicant),
+          params: { kyc_document: { files: [ file ] } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).not_to include("kyc-documents-empty")
+      end
+
+      it "renders only the toast, with no document append, when no files are provided via turbo_stream" do
+        post applicant_kyc_documents_path(applicant),
+          params: { kyc_document: { files: [] } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:ok)
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("turbo-stream").size).to eq(1)
+        expect(fragment.css("turbo-stream[action='append'][target='toast-container']")).to be_present
+      end
     end
 
     context "when signed in as psp_support" do
