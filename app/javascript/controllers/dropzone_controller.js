@@ -38,7 +38,7 @@ export default class extends Controller {
     event.preventDefault()
     this.submitTarget.disabled = true
     await Promise.all(this.files.map(f => this.upload(f)))
-    this.element.closest("form").submit()
+    this.element.closest("form").requestSubmit()
   }
 
   handleFiles(fileList) {
