@@ -95,6 +95,9 @@ group :development, :test do
 
   # Realistic fake data for seeds and factories
   gem "faker"
+
+  # Static architecture linter enforcing layered-design boundaries [https://archspecrb.dev]
+  gem "archspec"
 end
 
 group :development do

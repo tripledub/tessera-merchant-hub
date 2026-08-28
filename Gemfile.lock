@@ -96,6 +96,9 @@ GEM
       globalid
     anyway_config (2.8.0)
       ruby-next-core (~> 1.0)
+    archspec (1.1.0)
+      prism (>= 1.0)
+      rubydex (~> 0.4.0)
     ast (2.4.3)
     base64 (0.3.0)
     bcrypt (3.1.22)
@@ -507,6 +510,10 @@ GEM
       ruby_llm-schema (~> 0)
       zeitwerk (~> 2)
     ruby_llm-schema (0.4.0)
+    rubydex (0.4.0)
+    rubydex (0.4.0-aarch64-linux)
+    rubydex (0.4.0-arm64-darwin)
+    rubydex (0.4.0-x86_64-linux)
     rubyzip (2.4.1)
     securerandom (0.4.1)
     shoulda-matchers (8.0.1)
@@ -606,6 +613,7 @@ PLATFORMS
 
 DEPENDENCIES
   anycable-rails
+  archspec
   bootsnap
   brakeman
   bundler-audit
@@ -681,6 +689,7 @@ CHECKSUMS
   anycable-rails (1.6.2) sha256=954fd30f0f91825a06122da85abbf5b962d22fe0f4f3a2b5b262d4b98f5f3582
   anycable-rails-core (1.6.2) sha256=868e31c1df0aa3096073fa59df5c9815cdaaf2e798578d874f598044418f6d13
   anyway_config (2.8.0) sha256=f6797a7231f81202dcd3d0c07284e836e45713e761d320180348b13a5c7c9306
+  archspec (1.1.0) sha256=861d4869c81617139ea9e42e6de1456ba00d0538f3994476073829de223a754d
   ast (2.4.3) sha256=954615157c1d6a382bc27d690d973195e79db7f55e9765ac7c481c60bdb4d383
   base64 (0.3.0) sha256=27337aeabad6ffae05c265c450490628ef3ebd4b67be58257393227588f5a97b
   bcrypt (3.1.22) sha256=1f0072e88c2d705d94aff7f2c5cb02eb3f1ec4b8368671e19112527489f29032
@@ -849,6 +858,10 @@ CHECKSUMS
   ruby-vips (2.3.0) sha256=e685ec02c13969912debbd98019e50492e12989282da5f37d05f5471442f5374
   ruby_llm (1.16.0) sha256=26bd5310cf2ce55f74a60f8aae0b0d0327b586ff4532c84828103c3b2b905a18
   ruby_llm-schema (0.4.0) sha256=e930f5a5316f9301bff3fb7fe572e44727d05bb8e50621001bbb49a47d63b8da
+  rubydex (0.4.0) sha256=4b9c9d3aad5a7134ae0ac53183a9dda3874ea99b4b293c0f21cfb103bd283c11
+  rubydex (0.4.0-aarch64-linux) sha256=fab1f9cbb3301d2f3682f29165d9714aca5456fb3d70616b3676e3302af29709
+  rubydex (0.4.0-arm64-darwin) sha256=badbb7d1a7cfc03f1f7ce9fdc5ee414c729812c4b2eaa2bfe7da80d9a3a8b4b6
+  rubydex (0.4.0-x86_64-linux) sha256=75a4e1c6c4691ff815aee820dd26fb080f8053430a0ad248dd9b3125d621df86
   rubyzip (2.4.1) sha256=8577c88edc1fde8935eb91064c5cb1aef9ad5494b940cf19c775ee833e075615
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
   shoulda-matchers (8.0.1) sha256=5dbb46e5765b9da225111b085e0819e8c8a121ff94bba430a153eb1ea2c60288

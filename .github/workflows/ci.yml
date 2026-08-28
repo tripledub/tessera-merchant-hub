@@ -76,6 +76,22 @@ jobs:
       - name: Lint (RuboCop + performance + rspec extensions)
         run: bin/rubocop -f github
 
+  archspec:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Check layered architecture boundaries (ArchSpec)
+        run: bundle exec archspec check
+
   test:
     runs-on: ubuntu-latest
 
