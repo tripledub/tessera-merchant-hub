@@ -1,19 +1,21 @@
-<div class="mt-2 flex flex-wrap items-center gap-2 text-theme-sm" data-testid="document-validity-status">
-  <%= presenter.outcome_badge %>
-  <% if presenter.policy_version %>
-    <span class="text-xs text-gray-500 dark:text-gray-400">
-      <%= t("kyc.documents.validity.policy_version", version: presenter.policy_version) %>
-    </span>
+<div class="space-y-1.5">
+  <div class="flex flex-wrap items-center gap-2" data-testid="document-validity-status">
+    <%= presenter.outcome_badge %>
+    <% if presenter.policy_version %>
+      <span class="text-gray-500 dark:text-gray-400">
+        <%= t("kyc.documents.validity.policy_version", version: presenter.policy_version) %>
+      </span>
+    <% end %>
+    <% if presenter.reason_text %>
+      <span class="text-gray-500 dark:text-gray-400"><%= presenter.reason_text %></span>
+    <% end %>
+  </div>
+
+  <% if presenter.replacement_requirement %>
+    <%= render "kyc/documents/replacement_progress", presenter: presenter %>
   <% end %>
-  <% if presenter.reason_text %>
-    <span class="text-xs text-gray-500 dark:text-gray-400"><%= presenter.reason_text %></span>
+
+  <% if presenter.confirmation_history.any? %>
+    <%= render "kyc/documents/confirmation_history", presenter: presenter %>
   <% end %>
 </div>
-
-<% if presenter.replacement_requirement %>
-  <%= render "kyc/documents/replacement_progress", presenter: presenter %>
-<% end %>
-
-<% if presenter.confirmation_history.any? %>
-  <%= render "kyc/documents/confirmation_history", presenter: presenter %>
-<% end %>
