@@ -254,6 +254,23 @@ RSpec.describe "KycDocuments", type: :request do
         fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
         expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}")).to be_present
       end
+
+      it "returns a turbo stream response also replacing the comments modal with the updated highlight" do
+        patch comment_status_kyc_document_path(document),
+              params: { comment_status: "resolved" },
+              headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:ok)
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}")).to be_present
+
+        modal_frame = fragment.css("turbo-frame#document-comments-modal")
+        expect(modal_frame).to be_present
+
+        buttons = modal_frame.css("form button")
+        resolved_button = buttons.find { |b| b.text.include?("Mark resolved") }
+        expect(resolved_button["class"]).to include("ring-success-400")
+      end
     end
 
     context "when signed in as psp_support" do

@@ -135,11 +135,18 @@ class Kyc::DocumentsController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace(
-          dom_id(document),
-          partial: "kyc/documents/kyc_document",
-          locals: { document: document }
-        )
+        render turbo_stream: [
+          turbo_stream.replace(
+            dom_id(document),
+            partial: "kyc/documents/kyc_document",
+            locals: { document: document }
+          ),
+          turbo_stream.replace(
+            "document-comments-modal",
+            partial: "kyc/document_comments/modal",
+            locals: { kyc_document: document, comment_errors: nil }
+          )
+        ]
       end
       format.html { redirect_to applicant_path(document.applicant) }
     end

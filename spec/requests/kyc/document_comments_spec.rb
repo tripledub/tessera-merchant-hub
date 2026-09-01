@@ -29,12 +29,42 @@ RSpec.describe "Kyc::DocumentComments", type: :request do
       end
 
       it "shows both status buttons and highlights the active one" do
-        document.update!(comment_status: "resolved")
+        resolved_document = create(:kyc_document, applicant: applicant, comment_status: "resolved")
 
-        get kyc_document_comments_path(document)
+        get kyc_document_comments_path(resolved_document)
 
         expect(response.body).to include("Mark requires follow up")
         expect(response.body).to include("Mark resolved")
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        buttons = fragment.css("form button")
+        resolved_button = buttons.find { |b| b.text.include?("Mark resolved") }
+        follow_up_button = buttons.find { |b| b.text.include?("Mark requires follow up") }
+
+        expect(resolved_button["class"]).to include("ring-success-400")
+        expect(follow_up_button["class"]).not_to include("ring-warning-400")
+      end
+
+      it "highlights the requires-follow-up button when that status is active" do
+        follow_up_document = create(:kyc_document, applicant: applicant, comment_status: "requires_follow_up")
+
+        get kyc_document_comments_path(follow_up_document)
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        buttons = fragment.css("form button")
+        resolved_button = buttons.find { |b| b.text.include?("Mark resolved") }
+        follow_up_button = buttons.find { |b| b.text.include?("Mark requires follow up") }
+
+        expect(follow_up_button["class"]).to include("ring-warning-400")
+        expect(resolved_button["class"]).not_to include("ring-success-400")
+      end
+    end
+
+    context "when unauthenticated" do
+      it "redirects to sign in" do
+        get kyc_document_comments_path(document)
+
+        expect(response).to redirect_to(new_user_session_path)
       end
     end
 
