@@ -53,6 +53,13 @@ production-ready).
   `--no-verify`.
 - New i18n strings go through `config/locales/en.yml`; `i18n-tasks health`
   will fail on missing or unused keys.
+- If the suite feels slower than it should, re-profile with `test-prof`
+  (already bundled): `RD_PROF=1 bundle exec rspec` reports the slowest
+  suites by setup time (RSpecDissect); `FPROF=1 bundle exec rspec` reports
+  factory usage counts/time, including cascade creation via associations
+  (FactoryProf). Compare against the MH-280 baseline (1862 examples, ~40s,
+  `kyc_document`'s ActiveStorage `.attach` in its factory as the single
+  largest cost) before assuming a new slowdown is code, not data volume.
 
 ## Architecture Orientation (lightweight)
 
