@@ -254,7 +254,7 @@ aside[data-collapsed] .menu-item {
 /* ─── Status badges ──────────────────────────────────────────────────────── */
 
 @utility badge {
-  @apply inline-flex items-center justify-center gap-1 rounded-full px-2.5 py-0.5 text-sm font-medium;
+  @apply inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-full px-2.5 py-0.5 text-sm font-medium;
 }
 
 @utility badge-success {
