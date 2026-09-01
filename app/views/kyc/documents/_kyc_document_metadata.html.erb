@@ -1,5 +1,5 @@
 <div id="kyc_document_<%= document.id %>_metadata">
-  <div class="flex items-center justify-between rounded-md border border-gray-200 px-4 py-3 text-theme-sm dark:border-gray-700 dark:bg-white/[0.03]">
+  <div class="flex flex-col gap-3 rounded-md border border-gray-200 px-4 py-3 text-theme-sm sm:flex-row sm:items-center sm:justify-between dark:border-gray-700 dark:bg-white/[0.03]">
   <div class="flex items-center gap-3 min-w-0">
     <% if document.file.attached? %>
       <button type="button"
@@ -40,17 +40,17 @@
         <% if document.kyc_principal %>
           <span class="text-xs text-gray-500 dark:text-gray-400"><%= document.kyc_principal.name %></span>
           <% if document.match_method == "fuzzy" %>
-            <span class="inline-flex items-center rounded-full bg-yellow-100 px-1.5 py-0.5 text-xs font-medium text-yellow-700">
+            <span class="inline-flex items-center whitespace-nowrap rounded-full bg-yellow-100 px-1.5 py-0.5 text-xs font-medium text-yellow-700">
               <%= t("kyc.documents.match_method.fuzzy") %>
             </span>
           <% end %>
           <% if document.kyc_principal.unconfirmed? %>
-            <span class="inline-flex items-center rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
+            <span class="inline-flex items-center whitespace-nowrap rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
               <%= t("kyc.documents.principal_status.unconfirmed") %>
             </span>
           <% end %>
           <% if document.address_match_method.present? %>
-            <span class="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium <%= document.address_match_method == 'exact' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' %>">
+            <span class="inline-flex items-center whitespace-nowrap rounded-full px-1.5 py-0.5 text-xs font-medium <%= document.address_match_method == 'exact' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' %>">
               <%= t("kyc.documents.address_match_method.#{document.address_match_method}") %>
             </span>
           <% end %>
@@ -61,7 +61,7 @@
     </div>
   </div>
 
-  <div class="flex items-center gap-3 flex-shrink-0">
+  <div class="flex items-center gap-3 flex-wrap flex-shrink-0 sm:flex-nowrap">
     <% if document.document_type.present? %>
       <div class="flex items-center gap-2" data-controller="classification" data-classification-url-value="<%= kyc_document_path(document) %>" data-classification-status-value="<%= document.classification_status %>">
         <select data-classification-target="select"
