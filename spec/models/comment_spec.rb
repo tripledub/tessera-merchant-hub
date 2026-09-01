@@ -16,4 +16,30 @@ RSpec.describe Comment, type: :model do
 
     expect(document.comments.to_a).to eq([ older, newer ])
   end
+
+  describe "append-only guarantee" do
+    it "is readonly once persisted" do
+      comment = create(:comment)
+
+      expect(comment).to be_readonly
+    end
+
+    it "is not readonly before persistence" do
+      comment = build(:comment)
+
+      expect(comment).not_to be_readonly
+    end
+
+    it "raises ActiveRecord::ReadOnlyRecord when directly updated" do
+      comment = create(:comment)
+
+      expect { comment.update(body: "edited") }.to raise_error(ActiveRecord::ReadOnlyRecord)
+    end
+
+    it "raises ActiveRecord::ReadOnlyRecord when directly destroyed" do
+      comment = create(:comment)
+
+      expect { comment.destroy }.to raise_error(ActiveRecord::ReadOnlyRecord)
+    end
+  end
 end
