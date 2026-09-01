@@ -438,6 +438,7 @@ en:
         unconfirmed: Unconfirmed
       reject_match: Reject principal match
       retry: Retry
+      select_type: Select type…
       status:
         complete: Complete
         error: Error
