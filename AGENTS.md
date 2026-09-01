@@ -39,8 +39,15 @@ production-ready).
   ticket has enough detail to implement.
 - When starting implementation, transition the ticket to **In Progress**.
 - When opening a PR, transition the ticket to **In Review**.
+- A bare ticket key from the user (e.g. `MH-262?`) means deliver it
+  end-to-end — branch, implement, PR, status transitions — without asking
+  what to do next; see the `delivering-jira-tickets` skill.
 - Do not transition a ticket to **UAT** or **Done** — those are deployment
   and QA sign-off steps owned by the user.
+- An epic is not a unit of work: split it into child stories in Jira and
+  design/implement one story at a time. Bugs or feature ideas found
+  mid-session become new Jira tickets before any code — see the
+  `planning-jira-work` skill.
 
 ## Testing & TDD
 
