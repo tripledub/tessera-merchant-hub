@@ -69,7 +69,8 @@
         <%= f.label :body, t("kyc.documents.comments.body_label"), class: "sr-only" %>
         <%= f.text_area :body, rows: 3, required: true,
               placeholder: t("kyc.documents.comments.placeholder"),
-              class: "form-input w-full" %>
+              class: "form-input w-full",
+              **(comment_errors.present? ? { "data-modal-autofocus": true, "aria-invalid": true } : {}) %>
         <%= f.submit t("kyc.documents.comments.add"), class: "btn-primary mt-2" %>
       <% end %>
     </div>

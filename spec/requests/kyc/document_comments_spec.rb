@@ -113,6 +113,16 @@ RSpec.describe "Kyc::DocumentComments", type: :request do
         expect(response).to have_http_status(:unprocessable_content)
         expect(response.body).to include("can&#39;t be blank")
       end
+
+      it "marks the invalid textarea for autofocus instead of a status button" do
+        post kyc_document_comments_path(document), params: { body: "" }
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        textarea = fragment.css("textarea[name='body']").first
+
+        expect(textarea["data-modal-autofocus"]).to eq("true")
+        expect(textarea["aria-invalid"]).to eq("true")
+      end
     end
 
     context "when signed in as psp_support" do
