@@ -386,6 +386,19 @@ en:
           confirmed: Confirmed
           rejected: Rejected
           unclassified: Unclassified
+      comment_status:
+        requires_follow_up: Requires follow up
+        resolved: Resolved
+      comments:
+        add: Add comment
+        body_label: Comment
+        close: Close
+        empty: No comments yet.
+        mark_requires_follow_up: Mark requires follow up
+        mark_resolved: Mark resolved
+        open: Comments
+        placeholder: Add a comment…
+        title: Comments
       confirm: Confirm
       confirm_match: Confirm principal match
       date_confirmations:

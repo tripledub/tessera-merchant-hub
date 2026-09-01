@@ -16,4 +16,8 @@ RSpec.describe KycDocumentPolicy, type: :policy do
   it("psp_admin can confirm_dates")        { expect(described_class.new(psp_admin,      document).confirm_dates?).to be true }
   it("psp_support cannot confirm_dates")   { expect(described_class.new(psp_support,    document).confirm_dates?).to be false }
   it("merchant_admin cannot confirm_dates") { expect(described_class.new(merchant_admin, document).confirm_dates?).to be false }
+
+  it("psp_admin can update_comment_status")        { expect(described_class.new(psp_admin,      document).update_comment_status?).to be true }
+  it("psp_support can update_comment_status")      { expect(described_class.new(psp_support,    document).update_comment_status?).to be true }
+  it("merchant_admin cannot update_comment_status") { expect(described_class.new(merchant_admin, document).update_comment_status?).to be false }
 end

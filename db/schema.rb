@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_26_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -72,6 +72,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_160000) do
     t.index ["applicant_id"], name: "index_applicant_users_on_applicant_id"
     t.index ["email"], name: "index_applicant_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_applicant_users_on_reset_password_token", unique: true
+  end
+
+  create_table "comments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "author_id", null: false
+    t.text "body", null: false
+    t.uuid "commentable_id", null: false
+    t.string "commentable_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_comments_on_author_id"
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
   end
 
   create_table "kyc_corporate_entities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -149,6 +160,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_160000) do
     t.float "classification_confidence"
     t.string "classification_method"
     t.integer "classification_status", default: 0, null: false
+    t.integer "comment_status"
     t.uuid "corporate_entity_id"
     t.datetime "created_at", null: false
     t.integer "document_type"
@@ -376,6 +388,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_26_160000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "applicant_users", "merchants", column: "applicant_id"
+  add_foreign_key "comments", "users", column: "author_id"
   add_foreign_key "kyc_corporate_entities", "kyc_documents"
   add_foreign_key "kyc_corporate_entities", "merchants", column: "applicant_id"
   add_foreign_key "kyc_document_date_confirmations", "kyc_documents"

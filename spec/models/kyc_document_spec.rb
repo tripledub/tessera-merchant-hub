@@ -12,6 +12,33 @@ RSpec.describe KycDocument, type: :model do
     expect(document.status).to eq("pending")
   end
 
+  it "has no comment_status by default" do
+    expect(document.comment_status).to be_nil
+  end
+
+  it "defines the comment_status enum" do
+    expect(described_class.comment_statuses).to eq(
+      "requires_follow_up" => 0,
+      "resolved" => 1
+    )
+  end
+
+  it "can carry comments via the Commentable concern" do
+    document = create(:kyc_document)
+    comment  = create(:comment, commentable: document, author: create(:user, :psp_admin))
+
+    expect(document.comments).to contain_exactly(comment)
+  end
+
+  it "destroys along with its comments (comments are append-only/readonly and must not block cascade delete)" do
+    document = create(:kyc_document)
+    comment  = create(:comment, commentable: document, author: create(:user, :psp_admin))
+
+    expect { document.destroy! }.not_to raise_error
+    expect(described_class.exists?(document.id)).to be false
+    expect(Comment.exists?(comment.id)).to be false
+  end
+
   it "defines the crypto policy document types" do
     expect(described_class.document_types).to include(
       "vasp_registration" => 74,

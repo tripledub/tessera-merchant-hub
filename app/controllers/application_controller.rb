@@ -36,6 +36,13 @@ class ApplicationController < ActionController::Base
       format.html { render "errors/forbidden", status: :forbidden }
       format.json { render json: { error: "Forbidden" }, status: :forbidden }
       format.text { render plain: "Forbidden", status: :forbidden }
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.append(
+          "toast-container",
+          partial: "shared/toast",
+          locals: { message: t("errors.forbidden.message"), type: :error }
+        ), status: :forbidden
+      end
     end
   end
 end

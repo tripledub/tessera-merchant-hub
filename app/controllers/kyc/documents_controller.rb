@@ -126,6 +126,32 @@ class Kyc::DocumentsController < ApplicationController
     end
   end
 
+  def comment_status
+    authorize document, :update_comment_status?
+
+    status = params[:comment_status]
+    document.update!(comment_status: status) if KycDocument.comment_statuses.key?(status)
+    broadcast_document(document)
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.replace(
+            dom_id(document),
+            partial: "kyc/documents/kyc_document",
+            locals: { document: document }
+          ),
+          turbo_stream.update(
+            "document-comments-modal",
+            partial: "kyc/document_comments/modal_content",
+            locals: { kyc_document: document, comment_errors: nil }
+          )
+        ]
+      end
+      format.html { redirect_to applicant_path(document.applicant) }
+    end
+  end
+
   def retry
     authorize document
     document.update!(
