@@ -70,7 +70,11 @@ class KycDocument < ApplicationRecord
     source_of_wealth_questionnaire: 72,
     aml_ctf_questionnaire: 73,
     vasp_registration: 74,
-    wallet_custody_infrastructure_attestation: 75
+    wallet_custody_infrastructure_attestation: 75,
+    # Content type the AI classifier can't process at all (e.g. xlsx/xls —
+    # see DocumentClassifiers::AiFallback::SUPPORTED_CONTENT_TYPES). Acknowledged
+    # and kept on file, but never auto-extracted; a human can reclassify it later.
+    other: 99
   }
 
   enum :classification_status, {
