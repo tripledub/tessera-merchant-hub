@@ -1,4 +1,4 @@
-<%# locals: (kyc_document:) %>
+<%# locals: (kyc_document:, comment_errors: nil) %>
 <turbo-frame id="document-comments-modal">
   <div class="fixed inset-0 z-[9999] flex items-center justify-center px-4"
        data-controller="modal"
@@ -56,6 +56,10 @@
             <% end %>
           <% end %>
         </div>
+
+        <% if comment_errors.present? %>
+          <p class="mt-4 text-error-500"><%= comment_errors.full_messages.to_sentence %></p>
+        <% end %>
 
         <%= form_with url: kyc_document_comments_path(kyc_document), method: :post, class: "mt-4" do |f| %>
           <%= f.text_area :body, rows: 3, required: true,

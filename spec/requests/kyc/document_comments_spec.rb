@@ -61,6 +61,19 @@ RSpec.describe "Kyc::DocumentComments", type: :request do
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Needs a follow up call")
       end
+
+      it "does not create a comment when body is blank" do
+        expect {
+          post kyc_document_comments_path(document), params: { body: "" }
+        }.not_to change(Comment, :count)
+      end
+
+      it "renders a distinguishable failure state when body is blank" do
+        post kyc_document_comments_path(document), params: { body: "" }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("can&#39;t be blank")
+      end
     end
 
     context "when signed in as psp_support" do
