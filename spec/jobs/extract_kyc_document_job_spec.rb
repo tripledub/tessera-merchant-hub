@@ -95,6 +95,24 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       end
     end
 
+    context "when document_type is other" do
+      let(:document) do
+        create(:kyc_document,
+          applicant: applicant,
+          document_type: :other,
+          classification_status: :confirmed,
+          status: :pending)
+      end
+
+      it "skips extraction instead of crashing on the schema-less ExtractionData::Generic fallback" do
+        described_class.new.perform(document.id)
+        document.reload
+        expect(document.status).to eq("pending")
+        expect(document.result).to be_nil
+        expect(Kyc::DocumentExtractorService).not_to have_received(:call)
+      end
+    end
+
     context "when address matching runs for a utility bill with a principal present" do
       let(:principal_with_address) do
         create(:kyc_principal,

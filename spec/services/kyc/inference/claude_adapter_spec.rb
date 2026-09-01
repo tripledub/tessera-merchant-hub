@@ -89,6 +89,16 @@ RSpec.describe Kyc::Inference::ClaudeAdapter, type: :service do
       expect(result).to eq("result" => "some data")
     end
 
+    it "strips a markdown code fence before parsing (MH-172)" do
+      fenced_response = instance_double(RubyLLM::Message, content: "```json\n{\"result\":\"some data\"}\n```")
+      allow(mock_chat).to receive(:ask).and_return(fenced_response)
+
+      adapter = described_class.new(client: mock_chat)
+      result = adapter.generate(prompt: "Reply with JSON.")
+
+      expect(result).to eq("result" => "some data")
+    end
+
     context "when a schema is provided" do
       let(:schema) { Class.new(RubyLLM::Schema) }
 

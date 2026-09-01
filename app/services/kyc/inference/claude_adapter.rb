@@ -47,7 +47,7 @@ module Kyc
         content = response.content
         return content if content.is_a?(Hash)
 
-        JSON.parse(content)
+        JSON.parse(ResponseNormalizer.extract_json(content))
       rescue JSON::ParserError => e
         raise Kyc::Inference::Error, "Claude returned invalid JSON: #{e.message}"
       end
