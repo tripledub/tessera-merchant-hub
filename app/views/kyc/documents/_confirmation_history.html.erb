@@ -1,6 +1,6 @@
 <% entry = presenter.confirmation_history.first %>
 <% if entry %>
-  <p class="mt-2 text-xs text-gray-500 dark:text-gray-400" data-testid="confirmation-history">
+  <p class="text-gray-500 dark:text-gray-400" data-testid="confirmation-history">
     <%= t("kyc.documents.validity.confirmation_history.entry",
           role: t("kyc.documents.date_confirmations.roles.#{entry.date_role}", default: entry.date_role.humanize),
           change: presenter.confirmation_change_text(entry),

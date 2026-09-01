@@ -1,7 +1,7 @@
 <% requirement = presenter.replacement_requirement %>
-<div class="mt-2 rounded-md border border-gray-200 p-2 text-xs text-gray-600 dark:border-gray-700 dark:text-gray-300"
+<div class="border-l-2 border-gray-200 pl-2 text-gray-500 dark:border-gray-700 dark:text-gray-400"
      data-testid="replacement-progress">
-  <p class="font-medium text-gray-800 dark:text-white/90"><%= presenter.replacement_status_label %></p>
+  <p class="font-medium text-gray-700 dark:text-gray-300"><%= presenter.replacement_status_label %></p>
   <p><%= t("kyc.documents.validity.replacement.opened_at", date: l(requirement.opened_at.to_date)) %></p>
   <% if requirement.escalated_at %>
     <p><%= t("kyc.documents.validity.replacement.escalated_at", date: l(requirement.escalated_at.to_date)) %></p>

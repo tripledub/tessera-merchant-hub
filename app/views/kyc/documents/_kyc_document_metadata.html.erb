@@ -1,5 +1,6 @@
 <div id="kyc_document_<%= document.id %>_metadata">
-  <div class="flex flex-col gap-3 rounded-md border border-gray-200 px-4 py-3 text-theme-sm sm:flex-row sm:items-center sm:justify-between dark:border-gray-700 dark:bg-white/[0.03]">
+  <div class="rounded-md border border-gray-200 px-4 py-3 text-theme-sm dark:border-gray-700 dark:bg-white/[0.03]">
+  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
   <div class="flex items-center gap-3 min-w-0">
     <% if document.file.attached? %>
       <button type="button"
@@ -35,27 +36,6 @@
                else "badge-gray"
              end %>
           <span class="badge <%= badge_class %>"><%= t("kyc.documents.classification.status.#{document.classification_status}") %></span>
-        <% end %>
-
-        <% if document.kyc_principal %>
-          <span class="text-xs text-gray-500 dark:text-gray-400"><%= document.kyc_principal.name %></span>
-          <% if document.match_method == "fuzzy" %>
-            <span class="inline-flex items-center whitespace-nowrap rounded-full bg-yellow-100 px-1.5 py-0.5 text-xs font-medium text-yellow-700">
-              <%= t("kyc.documents.match_method.fuzzy") %>
-            </span>
-          <% end %>
-          <% if document.kyc_principal.unconfirmed? %>
-            <span class="inline-flex items-center whitespace-nowrap rounded-full bg-orange-100 px-1.5 py-0.5 text-xs font-medium text-orange-700">
-              <%= t("kyc.documents.principal_status.unconfirmed") %>
-            </span>
-          <% end %>
-          <% if document.address_match_method.present? %>
-            <span class="inline-flex items-center whitespace-nowrap rounded-full px-1.5 py-0.5 text-xs font-medium <%= document.address_match_method == 'exact' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' %>">
-              <%= t("kyc.documents.address_match_method.#{document.address_match_method}") %>
-            </span>
-          <% end %>
-        <% elsif document.complete? %>
-          <span class="text-xs text-gray-400 italic"><%= t("kyc.documents.unlinked") %></span>
         <% end %>
       </div>
     </div>
@@ -131,9 +111,40 @@
   </div>
   </div>
 
-  <% if document.document_type.present? %>
-    <% present(document, Kyc::DocumentValidityPresenter) do |vp| %>
-      <%= render "kyc/documents/validity_status", presenter: vp %>
-    <% end %>
+  <% has_principal_info = document.kyc_principal || document.complete? %>
+  <% if has_principal_info || document.document_type.present? %>
+    <div class="mt-2 space-y-1.5 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
+      <% if has_principal_info %>
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <% if document.kyc_principal %>
+            <span><%= document.kyc_principal.name %></span>
+            <% if document.match_method == "fuzzy" %>
+              <span class="inline-flex items-center whitespace-nowrap rounded-full bg-yellow-100 px-1.5 py-0.5 font-medium text-yellow-700">
+                <%= t("kyc.documents.match_method.fuzzy") %>
+              </span>
+            <% end %>
+            <% if document.kyc_principal.unconfirmed? %>
+              <span class="inline-flex items-center whitespace-nowrap rounded-full bg-orange-100 px-1.5 py-0.5 font-medium text-orange-700">
+                <%= t("kyc.documents.principal_status.unconfirmed") %>
+              </span>
+            <% end %>
+            <% if document.address_match_method.present? %>
+              <span class="inline-flex items-center whitespace-nowrap rounded-full px-1.5 py-0.5 font-medium <%= document.address_match_method == 'exact' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' %>">
+                <%= t("kyc.documents.address_match_method.#{document.address_match_method}") %>
+              </span>
+            <% end %>
+          <% elsif document.complete? %>
+            <span class="italic"><%= t("kyc.documents.unlinked") %></span>
+          <% end %>
+        </div>
+      <% end %>
+
+      <% if document.document_type.present? %>
+        <% present(document, Kyc::DocumentValidityPresenter) do |vp| %>
+          <%= render "kyc/documents/validity_status", presenter: vp %>
+        <% end %>
+      <% end %>
+    </div>
   <% end %>
+  </div>
 </div>
