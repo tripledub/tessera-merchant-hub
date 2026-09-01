@@ -6,6 +6,8 @@ class KycDocument < ApplicationRecord
   belongs_to :corporate_entity, class_name: "Kyc::CorporateEntity", optional: true
   belongs_to :superseded_by_kyc_document, class_name: "KycDocument", optional: true
 
+  include Commentable
+
   has_many :corporate_entities, class_name: "Kyc::CorporateEntity", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
   has_many :validation_warnings, class_name: "Kyc::ValidationWarning", foreign_key: :kyc_document_id,
@@ -84,6 +86,10 @@ class KycDocument < ApplicationRecord
     confirmed: 3,
     rejected: 4
   }, default: :unclassified, prefix: :classification
+
+  # Nullable, no default — nil means no flag has ever been set, distinct
+  # from `status` above which tracks classification/extraction progress.
+  enum :comment_status, { requires_follow_up: 0, resolved: 1 }, prefix: :comment
 
   ALLOWED_CONTENT_TYPES = %w[
     image/jpeg image/png image/webp image/gif
