@@ -7,13 +7,14 @@ export default class extends Controller {
     document.body.style.overflow = "hidden"
 
     const frame = this.frameElement
-    if (frame && !frame.dataset.modalReturnFocusSet) {
+    const isFirstOpen = frame && !frame.dataset.modalReturnFocusSet
+    if (isFirstOpen) {
       frame._modalReturnFocus = document.activeElement
       frame.dataset.modalReturnFocusSet = "true"
-    }
 
-    const focusTarget = this.element.querySelector("textarea") || this.element.querySelector("button, [href], input, select")
-    focusTarget?.focus()
+      const focusTarget = this.element.querySelector("textarea") || this.element.querySelector("button, [href], input, select")
+      focusTarget?.focus()
+    }
   }
 
   disconnect() {
