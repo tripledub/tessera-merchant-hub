@@ -13,6 +13,14 @@ class ExtractKycDocumentJob < ApplicationJob
       return
     end
 
+    # "Other" has no dedicated ExtractionData schema and falls back to
+    # ExtractionData::Generic, which defines no attributes and can't accept
+    # real free-form data — this type is acknowledged, not extracted, by design.
+    if document.other?
+      Rails.logger.warn("ExtractKycDocumentJob: skipping #{document.id} — document_type is 'other', not extractable")
+      return
+    end
+
     document.processing!
     broadcast_document(document)
 
