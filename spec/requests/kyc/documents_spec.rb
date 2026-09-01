@@ -219,4 +219,62 @@ RSpec.describe "KycDocuments", type: :request do
       end
     end
   end
+
+  describe "PATCH /kyc_documents/:id/comment_status" do
+    let_it_be(:merchant_admin) { create(:user, :merchant_admin) }
+    let!(:document) { create(:kyc_document, applicant: applicant) }
+
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "sets the comment_status to requires_follow_up" do
+        patch comment_status_kyc_document_path(document), params: { comment_status: "requires_follow_up" }
+
+        expect(document.reload.comment_status).to eq("requires_follow_up")
+      end
+
+      it "sets the comment_status to resolved" do
+        patch comment_status_kyc_document_path(document), params: { comment_status: "resolved" }
+
+        expect(document.reload.comment_status).to eq("resolved")
+      end
+
+      it "ignores an invalid comment_status value" do
+        patch comment_status_kyc_document_path(document), params: { comment_status: "bogus" }
+
+        expect(document.reload.comment_status).to be_nil
+      end
+
+      it "returns a turbo stream response replacing the document row" do
+        patch comment_status_kyc_document_path(document),
+              params: { comment_status: "resolved" },
+              headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:ok)
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}")).to be_present
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "sets the comment_status" do
+        patch comment_status_kyc_document_path(document), params: { comment_status: "resolved" }
+
+        expect(document.reload.comment_status).to eq("resolved")
+      end
+    end
+
+    context "when signed in as merchant_admin" do
+      before { sign_in merchant_admin }
+
+      it "returns 403" do
+        patch comment_status_kyc_document_path(document), params: { comment_status: "resolved" }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(document.reload.comment_status).to be_nil
+      end
+    end
+  end
 end
