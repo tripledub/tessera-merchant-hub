@@ -1,0 +1,20 @@
+# Minimum acceptable score
+minimum_score: 80.0
+
+# Paths to exclude
+paths:
+  - 'db/schema.rb'
+  - 'db/migrate/**/*'
+  - 'config/**/*'
+  - 'spec/factories/**/*'
+
+# Enable analyzers
+analyzers:
+  - flay
+  - flog
+  - reek
+
+# Output format
+formats:
+  - console
+  - html

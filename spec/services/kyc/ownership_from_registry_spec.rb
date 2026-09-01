@@ -41,6 +41,12 @@ RSpec.describe Kyc::OwnershipFromRegistry do
         expect(warning.typed_metadata.effective_percentage).to eq(75)
         expect(warning.typed_metadata.threshold).to eq(25.0)
       end
+
+      it "describes an individual PSC as a person" do
+        call
+
+        expect(Kyc::ValidationWarning.last.message).to include("is a person with significant control of")
+      end
     end
 
     context "with an active PSC whose natures_of_control has no numeric band (control only)" do
@@ -63,14 +69,20 @@ RSpec.describe Kyc::OwnershipFromRegistry do
     context "with an active corporate PSC" do
       before do
         create(:registry_person_with_significant_control,
-          registry_profile: registry_profile, name: "Hexopay Holdings Limited",
+          registry_profile: registry_profile, name: "Example Holdings Ltd",
           kind: "corporate-entity-person-with-significant-control",
           natures_of_control: [ "ownership-of-shares-75-to-100-percent" ], ceased_on: nil)
       end
 
       it "flags corporate PSCs as UBOs too" do
         expect { call }.to change(Kyc::ValidationWarning, :count).by(1)
-        expect(Kyc::ValidationWarning.last.typed_metadata.individual_name).to eq("Hexopay Holdings Limited")
+        expect(Kyc::ValidationWarning.last.typed_metadata.individual_name).to eq("Example Holdings Ltd")
+      end
+
+      it "describes a corporate PSC as a company, not a person" do
+        call
+
+        expect(Kyc::ValidationWarning.last.message).to include("is a company with significant control of")
       end
     end
 

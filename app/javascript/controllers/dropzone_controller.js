@@ -7,6 +7,12 @@ export default class extends Controller {
 
   connect() {
     this.files = []
+    this.onSubmitEnd = this.reset.bind(this)
+    this.element.addEventListener("turbo:submit-end", this.onSubmitEnd)
+  }
+
+  disconnect() {
+    this.element.removeEventListener("turbo:submit-end", this.onSubmitEnd)
   }
 
   dragover(event) {
@@ -38,7 +44,21 @@ export default class extends Controller {
     event.preventDefault()
     this.submitTarget.disabled = true
     await Promise.all(this.files.map(f => this.upload(f)))
-    this.element.closest("form").submit()
+    this.element.requestSubmit()
+  }
+
+  // Turbo renders the response in place instead of reloading the page, so
+  // nothing else clears the picked files, the hidden blob inputs from
+  // upload(), or the disabled submit button between attempts — without
+  // this, a second upload would silently resubmit the first file's blob
+  // alongside the new one (duplicate documents) and the button would stay
+  // disabled forever.
+  reset() {
+    this.files = []
+    this.listTarget.innerHTML = ""
+    this.inputTarget.value = ""
+    this.element.querySelectorAll('input[name="kyc_document[files][]"]').forEach(el => el.remove())
+    this.submitTarget.disabled = false
   }
 
   handleFiles(fileList) {

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
+require "tmpdir"
 
 RSpec.describe Kyc::DocumentExpiryMonitoringJob do
   let_it_be(:applicant) { create(:applicant) }
@@ -18,6 +19,47 @@ RSpec.describe Kyc::DocumentExpiryMonitoringJob do
 
   def requirement_for(document)
     Kyc::DocumentReplacementRequirement.current_for(document)
+  end
+
+  def synchronized_expiry_policy(reference_date)
+    <<~YAML
+      schema_version: 1
+      sector: base
+      requirements:
+        - id: test.driving_licence_validity
+          rule: document_validity
+          outcome: blocking
+          source: MH-212
+          parameters:
+            document_type: driving_licence
+            version: 1
+            effective_from: "#{reference_date.iso8601}"
+            mode: expires
+            required_dates:
+              - expiry
+            warning_thresholds:
+              - 60
+              - 15
+            blocking: true
+    YAML
+  end
+
+  def store_driving_licence_validity_translations
+    I18n.backend.store_translations(
+      :en,
+      kyc: { policy_requirements: { test: { driving_licence_validity: {
+        title: "Driving licence validity",
+        guidance: "Confirm that the driving licence is current."
+      } } } }
+    )
+  end
+
+  def driving_licence_document(reference_date)
+    create(:kyc_document, document_type: :driving_licence, applicant: applicant, status: :complete,
+                           classification_status: :confirmed,
+                           validity_dates: {
+                             "expiry" => validity_dates_for(normalized: (reference_date + 45).iso8601)
+                           })
   end
 
   before do
@@ -93,6 +135,33 @@ RSpec.describe Kyc::DocumentExpiryMonitoringJob do
 
       expect(Kyc::DocumentValidityAssessment.where(kyc_document: disabled_doc)).to be_empty
       expect(requirement_for(disabled_doc)).to be_nil
+    end
+
+    it "discovers a newly synchronized expires-mode document type without enqueueing an immediate run" do
+      reference_date = Date.new(2026, 8, 21)
+      document = driving_licence_document(reference_date)
+      original_registry = Kyc::PolicyRegistry.instance
+      store_driving_licence_validity_translations
+
+      Dir.mktmpdir("kyc-policies") do |directory|
+        Pathname(directory).join("base.yml").write(synchronized_expiry_policy(reference_date))
+        registry = Kyc::PolicyRegistry.load!(path: directory)
+        Kyc::PolicyRegistry.instance = registry
+
+        expect {
+          Kyc::PolicyValiditySync.call(registry: registry)
+        }.not_to have_enqueued_job
+
+        synchronized_policy = Kyc::DocumentValidityPolicy.find_by!(document_type: "driving_licence", version: 1)
+        described_class.new.perform(reference_date: reference_date)
+
+        expect(Kyc::DocumentValidityAssessment.current_for(document))
+          .to have_attributes(kyc_document_validity_policy: synchronized_policy)
+        expect(requirement_for(document)).to be_warned
+      end
+    ensure
+      I18n.backend.reload!
+      Kyc::PolicyRegistry.instance = original_registry
     end
   end
 

@@ -31,6 +31,7 @@ module Kyc
     def confirmed_document_count = data[:documents][:confirmed_count]
     def extracted_document_count = data[:documents][:extracted_count]
     def documents_by_type = data[:documents][:by_type]
+    def document_type_label(type) = KycDocument.document_type_label(type)
 
     # Principals
     def principals = data[:principals]
@@ -40,6 +41,7 @@ module Kyc
     def compliant_entity_count = data[:compliance][:compliant_entity_count]
     def compliance_entity_count = data[:compliance][:entity_count]
     def entity_results = data[:compliance][:entity_results]
+    def policy_results = data[:compliance][:policy_results]
 
     # Cross-references
     def cross_reference_discrepancies = data[:cross_references]

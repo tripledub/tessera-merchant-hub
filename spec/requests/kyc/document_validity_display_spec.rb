@@ -172,6 +172,17 @@ RSpec.describe "Kyc document validity display", type: :request do
 
       expect(response).to have_http_status(:forbidden)
     end
+
+    it "does not render the MH-196 confirm/correct interaction on the documents tab" do
+      create(:kyc_document, applicant: applicant, document_type: :passport, status: :complete,
+             classification_status: :confirmed,
+             validity_dates: { "expiry" => { "raw" => "2030-01-01", "normalized" => "2030-01-01",
+               "confidence" => 0.95, "provenance" => "ai_extraction" } })
+
+      get_documents_tab
+
+      expect(response.body).not_to include(t_confirm_date)
+    end
   end
 
   def t_confirm_date

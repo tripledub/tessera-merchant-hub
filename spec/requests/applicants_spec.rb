@@ -140,9 +140,19 @@ RSpec.describe "Applicants", type: :request do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
 
-      it "returns 200" do
+      it "returns 200 with a sector field" do
         get new_applicant_path
         expect(response).to have_http_status(:ok)
+        expect(response.body).to include('id="applicant_sector"')
+      end
+
+      it "lets the Lookup button skip HTML5 validation so it works without a Name (MH-272)" do
+        get new_applicant_path
+
+        doc = Nokogiri::HTML(response.body)
+        lookup_button = doc.at_css("[formaction='#{registry_preview_applicants_path}']")
+
+        expect(lookup_button["formnovalidate"]).to be_present
       end
     end
 
@@ -160,12 +170,28 @@ RSpec.describe "Applicants", type: :request do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
 
-      it "creates the applicant with a blank company_number, and redirects to show with a retry alert" do
+      it "creates an applicant with the selected sector and redirects to show" do
+        post applicants_path, params: {
+          applicant: {
+            name: "New Corp", company_name: "New Corp Ltd", contact_email: "info@new.com",
+            sector: "crypto_exchange"
+          }
+        }
+        created = Applicant.find_by!(name: "New Corp")
+        expect(response).to redirect_to(applicant_path(created))
+        expect(created.sector).to eq("crypto_exchange")
+      end
+
+      it "creates the applicant with a blank company_number, and redirects to show without attempting a registry lookup" do
+        allow(Applicants::RegistryLookup).to receive(:call)
+
         post applicants_path, params: { applicant: { name: "New Corp" } }
 
         created = Applicant.find_by!(name: "New Corp")
+        expect(Applicants::RegistryLookup).not_to have_received(:call)
         expect(response).to redirect_to(applicant_path(created))
-        expect(flash[:alert]).to be_present
+        expect(flash[:notice]).to be_present
+        expect(flash[:alert]).to be_nil
         expect(created.registry_profiles).to be_empty
       end
 
@@ -294,6 +320,17 @@ RSpec.describe "Applicants", type: :request do
         expect(response).to have_http_status(:ok)
         expect(response.body).to include("Preview Corp Ltd")
       end
+
+      it "renders a 'Use these details' checkbox, checked by default (MH-272)" do
+        post registry_preview_applicants_path, params: { applicant: { company_number: "12345678" } },
+          as: :turbo_stream
+
+        doc = Nokogiri::HTML(response.body)
+        checkbox = doc.at_css("#registry_preview_use_these_details")
+
+        expect(checkbox["checked"]).to be_present
+        expect(response.body).to include(I18n.t("applicants.registry_preview.card.use_these_details"))
+      end
     end
 
     context "when signed in as psp_admin, and the lookup fails" do
@@ -386,11 +423,52 @@ RSpec.describe "Applicants", type: :request do
         expect(response.body).to include("75%+")
       end
 
+      it "does not show a trace-chain button for an individual PSC" do
+        post registry_lookup_applicant_path(applicant)
+
+        get tab_applicant_path(applicant, tab: "ownership")
+
+        expect(response.body).not_to include(I18n.t("applicants.tabs.ownership.registry_pscs_table.trace_chain"))
+      end
+
       it "does not create duplicate principals when retried again" do
         post registry_lookup_applicant_path(applicant)
 
         expect { post registry_lookup_applicant_path(applicant) }
           .not_to change { applicant.kyc_principals.count }
+      end
+    end
+
+    context "when signed in as psp_admin, and the lookup succeeds with a corporate PSC" do
+      let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
+      let(:fetch_result) do
+        Registry::FetchResult.success(
+          company_name: "Acme Ltd", status: "active", incorporated_on: Date.new(2020, 1, 1),
+          directors: [], addresses: [],
+          people_with_significant_control: [
+            {
+              name: "Example Holdings Ltd", kind: "corporate-entity-person-with-significant-control",
+              natures_of_control: [ "ownership-of-shares-75-to-100-percent" ],
+              notified_on: Date.new(2020, 1, 1), ceased_on: nil, nationality: nil,
+              date_of_birth_month: nil, date_of_birth_year: nil,
+              line1: nil, city: nil, postcode: nil, country: nil, registration_number: "99999999"
+            }
+          ]
+        )
+      end
+
+      before do
+        sign_in psp_admin
+        allow(Registry::CompaniesHouseUkClient).to receive(:new).and_return(fake_client)
+        allow(fake_client).to receive(:fetch).with(company_number: "12345678").and_return(fetch_result)
+      end
+
+      it "shows a trace-chain button for a corporate PSC" do
+        post registry_lookup_applicant_path(applicant)
+
+        get tab_applicant_path(applicant, tab: "ownership")
+
+        expect(response.body).to include(I18n.t("applicants.tabs.ownership.registry_pscs_table.trace_chain"))
       end
     end
 
@@ -423,6 +501,67 @@ RSpec.describe "Applicants", type: :request do
     end
   end
 
+  describe "POST /applicants/:id/trace_psc_chain/:psc_id" do
+    let(:applicant) { create(:applicant, company_number: "12345678", registry_jurisdiction: "gb", company_name: "Acme Ltd") }
+    let(:registry_profile) { create(:registry_profile, applicant: applicant, company_number: "12345678") }
+    let(:psc) do
+      create(:registry_person_with_significant_control,
+        registry_profile: registry_profile, name: "Intermediate Holdings Ltd",
+        kind: "corporate-entity-person-with-significant-control", registration_number: "99999999")
+    end
+
+    context "when signed in as psp_admin, and the chain follower succeeds" do
+      let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
+
+      before do
+        sign_in psp_admin
+        psc
+        allow(Registry::CompaniesHouseUkClient).to receive(:new).and_return(fake_client)
+        allow(fake_client).to receive(:fetch).with(company_number: "99999999").and_return(
+          Registry::FetchResult.success(
+            company_name: "Intermediate Holdings Ltd", status: "active", incorporated_on: Date.new(2018, 1, 1),
+            directors: [], addresses: [], people_with_significant_control: []
+          )
+        )
+      end
+
+      it "persists a new registry profile and redirects to show with a success notice" do
+        expect { post trace_psc_chain_applicant_path(applicant, psc_id: psc.id) }
+          .to change { applicant.registry_profiles.count }.by(1)
+
+        expect(response).to redirect_to(applicant_path(applicant))
+        expect(flash[:notice]).to be_present
+      end
+    end
+
+    context "when signed in as psp_admin, and the chain follower fails" do
+      before do
+        sign_in psp_admin
+        psc.update!(registration_number: nil)
+      end
+
+      it "redirects to show with an alert and persists nothing" do
+        expect { post trace_psc_chain_applicant_path(applicant, psc_id: psc.id) }
+          .not_to change { applicant.registry_profiles.count }
+
+        expect(response).to redirect_to(applicant_path(applicant))
+        expect(flash[:alert]).to be_present
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before do
+        sign_in psp_support
+        psc
+      end
+
+      it "returns 403" do
+        post trace_psc_chain_applicant_path(applicant, psc_id: psc.id)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
   describe "GET /applicants/:id/edit" do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
@@ -430,6 +569,16 @@ RSpec.describe "Applicants", type: :request do
       it "returns 200" do
         get edit_applicant_path(applicant_a)
         expect(response).to have_http_status(:ok)
+      end
+
+      it "disables sector editing once document collection has begun" do
+        create(:onboarding_session, applicant: applicant_a, current_stage: :document_collection)
+
+        get edit_applicant_path(applicant_a)
+
+        expect(response.body).to include('id="applicant_sector"')
+        expect(response.body).to include('disabled="disabled"')
+        expect(response.body).to include("The business sector cannot be changed after document collection has begun.")
       end
     end
 
@@ -453,6 +602,53 @@ RSpec.describe "Applicants", type: :request do
         }
         expect(response).to redirect_to(applicant_path(applicant_a))
         expect(applicant_a.reload.contact_email).to eq("updated@acme.com")
+      end
+
+      it "updates the applicant sector" do
+        patch applicant_path(applicant_a), params: { applicant: { sector: "gambling" } }
+
+        expect(response).to redirect_to(applicant_path(applicant_a))
+        expect(applicant_a.reload.sector).to eq("gambling")
+      end
+
+      it "rejects changing from general after document collection begins" do
+        locked_applicant = create(:applicant, name: "Locked General Applicant", sector: :general)
+        create(:onboarding_session, applicant: locked_applicant, current_stage: :document_collection)
+
+        patch applicant_path(locked_applicant), params: { applicant: { sector: "crypto_exchange" } }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Sector cannot be changed after document collection has begun")
+        expect(locked_applicant.reload.sector).to eq("general")
+      end
+
+      it "rejects changing from a policy sector when a collection checklist already exists" do
+        locked_applicant = create(:applicant, name: "Locked Policy Applicant", sector: :crypto_exchange)
+        create(
+          :onboarding_session,
+          applicant: locked_applicant,
+          current_stage: :jurisdictions,
+          document_checklist: [ { "category" => "sector_policy" } ]
+        )
+
+        patch applicant_path(locked_applicant), params: { applicant: { sector: "general" } }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Sector cannot be changed after document collection has begun")
+        expect(locked_applicant.reload.sector).to eq("crypto_exchange")
+      end
+
+      it "rejects changing sector after a direct document upload without an onboarding session" do
+        locked_applicant = create(:applicant, name: "Direct Upload Applicant", sector: :crypto_exchange)
+        create(:kyc_document, applicant: locked_applicant)
+
+        expect(locked_applicant.onboarding_session).to be_nil
+
+        patch applicant_path(locked_applicant), params: { applicant: { sector: "general" } }
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(response.body).to include("Sector cannot be changed after document collection has begun")
+        expect(locked_applicant.reload.sector).to eq("crypto_exchange")
       end
     end
 
@@ -538,6 +734,24 @@ RSpec.describe "Applicants", type: :request do
         expect(response.body).not_to include("Portal Users")
       end
 
+      it "explains unmet Crypto Exchange policy evidence alongside entity results" do
+        policy_applicant = create(:applicant, sector: :crypto_exchange)
+        source_document = create(:kyc_document, applicant: policy_applicant, document_type: :group_structure_chart)
+        create(
+          :kyc_corporate_entity,
+          applicant: policy_applicant,
+          kyc_document: source_document,
+          name: "Test Crypto Entity"
+        )
+
+        get tab_applicant_path(policy_applicant, tab: "summary")
+
+        expect(response.body).to include("Test Crypto Entity")
+        expect(response.body).to include("Wallet and custody infrastructure attestation")
+        expect(response.body).to include("Upload an attestation describing the applicant")
+        expect(response.body).to include("Unmet")
+      end
+
       it "renders the portal user's email and a remove button when one exists" do
         applicant_user = create(:applicant_user, applicant: applicant, email: "jane@example.com")
 
@@ -546,6 +760,15 @@ RSpec.describe "Applicants", type: :request do
         expect(response.body).to include("Portal Users")
         expect(response.body).to include("jane@example.com")
         expect(response.body).to include(applicant_user_path(applicant_user))
+      end
+
+      it "renders an Unclassified badge instead of crashing when a document has no document_type (MH-271)" do
+        create(:kyc_document, applicant: applicant, document_type: nil, status: :pending)
+
+        get tab_applicant_path(applicant, tab: "summary")
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include("Unclassified")
       end
     end
 

@@ -81,6 +81,19 @@
         <%= t('.compliant_of_total', compliant: p.compliant_entity_count, total: p.compliance_entity_count) %>
       </span>
     </div>
+    <% if p.policy_results.any? %>
+      <div class="mb-2 space-y-2">
+        <% p.policy_results.each do |result| %>
+          <div class="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+            <div class="flex items-center justify-between gap-3">
+              <p class="text-sm font-medium text-gray-800 dark:text-white/90"><%= result[:title] %></p>
+              <span class="text-xs text-gray-600 dark:text-gray-400"><%= result[:status].to_s.humanize %></span>
+            </div>
+            <p class="mt-1 text-xs text-gray-600 dark:text-gray-400"><%= result[:guidance] %></p>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
     <% if p.entity_results.any? %>
       <div class="space-y-2">
         <% p.entity_results.each do |er| %>
@@ -127,7 +140,7 @@
       <div class="flex flex-wrap gap-1.5">
         <% p.documents_by_type.each do |type, count| %>
           <span class="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-500/10 dark:text-gray-400">
-            <%= t("kyc.documents.document_types.#{type}", default: type.humanize) %> (<%= count %>)
+            <%= p.document_type_label(type) %> (<%= count %>)
           </span>
         <% end %>
       </div>

@@ -102,6 +102,17 @@ module Kyc
               entity_id: er[:entity].id,
               results: er[:results].map { |r| { rule: r.rule_name, met: r.met? } }
             }
+          end,
+          policy_results: assessment.policy_results.map do |result|
+            {
+              requirement_id: result.requirement_id,
+              title: result.title,
+              guidance: result.guidance,
+              status: result.status,
+              met: result.met?,
+              outcome: result.outcome,
+              missing: result.missing
+            }
           end
         }
       end

@@ -12,11 +12,22 @@ class Kyc::DocumentsController < ApplicationController
     files = params[:kyc_document]&.fetch(:files, [])&.compact_blank
 
     if files.blank?
-      redirect_to applicant_path(applicant), alert: t("flash.kyc_documents.no_files")
+      respond_to do |format|
+        format.turbo_stream do
+          render turbo_stream: turbo_stream.append(
+            "toast-container",
+            partial: "shared/toast",
+            locals: { message: t("flash.kyc_documents.no_files"), type: :error }
+          )
+        end
+        format.html { redirect_to applicant_path(applicant), alert: t("flash.kyc_documents.no_files") }
+      end
       return
     end
 
-    saved = 0
+    had_no_documents = applicant.kyc_documents.none?
+    saved_documents = []
+
     files.each do |file|
       doc = KycDocument.new(applicant: applicant, status: :pending)
       # Save first so doc.id exists before Active Storage creates the attachment
@@ -38,19 +49,24 @@ class Kyc::DocumentsController < ApplicationController
       end
 
       ClassifyKycDocumentJob.perform_later(doc.id)
-      saved += 1
+      saved_documents << doc
     end
 
+    saved = saved_documents.size
     message = saved.zero? ? t("flash.kyc_documents.no_files") : t("flash.kyc_documents.upload_success", count: saved)
     type = saved.zero? ? :error : :success
 
     respond_to do |format|
       format.turbo_stream do
-        render turbo_stream: turbo_stream.append(
-          "toast-container",
-          partial: "shared/toast",
-          locals: { message: message, type: type }
-        )
+        streams = []
+        if saved_documents.any?
+          streams << turbo_stream.remove("kyc-documents-empty") if had_no_documents
+          streams.concat(saved_documents.map { |doc|
+            turbo_stream.append("kyc-documents-list", partial: "kyc/documents/kyc_document", locals: { document: doc })
+          })
+        end
+        streams << turbo_stream.append("toast-container", partial: "shared/toast", locals: { message: message, type: type })
+        render turbo_stream: streams
       end
       format.html do
         redirect_to applicant_path(applicant), saved.zero? ? { alert: message } : { notice: message }
@@ -103,6 +119,32 @@ class Kyc::DocumentsController < ApplicationController
               confirmed_count: docs.where(classification_status: :confirmed).count,
               total_count: docs.count
             }
+          )
+        ]
+      end
+      format.html { redirect_to applicant_path(document.applicant) }
+    end
+  end
+
+  def comment_status
+    authorize document, :update_comment_status?
+
+    status = params[:comment_status]
+    document.update!(comment_status: status) if KycDocument.comment_statuses.key?(status)
+    broadcast_document(document)
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: [
+          turbo_stream.replace(
+            dom_id(document),
+            partial: "kyc/documents/kyc_document",
+            locals: { document: document }
+          ),
+          turbo_stream.update(
+            "document-comments-modal",
+            partial: "kyc/document_comments/modal_content",
+            locals: { kyc_document: document, comment_errors: nil }
           )
         ]
       end

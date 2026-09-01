@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_01_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -72,6 +72,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_200000) do
     t.index ["applicant_id"], name: "index_applicant_users_on_applicant_id"
     t.index ["email"], name: "index_applicant_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_applicant_users_on_reset_password_token", unique: true
+  end
+
+  create_table "comments", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.bigint "author_id", null: false
+    t.text "body", null: false
+    t.uuid "commentable_id", null: false
+    t.string "commentable_type", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["author_id"], name: "index_comments_on_author_id"
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
   end
 
   create_table "kyc_corporate_entities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -149,6 +160,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_200000) do
     t.float "classification_confidence"
     t.string "classification_method"
     t.integer "classification_status", default: 0, null: false
+    t.integer "comment_status"
     t.uuid "corporate_entity_id"
     t.datetime "created_at", null: false
     t.integer "document_type"
@@ -229,6 +241,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_200000) do
     t.string "merchant_id"
     t.string "name", null: false
     t.string "registry_jurisdiction"
+    t.string "sector", default: "general", null: false
     t.string "status", default: "pending", null: false
     t.string "support_url"
     t.string "type"
@@ -259,6 +272,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_200000) do
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_onboarding_sessions_on_applicant_id", unique: true
+  end
+
+  create_table "processing_statements", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.jsonb "column_mapping", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.text "error_message"
+    t.jsonb "metrics", default: {}, null: false
+    t.integer "row_count"
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id"], name: "index_processing_statements_on_applicant_id"
   end
 
   create_table "registry_addresses", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -363,6 +388,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_200000) do
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
   add_foreign_key "applicant_users", "merchants", column: "applicant_id"
+  add_foreign_key "comments", "users", column: "author_id"
   add_foreign_key "kyc_corporate_entities", "kyc_documents"
   add_foreign_key "kyc_corporate_entities", "merchants", column: "applicant_id"
   add_foreign_key "kyc_document_date_confirmations", "kyc_documents"
@@ -384,6 +410,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_200000) do
   add_foreign_key "kyc_validation_warnings", "merchants", column: "applicant_id"
   add_foreign_key "onboarding_messages", "onboarding_sessions"
   add_foreign_key "onboarding_sessions", "merchants", column: "applicant_id"
+  add_foreign_key "processing_statements", "merchants", column: "applicant_id"
   add_foreign_key "registry_addresses", "registry_profiles"
   add_foreign_key "registry_directors", "registry_profiles"
   add_foreign_key "registry_people_with_significant_control", "registry_profiles"

@@ -1,0 +1,41 @@
+<% content_for :title, t('.title') %>
+
+<div class="mb-4">
+  <%= link_to t('.back'), applicant_path(applicant), class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<div class="mb-6 flex items-start justify-between">
+  <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= t('.title') %></h1>
+  <% if policy(ProcessingStatement).create? %>
+    <%= link_to t('.upload_new'), new_applicant_processing_statement_path(applicant), class: "btn-primary" %>
+  <% end %>
+</div>
+
+<% if @processing_statements.empty? %>
+  <div class="card">
+    <p class="text-theme-sm text-gray-500"><%= t('.empty') %></p>
+  </div>
+<% else %>
+  <div class="card overflow-x-auto">
+    <table class="min-w-full text-theme-sm">
+      <thead>
+        <tr class="text-left text-gray-500">
+          <th class="py-2 pr-4"><%= t('.table.uploaded') %></th>
+          <th class="py-2 pr-4"><%= t('.table.status') %></th>
+          <th class="py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @processing_statements.each do |statement| %>
+          <tr class="border-t border-gray-100 dark:border-gray-800">
+            <td class="py-2 pr-4 text-gray-900 dark:text-white/90"><%= l(statement.created_at, format: :long) %></td>
+            <td class="py-2 pr-4 text-gray-900 dark:text-white/90"><%= statement.status.humanize %></td>
+            <td class="py-2">
+              <%= link_to t('.table.view'), processing_statement_path(statement), class: "text-brand-600 hover:text-brand-700" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

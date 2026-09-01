@@ -8,6 +8,39 @@ RSpec.describe Onboarding::DocumentCollectionService do
   let(:stage_data) { {} }
 
   describe ".generate_checklist" do
+    context "with a Crypto Exchange applicant" do
+      let(:applicant) { create(:applicant, sector: :crypto_exchange) }
+
+      it "adds a checklist item for each required-document policy" do
+        checklist = described_class.generate_checklist(session)
+
+        expect(checklist.select { |item| item["category"] == "sector_policy" }).to contain_exactly(
+          a_hash_including(
+            "requirement_id" => "crypto.vasp_registration",
+            "document_types" => [ "vasp_registration" ],
+            "label" => "VASP registration",
+            "guidance" => "Upload evidence of the applicant's VASP registration or authorisation.",
+            "deferred" => false
+          ),
+          a_hash_including(
+            "requirement_id" => "crypto.wallet_custody_infrastructure_attestation",
+            "document_types" => [ "wallet_custody_infrastructure_attestation" ],
+            "label" => "Wallet and custody infrastructure attestation",
+            "guidance" => "Upload an attestation describing the applicant's wallet and custody infrastructure.",
+            "deferred" => false
+          )
+        )
+      end
+    end
+
+    context "with a general applicant" do
+      it "does not add sector-policy checklist items" do
+        checklist = described_class.generate_checklist(session)
+
+        expect(checklist).not_to include(a_hash_including("category" => "sector_policy"))
+      end
+    end
+
     context "with declared principals" do
       let!(:principal_a) { create(:kyc_principal, applicant: applicant, name: "Person Alpha", source: :applicant_declared) }
       let!(:principal_b) { create(:kyc_principal, applicant: applicant, name: "Person Beta", source: :applicant_declared) }

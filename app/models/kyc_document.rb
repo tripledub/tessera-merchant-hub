@@ -6,6 +6,8 @@ class KycDocument < ApplicationRecord
   belongs_to :corporate_entity, class_name: "Kyc::CorporateEntity", optional: true
   belongs_to :superseded_by_kyc_document, class_name: "KycDocument", optional: true
 
+  include Commentable
+
   has_many :corporate_entities, class_name: "Kyc::CorporateEntity", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
   has_many :validation_warnings, class_name: "Kyc::ValidationWarning", foreign_key: :kyc_document_id,
@@ -25,6 +27,12 @@ class KycDocument < ApplicationRecord
   # so a superseded, possibly-expired document doesn't count against (or
   # for) an applicant once a valid replacement is on file.
   scope :not_superseded, -> { where(superseded_by_kyc_document_id: nil) }
+
+  # Surfaces documents needing attention first: processing, then pending,
+  # then errored, with complete documents last.
+  scope :ordered_by_review_priority, -> {
+    order(Arel.sql("CASE status WHEN 1 THEN 0 WHEN 0 THEN 1 WHEN 3 THEN 2 WHEN 2 THEN 3 END"), :created_at)
+  }
 
   enum :status, { pending: 0, processing: 1, complete: 2, error: 3 }, default: :pending
 
@@ -62,7 +70,13 @@ class KycDocument < ApplicationRecord
     aml_ctf_policy: 70,
     aml_kyc_requirements: 71,
     source_of_wealth_questionnaire: 72,
-    aml_ctf_questionnaire: 73
+    aml_ctf_questionnaire: 73,
+    vasp_registration: 74,
+    wallet_custody_infrastructure_attestation: 75,
+    # Content type the AI classifier can't process at all (e.g. xlsx/xls —
+    # see DocumentClassifiers::AiFallback::SUPPORTED_CONTENT_TYPES). Acknowledged
+    # and kept on file, but never auto-extracted; a human can reclassify it later.
+    other: 99
   }
 
   enum :classification_status, {
@@ -73,6 +87,10 @@ class KycDocument < ApplicationRecord
     rejected: 4
   }, default: :unclassified, prefix: :classification
 
+  # Nullable, no default — nil means no flag has ever been set, distinct
+  # from `status` above which tracks classification/extraction progress.
+  enum :comment_status, { requires_follow_up: 0, resolved: 1 }, prefix: :comment
+
   ALLOWED_CONTENT_TYPES = %w[
     image/jpeg image/png image/webp image/gif
     application/pdf
@@ -81,6 +99,15 @@ class KycDocument < ApplicationRecord
     text/csv
   ].freeze
   MAX_FILE_SIZE = 10.megabytes
+
+  # document_type is nil until classification completes (or if it errors),
+  # so any UI/report grouping documents by type must label that case
+  # explicitly rather than calling #humanize on nil (MH-271).
+  def self.document_type_label(type)
+    return I18n.t("kyc.documents.classification.status.unclassified") if type.nil?
+
+    I18n.t("kyc.documents.document_types.#{type}", default: type.humanize)
+  end
 
   def extraction_schema
     ExtractionData::Base.for(document_type)

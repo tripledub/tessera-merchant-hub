@@ -41,6 +41,7 @@ Rails.application.routes.draw do
     get "tab/:tab", action: :tab, as: :tab, on: :member
     post "registry_preview", action: :registry_preview, on: :collection
     post "registry_lookup", action: :registry_lookup, on: :member
+    post "trace_psc_chain/:psc_id", action: :trace_psc_chain, as: :trace_psc_chain, on: :member
     namespace :kyc do
       resource :executive_narrative, only: %i[show create]
       resource :extraction_run, only: :create
@@ -49,7 +50,12 @@ Rails.application.routes.draw do
       end
       resources :documents, only: %i[create update destroy], shallow: true do
         member { post :retry }
+        member { patch :comment_status }
+        resources :comments, only: %i[index create], controller: "document_comments"
       end
+    end
+    resources :processing_statements, only: %i[index new create show edit update], shallow: true do
+      member { get :export }
     end
   end
 

@@ -16,4 +16,10 @@ class OnboardingSession < ApplicationRecord
   enum :status, { in_progress: 0, completed: 1, abandoned: 2 }, default: :in_progress
 
   validates :applicant_id, uniqueness: true
+
+  def document_collection_started?
+    document_collection? ||
+      completed_stages.include?("document_collection") ||
+      document_checklist.is_a?(Array)
+  end
 end

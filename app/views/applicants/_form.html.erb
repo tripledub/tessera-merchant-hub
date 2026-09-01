@@ -16,6 +16,14 @@
     <%= f.email_field :contact_email, class: "form-input" %>
   </div>
 
+  <div>
+    <%= f.label :sector, t("applicants.form.fields.sector"), class: "form-label" %>
+    <%= f.select :sector, Applicant.sectors.keys.map { |sector| [t("applicants.sectors.#{sector}"), sector] }, {}, class: "form-input", disabled: applicant.sector_locked? %>
+    <% if applicant.sector_locked? %>
+      <p class="mt-1 text-theme-xs text-gray-500"><%= t("applicants.form.sector_locked_hint") %></p>
+    <% end %>
+  </div>
+
   <div class="grid grid-cols-2 gap-4">
     <div>
       <%= f.label :country, t("applicants.form.fields.country"), class: "form-label" %>

@@ -1,5 +1,13 @@
 ---
 en:
+  activerecord:
+    errors:
+      models:
+        applicant:
+          attributes:
+            sector:
+              locked_after_document_collection: cannot be changed after document collection
+                has begun
   admin:
     users:
       index:
@@ -89,6 +97,9 @@ en:
         country: Country
         country_code: Country code (ISO 3166-1 alpha-2, e.g. GB)
         name: Name
+        sector: Business sector
+      sector_locked_hint: The business sector cannot be changed after document collection
+        has begun.
       submit: Save
     index:
       new_applicant: New applicant
@@ -125,6 +136,7 @@ en:
         incorporated_on: Incorporated
         registered_address: Registered address
         status: Status
+        use_these_details: Use these details
       errors:
         invalid_number: Enter a company number before looking it up.
         not_found: No company found with that number.
@@ -132,6 +144,12 @@ en:
         rate_limited: Companies House rate limit reached — try again shortly.
         unauthorized: Companies House rejected our API key.
         unavailable: Companies House is unavailable right now — try again shortly.
+    sectors:
+      crypto_exchange: Crypto exchange
+      forex_brokerage: Forex brokerage
+      gambling: Gambling
+      general: General
+      proprietary_trading: Proprietary trading
     show:
       add_principal: Add principal
       back: "← Back to applicants"
@@ -158,6 +176,7 @@ en:
           actions: Actions
           name: Name
           role: Role
+      processing_statements: Processing statements
       sections:
         documents: KYC Documents
         principals: Principals
@@ -208,6 +227,7 @@ en:
         registry_pscs_table:
           control: Control
           notified_on: Notified on
+          trace_chain: Trace ownership chain
         relationships: Relationships
         table:
           child: Child
@@ -281,10 +301,13 @@ en:
     applicant_users:
       destroy_success: Portal user removed.
     applicants:
+      create_success: Applicant created.
       destroy_success: Applicant deleted.
       registry_lookup_failed: Registry data fetch failed. You can retry from this
         page.
       registry_lookup_success: Registry data fetched.
+      trace_psc_chain_failed: Could not trace this ownership chain further.
+      trace_psc_chain_success: Ownership chain traced.
       update_success: Applicant updated.
     executive_narrative:
       failed: Could not generate the executive summary. Please try again.
@@ -363,6 +386,19 @@ en:
           confirmed: Confirmed
           rejected: Rejected
           unclassified: Unclassified
+      comment_status:
+        requires_follow_up: Requires follow up
+        resolved: Resolved
+      comments:
+        add: Add comment
+        body_label: Comment
+        close: Close
+        empty: No comments yet.
+        mark_requires_follow_up: Mark requires follow up
+        mark_resolved: Mark resolved
+        open: Comments
+        placeholder: Add a comment…
+        title: Comments
       confirm: Confirm
       confirm_match: Confirm principal match
       date_confirmations:
@@ -398,6 +434,7 @@ en:
         group_structure_chart: Group Structure Chart
         legal_opinion: Legal Opinion
         memorandum_of_association: Memorandum of Association
+        other: Other
         passport: Passport
         payment_agreement: Payment Agreement
         register_of_members: Register of Members
@@ -405,6 +442,8 @@ en:
         source_of_wealth_questionnaire: Source of Wealth Questionnaire
         transaction_extract: Transaction Extract
         utility_bill: Utility Bill
+        vasp_registration: VASP Registration
+        wallet_custody_infrastructure_attestation: Wallet Custody Infrastructure Attestation
       match_method:
         exact: Exact match
         fuzzy: Fuzzy match
@@ -412,6 +451,7 @@ en:
         unconfirmed: Unconfirmed
       reject_match: Reject principal match
       retry: Retry
+      select_type: Select type…
       status:
         complete: Complete
         error: Error
@@ -455,6 +495,22 @@ en:
         empty: All documents are already linked.
         link: Link
         title: Link documents to entity
+    policy_requirements:
+      base:
+        passport_validity:
+          guidance: Confirm the passport is current and monitor its expiry date.
+          title: Passport validity
+        utility_bill_freshness:
+          guidance: Confirm the utility bill was issued within the last three months.
+          title: Utility bill freshness
+      crypto:
+        vasp_registration:
+          guidance: Upload evidence of the applicant's VASP registration or authorisation.
+          title: VASP registration
+        wallet_custody_infrastructure_attestation:
+          guidance: Upload an attestation describing the applicant's wallet and custody
+            infrastructure.
+          title: Wallet and custody infrastructure attestation
     principal_document_links:
       new:
         empty: All documents for this applicant are already linked.
@@ -706,6 +762,53 @@ en:
         welcome: Welcome, %{name}!
     sign_out: Sign out
     title: Kynetic Portal
+  processing_statements:
+    create:
+      no_file: Please choose a file to upload.
+    edit:
+      amount_label: Amount column
+      currency_label: Currency column
+      date_label: Transaction date column
+      intro: Match each column from your file to the fields we need, then import.
+      outcome_label: Status/outcome column
+      read_error: Could not read this file.
+      submit: Import and calculate metrics
+      title: Map statement columns
+      unmapped: "— Not mapped —"
+    export:
+      button: Export CSV
+    index:
+      back: "← Back to applicant"
+      empty: No processing statements uploaded yet.
+      table:
+        status: Status
+        uploaded: Uploaded
+        view: View
+      title: Processing statements
+      upload_new: Upload new statement
+    new:
+      back: "← Back to statements"
+      file_label: Statement file (.xlsx, .xls or .csv)
+      submit: Upload
+      title: Upload processing statement
+    show:
+      approved_volume: Approved volume
+      back: "← Back to statements"
+      chargebacks: Chargebacks
+      currencies_used: Currencies used
+      declined_volume: Declined volume
+      map_columns: Map columns to import this statement
+      month: Month
+      no_data: "—"
+      overall: Overall
+      processing: Import queued — this page will update automatically once metrics
+        have been calculated.
+      refunds: Refunds
+      title: Processing statement overview
+      total_volume: Total volume
+    update:
+      missing_fields: 'Missing required field mapping: %{fields}'
+      success: Statement queued for import.
   shared:
     error_messages:
       header:

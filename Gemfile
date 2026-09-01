@@ -25,7 +25,7 @@ gem "tzinfo-data", platforms: %i[ mswin mswin64 mingw x64_mingw jruby ]
 
 # Use the database-backed adapters for Rails.cache, Active Job, and Action Cable
 gem "solid_cache"
-gem "solid_queue", "~> 1.6"
+gem "solid_queue", "~> 1.7"
 gem "solid_cable"
 
 # Reduces boot times through caching; required in config/boot.rb
@@ -95,6 +95,9 @@ group :development, :test do
 
   # Realistic fake data for seeds and factories
   gem "faker"
+
+  # Static architecture linter enforcing layered-design boundaries [https://archspecrb.dev]
+  gem "archspec"
 end
 
 group :development do
@@ -115,3 +118,8 @@ gem "prawn-table", "~> 0.2"
 gem "pdf-inspector", "~> 1.3", group: :test
 
 gem "honeybadger", "~> 6.9"
+
+# Read .xlsx/.xls/.csv processing statements for Statements::SpreadsheetReader [https://github.com/roo-rb/roo]
+gem "roo", "~> 2.10"
+gem "roo-xls", "~> 2.0" # legacy .xls (binary) support — roo alone only handles xlsx/csv/ods
+gem "csv"

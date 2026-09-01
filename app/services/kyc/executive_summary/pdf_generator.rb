@@ -114,6 +114,14 @@ module Kyc
                  size: BODY_SIZE, color: DARK_COLOR
         pdf.move_down 6
 
+        compliance[:policy_results].each do |result|
+          marker = result[:met] ? "✓" : "✗"
+          pdf.text "#{marker} #{result[:title]} — #{result[:status].to_s.humanize}",
+                   size: BODY_SIZE, style: :bold, color: DARK_COLOR
+          pdf.text result[:guidance], size: BODY_SIZE, color: SECONDARY_COLOR
+          pdf.move_down 4
+        end
+
         compliance[:entity_results].each do |er|
           pdf.text er[:entity_name], size: BODY_SIZE, style: :bold, color: DARK_COLOR
           er[:results].each do |r|
@@ -140,7 +148,7 @@ module Kyc
 
         if docs[:by_type].any?
           pdf.move_down 6
-          pdf.text "By type: #{docs[:by_type].map { |t, c| "#{t.humanize} (#{c})" }.join(', ')}",
+          pdf.text "By type: #{docs[:by_type].map { |t, c| "#{KycDocument.document_type_label(t)} (#{c})" }.join(', ')}",
                    size: BODY_SIZE, color: SECONDARY_COLOR
         end
         pdf.move_down 16

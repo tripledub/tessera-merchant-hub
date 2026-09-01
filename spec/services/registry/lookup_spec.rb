@@ -142,6 +142,43 @@ RSpec.describe Registry::Lookup do
       end
     end
 
+    context "when fetching a company other than the applicant's own (chain-following)" do
+      let(:applicant) { create(:applicant, registry_jurisdiction: "gb", company_number: "12345678") }
+      let(:fetch_result) do
+        Registry::FetchResult.success(
+          company_name: "Intermediate Holdings Ltd", status: "active", incorporated_on: Date.new(2018, 1, 1),
+          directors: [], addresses: []
+        )
+      end
+
+      before do
+        allow(fake_client).to receive(:fetch).with(company_number: "99999999").and_return(fetch_result)
+      end
+
+      it "fetches the given company_number instead of the applicant's own" do
+        described_class.call(applicant: applicant, company_number: "99999999", jurisdiction: "gb")
+        expect(fake_client).to have_received(:fetch).with(company_number: "99999999")
+      end
+
+      it "persists the profile under the applicant, with the overridden company_number and jurisdiction" do
+        result = described_class.call(applicant: applicant, company_number: "99999999", jurisdiction: "gb")
+
+        expect(result.success).to be(true)
+        expect(result.registry_profile.applicant).to eq(applicant)
+        expect(result.registry_profile.company_number).to eq("99999999")
+        expect(result.registry_profile.jurisdiction).to eq("gb")
+        expect(result.registry_profile.company_name).to eq("Intermediate Holdings Ltd")
+      end
+
+      it "defaults to the applicant's own company_number and registry_jurisdiction when not overridden" do
+        allow(fake_client).to receive(:fetch).with(company_number: "12345678").and_return(fetch_result)
+
+        described_class.call(applicant: applicant)
+
+        expect(fake_client).to have_received(:fetch).with(company_number: "12345678")
+      end
+    end
+
     context "when the client fetch fails" do
       let(:applicant) { create(:applicant, registry_jurisdiction: "gb", company_number: "00000000") }
       let(:fetch_result) { Registry::FetchResult.failure(error_type: :not_found, error_message: "no such company") }

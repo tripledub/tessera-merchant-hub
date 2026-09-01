@@ -11,6 +11,8 @@
   <%= render "kyc/documents/extraction_button", applicant: applicant %>
 </div>
 
+<turbo-frame id="document-comments-modal"></turbo-frame>
+
 <%= turbo_stream_from "applicant_#{applicant.id}_documents" %>
 
 <div id="extraction-progress-container">
@@ -21,17 +23,17 @@
   <% end %>
 </div>
 
-<% if @kyc_documents.empty? %>
-  <p class="text-theme-sm text-gray-500 mb-4"><%= t('applicants.show.documents.empty') %></p>
-<% else %>
-  <div class="space-y-2 mb-4">
+<div id="kyc-documents-list" class="space-y-2 mb-4">
+  <% if @kyc_documents.empty? %>
+    <p id="kyc-documents-empty" class="text-theme-sm text-gray-500"><%= t('applicants.show.documents.empty') %></p>
+  <% else %>
     <% @kyc_documents.each do |doc| %>
       <%= turbo_frame_tag "kyc_document_#{doc.id}" do %>
         <%= render "kyc/documents/kyc_document", document: doc %>
       <% end %>
     <% end %>
-  </div>
-<% end %>
+  <% end %>
+</div>
 
 <% if policy(KycDocument).create? %>
   <div id="kyc-upload" class="mt-4 border-t border-gray-200 pt-4">

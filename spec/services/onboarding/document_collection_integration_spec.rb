@@ -46,4 +46,85 @@ RSpec.describe Onboarding::DocumentCollectionService, type: :service do # ruboco
     expect(described_class.all_received?(session)).to be false
     expect(Onboarding::StateMachine.stage_complete?(session)).to be false
   end
+
+  context "with a Crypto Exchange applicant" do
+    let(:applicant) { create(:applicant, sector: :crypto_exchange) }
+
+    it "marks each required policy document as received when uploaded" do
+      described_class.generate_checklist(session)
+
+      create(:kyc_document, applicant: applicant, document_type: :vasp_registration,
+             classification_status: :confirmed, status: :complete)
+
+      received = described_class.received_documents(session)
+      expect(received.find { |item| item["requirement_id"] == "crypto.vasp_registration" }["received"]).to be true
+      expect(received.find { |item| item["requirement_id"] == "crypto.wallet_custody_infrastructure_attestation" }["received"]).to be false
+
+      create(:kyc_document, applicant: applicant, document_type: :wallet_custody_infrastructure_attestation,
+             classification_status: :confirmed, status: :complete)
+
+      received = described_class.received_documents(session)
+      expect(received.find { |item| item["requirement_id"] == "crypto.wallet_custody_infrastructure_attestation" }["received"]).to be true
+    end
+
+    context "with warning and blocking policy requirements" do
+      let(:warning_requirement) do
+        Kyc::PolicyRequirement.new(
+          id: "crypto.vasp_registration",
+          rule: "required_document",
+          outcome: "warning",
+          source: "1.1",
+          parameters: { "document_type" => "vasp_registration", "subject" => "applicant" }.freeze
+        )
+      end
+      let(:blocking_requirement) do
+        Kyc::PolicyRequirement.new(
+          id: "crypto.wallet_custody_infrastructure_attestation",
+          rule: "required_document",
+          outcome: "blocking",
+          source: "1.5",
+          parameters: {
+            "document_type" => "wallet_custody_infrastructure_attestation",
+            "subject" => "applicant"
+          }.freeze
+        )
+      end
+
+      before do
+        allow(Kyc::EffectivePolicy).to receive(:for).with(applicant)
+          .and_return([ warning_requirement, blocking_requirement ].freeze)
+        described_class.generate_checklist(session)
+        create(:kyc_document, applicant: applicant, kyc_principal: principal,
+               document_type: :passport, classification_status: :confirmed, status: :complete)
+        create(:kyc_document, applicant: applicant, kyc_principal: principal,
+               document_type: :utility_bill, classification_status: :confirmed, status: :complete)
+        create(:kyc_document, applicant: applicant,
+               document_type: :certificate_of_incorporation,
+               classification_status: :confirmed, status: :complete)
+      end
+
+      it "keeps an unmet warning visible without blocking document-stage completion" do
+        create(:kyc_document, applicant: applicant,
+               document_type: :wallet_custody_infrastructure_attestation,
+               classification_status: :confirmed, status: :complete)
+
+        warning_item = described_class.outstanding_items(session).sole
+        expect(warning_item).to include(
+          "requirement_id" => "crypto.vasp_registration",
+          "outcome" => "warning",
+          "received" => false
+        )
+        expect(described_class.all_received?(session)).to be true
+        expect(Onboarding::StateMachine.stage_complete?(session)).to be true
+      end
+
+      it "continues to block completion for an unmet blocking policy requirement" do
+        expect(described_class.outstanding_items(session)).to include(
+          a_hash_including("requirement_id" => "crypto.wallet_custody_infrastructure_attestation")
+        )
+        expect(described_class.all_received?(session)).to be false
+        expect(Onboarding::StateMachine.stage_complete?(session)).to be false
+      end
+    end
+  end
 end

@@ -9,11 +9,20 @@ module Kyc
 
       respond_to do |format|
         format.turbo_stream do
-          render turbo_stream: turbo_stream.replace(
-            "warning_#{warning.id}",
-            partial: "applicants/tabs/compliance/warning_card",
-            locals: { warning: warning, presenter: Kyc::CompliancePresenter.new(warning.applicant, view_context) }
-          )
+          presenter = Kyc::CompliancePresenter.new(warning.applicant, view_context)
+
+          render turbo_stream: [
+            turbo_stream.replace(
+              "warning_#{warning.id}",
+              partial: "applicants/tabs/compliance/warning_card",
+              locals: { warning: warning, presenter: presenter }
+            ),
+            turbo_stream.update(
+              "compliance_unacknowledged_count",
+              partial: "applicants/tabs/compliance/unacknowledged_count",
+              locals: { presenter: presenter }
+            )
+          ]
         end
         format.html { redirect_back fallback_location: applicant_path(warning.applicant, anchor: "compliance") }
       end

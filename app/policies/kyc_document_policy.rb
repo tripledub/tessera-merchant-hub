@@ -32,4 +32,8 @@ class KycDocumentPolicy < ApplicationPolicy
   def confirm_dates?
     psp_admin?
   end
+
+  def update_comment_status?
+    psp_role?
+  end
 end

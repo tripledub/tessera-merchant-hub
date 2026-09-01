@@ -35,6 +35,52 @@ RSpec.describe "KycDocuments", type: :request do
         expect(response).to redirect_to(applicant_path(applicant))
         expect(flash[:alert]).to be_present
       end
+
+      # MH-210: uploading must never trigger a full page reload — the tab
+      # the user is on (and the client-side dropzone form state) is only
+      # preserved if the response stays a turbo_stream.
+      it "appends the new document into the list instead of redirecting, when requesting turbo_stream" do
+        post applicant_kyc_documents_path(applicant),
+          params: { kyc_document: { files: [ file ] } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:ok)
+        expect(response.media_type).to eq("text/vnd.turbo-stream.html")
+
+        new_document = applicant.kyc_documents.last
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(new_document)}")).to be_present
+        expect(fragment.css("turbo-stream[action='append'][target='toast-container']")).to be_present
+      end
+
+      it "removes the empty-state placeholder when this is the applicant's first document" do
+        post applicant_kyc_documents_path(applicant),
+          params: { kyc_document: { files: [ file ] } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).to include('turbo-stream action="remove" target="kyc-documents-empty"')
+      end
+
+      it "does not try to remove the empty-state placeholder when the applicant already has documents" do
+        create(:kyc_document, applicant: applicant)
+
+        post applicant_kyc_documents_path(applicant),
+          params: { kyc_document: { files: [ file ] } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).not_to include("kyc-documents-empty")
+      end
+
+      it "renders only the toast, with no document append, when no files are provided via turbo_stream" do
+        post applicant_kyc_documents_path(applicant),
+          params: { kyc_document: { files: [] } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:ok)
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("turbo-stream").size).to eq(1)
+        expect(fragment.css("turbo-stream[action='append'][target='toast-container']")).to be_present
+      end
     end
 
     context "when signed in as psp_support" do
@@ -170,6 +216,135 @@ RSpec.describe "KycDocuments", type: :request do
       it "returns 403" do
         post retry_kyc_document_path(document)
         expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
+  describe "PATCH /kyc_documents/:id/comment_status" do
+    let_it_be(:merchant_admin) { create(:user, :merchant_admin) }
+    let!(:document) { create(:kyc_document, applicant: applicant) }
+
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "sets the comment_status to requires_follow_up" do
+        patch comment_status_kyc_document_path(document), params: { comment_status: "requires_follow_up" }
+
+        expect(document.reload.comment_status).to eq("requires_follow_up")
+      end
+
+      it "sets the comment_status to resolved" do
+        patch comment_status_kyc_document_path(document), params: { comment_status: "resolved" }
+
+        expect(document.reload.comment_status).to eq("resolved")
+      end
+
+      it "ignores an invalid comment_status value" do
+        patch comment_status_kyc_document_path(document), params: { comment_status: "bogus" }
+
+        expect(document.reload.comment_status).to be_nil
+      end
+
+      it "returns a turbo stream response replacing the document row" do
+        patch comment_status_kyc_document_path(document),
+              params: { comment_status: "resolved" },
+              headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:ok)
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}")).to be_present
+      end
+
+      it "returns a turbo stream response also updating the comments modal content with the updated highlight" do
+        patch comment_status_kyc_document_path(document),
+              params: { comment_status: "resolved" },
+              headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:ok)
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}")).to be_present
+
+        modal_stream = fragment.css('turbo-stream[target="document-comments-modal"]')
+        expect(modal_stream).to be_present
+
+        buttons = modal_stream.css("form button")
+        resolved_button = buttons.find { |b| b.text.include?("Mark resolved") }
+        expect(resolved_button["class"]).to include("ring-success-400")
+      end
+
+      it "updates the comments modal in place (turbo_stream update, not replace) so the frame element's identity is preserved" do
+        patch comment_status_kyc_document_path(document),
+              params: { comment_status: "resolved" },
+              headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:ok)
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+
+        modal_stream = fragment.css('turbo-stream[target="document-comments-modal"]')
+        expect(modal_stream).to be_present
+        expect(modal_stream.attr("action").value).to eq("update")
+
+        # The stream must NOT contain a nested <turbo-frame id="document-comments-modal">
+        # element — that would mean the frame itself is being replaced (outerHTML swap),
+        # which destroys any JS expando/dataset state stored on the persistent frame node.
+        expect(modal_stream.css("turbo-frame#document-comments-modal")).to be_empty
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "sets the comment_status" do
+        patch comment_status_kyc_document_path(document), params: { comment_status: "resolved" }
+
+        expect(document.reload.comment_status).to eq("resolved")
+      end
+    end
+
+    context "when signed in as merchant_admin" do
+      before { sign_in merchant_admin }
+
+      it "returns 403" do
+        patch comment_status_kyc_document_path(document), params: { comment_status: "resolved" }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(document.reload.comment_status).to be_nil
+      end
+
+      it "returns 403, not 406, for a turbo stream request" do
+        patch comment_status_kyc_document_path(document),
+              params: { comment_status: "resolved" },
+              headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(document.reload.comment_status).to be_nil
+      end
+    end
+  end
+
+  describe "document row rendering with comment_status set" do
+    let!(:document) { create(:kyc_document, applicant: applicant, comment_status: "requires_follow_up") }
+
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "shows the comment_status badge on the applicant documents tab" do
+        get tab_applicant_path(applicant, tab: "documents")
+
+        expect(response.body).to include("Requires follow up")
+      end
+
+      it "shows the comments trigger icon on the document row" do
+        get tab_applicant_path(applicant, tab: "documents")
+
+        expect(response.body).to include(kyc_document_comments_path(document))
+      end
+
+      it "gives the comments trigger a stable, deterministic id derived from the document id" do
+        get tab_applicant_path(applicant, tab: "documents")
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)} ##{"comments-trigger-#{document.id}"}")).to be_present
       end
     end
   end
