@@ -50,6 +50,8 @@ Rails.application.routes.draw do
       end
       resources :documents, only: %i[create update destroy], shallow: true do
         member { post :retry }
+        member { patch :comment_status }
+        resources :comments, only: %i[index create], controller: "document_comments"
       end
     end
     resources :processing_statements, only: %i[index new create show edit update], shallow: true do
