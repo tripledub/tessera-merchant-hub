@@ -105,6 +105,7 @@
     <% end %>
 
     <%= link_to kyc_document_comments_path(document),
+            id: "comments-trigger-#{document.id}",
             title: t("kyc.documents.comments.open"),
             data: { turbo_frame: "document-comments-modal" },
             class: "text-gray-400 hover:text-brand-500 dark:hover:text-brand-400" do %>

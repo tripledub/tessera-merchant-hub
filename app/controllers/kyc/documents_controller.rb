@@ -141,9 +141,9 @@ class Kyc::DocumentsController < ApplicationController
             partial: "kyc/documents/kyc_document",
             locals: { document: document }
           ),
-          turbo_stream.replace(
+          turbo_stream.update(
             "document-comments-modal",
-            partial: "kyc/document_comments/modal",
+            partial: "kyc/document_comments/modal_content",
             locals: { kyc_document: document, comment_errors: nil }
           )
         ]
