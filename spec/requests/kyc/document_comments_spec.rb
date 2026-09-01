@@ -135,6 +135,16 @@ RSpec.describe "Kyc::DocumentComments", type: :request do
 
         expect(response).to have_http_status(:forbidden)
       end
+
+      it "returns 403, not 406, for a turbo stream request" do
+        expect {
+          post kyc_document_comments_path(document),
+               params: { body: "Should not persist" },
+               headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        }.not_to change(Comment, :count)
+
+        expect(response).to have_http_status(:forbidden)
+      end
     end
 
     context "when unauthenticated" do

@@ -292,6 +292,15 @@ RSpec.describe "KycDocuments", type: :request do
         expect(response).to have_http_status(:forbidden)
         expect(document.reload.comment_status).to be_nil
       end
+
+      it "returns 403, not 406, for a turbo stream request" do
+        patch comment_status_kyc_document_path(document),
+              params: { comment_status: "resolved" },
+              headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response).to have_http_status(:forbidden)
+        expect(document.reload.comment_status).to be_nil
+      end
     end
   end
 

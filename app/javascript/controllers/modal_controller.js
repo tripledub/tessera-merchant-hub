@@ -5,6 +5,15 @@ export default class extends Controller {
 
   connect() {
     document.body.style.overflow = "hidden"
+
+    const frame = this.frameElement
+    if (frame && !frame.dataset.modalReturnFocusSet) {
+      frame._modalReturnFocus = document.activeElement
+      frame.dataset.modalReturnFocusSet = "true"
+    }
+
+    const focusTarget = this.element.querySelector("textarea") || this.element.querySelector("button, [href], input, select")
+    focusTarget?.focus()
   }
 
   disconnect() {
@@ -12,11 +21,18 @@ export default class extends Controller {
   }
 
   close() {
-    const frameId = this.hasFrameValue ? this.frameValue : "payment-modal"
-    const frame = document.getElementById(frameId)
+    const frame = this.frameElement
     if (frame) {
+      const returnFocus = frame._modalReturnFocus
       frame.src = ""
       frame.innerHTML = ""
+      delete frame.dataset.modalReturnFocusSet
+      if (returnFocus && document.contains(returnFocus)) returnFocus.focus()
     }
+  }
+
+  get frameElement() {
+    const frameId = this.hasFrameValue ? this.frameValue : "payment-modal"
+    return document.getElementById(frameId)
   }
 }

@@ -391,6 +391,7 @@ en:
         resolved: Resolved
       comments:
         add: Add comment
+        body_label: Comment
         close: Close
         empty: No comments yet.
         mark_requires_follow_up: Mark requires follow up

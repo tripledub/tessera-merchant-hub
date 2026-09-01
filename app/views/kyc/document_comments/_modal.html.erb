@@ -3,7 +3,10 @@
   <div class="fixed inset-0 z-[9999] flex items-center justify-center px-4"
        data-controller="modal"
        data-modal-frame-value="document-comments-modal"
-       data-action="keydown.esc@window->modal#close">
+       data-action="keydown.esc@window->modal#close"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="document-comments-modal-title document-comments-modal-filename">
 
     <div class="absolute inset-0 bg-gray-900/60" data-action="click->modal#close" aria-hidden="true"></div>
 
@@ -11,10 +14,10 @@
       <div class="card">
         <div class="mb-4 flex items-start justify-between gap-4">
           <div class="min-w-0">
-            <p class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+            <p id="document-comments-modal-title" class="text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               <%= t("kyc.documents.comments.title") %>
             </p>
-            <p class="mt-0.5 text-theme-sm text-gray-900 truncate dark:text-white/90">
+            <p id="document-comments-modal-filename" class="mt-0.5 text-theme-sm text-gray-900 truncate dark:text-white/90">
               <%= kyc_document.file.filename %>
             </p>
           </div>
@@ -33,12 +36,14 @@
                 comment_status_kyc_document_path(kyc_document),
                 method: :patch,
                 params: { comment_status: "requires_follow_up" },
-                class: "btn-secondary text-xs #{'ring-2 ring-warning-400' if kyc_document.comment_requires_follow_up?}" %>
+                class: "btn-secondary text-xs #{'ring-2 ring-warning-400' if kyc_document.comment_requires_follow_up?}",
+                "aria-pressed": kyc_document.comment_requires_follow_up? %>
           <%= button_to t("kyc.documents.comments.mark_resolved"),
                 comment_status_kyc_document_path(kyc_document),
                 method: :patch,
                 params: { comment_status: "resolved" },
-                class: "btn-secondary text-xs #{'ring-2 ring-success-400' if kyc_document.comment_resolved?}" %>
+                class: "btn-secondary text-xs #{'ring-2 ring-success-400' if kyc_document.comment_resolved?}",
+                "aria-pressed": kyc_document.comment_resolved? %>
         </div>
 
         <div class="max-h-80 space-y-3 overflow-y-auto">
@@ -62,6 +67,7 @@
         <% end %>
 
         <%= form_with url: kyc_document_comments_path(kyc_document), method: :post, class: "mt-4" do |f| %>
+          <%= f.label :body, t("kyc.documents.comments.body_label"), class: "sr-only" %>
           <%= f.text_area :body, rows: 3, required: true,
                 placeholder: t("kyc.documents.comments.placeholder"),
                 class: "form-input w-full" %>
