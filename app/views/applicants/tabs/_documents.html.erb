@@ -11,6 +11,8 @@
   <%= render "kyc/documents/extraction_button", applicant: applicant %>
 </div>
 
+<turbo-frame id="document-comments-modal"></turbo-frame>
+
 <%= turbo_stream_from "applicant_#{applicant.id}_documents" %>
 
 <div id="extraction-progress-container">

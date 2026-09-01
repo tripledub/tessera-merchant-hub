@@ -277,4 +277,24 @@ RSpec.describe "KycDocuments", type: :request do
       end
     end
   end
+
+  describe "document row rendering with comment_status set" do
+    let!(:document) { create(:kyc_document, applicant: applicant, comment_status: "requires_follow_up") }
+
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "shows the comment_status badge on the applicant documents tab" do
+        get tab_applicant_path(applicant, tab: "documents")
+
+        expect(response.body).to include("Requires follow up")
+      end
+
+      it "shows the comments trigger icon on the document row" do
+        get tab_applicant_path(applicant, tab: "documents")
+
+        expect(response.body).to include(kyc_document_comments_path(document))
+      end
+    end
+  end
 end

@@ -7,10 +7,3 @@ ignore_unused:
   - devise.failure.deactivated
   # Rails form builder resolves these at runtime
   - helpers.submit.applicant_user.*
-  # MH-276: comment_status labels are looked up dynamically via
-  # t("kyc.documents.comment_status.#{document.comment_status}") by the
-  # row-level badge UI landing in a later task on this branch; `open` is
-  # the trigger-icon label added by that same later task.
-  - kyc.documents.comment_status.requires_follow_up
-  - kyc.documents.comment_status.resolved
-  - kyc.documents.comments.open

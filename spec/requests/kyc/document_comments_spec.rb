@@ -27,6 +27,15 @@ RSpec.describe "Kyc::DocumentComments", type: :request do
 
         expect(response.body).to include("Please re-upload, blurry scan")
       end
+
+      it "shows both status buttons and highlights the active one" do
+        document.update!(comment_status: "resolved")
+
+        get kyc_document_comments_path(document)
+
+        expect(response.body).to include("Mark requires follow up")
+        expect(response.body).to include("Mark resolved")
+      end
     end
 
     context "when signed in as merchant_admin" do
