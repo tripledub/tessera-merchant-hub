@@ -121,5 +121,5 @@ gem "honeybadger", "~> 6.9"
 
 # Read .xlsx/.xls/.csv processing statements for Statements::SpreadsheetReader [https://github.com/roo-rb/roo]
 gem "roo", "~> 2.10"
-gem "roo-xls", "~> 1.2" # legacy .xls (binary) support — roo alone only handles xlsx/csv/ods
+gem "roo-xls", "~> 2.0" # legacy .xls (binary) support — roo alone only handles xlsx/csv/ods
 gem "csv"
