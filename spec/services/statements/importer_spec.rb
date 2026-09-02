@@ -68,6 +68,66 @@ RSpec.describe Statements::Importer do
       end
     end
 
+    context "when a date cell cannot be parsed" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          not-a-date,100.00,GBP,approved
+          2026-04-15,50.00,GBP,declined
+        CSV
+      end
+
+      it "records the row and field details without exposing another row" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.error_message).to eq(
+          'Row 2, field "date", column "Txn Date", value "not-a-date": invalid date'
+        )
+        expect(statement.error_message).not_to include("2026-04-15", "50.00", "declined")
+      end
+    end
+
+    context "when an amount cell cannot be parsed" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          2026-04-01,not-an-amount,GBP,approved
+          2026-04-15,50.00,GBP,declined
+        CSV
+      end
+
+      it "records the row and field details without exposing another row" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.error_message).to eq(
+          'Row 2, field "amount", column "Value", value "not-an-amount": invalid amount'
+        )
+        expect(statement.error_message).not_to include("2026-04-15", "50.00", "declined")
+      end
+    end
+
+    context "when a currency cell cannot be parsed" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          2026-04-01,100.00,not-a-currency,approved
+          2026-04-15,50.00,GBP,declined
+        CSV
+      end
+
+      it "records the row and field details without exposing another row" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.error_message).to eq(
+          'Row 2, field "currency", column "Currency", value "not-a-currency": invalid currency code'
+        )
+        expect(statement.error_message).not_to include("2026-04-15", "50.00", "declined")
+      end
+    end
+
     context "when a mapped column is missing from a row (malformed/ragged file)" do
       it "marks the statement as error without raising a KeyError" do
         reader = instance_double(Statements::SpreadsheetReader, row_count!: 1,
