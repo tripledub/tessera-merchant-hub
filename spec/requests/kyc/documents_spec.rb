@@ -425,4 +425,42 @@ RSpec.describe "KycDocuments", type: :request do
       fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}").first
     end
   end
+
+  describe "sticky upload shortcut in the documents header" do
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "shows a labelled jump-to-upload shortcut in the sticky header, next to Run extraction, that scrolls without touching the hash-based tab router" do
+        create(:kyc_document, applicant: applicant)
+
+        get tab_applicant_path(applicant, tab: "documents")
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        header = fragment.css(".sticky").first
+        upload_button = header.css("button[data-scroll-to-target-value='kyc-upload']").first
+        expect(upload_button).to be_present
+        expect(upload_button["type"]).to eq("button")
+        expect(upload_button["aria-label"]).to eq(I18n.t("applicants.show.documents.upload_document"))
+        expect(header.css("form[action='#{applicant_kyc_extraction_run_path(applicant)}']")).to be_present
+      end
+
+      it "shows the upload shortcut even when the document list is empty" do
+        get tab_applicant_path(applicant, tab: "documents")
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("button[data-scroll-to-target-value='kyc-upload']")).to be_present
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "does not show the upload shortcut (no create permission)" do
+        get tab_applicant_path(applicant, tab: "documents")
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("button[data-scroll-to-target-value='kyc-upload']")).to be_empty
+      end
+    end
+  end
 end

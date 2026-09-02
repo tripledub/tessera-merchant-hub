@@ -160,6 +160,7 @@ en:
         run_extraction: Run extraction
         run_extraction_confirm: Run extraction on all confirmed documents?
         upload_button: Upload
+        upload_document: Upload document
       edit: Edit
       principals:
         delete: Delete
