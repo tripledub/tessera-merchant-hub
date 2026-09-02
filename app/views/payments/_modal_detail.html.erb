@@ -9,9 +9,9 @@
        data-action="click->modal#close"
        aria-hidden="true"></div>
 
-  <%# Modal card — stop propagation so clicks inside don't trigger backdrop close %>
-  <div class="relative w-full max-w-lg"
-       data-action="click->modal#close:stop">
+  <%# Modal card — the backdrop div above is a sibling, not an ancestor, so
+      clicks here never reach its close handler; no stop-propagation needed. %>
+  <div class="relative w-full max-w-lg">
     <div class="card">
 
       <%# Header %>

@@ -160,6 +160,7 @@ en:
         run_extraction: Run extraction
         run_extraction_confirm: Run extraction on all confirmed documents?
         upload_button: Upload
+        upload_document: Upload document
       edit: Edit
       principals:
         delete: Delete
@@ -414,6 +415,7 @@ en:
         success: Date confirmed.
         unconfirmed: Not yet confirmed
       delete: Delete document
+      delete_confirm: Delete %{filename}? This cannot be undone.
       document_types:
         aml_ctf_policy: AML/CTF Policy
         aml_ctf_questionnaire: AML/CTF Questionnaire
@@ -447,6 +449,7 @@ en:
       match_method:
         exact: Exact match
         fuzzy: Fuzzy match
+      preview: Preview document
       principal_status:
         unconfirmed: Unconfirmed
       reject_match: Reject principal match

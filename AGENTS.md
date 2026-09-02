@@ -43,17 +43,16 @@ production-ready).
   ticket has enough detail to implement.
 - When starting implementation, transition the ticket to **In Progress**.
 - When opening a PR, transition the ticket to **In Review**.
-<<<<<<< Updated upstream
-=======
+
 - A bare ticket key from the user (e.g. `MH-262?`) means deliver it
   end-to-end — branch, implement, PR, status transitions — without asking
   what to do next; see the `delivering-jira-tickets` skill.
-- If the user asks to groom or discuss a ticket, or its requirements are
-  thin, groom it with them point by point before any code — see the
-  `planning-jira-work` skill.
->>>>>>> Stashed changes
 - Do not transition a ticket to **UAT** or **Done** — those are deployment
   and QA sign-off steps owned by the user.
+- An epic is not a unit of work: split it into child stories in Jira and
+  design/implement one story at a time. Bugs or feature ideas found
+  mid-session become new Jira tickets before any code — see the
+  `planning-jira-work` skill.
 
 ## Testing & TDD
 
@@ -66,6 +65,13 @@ production-ready).
   `--no-verify`.
 - New i18n strings go through `config/locales/en.yml`; `i18n-tasks health`
   will fail on missing or unused keys.
+- If the suite feels slower than it should, re-profile with `test-prof`
+  (already bundled): `RD_PROF=1 bundle exec rspec` reports the slowest
+  suites by setup time (RSpecDissect); `FPROF=1 bundle exec rspec` reports
+  factory usage counts/time, including cascade creation via associations
+  (FactoryProf). Compare against the MH-280 baseline (1862 examples, ~40s,
+  `kyc_document`'s ActiveStorage `.attach` in its factory as the single
+  largest cost) before assuming a new slowdown is code, not data volume.
 
 ## Architecture Orientation (lightweight)
 
