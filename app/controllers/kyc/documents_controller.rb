@@ -90,7 +90,7 @@ class Kyc::DocumentsController < ApplicationController
     attrs = {}
     doc_type = params.dig(:kyc_document, :document_type)
 
-    if doc_type.present? && KycDocument.manually_selectable_document_types.include?(doc_type)
+    if doc_type.present? && document.selectable_document_types.include?(doc_type)
       attrs[:document_type] = doc_type
     end
 
@@ -100,7 +100,12 @@ class Kyc::DocumentsController < ApplicationController
       attrs[:classification_method] = document.classification_method || "manual" if classification == "confirmed"
     end
 
-    document.update!(attrs) if attrs.any?
+    KycDocument.transaction do
+      document.update!(attrs) if attrs.any?
+      if document.processing_statement? && document.classification_confirmed?
+        ProcessingStatements::RouteFromKycDocument.call(document)
+      end
+    end
     broadcast_document(document)
 
     respond_to do |format|

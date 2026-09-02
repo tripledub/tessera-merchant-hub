@@ -82,9 +82,24 @@ class KycDocument < ApplicationRecord
   }
 
   ROUTING_ONLY_DOCUMENT_TYPES = %w[processing_statement].freeze
+  PROCESSING_STATEMENT_CONTENT_TYPES = %w[
+    application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+    application/vnd.ms-excel
+    text/csv
+  ].freeze
 
   def self.manually_selectable_document_types
     document_types.keys - ROUTING_ONLY_DOCUMENT_TYPES
+  end
+
+  def selectable_document_types
+    self.class.manually_selectable_document_types.tap do |types|
+      types << "processing_statement" if processing_statement_spreadsheet?
+    end
+  end
+
+  def processing_statement_spreadsheet?
+    file.attached? && PROCESSING_STATEMENT_CONTENT_TYPES.include?(file.content_type)
   end
 
   enum :classification_status, {

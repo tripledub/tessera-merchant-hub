@@ -164,13 +164,34 @@ RSpec.describe "KycDocuments", type: :request do
         expect(document.reload.document_type).to eq("passport")
       end
 
-      it "ignores routing-only document types" do
+      it "ignores processing statement for a non-spreadsheet" do
         patch kyc_document_path(document),
           params: { kyc_document: { document_type: "processing_statement" } },
           headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
         expect(document.reload.document_type).to eq("passport")
         expect(document.processing_statement).to be_nil
+      end
+
+      it "routes a suggested spreadsheet after confirmation and reuses its blob" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :ai_suggested, classification_method: "spreadsheet_content_type")
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "statement.csv",
+          content_type: "text/csv"
+        )
+
+        expect {
+          patch kyc_document_path(spreadsheet),
+            params: { kyc_document: { document_type: "processing_statement", classification_status: "confirmed" } },
+            headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        }.to change(ProcessingStatement, :count).by(1)
+
+        statement = spreadsheet.reload.processing_statement
+        expect(spreadsheet.classification_status).to eq("confirmed")
+        expect(statement).to have_attributes(applicant: applicant, status: "uploaded")
+        expect(statement.file.blob).to eq(spreadsheet.file.blob)
       end
 
       it "renders the validity status inside a single dom_id-wrapped element (MH-208)" do

@@ -34,7 +34,6 @@ class ClassifyKycDocumentJob < ApplicationJob
         classification_confidence: result[:confidence],
         classification_method: result[:classification_method].to_s
       )
-      ProcessingStatements::RouteFromKycDocument.call(document) if document.processing_statement?
     end
     broadcast_document(document)
     auto_confirm_for_onboarding(document) unless no_extraction
@@ -91,7 +90,7 @@ class ClassifyKycDocumentJob < ApplicationJob
 
   def classification_status_for(result)
     case result[:classification_method]
-    when :ai then :ai_suggested
+    when :ai, :spreadsheet_content_type then :ai_suggested
     else :auto_classified
     end
   end

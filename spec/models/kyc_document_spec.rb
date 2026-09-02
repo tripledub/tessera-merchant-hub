@@ -55,6 +55,21 @@ RSpec.describe KycDocument, type: :model do
     expect(described_class.manually_selectable_document_types).not_to include("processing_statement")
   end
 
+  it "allows a suggested spreadsheet to be confirmed as a processing statement" do
+    document.file.attach(
+      io: StringIO.new("spreadsheet"),
+      filename: "statement.csv",
+      content_type: "text/csv"
+    )
+    document.document_type = :processing_statement
+
+    expect(document.selectable_document_types).to include("processing_statement")
+  end
+
+  it "does not offer processing statements for non-spreadsheet documents" do
+    expect(document.selectable_document_types).not_to include("processing_statement")
+  end
+
   it "requires an attached file" do
     document.file = nil
     expect(document).not_to be_valid

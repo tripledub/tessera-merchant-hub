@@ -6,11 +6,7 @@ module DocumentClassifiers
 
     VALID_TYPES = KycDocument.manually_selectable_document_types.freeze
 
-    SPREADSHEET_CONTENT_TYPES = %w[
-      application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
-      application/vnd.ms-excel
-      text/csv
-    ].freeze
+    SPREADSHEET_CONTENT_TYPES = KycDocument::PROCESSING_STATEMENT_CONTENT_TYPES
 
     # Spreadsheet uploads reaching this fallback have no matching filename
     # rule, so they belong to the processing-statement import flow instead of

@@ -276,23 +276,19 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         allow(KycDocument).to receive(:find).with(document.id).and_return(document)
       end
 
-      it "classifies it as a processing statement and reuses its blob" do
-        expect {
-          described_class.new.perform(document.id)
-        }.to change(ProcessingStatement, :count).by(1)
-          .and change {
-            ActiveJob::Base.queue_adapter.enqueued_jobs.count { |job| job[:job] == ExtractKycDocumentJob }
-          }.by(0)
+      it "suggests a processing statement without routing it before confirmation" do
+        extraction_jobs_before = ActiveJob::Base.queue_adapter.enqueued_jobs.count { |job| job[:job] == ExtractKycDocumentJob }
+        expect { described_class.new.perform(document.id) }.not_to change(ProcessingStatement, :count)
+        extraction_jobs_after = ActiveJob::Base.queue_adapter.enqueued_jobs.count { |job| job[:job] == ExtractKycDocumentJob }
+        expect(extraction_jobs_after).to eq(extraction_jobs_before)
 
         document.reload
-        statement = document.processing_statement
         expect(document.status).to eq("complete")
         expect(document.document_type).to eq("processing_statement")
-        expect(document.classification_status).to eq("auto_classified")
+        expect(document.classification_status).to eq("ai_suggested")
         expect(document.classification_method).to eq("spreadsheet_content_type")
         expect(document.result).to be_nil
-        expect(statement).to have_attributes(applicant: applicant, status: "uploaded")
-        expect(statement.file.blob).to eq(document.file.blob)
+        expect(document.processing_statement).to be_nil
       end
     end
 
@@ -335,8 +331,8 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         }.not_to have_enqueued_job(ExtractKycDocumentJob)
 
         document.reload
-        expect(document.classification_status).to eq("auto_classified")
-        expect(document.processing_statement).to be_present
+        expect(document.classification_status).to eq("ai_suggested")
+        expect(document.processing_statement).to be_nil
       end
     end
   end

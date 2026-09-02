@@ -52,7 +52,7 @@
           <% if document.document_type.blank? %>
             <option value="" disabled selected><%= t("kyc.documents.select_type") %></option>
           <% end %>
-          <% KycDocument.manually_selectable_document_types.sort.each do |type| %>
+          <% document.selectable_document_types.sort.each do |type| %>
             <option value="<%= type %>" <%= "selected" if type == document.document_type %>>
               <%= t("kyc.documents.document_types.#{type}") %>
             </option>
