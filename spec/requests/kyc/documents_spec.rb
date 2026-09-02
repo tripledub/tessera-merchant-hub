@@ -215,6 +215,42 @@ RSpec.describe "KycDocuments", type: :request do
         )
       end
 
+      it "keeps a spreadsheet suggestion complete when corrected to other" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :ai_suggested, classification_method: "spreadsheet_content_type", status: :complete)
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "unknown.csv",
+          content_type: "text/csv"
+        )
+
+        patch kyc_document_path(spreadsheet),
+          params: { kyc_document: { document_type: "other", classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(spreadsheet.reload).to have_attributes(document_type: "other", status: "complete")
+      end
+
+      it "does not reclassify an already routed processing statement" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :confirmed, classification_method: "spreadsheet_content_type", status: :complete)
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "statement.csv",
+          content_type: "text/csv"
+        )
+        statement = ProcessingStatements::RouteFromKycDocument.call(spreadsheet)
+
+        patch kyc_document_path(spreadsheet),
+          params: { kyc_document: { document_type: "transaction_extract" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(spreadsheet.reload).to have_attributes(
+          document_type: "processing_statement",
+          processing_statement: statement
+        )
+      end
+
       it "renders the validity status inside a single dom_id-wrapped element (MH-208)" do
         # A turbo_stream.replace can only remove content living inside its target
         # element. Confirming the classification repeatedly used to leave the

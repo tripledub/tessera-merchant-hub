@@ -44,7 +44,7 @@
   </div>
 
   <div class="flex items-center gap-3 flex-wrap flex-shrink-0 sm:flex-nowrap">
-    <% unless document.processing? %>
+    <% unless document.processing? || document.processing_statement %>
       <div class="flex items-center gap-2" data-controller="classification" data-classification-url-value="<%= kyc_document_path(document) %>" data-classification-status-value="<%= document.classification_status %>">
         <select data-classification-target="select"
                 data-action="change->classification#change"

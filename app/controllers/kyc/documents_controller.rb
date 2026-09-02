@@ -90,7 +90,7 @@ class Kyc::DocumentsController < ApplicationController
     attrs = {}
     doc_type = params.dig(:kyc_document, :document_type)
 
-    if doc_type.present? && document.selectable_document_types.include?(doc_type)
+    if doc_type.present? && document.processing_statement.nil? && document.selectable_document_types.include?(doc_type)
       attrs[:document_type] = doc_type
     end
 
@@ -101,7 +101,7 @@ class Kyc::DocumentsController < ApplicationController
     end
 
     if document.processing_statement? && document.classification_method == "spreadsheet_content_type" &&
-        attrs[:document_type].present? && attrs[:document_type] != "processing_statement"
+        attrs[:document_type].present? && %w[processing_statement other].exclude?(attrs[:document_type])
       attrs[:status] = :pending
     end
 
