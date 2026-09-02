@@ -13,11 +13,10 @@ class ExtractKycDocumentJob < ApplicationJob
       return
     end
 
-    # "Other" has no dedicated ExtractionData schema and falls back to
-    # ExtractionData::Generic, which defines no attributes and can't accept
-    # real free-form data — this type is acknowledged, not extracted, by design.
-    if document.other?
-      Rails.logger.warn("ExtractKycDocumentJob: skipping #{document.id} — document_type is 'other', not extractable")
+    # These types are handled outside the KYC extraction pipeline and have no
+    # dedicated ExtractionData schema.
+    if document.other? || document.processing_statement?
+      Rails.logger.warn("ExtractKycDocumentJob: skipping #{document.id} — document_type is '#{document.document_type}', not extractable")
       return
     end
 

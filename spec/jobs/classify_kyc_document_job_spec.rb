@@ -266,7 +266,7 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
       end
     end
 
-    context "when the content type is structurally unsupported by the AI classifier (e.g. xlsx)" do
+    context "when an unmatched spreadsheet is uploaded" do
       before do
         document.file.attach(
           io: StringIO.new("fake spreadsheet content"),
@@ -276,21 +276,49 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
         allow(KycDocument).to receive(:find).with(document.id).and_return(document)
       end
 
-      it "classifies as other and completes without an error, an AI call, or extraction" do
+      it "classifies it as a processing statement and reuses its blob" do
         expect {
           described_class.new.perform(document.id)
-        }.not_to have_enqueued_job(ExtractKycDocumentJob)
+        }.to change(ProcessingStatement, :count).by(1)
+          .and change {
+            ActiveJob::Base.queue_adapter.enqueued_jobs.count { |job| job[:job] == ExtractKycDocumentJob }
+          }.by(0)
 
         document.reload
+        statement = document.processing_statement
         expect(document.status).to eq("complete")
-        expect(document.document_type).to eq("other")
+        expect(document.document_type).to eq("processing_statement")
         expect(document.classification_status).to eq("auto_classified")
-        expect(document.classification_method).to eq("unsupported_content_type")
+        expect(document.classification_method).to eq("spreadsheet_content_type")
         expect(document.result).to be_nil
+        expect(statement).to have_attributes(applicant: applicant, status: "uploaded")
+        expect(statement.file.blob).to eq(document.file.blob)
       end
     end
 
-    context "when the content type is unsupported and onboarding is in document_collection stage" do
+    context "when a spreadsheet filename matches an existing rule" do
+      before do
+        document.file.attach(
+          io: StringIO.new("fake spreadsheet content"),
+          filename: "transaction extract.csv",
+          content_type: "text/csv"
+        )
+        allow(KycDocument).to receive(:find).with(document.id).and_return(document)
+      end
+
+      it "keeps the rule-based classification and does not create a processing statement" do
+        expect {
+          described_class.new.perform(document.id)
+        }.not_to change(ProcessingStatement, :count)
+
+        expect(document.reload).to have_attributes(
+          document_type: "transaction_extract",
+          classification_method: "rule_based"
+        )
+      end
+    end
+
+    context "when the spreadsheet is uploaded during onboarding document collection" do
       before do
         document.file.attach(
           io: StringIO.new("fake spreadsheet content"),
@@ -308,6 +336,7 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
 
         document.reload
         expect(document.classification_status).to eq("auto_classified")
+        expect(document.processing_statement).to be_present
       end
     end
   end

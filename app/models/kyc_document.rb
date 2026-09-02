@@ -5,6 +5,7 @@ class KycDocument < ApplicationRecord
   belongs_to :kyc_principal, foreign_key: :kyc_principal_id, inverse_of: :kyc_documents, optional: true
   belongs_to :corporate_entity, class_name: "Kyc::CorporateEntity", optional: true
   belongs_to :superseded_by_kyc_document, class_name: "KycDocument", optional: true
+  belongs_to :processing_statement, optional: true, inverse_of: :kyc_document
 
   include Commentable
 
@@ -62,6 +63,7 @@ class KycDocument < ApplicationRecord
     funds_flow_diagram: 52,
     business_plan: 53,
     apm_summary: 54,
+    processing_statement: 55,
     # Legal
     legal_opinion: 60,
     declaration_of_trust: 61,

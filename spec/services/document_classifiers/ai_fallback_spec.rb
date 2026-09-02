@@ -121,12 +121,13 @@ RSpec.describe DocumentClassifiers::AiFallback do
     end
 
     context "when the document's content type is a spreadsheet MIME type" do
-      it "classifies as other without calling the AI model, for both xlsx and legacy xls" do
+      it "classifies as a processing statement without calling the AI model" do
         allow(mock_chat).to receive(:ask)
 
         [
           [ "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "export.xlsx" ],
-          [ "application/vnd.ms-excel", "export.xls" ]
+          [ "application/vnd.ms-excel", "export.xls" ],
+          [ "text/csv", "export.csv" ]
         ].each do |content_type, filename|
           doc = create(:kyc_document).tap do |d|
             d.file.attach(io: StringIO.new("fake spreadsheet content"), filename: filename, content_type: content_type)
@@ -136,8 +137,8 @@ RSpec.describe DocumentClassifiers::AiFallback do
           )
 
           expect(spreadsheet_handler.classify).to eq(
-            document_type: :other,
-            classification_method: :unsupported_content_type,
+            document_type: :processing_statement,
+            classification_method: :spreadsheet_content_type,
             confidence: 0.0
           )
         end
@@ -149,7 +150,7 @@ RSpec.describe DocumentClassifiers::AiFallback do
     context "with every content type KycDocument accepts at upload time" do
       def classify_each_allowed_content_type
         called_for = []
-        classified_other = []
+        classified_without_ai = []
 
         KycDocument::ALLOWED_CONTENT_TYPES.each do |content_type|
           doc = create(:kyc_document).tap do |d|
@@ -160,10 +161,10 @@ RSpec.describe DocumentClassifiers::AiFallback do
           )
 
           result = matrix_handler.classify
-          result[:document_type] == :other ? classified_other << content_type : called_for << content_type
+          result[:classification_method] == :ai ? called_for << content_type : classified_without_ai << content_type
         end
 
-        [ called_for, classified_other ]
+        [ called_for, classified_without_ai ]
       end
 
       before do
@@ -171,11 +172,11 @@ RSpec.describe DocumentClassifiers::AiFallback do
         allow(mock_chat).to receive(:ask).and_return(response)
       end
 
-      it "calls the AI model only for the types AiFallback declares as supported, classifying the rest as other" do
-        called_for, classified_other = classify_each_allowed_content_type
+      it "calls the AI model only for non-spreadsheet supported types" do
+        called_for, classified_without_ai = classify_each_allowed_content_type
 
         expect(called_for.sort).to eq(DocumentClassifiers::AiFallback::SUPPORTED_CONTENT_TYPES.sort)
-        expect(classified_other.sort).to eq(
+        expect(classified_without_ai.sort).to eq(
           (KycDocument::ALLOWED_CONTENT_TYPES - DocumentClassifiers::AiFallback::SUPPORTED_CONTENT_TYPES).sort
         )
       end

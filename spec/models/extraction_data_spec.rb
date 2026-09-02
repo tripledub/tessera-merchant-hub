@@ -23,9 +23,9 @@ RSpec.describe ExtractionData do
     end
 
     it "has every document type registered, except types intentionally never extracted" do
-      # "other" acknowledges a document without extracting it (ExtractKycDocumentJob
-      # refuses to run for it) — it deliberately has no dedicated schema to extract into.
-      never_extracted = %w[other]
+      # These document types are handled outside the KYC extraction pipeline
+      # and deliberately have no dedicated schema to extract into.
+      never_extracted = %w[other processing_statement]
 
       (KycDocument.document_types.keys - never_extracted).each do |type|
         model = ExtractionData::Base.for(type)
@@ -33,8 +33,9 @@ RSpec.describe ExtractionData do
       end
     end
 
-    it "falls back to Generic for other, since it is never extracted" do
+    it "falls back to Generic for document types that are never extracted" do
       expect(ExtractionData::Base.for(:other)).to eq(ExtractionData::Generic)
+      expect(ExtractionData::Base.for(:processing_statement)).to eq(ExtractionData::Generic)
     end
   end
 
