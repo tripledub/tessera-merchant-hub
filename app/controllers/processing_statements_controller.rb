@@ -63,7 +63,10 @@ class ProcessingStatementsController < ApplicationController
       return
     end
 
-    processing_statement.update!(status: :mapped, column_mapping: mapping)
+    processing_statement.with_lock do
+      authorize processing_statement, :update?
+      processing_statement.update!(status: :mapped, column_mapping: mapping)
+    end
     ImportProcessingStatementJob.perform_later(processing_statement.id, mapping)
     redirect_to processing_statement_path(processing_statement), notice: t(".success")
   end
@@ -76,6 +79,18 @@ class ProcessingStatementsController < ApplicationController
     authorize processing_statement, :export?
     send_data Statements::ReportExporter.new(processing_statement).to_csv,
       filename: "processing-statement-#{processing_statement.id}.csv", type: "text/csv"
+  end
+
+  def destroy
+    authorize processing_statement, :destroy?
+
+    processing_statement.with_lock do
+      authorize processing_statement, :destroy?
+      processing_statement.kyc_document&.update!(processing_statement: nil, classification_status: :rejected)
+      processing_statement.destroy!
+    end
+
+    redirect_to applicant_processing_statements_path(applicant)
   end
 
   private

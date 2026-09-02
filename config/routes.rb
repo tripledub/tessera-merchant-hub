@@ -54,7 +54,7 @@ Rails.application.routes.draw do
         resources :comments, only: %i[index create], controller: "document_comments"
       end
     end
-    resources :processing_statements, only: %i[index new create show edit update], shallow: true do
+    resources :processing_statements, only: %i[index new create show edit update destroy], shallow: true do
       member { get :export }
     end
   end

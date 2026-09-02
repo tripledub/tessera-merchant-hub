@@ -14,7 +14,11 @@ class ProcessingStatementPolicy < ApplicationPolicy
   end
 
   def update?
-    psp_admin?
+    psp_admin? && record.mappable?
+  end
+
+  def destroy?
+    psp_admin? && record.removable?
   end
 
   # Only a fully processed statement has real metrics — exporting one

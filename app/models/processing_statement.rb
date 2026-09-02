@@ -20,4 +20,12 @@ class ProcessingStatement < ApplicationRecord
   enum :status, { uploaded: 0, mapped: 1, processed: 2, error: 3 }, default: :uploaded
 
   validates :file, presence: true, on: :create
+
+  def mappable?
+    uploaded? || error?
+  end
+
+  def removable?
+    error?
+  end
 end

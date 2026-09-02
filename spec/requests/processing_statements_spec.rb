@@ -146,6 +146,81 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(statement.status).to eq("error")
       expect(statement.error_message).to match(/exceeds/i)
     end
+
+    it "allows an errored statement to be remapped" do
+      statement.update!(status: :error, error_message: "Invalid date")
+
+      expect {
+        patch processing_statement_path(statement), params: {
+          processing_statement: { date: "Txn Date", amount: "Value", currency: "Currency", outcome: "Result" }
+        }
+      }.to have_enqueued_job(ImportProcessingStatementJob)
+
+      expect(response).to redirect_to(processing_statement_path(statement))
+      expect(statement.reload.status).to eq("mapped")
+    end
+
+    it "rejects a mapping attempt after the statement is locked" do
+      statement.update!(status: :mapped)
+
+      expect {
+        patch processing_statement_path(statement), params: {
+          processing_statement: { date: "Txn Date", amount: "Value", currency: "Currency", outcome: "Result" }
+        }
+      }.not_to have_enqueued_job(ImportProcessingStatementJob)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(statement.reload.status).to eq("mapped")
+    end
+
+    it "rejects a malformed mapping request for a locked statement before reading its parameters" do
+      statement.update!(status: :processed)
+
+      patch processing_statement_path(statement)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(statement.reload.status).to eq("processed")
+    end
+  end
+
+  describe "DELETE /processing_statements/:id" do
+    it "removes an errored statement while retaining and rejecting its linked KYC document" do
+      statement = create(:processing_statement, applicant: applicant, status: :error)
+      other_statement = create(:processing_statement, applicant: applicant, status: :error)
+      document = create(:kyc_document, applicant: applicant, processing_statement: statement,
+        classification_status: :confirmed)
+
+      expect {
+        delete processing_statement_path(statement)
+      }.to change(ProcessingStatement, :count).by(-1)
+
+      expect(response).to redirect_to(applicant_processing_statements_path(applicant))
+      expect(KycDocument.find_by(id: document.id)).to be_present
+      expect(document.reload).to have_attributes(processing_statement_id: nil, classification_status: "rejected")
+      expect(ProcessingStatement.find_by(id: other_statement.id)).to be_present
+    end
+
+    it "rejects removal of a statement that has not errored" do
+      statement = create(:processing_statement, applicant: applicant, status: :processed)
+
+      expect {
+        delete processing_statement_path(statement)
+      }.not_to change(ProcessingStatement, :count)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(ProcessingStatement.find_by(id: statement.id)).to be_present
+    end
+
+    it "rejects removal by a non-admin PSP user" do
+      statement = create(:processing_statement, applicant: applicant, status: :error)
+      sign_in create(:user, :psp_support)
+
+      expect {
+        delete processing_statement_path(statement)
+      }.not_to change(ProcessingStatement, :count)
+
+      expect(response).to have_http_status(:forbidden)
+    end
   end
 
   describe "GET /processing_statements/:id/export" do
