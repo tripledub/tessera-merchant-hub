@@ -26,6 +26,10 @@ over this file.
   explicitly asked.
 - Before any destructive git command (`reset --hard`, `checkout --`,
   `clean -f`), run `git status` and stash or preserve anything uncommitted.
+- Reviewing a PR is delegated, not ad hoc: use the `reviewing-pull-requests`
+  skill — it posts concise inline comments on the PR itself.
+- Before starting new work, check the open PRs first and land any that have
+  gone stale — see the `landing-open-pull-requests` skill.
 
 ## Jira Workflow
 
@@ -39,6 +43,15 @@ production-ready).
   ticket has enough detail to implement.
 - When starting implementation, transition the ticket to **In Progress**.
 - When opening a PR, transition the ticket to **In Review**.
+<<<<<<< Updated upstream
+=======
+- A bare ticket key from the user (e.g. `MH-262?`) means deliver it
+  end-to-end — branch, implement, PR, status transitions — without asking
+  what to do next; see the `delivering-jira-tickets` skill.
+- If the user asks to groom or discuss a ticket, or its requirements are
+  thin, groom it with them point by point before any code — see the
+  `planning-jira-work` skill.
+>>>>>>> Stashed changes
 - Do not transition a ticket to **UAT** or **Done** — those are deployment
   and QA sign-off steps owned by the user.
 
