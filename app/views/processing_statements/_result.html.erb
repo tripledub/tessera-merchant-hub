@@ -7,6 +7,21 @@
     <% elsif p.failed? %>
       <div class="card">
         <p class="text-theme-sm text-red-500"><%= processing_statement.error_message %></p>
+        <div class="mt-4 flex flex-wrap gap-3">
+          <% if processing_statement.mappable? %>
+            <%= link_to t("processing_statements.actions.remap"),
+                  edit_processing_statement_path(processing_statement, context: "show"),
+                  id: "map-processing-statement-#{processing_statement.id}",
+                  class: "btn-secondary",
+                  data: { turbo_frame: ProcessingStatementsController::MAPPING_MODAL_ID } %>
+          <% end %>
+          <% if processing_statement.removable? %>
+            <%= button_to t("processing_statements.actions.remove"), processing_statement_path(processing_statement),
+                  method: :delete,
+                  class: "btn-danger",
+                  data: { turbo_confirm: t("processing_statements.actions.remove_confirm") } %>
+          <% end %>
+        </div>
       </div>
     <% elsif p.ready? %>
       <div class="mb-6 flex justify-end">
@@ -75,7 +90,13 @@
       </div>
     <% else %>
       <div class="card">
-        <p class="text-theme-sm text-gray-500"><%= link_to t('processing_statements.show.map_columns'), edit_processing_statement_path(processing_statement), class: "text-brand-600 hover:text-brand-700" %></p>
+        <% if processing_statement.mappable? %>
+          <%= link_to t("processing_statements.actions.map"),
+                edit_processing_statement_path(processing_statement, context: "show"),
+                id: "map-processing-statement-#{processing_statement.id}",
+                class: "text-brand-600 hover:text-brand-700",
+                data: { turbo_frame: ProcessingStatementsController::MAPPING_MODAL_ID } %>
+        <% end %>
       </div>
     <% end %>
   </div>

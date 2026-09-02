@@ -1,0 +1,23 @@
+<tr id="<%= dom_id(statement) %>" class="border-t border-gray-100 dark:border-gray-800">
+  <td class="py-2 pr-4 text-gray-900 dark:text-white/90"><%= l(statement.created_at, format: :long) %></td>
+  <td class="py-2 pr-4 text-gray-900 dark:text-white/90"><%= t("processing_statements.statuses.#{statement.status}") %></td>
+  <td class="py-2">
+    <div class="flex flex-wrap items-center justify-end gap-3">
+      <% if statement.mappable? %>
+        <%= link_to statement.error? ? t("processing_statements.actions.remap") : t("processing_statements.actions.map"),
+              edit_processing_statement_path(statement, context: "index"),
+              id: "map-processing-statement-#{statement.id}",
+              class: "text-brand-600 hover:text-brand-700",
+              data: { turbo_frame: ProcessingStatementsController::MAPPING_MODAL_ID } %>
+      <% end %>
+      <% if statement.removable? %>
+        <%= button_to t("processing_statements.actions.remove"), processing_statement_path(statement),
+              method: :delete,
+              class: "text-error-600 hover:text-error-700",
+              data: { turbo_confirm: t("processing_statements.actions.remove_confirm") } %>
+      <% end %>
+      <%= link_to t("processing_statements.index.table.view"), processing_statement_path(statement),
+            class: "text-brand-600 hover:text-brand-700" %>
+    </div>
+  </td>
+</tr>
