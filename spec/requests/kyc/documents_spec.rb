@@ -164,6 +164,15 @@ RSpec.describe "KycDocuments", type: :request do
         expect(document.reload.document_type).to eq("passport")
       end
 
+      it "ignores routing-only document types" do
+        patch kyc_document_path(document),
+          params: { kyc_document: { document_type: "processing_statement" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(document.reload.document_type).to eq("passport")
+        expect(document.processing_statement).to be_nil
+      end
+
       it "renders the validity status inside a single dom_id-wrapped element (MH-208)" do
         # A turbo_stream.replace can only remove content living inside its target
         # element. Confirming the classification repeatedly used to leave the

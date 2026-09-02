@@ -90,7 +90,7 @@ class Kyc::DocumentsController < ApplicationController
     attrs = {}
     doc_type = params.dig(:kyc_document, :document_type)
 
-    if doc_type.present? && KycDocument.document_types.key?(doc_type)
+    if doc_type.present? && KycDocument.manually_selectable_document_types.include?(doc_type)
       attrs[:document_type] = doc_type
     end
 
