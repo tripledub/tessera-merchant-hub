@@ -47,12 +47,12 @@ module Statements
       fail!("Could not parse statement data: #{e.message}")
     rescue SpreadsheetReader::RowLimitExceeded => e
       fail!(e.message)
-    rescue StandardError => e
+    rescue StandardError
       # Defense in depth: whatever the underlying spreadsheet library or a
       # malformed file throws that we haven't anticipated must still land
       # the statement in :error, not leave it stuck in :mapped forever —
       # this is exactly the class of bug fixed in MH-232 for KYC documents.
-      fail!("Import failed: #{e.message}")
+      fail!("Import failed while processing statement data.")
     end
 
     private

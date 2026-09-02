@@ -84,7 +84,9 @@ RSpec.describe Statements::Importer do
         expect(statement.error_message).to eq(
           'Row 2, field "date", column "Txn Date", value "not-a-date": invalid date'
         )
-        expect(statement.error_message).not_to include("2026-04-15", "50.00", "declined")
+        expect(statement.error_message).not_to include(
+          "100.00", "GBP", "approved", "2026-04-15", "50.00", "declined"
+        )
       end
     end
 
@@ -104,7 +106,9 @@ RSpec.describe Statements::Importer do
         expect(statement.error_message).to eq(
           'Row 2, field "amount", column "Value", value "not-an-amount": invalid amount'
         )
-        expect(statement.error_message).not_to include("2026-04-15", "50.00", "declined")
+        expect(statement.error_message).not_to include(
+          "2026-04-01", "GBP", "approved", "2026-04-15", "50.00", "declined"
+        )
       end
     end
 
@@ -124,7 +128,9 @@ RSpec.describe Statements::Importer do
         expect(statement.error_message).to eq(
           'Row 2, field "currency", column "Currency", value "not-a-currency": invalid currency code'
         )
-        expect(statement.error_message).not_to include("2026-04-15", "50.00", "declined")
+        expect(statement.error_message).not_to include(
+          "2026-04-01", "100.00", "approved", "2026-04-15", "50.00", "declined"
+        )
       end
     end
 
@@ -152,7 +158,7 @@ RSpec.describe Statements::Importer do
 
         statement.reload
         expect(statement.status).to eq("error")
-        expect(statement.error_message).to be_present
+        expect(statement.error_message).to eq("Import failed while processing statement data.")
       end
     end
 
