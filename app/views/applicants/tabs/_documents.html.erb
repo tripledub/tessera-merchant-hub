@@ -8,7 +8,22 @@
             total_count: @kyc_documents.size %>
     <% end %>
   </h2>
-  <%= render "kyc/documents/extraction_button", applicant: applicant %>
+  <div class="flex items-center gap-2">
+    <% if policy(KycDocument).create? %>
+      <button type="button"
+              data-controller="scroll-to"
+              data-scroll-to-target-value="kyc-upload"
+              data-action="click->scroll-to#jump"
+              title="<%= t('applicants.show.documents.upload_document') %>"
+              aria-label="<%= t('applicants.show.documents.upload_document') %>"
+              class="btn-secondary inline-flex h-9 w-9 shrink-0 items-center justify-center p-0">
+        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5v15m7.5-7.5h-15"/>
+        </svg>
+      </button>
+    <% end %>
+    <%= render "kyc/documents/extraction_button", applicant: applicant %>
+  </div>
 </div>
 
 <turbo-frame id="document-comments-modal"></turbo-frame>
