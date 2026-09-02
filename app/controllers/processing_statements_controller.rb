@@ -44,10 +44,13 @@ class ProcessingStatementsController < ApplicationController
 
   def edit
     authorize processing_statement, :update?
-    @headers = Statements::SpreadsheetReader.new(processing_statement).headers
-  rescue StandardError => e
-    processing_statement.update!(status: :error, error_message: "Could not read this file: #{e.message}")
-    redirect_to processing_statement_path(processing_statement), alert: t(".read_error")
+
+    begin
+      @headers = Statements::SpreadsheetReader.new(processing_statement).headers
+    rescue StandardError => e
+      processing_statement.update!(status: :error, error_message: "Could not read this file: #{e.message}")
+      redirect_to processing_statement_path(processing_statement), alert: t(".read_error")
+    end
   end
 
   def update

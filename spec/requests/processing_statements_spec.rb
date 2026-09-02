@@ -80,6 +80,25 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(statement.status).to eq("error")
       expect(statement.error_message).to be_present
     end
+
+    it "rejects a locked statement without changing its state" do
+      statement = create(:processing_statement, applicant: applicant, status: :mapped)
+
+      get edit_processing_statement_path(statement)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(statement.reload.status).to eq("mapped")
+    end
+
+    it "rejects a non-admin PSP user without changing the statement" do
+      statement = create(:processing_statement, applicant: applicant, status: :uploaded)
+      sign_in create(:user, :psp_support)
+
+      get edit_processing_statement_path(statement)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(statement.reload.status).to eq("uploaded")
+    end
   end
 
   describe "PATCH /processing_statements/:id then GET show" do
@@ -171,6 +190,19 @@ RSpec.describe "ProcessingStatements", type: :request do
 
       expect(response).to have_http_status(:forbidden)
       expect(statement.reload.status).to eq("mapped")
+    end
+
+    it "rejects a mapping attempt by a non-admin PSP user" do
+      sign_in create(:user, :psp_support)
+
+      expect {
+        patch processing_statement_path(statement), params: {
+          processing_statement: { date: "Txn Date", amount: "Value", currency: "Currency", outcome: "Result" }
+        }
+      }.not_to have_enqueued_job(ImportProcessingStatementJob)
+
+      expect(response).to have_http_status(:forbidden)
+      expect(statement.reload.status).to eq("uploaded")
     end
 
     it "rejects a malformed mapping request for a locked statement before reading its parameters" do
