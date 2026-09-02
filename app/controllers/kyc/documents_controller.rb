@@ -100,6 +100,11 @@ class Kyc::DocumentsController < ApplicationController
       attrs[:classification_method] = document.classification_method || "manual" if classification == "confirmed"
     end
 
+    if document.processing_statement? && document.classification_method == "spreadsheet_content_type" &&
+        attrs[:document_type].present? && attrs[:document_type] != "processing_statement"
+      attrs[:status] = :pending
+    end
+
     KycDocument.transaction do
       document.update!(attrs) if attrs.any?
       if document.processing_statement? && document.classification_confirmed?

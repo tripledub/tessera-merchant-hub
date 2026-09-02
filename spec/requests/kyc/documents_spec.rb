@@ -194,6 +194,27 @@ RSpec.describe "KycDocuments", type: :request do
         expect(statement.file.blob).to eq(spreadsheet.file.blob)
       end
 
+      it "returns a corrected spreadsheet suggestion to pending extraction" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :ai_suggested, classification_method: "spreadsheet_content_type", status: :complete)
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "transactions.csv",
+          content_type: "text/csv"
+        )
+
+        patch kyc_document_path(spreadsheet),
+          params: { kyc_document: { document_type: "transaction_extract", classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(spreadsheet.reload).to have_attributes(
+          document_type: "transaction_extract",
+          classification_status: "confirmed",
+          status: "pending",
+          processing_statement: nil
+        )
+      end
+
       it "renders the validity status inside a single dom_id-wrapped element (MH-208)" do
         # A turbo_stream.replace can only remove content living inside its target
         # element. Confirming the classification repeatedly used to leave the
