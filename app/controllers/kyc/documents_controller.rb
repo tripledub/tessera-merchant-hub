@@ -87,20 +87,30 @@ class Kyc::DocumentsController < ApplicationController
 
   def update
     authorize document
-    attrs = {}
-    doc_type = params.dig(:kyc_document, :document_type)
+    document.with_lock do
+      attrs = {}
+      doc_type = params.dig(:kyc_document, :document_type)
 
-    if doc_type.present? && KycDocument.document_types.key?(doc_type)
-      attrs[:document_type] = doc_type
+      if doc_type.present? && document.processing_statement.nil? && document.selectable_document_types.include?(doc_type)
+        attrs[:document_type] = doc_type
+      end
+
+      classification = params.dig(:kyc_document, :classification_status)
+      if classification.present? && KycDocument.classification_statuses.key?(classification)
+        attrs[:classification_status] = classification
+        attrs[:classification_method] = document.classification_method || "manual" if classification == "confirmed"
+      end
+
+      if document.processing_statement? && document.classification_method == "spreadsheet_content_type" &&
+          attrs[:document_type].present? && %w[processing_statement other].exclude?(attrs[:document_type])
+        attrs[:status] = :pending
+      end
+
+      document.update!(attrs) if attrs.any?
+      if document.processing_statement? && document.classification_confirmed?
+        ProcessingStatements::RouteFromKycDocument.call(document)
+      end
     end
-
-    classification = params.dig(:kyc_document, :classification_status)
-    if classification.present? && KycDocument.classification_statuses.key?(classification)
-      attrs[:classification_status] = classification
-      attrs[:classification_method] = document.classification_method || "manual" if classification == "confirmed"
-    end
-
-    document.update!(attrs) if attrs.any?
     broadcast_document(document)
 
     respond_to do |format|

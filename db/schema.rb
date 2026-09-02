@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_01_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_02_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -168,6 +168,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_130000) do
     t.uuid "kyc_principal_id"
     t.decimal "match_confidence", precision: 4, scale: 3
     t.string "match_method"
+    t.uuid "processing_statement_id"
     t.jsonb "result"
     t.integer "status", default: 0, null: false
     t.uuid "superseded_by_kyc_document_id"
@@ -177,6 +178,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_130000) do
     t.index ["applicant_id"], name: "index_kyc_documents_on_applicant_id"
     t.index ["corporate_entity_id"], name: "index_kyc_documents_on_corporate_entity_id"
     t.index ["kyc_principal_id"], name: "index_kyc_documents_on_kyc_principal_id"
+    t.index ["processing_statement_id"], name: "index_kyc_documents_on_processing_statement_id", unique: true
     t.index ["superseded_by_kyc_document_id"], name: "index_kyc_documents_on_superseded_by_kyc_document_id"
   end
 
@@ -401,6 +403,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_01_130000) do
   add_foreign_key "kyc_documents", "kyc_documents", column: "superseded_by_kyc_document_id", on_delete: :nullify
   add_foreign_key "kyc_documents", "kyc_principals"
   add_foreign_key "kyc_documents", "merchants", column: "applicant_id"
+  add_foreign_key "kyc_documents", "processing_statements"
   add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "child_entity_id"
   add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "parent_entity_id"
   add_foreign_key "kyc_ownership_edges", "kyc_documents", column: "source_document_id"

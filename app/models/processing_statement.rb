@@ -13,6 +13,7 @@ class ProcessingStatement < ApplicationRecord
   REQUIRED_FIELDS = %i[date amount currency outcome].freeze
 
   belongs_to :applicant
+  has_one :kyc_document, dependent: :nullify, inverse_of: :processing_statement
 
   has_one_attached :file
 

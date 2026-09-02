@@ -5,6 +5,7 @@ class KycDocument < ApplicationRecord
   belongs_to :kyc_principal, foreign_key: :kyc_principal_id, inverse_of: :kyc_documents, optional: true
   belongs_to :corporate_entity, class_name: "Kyc::CorporateEntity", optional: true
   belongs_to :superseded_by_kyc_document, class_name: "KycDocument", optional: true
+  belongs_to :processing_statement, optional: true, inverse_of: :kyc_document
 
   include Commentable
 
@@ -62,6 +63,7 @@ class KycDocument < ApplicationRecord
     funds_flow_diagram: 52,
     business_plan: 53,
     apm_summary: 54,
+    processing_statement: 55,
     # Legal
     legal_opinion: 60,
     declaration_of_trust: 61,
@@ -78,6 +80,27 @@ class KycDocument < ApplicationRecord
     # and kept on file, but never auto-extracted; a human can reclassify it later.
     other: 99
   }
+
+  ROUTING_ONLY_DOCUMENT_TYPES = %w[processing_statement].freeze
+  PROCESSING_STATEMENT_CONTENT_TYPES = %w[
+    application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+    application/vnd.ms-excel
+    text/csv
+  ].freeze
+
+  def self.manually_selectable_document_types
+    document_types.keys - ROUTING_ONLY_DOCUMENT_TYPES
+  end
+
+  def selectable_document_types
+    self.class.manually_selectable_document_types.tap do |types|
+      types << "processing_statement" if processing_statement_spreadsheet?
+    end
+  end
+
+  def processing_statement_spreadsheet?
+    file.attached? && PROCESSING_STATEMENT_CONTENT_TYPES.include?(file.content_type)
+  end
 
   enum :classification_status, {
     unclassified: 0,

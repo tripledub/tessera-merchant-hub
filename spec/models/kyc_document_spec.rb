@@ -7,6 +7,7 @@ RSpec.describe KycDocument, type: :model do
 
   it { is_expected.to belong_to(:applicant) }
   it { is_expected.to belong_to(:kyc_principal).optional }
+  it { is_expected.to belong_to(:processing_statement).optional }
 
   it "defaults status to pending" do
     expect(document.status).to eq("pending")
@@ -44,6 +45,29 @@ RSpec.describe KycDocument, type: :model do
       "vasp_registration" => 74,
       "wallet_custody_infrastructure_attestation" => 75
     )
+  end
+
+  it "defines the processing statement document type" do
+    expect(described_class.document_types).to include("processing_statement" => 55)
+  end
+
+  it "keeps processing statements out of manually selectable document types" do
+    expect(described_class.manually_selectable_document_types).not_to include("processing_statement")
+  end
+
+  it "allows a suggested spreadsheet to be confirmed as a processing statement" do
+    document.file.attach(
+      io: StringIO.new("spreadsheet"),
+      filename: "statement.csv",
+      content_type: "text/csv"
+    )
+    document.document_type = :processing_statement
+
+    expect(document.selectable_document_types).to include("processing_statement")
+  end
+
+  it "does not offer processing statements for non-spreadsheet documents" do
+    expect(document.selectable_document_types).not_to include("processing_statement")
   end
 
   it "requires an attached file" do
