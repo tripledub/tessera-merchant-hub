@@ -79,6 +79,17 @@ RSpec.describe DocumentClassifiers::AiFallback do
       end
     end
 
+    context "when AI returns the routing-only processing statement type" do
+      before do
+        response = instance_double(RubyLLM::Message, content: '{"document_type": "processing_statement", "confidence": 0.9}')
+        allow(mock_chat).to receive(:ask).and_return(response)
+      end
+
+      it "rejects the type for image and PDF classification" do
+        expect(handler.classify[:document_type]).to be_nil
+      end
+    end
+
     context "when AI returns invalid JSON" do
       before do
         response = instance_double(RubyLLM::Message, content: "not json at all")

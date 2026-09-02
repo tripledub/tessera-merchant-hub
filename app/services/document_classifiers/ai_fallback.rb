@@ -4,7 +4,7 @@ module DocumentClassifiers
   class AiFallback < Base
     class Error < StandardError; end
 
-    VALID_TYPES = KycDocument.document_types.keys.freeze
+    VALID_TYPES = KycDocument.manually_selectable_document_types.freeze
 
     SPREADSHEET_CONTENT_TYPES = %w[
       application/vnd.openxmlformats-officedocument.spreadsheetml.sheet

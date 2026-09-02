@@ -51,6 +51,10 @@ RSpec.describe KycDocument, type: :model do
     expect(described_class.document_types).to include("processing_statement" => 55)
   end
 
+  it "keeps processing statements out of manually selectable document types" do
+    expect(described_class.manually_selectable_document_types).not_to include("processing_statement")
+  end
+
   it "requires an attached file" do
     document.file = nil
     expect(document).not_to be_valid

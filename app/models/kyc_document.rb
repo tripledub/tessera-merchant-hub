@@ -81,6 +81,12 @@ class KycDocument < ApplicationRecord
     other: 99
   }
 
+  ROUTING_ONLY_DOCUMENT_TYPES = %w[processing_statement].freeze
+
+  def self.manually_selectable_document_types
+    document_types.keys - ROUTING_ONLY_DOCUMENT_TYPES
+  end
+
   enum :classification_status, {
     unclassified: 0,
     auto_classified: 1,
