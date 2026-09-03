@@ -39,6 +39,64 @@ RSpec.describe Statements::Importer do
       expect(statement.metrics["by_month"].keys).to eq(%w[2026-04 2026-05])
     end
 
+    context "when the transaction table is followed by a summary footer" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          2026-04-01,100.00,GBP,approved
+
+          SUMMARY,,,
+          Total transaction count,1,,
+          Total volume,100.00,GBP,
+        CSV
+      end
+
+      it "imports the transactions and ignores the blank separator and summary block" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.status).to eq("processed")
+        expect(statement.row_count).to eq(1)
+        expect(statement.metrics["overall"]["total_volume"]).to eq({ "GBP" => "100.0" })
+      end
+    end
+
+    context "when a non-summary row contains malformed transaction data" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          Notes,,,
+        CSV
+      end
+
+      it "fails rather than silently discarding the row" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.status).to eq("error")
+        expect(statement.error_message).to eq(
+          'Row 2, field "date", column "Txn Date", value "Notes": invalid date'
+        )
+      end
+    end
+
+    context "when a populated transaction row begins with the summary marker" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          SUMMARY,100.00,GBP,approved
+        CSV
+      end
+
+      it "validates the row instead of treating it as a footer" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.status).to eq("error")
+        expect(statement.error_message).to include('value "SUMMARY": invalid date')
+      end
+    end
+
     context "when a required field is not mapped" do
       before { statement.update!(column_mapping: { "date" => "Txn Date" }) }
 
