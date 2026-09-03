@@ -30,6 +30,9 @@ RSpec.describe "ProcessingStatements", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include(processing_statement_path(statement))
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("turbo-cable-stream-source[signed-stream-name]")).to be_present
+      expect(page.at_css("#processing_statement_#{statement.id}")).to be_present
     end
 
     it "shows an empty state when there are none yet" do
@@ -374,6 +377,16 @@ RSpec.describe "ProcessingStatements", type: :request do
   end
 
   describe "GET /processing_statements/:id" do
+    it "subscribes to live updates using a stable detail target" do
+      statement = create(:processing_statement, applicant: applicant, status: :mapped)
+
+      get processing_statement_path(statement)
+
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("turbo-cable-stream-source[signed-stream-name]")).to be_present
+      expect(page.at_css("#processing_statement_#{statement.id}")).to be_present
+    end
+
     it "offers an uploaded statement for mapping in the shared modal" do
       statement = create(:processing_statement, applicant: applicant, status: :uploaded)
 

@@ -33,11 +33,20 @@ RSpec.describe ImportProcessingStatementJob, type: :job do
       expect(statement.metrics["overall"]["total_volume"]).to eq({ "GBP" => "150.0" })
     end
 
-    it "broadcasts the updated statement" do
+    it "broadcasts updated index and detail replacements" do
       described_class.new.perform(statement.id, mapping)
 
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
-        "processing_statement_#{statement.id}", hash_including(target: "processing_statement_#{statement.id}")
+        "processing_statement_row_#{statement.id}",
+        target: "processing_statement_#{statement.id}",
+        partial: "processing_statements/statement",
+        locals: { statement: statement }
+      )
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
+        "processing_statement_#{statement.id}",
+        target: "processing_statement_#{statement.id}",
+        partial: "processing_statements/result",
+        locals: { processing_statement: statement }
       )
     end
 
@@ -49,6 +58,12 @@ RSpec.describe ImportProcessingStatementJob, type: :job do
       statement.reload
       expect(statement.status).to eq("error")
       expect(statement.error_message).to match(/exceeds/i)
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
+        "processing_statement_row_#{statement.id}", hash_including(target: "processing_statement_#{statement.id}")
+      )
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
+        "processing_statement_#{statement.id}", hash_including(target: "processing_statement_#{statement.id}")
+      )
     end
   end
 end

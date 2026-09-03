@@ -16,6 +16,9 @@
     <p class="text-theme-sm text-gray-500"><%= t('.empty') %></p>
   </div>
 <% else %>
+  <% @processing_statements.each do |statement| %>
+    <%= turbo_stream_from "processing_statement_row_#{statement.id}" %>
+  <% end %>
   <div class="card overflow-x-auto">
     <table class="min-w-full text-theme-sm">
       <thead>

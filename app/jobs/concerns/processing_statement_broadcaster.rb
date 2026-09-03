@@ -7,6 +7,13 @@ module ProcessingStatementBroadcaster
 
   def broadcast_statement(statement)
     Turbo::StreamsChannel.broadcast_replace_to(
+      "processing_statement_row_#{statement.id}",
+      target: "processing_statement_#{statement.id}",
+      partial: "processing_statements/statement",
+      locals: { statement: statement }
+    )
+
+    Turbo::StreamsChannel.broadcast_replace_to(
       "processing_statement_#{statement.id}",
       target: "processing_statement_#{statement.id}",
       partial: "processing_statements/result",
