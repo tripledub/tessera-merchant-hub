@@ -3,6 +3,7 @@
 module Statements
   class Importer
     CURRENCY_FORMAT = /\A[A-Z]{3}\z/
+    SUMMARY_FOOTER = "SUMMARY"
 
     class ParseError < StandardError
       def initialize(row_number:, logical_field:, mapped_column:, value:, reason:)
@@ -69,14 +70,31 @@ module Statements
     def build_rows
       reader = SpreadsheetReader.new(processing_statement)
       reader.row_count!
-      reader.each_row_hash.with_index(2).map do |raw_row, row_number|
-        {
+      rows = []
+      reader.each_row_hash.with_index(2) do |raw_row, row_number|
+        break if summary_footer?(raw_row)
+        next if blank_row?(raw_row)
+
+        rows << {
           date: parse_field(raw_row, row_number, "date") { |value| parse_date(value) },
           amount: parse_field(raw_row, row_number, "amount") { |value| parse_amount(value) },
           currency: parse_field(raw_row, row_number, "currency") { |value| parse_currency(value) },
           outcome: parse_field(raw_row, row_number, "outcome", &:itself)
         }
       end
+      rows
+    end
+
+    def summary_footer?(raw_row)
+      values = raw_row.values.map { |value| value.to_s.strip }
+      first_populated_index = values.index(&:present?)
+      return false unless first_populated_index
+
+      values[first_populated_index].casecmp?(SUMMARY_FOOTER) && values.drop(first_populated_index + 1).all?(&:blank?)
+    end
+
+    def blank_row?(raw_row)
+      raw_row.values.all? { |value| value.to_s.strip.blank? }
     end
 
     def parse_field(raw_row, row_number, logical_field)
