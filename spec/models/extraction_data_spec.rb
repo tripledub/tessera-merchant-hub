@@ -25,7 +25,7 @@ RSpec.describe ExtractionData do
     it "has every document type registered, except types intentionally never extracted" do
       # These document types are handled outside the KYC extraction pipeline
       # and deliberately have no dedicated schema to extract into.
-      never_extracted = %w[other processing_statement]
+      never_extracted = %w[other processing_statement proof_of_domain_ownership]
 
       (KycDocument.document_types.keys - never_extracted).each do |type|
         model = ExtractionData::Base.for(type)
@@ -36,6 +36,7 @@ RSpec.describe ExtractionData do
     it "falls back to Generic for document types that are never extracted" do
       expect(ExtractionData::Base.for(:other)).to eq(ExtractionData::Generic)
       expect(ExtractionData::Base.for(:processing_statement)).to eq(ExtractionData::Generic)
+      expect(ExtractionData::Base.for(:proof_of_domain_ownership)).to eq(ExtractionData::Generic)
     end
   end
 

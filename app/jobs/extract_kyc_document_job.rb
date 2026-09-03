@@ -15,7 +15,7 @@ class ExtractKycDocumentJob < ApplicationJob
 
     # These types are handled outside the KYC extraction pipeline and have no
     # dedicated ExtractionData schema.
-    if document.other? || document.processing_statement?
+    if document.other? || document.processing_statement? || document.proof_of_domain_ownership?
       Rails.logger.warn("ExtractKycDocumentJob: skipping #{document.id} — document_type is '#{document.document_type}', not extractable")
       return
     end

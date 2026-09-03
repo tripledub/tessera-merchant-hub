@@ -51,6 +51,14 @@ RSpec.describe KycDocument, type: :model do
     expect(described_class.document_types).to include("processing_statement" => 55)
   end
 
+  it "defines the proof of domain ownership document type" do
+    expect(described_class.document_types).to include("proof_of_domain_ownership" => 80)
+  end
+
+  it "offers proof of domain ownership as manually selectable" do
+    expect(described_class.manually_selectable_document_types).to include("proof_of_domain_ownership")
+  end
+
   it "keeps processing statements out of manually selectable document types" do
     expect(described_class.manually_selectable_document_types).not_to include("processing_statement")
   end

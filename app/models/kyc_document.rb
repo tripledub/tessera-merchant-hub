@@ -75,6 +75,8 @@ class KycDocument < ApplicationRecord
     aml_ctf_questionnaire: 73,
     vasp_registration: 74,
     wallet_custody_infrastructure_attestation: 75,
+    # Proof of ownership
+    proof_of_domain_ownership: 80,
     # Content type the AI classifier can't process at all (e.g. xlsx/xls —
     # see DocumentClassifiers::AiFallback::SUPPORTED_CONTENT_TYPES). Acknowledged
     # and kept on file, but never auto-extracted; a human can reclassify it later.
