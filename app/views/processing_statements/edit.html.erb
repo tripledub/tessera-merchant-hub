@@ -4,7 +4,8 @@
           processing_statement: processing_statement,
           headers: @headers,
           context: @mapping_context,
-          mapping_error: @mapping_error %>
+          mapping_error: @mapping_error,
+          mapping: @mapping || {} %>
   <% end %>
 <% else %>
   <% content_for :title, t('.title') %>
@@ -20,6 +21,7 @@
           headers: @headers,
           context: @mapping_context,
           mapping_error: @mapping_error,
+          mapping: @mapping || {},
           modal: false %>
   </div>
 <% end %>

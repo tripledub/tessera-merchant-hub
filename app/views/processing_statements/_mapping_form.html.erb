@@ -17,7 +17,7 @@
       <%= f.select field,
             options_for_select(
               [[t("processing_statements.edit.unmapped"), ""]] + headers.map { |header| [header, header] },
-              processing_statement.column_mapping[field.to_s]
+              mapping.fetch(field.to_s, processing_statement.column_mapping[field.to_s])
             ),
             {},
             class: "form-input",

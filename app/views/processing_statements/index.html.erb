@@ -30,7 +30,10 @@
       </thead>
       <tbody>
         <% @processing_statements.each do |statement| %>
-          <%= render "processing_statements/statement", statement: statement %>
+          <%= render "processing_statements/statement",
+                statement: statement,
+                mapping_allowed: policy(statement).update?,
+                removal_allowed: policy(statement).destroy? %>
         <% end %>
       </tbody>
     </table>

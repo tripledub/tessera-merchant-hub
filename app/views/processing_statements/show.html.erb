@@ -10,6 +10,9 @@
   <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= t('.title') %></h1>
 </div>
 
-<%= render "processing_statements/result", processing_statement: processing_statement %>
+<%= render "processing_statements/result",
+      processing_statement: processing_statement,
+      mapping_allowed: policy(processing_statement).update?,
+      removal_allowed: policy(processing_statement).destroy? %>
 
 <%= turbo_frame_tag ProcessingStatementsController::MAPPING_MODAL_ID %>

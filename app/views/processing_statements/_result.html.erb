@@ -8,14 +8,14 @@
       <div class="card">
         <p class="text-theme-sm text-red-500"><%= processing_statement.error_message %></p>
         <div class="mt-4 flex flex-wrap gap-3">
-          <% if processing_statement.mappable? %>
+          <% if mapping_allowed %>
             <%= link_to t("processing_statements.actions.remap"),
                   edit_processing_statement_path(processing_statement, context: "show"),
                   id: "map-processing-statement-#{processing_statement.id}",
                   class: "btn-secondary",
                   data: { turbo_frame: ProcessingStatementsController::MAPPING_MODAL_ID } %>
           <% end %>
-          <% if processing_statement.removable? %>
+          <% if removal_allowed %>
             <%= button_to t("processing_statements.actions.remove"), processing_statement_path(processing_statement),
                   method: :delete,
                   class: "btn-danger",
@@ -90,7 +90,7 @@
       </div>
     <% else %>
       <div class="card">
-        <% if processing_statement.mappable? %>
+        <% if mapping_allowed %>
           <%= link_to t("processing_statements.actions.map"),
                 edit_processing_statement_path(processing_statement, context: "show"),
                 id: "map-processing-statement-#{processing_statement.id}",

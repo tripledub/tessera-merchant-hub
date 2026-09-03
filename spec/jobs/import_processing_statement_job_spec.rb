@@ -40,13 +40,13 @@ RSpec.describe ImportProcessingStatementJob, type: :job do
         "processing_statement_row_#{statement.id}",
         target: "processing_statement_#{statement.id}",
         partial: "processing_statements/statement",
-        locals: { statement: statement }
+        locals: { statement: statement, mapping_allowed: false, removal_allowed: false }
       )
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
         "processing_statement_#{statement.id}",
         target: "processing_statement_#{statement.id}",
         partial: "processing_statements/result",
-        locals: { processing_statement: statement }
+        locals: { processing_statement: statement, mapping_allowed: false, removal_allowed: false }
       )
     end
 
@@ -64,6 +64,18 @@ RSpec.describe ImportProcessingStatementJob, type: :job do
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
         "processing_statement_#{statement.id}", hash_including(target: "processing_statement_#{statement.id}")
       )
+    end
+
+    it "finishes quietly when the errored statement is removed before broadcasting" do
+      importer = instance_double(Statements::Importer)
+      allow(Statements::Importer).to receive(:new).with(statement, mapping).and_return(importer)
+      allow(importer).to receive(:call) do
+        statement.update!(status: :error, error_message: "Invalid row")
+        statement.destroy!
+      end
+
+      expect { described_class.new.perform(statement.id, mapping) }.not_to raise_error
+      expect(Turbo::StreamsChannel).not_to have_received(:broadcast_replace_to)
     end
   end
 end

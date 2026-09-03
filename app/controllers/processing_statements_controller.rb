@@ -53,7 +53,8 @@ class ProcessingStatementsController < ApplicationController
     begin
       @headers = Statements::SpreadsheetReader.new(processing_statement).headers
     rescue StandardError => e
-      processing_statement.update!(status: :error, error_message: "Could not read this file: #{e.message}")
+      Rails.logger.warn("ProcessingStatementsController: could not read processing statement #{processing_statement.id} — #{e.class}: #{e.message}")
+      processing_statement.update!(status: :error, error_message: t(".read_error"))
       redirect_to processing_statement_path(processing_statement), alert: t(".read_error")
     end
   end
@@ -68,6 +69,7 @@ class ProcessingStatementsController < ApplicationController
       @headers = Statements::SpreadsheetReader.new(processing_statement).headers
       @mapping_context = mapping_context
       @mapping_error = t(".missing_fields", fields: missing.join(", "))
+      @mapping = mapping
 
       respond_to do |format|
         format.html do
@@ -81,7 +83,8 @@ class ProcessingStatementsController < ApplicationController
               processing_statement: processing_statement,
               headers: @headers,
               context: @mapping_context,
-              mapping_error: @mapping_error
+              mapping_error: @mapping_error,
+              mapping: @mapping
             }
           ), status: :unprocessable_content
         end

@@ -3,14 +3,14 @@
   <td class="py-2 pr-4 text-gray-900 dark:text-white/90"><%= t("processing_statements.statuses.#{statement.status}") %></td>
   <td class="py-2">
     <div class="flex flex-wrap items-center justify-end gap-3">
-      <% if statement.mappable? %>
+      <% if mapping_allowed %>
         <%= link_to statement.error? ? t("processing_statements.actions.remap") : t("processing_statements.actions.map"),
               edit_processing_statement_path(statement, context: "index"),
               id: "map-processing-statement-#{statement.id}",
               class: "text-brand-600 hover:text-brand-700",
               data: { turbo_frame: ProcessingStatementsController::MAPPING_MODAL_ID } %>
       <% end %>
-      <% if statement.removable? %>
+      <% if removal_allowed %>
         <%= button_to t("processing_statements.actions.remove"), processing_statement_path(statement),
               method: :delete,
               class: "text-error-600 hover:text-error-700",

@@ -70,6 +70,21 @@ RSpec.describe "ProcessingStatements", type: :request do
         .to eq(I18n.t("processing_statements.actions.remove_confirm"))
     end
 
+    it "does not offer recovery actions to PSP support users" do
+      uploaded = create(:processing_statement, applicant: applicant, status: :uploaded)
+      errored = create(:processing_statement, applicant: applicant, status: :error)
+      sign_in create(:user, :psp_support)
+
+      get applicant_processing_statements_path(applicant)
+
+      page = Nokogiri::HTML(response.body)
+      [ uploaded, errored ].each do |statement|
+        row = page.at_css("#processing_statement_#{statement.id}")
+        expect(row.at_css("a[href^='#{edit_processing_statement_path(statement)}']")).to be_nil
+        expect(row.at_css("form[action='#{processing_statement_path(statement)}']")).to be_nil
+      end
+    end
+
     it "does not offer mapping or removal actions for locked statements" do
       mapped = create(:processing_statement, applicant: applicant, status: :mapped)
       processed = create(:processing_statement, applicant: applicant, status: :processed)
@@ -153,6 +168,19 @@ RSpec.describe "ProcessingStatements", type: :request do
       statement.reload
       expect(statement.status).to eq("error")
       expect(statement.error_message).to be_present
+    end
+
+    it "does not persist file-reader exception details" do
+      statement = create(:processing_statement, applicant: applicant)
+      sensitive_detail = "customer@example.test"
+      reader = instance_double(Statements::SpreadsheetReader)
+      allow(reader).to receive(:headers).and_raise(Zip::Error, sensitive_detail)
+      allow(Statements::SpreadsheetReader).to receive(:new).with(statement).and_return(reader)
+
+      get edit_processing_statement_path(statement)
+
+      expect(statement.reload.error_message).to eq(I18n.t("processing_statements.edit.read_error"))
+      expect(statement.error_message).not_to include(sensitive_detail)
     end
 
     it "rejects a locked statement without changing its state" do
@@ -243,7 +271,10 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(modal_stream.at_css("template").text.strip).to be_empty
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
         "processing_statement_row_#{statement.id}",
-        hash_including(partial: "processing_statements/statement", locals: { statement: statement })
+        hash_including(
+          partial: "processing_statements/statement",
+          locals: { statement: statement, mapping_allowed: false, removal_allowed: false }
+        )
       )
     end
 
@@ -276,7 +307,10 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(streams.at_css("turbo-stream[action='update'][target='#{MAPPING_MODAL_ID}']")).to be_present
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
         "processing_statement_#{statement.id}",
-        hash_including(partial: "processing_statements/result", locals: { processing_statement: statement })
+        hash_including(
+          partial: "processing_statements/result",
+          locals: { processing_statement: statement, mapping_allowed: false, removal_allowed: false }
+        )
       )
     end
 
@@ -295,6 +329,18 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(modal_stream.at_css("[role='alert']")&.text).to include("amount, currency, outcome")
       expect(modal_stream.at_css("form[action='#{processing_statement_path(statement)}']")).to be_present
       expect(statement.reload.status).to eq("uploaded")
+    end
+
+    it "preserves valid submitted selections after an invalid Turbo submission" do
+      patch processing_statement_path(statement), params: {
+        context: "index",
+        processing_statement: { date: "Txn Date", amount: "Value", currency: "", outcome: "Result" }
+      }, headers: { "Accept" => Mime[:turbo_stream].to_s, "Turbo-Frame" => MAPPING_MODAL_ID }
+
+      modal = Nokogiri::HTML.fragment(response.body)
+      expect(modal.at_css("select[name='processing_statement[date]'] option[selected]")&.attr("value")).to eq("Txn Date")
+      expect(modal.at_css("select[name='processing_statement[amount]'] option[selected]")&.attr("value")).to eq("Value")
+      expect(modal.at_css("select[name='processing_statement[outcome]'] option[selected]")&.attr("value")).to eq("Result")
     end
 
     it "marks the statement as error without raising when the row limit is exceeded" do
@@ -434,6 +480,17 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(result.at_css("a[href='#{edit_processing_statement_path(statement, context: "show")}']")&.text&.strip)
         .to eq(I18n.t("processing_statements.actions.remap"))
       expect(result.at_css("form[action='#{processing_statement_path(statement)}']")).to be_present
+    end
+
+    it "does not offer recovery actions to a PSP support user" do
+      statement = create(:processing_statement, applicant: applicant, status: :error)
+      sign_in create(:user, :psp_support)
+
+      get processing_statement_path(statement)
+
+      result = Nokogiri::HTML(response.body).at_css("#processing_statement_#{statement.id}")
+      expect(result.at_css("a[href^='#{edit_processing_statement_path(statement)}']")).to be_nil
+      expect(result.at_css("form[action='#{processing_statement_path(statement)}']")).to be_nil
     end
 
     it "does not offer mapping or removal actions for locked statements" do
