@@ -132,6 +132,8 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(response).to have_http_status(:ok)
       expect(modal&.attr("aria-modal")).to eq("true")
       expect(modal&.attr("aria-labelledby")).to be_present
+      expect(modal&.attr("data-action")).to include("keydown.tab->modal#trapFocus")
+      expect(modal&.to_html).not_to include("modal#nothing")
       expect(modal.at_css("button[aria-label='#{I18n.t("processing_statements.mapping_modal.close")}']")).to be_present
       expect(modal.at_css("form[action='#{processing_statement_path(statement)}']")).to be_present
     end
