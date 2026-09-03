@@ -16,6 +16,9 @@
     <p class="text-theme-sm text-gray-500"><%= t('.empty') %></p>
   </div>
 <% else %>
+  <% @processing_statements.each do |statement| %>
+    <%= turbo_stream_from "processing_statement_row_#{statement.id}" %>
+  <% end %>
   <div class="card overflow-x-auto">
     <table class="min-w-full text-theme-sm">
       <thead>
@@ -27,15 +30,13 @@
       </thead>
       <tbody>
         <% @processing_statements.each do |statement| %>
-          <tr class="border-t border-gray-100 dark:border-gray-800">
-            <td class="py-2 pr-4 text-gray-900 dark:text-white/90"><%= l(statement.created_at, format: :long) %></td>
-            <td class="py-2 pr-4 text-gray-900 dark:text-white/90"><%= statement.status.humanize %></td>
-            <td class="py-2">
-              <%= link_to t('.table.view'), processing_statement_path(statement), class: "text-brand-600 hover:text-brand-700" %>
-            </td>
-          </tr>
+          <%= render "processing_statements/statement",
+                statement: statement,
+                recovery_allowed: policy(statement).recover? %>
         <% end %>
       </tbody>
     </table>
   </div>
 <% end %>
+
+<%= turbo_frame_tag ProcessingStatementsController::MAPPING_MODAL_ID %>

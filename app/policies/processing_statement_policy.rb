@@ -14,6 +14,14 @@ class ProcessingStatementPolicy < ApplicationPolicy
   end
 
   def update?
+    psp_admin? && record.mappable?
+  end
+
+  def destroy?
+    psp_admin? && record.removable?
+  end
+
+  def recover?
     psp_admin?
   end
 

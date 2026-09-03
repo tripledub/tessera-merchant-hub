@@ -4,6 +4,22 @@ module Statements
   class Importer
     CURRENCY_FORMAT = /\A[A-Z]{3}\z/
 
+    class ParseError < StandardError
+      def initialize(row_number:, logical_field:, mapped_column:, value:, reason:)
+        message = "Row #{row_number}, field #{logical_field.inspect}, column #{mapped_column.inspect}, " \
+          "value #{diagnostic_value(value)}: #{reason}"
+        super(message)
+      end
+
+      private
+
+      def diagnostic_value(value)
+        scalar = value.to_s
+        scalar = "#{scalar[0, 200]}…" if scalar.length > 200
+        scalar.inspect
+      end
+    end
+
     def initialize(processing_statement, mapping)
       @processing_statement = processing_statement
       @mapping = mapping.stringify_keys
@@ -25,16 +41,18 @@ module Statements
         metrics: result,
         error_message: nil
       )
+    rescue ParseError => e
+      fail!(e.message)
     rescue ArgumentError, TypeError, KeyError => e
       fail!("Could not parse statement data: #{e.message}")
     rescue SpreadsheetReader::RowLimitExceeded => e
       fail!(e.message)
-    rescue StandardError => e
+    rescue StandardError
       # Defense in depth: whatever the underlying spreadsheet library or a
       # malformed file throws that we haven't anticipated must still land
       # the statement in :error, not leave it stuck in :mapped forever —
       # this is exactly the class of bug fixed in MH-232 for KYC documents.
-      fail!("Import failed: #{e.message}")
+      fail!("Import failed while processing statement data.")
     end
 
     private
@@ -51,14 +69,28 @@ module Statements
     def build_rows
       reader = SpreadsheetReader.new(processing_statement)
       reader.row_count!
-      reader.each_row_hash.map do |raw_row|
+      reader.each_row_hash.with_index(2).map do |raw_row, row_number|
         {
-          date: parse_date(raw_row.fetch(mapping.fetch("date")).to_s),
-          amount: BigDecimal(raw_row.fetch(mapping.fetch("amount")).to_s),
-          currency: parse_currency(raw_row.fetch(mapping.fetch("currency")).to_s),
-          outcome: raw_row.fetch(mapping.fetch("outcome")).to_s
+          date: parse_field(raw_row, row_number, "date") { |value| parse_date(value) },
+          amount: parse_field(raw_row, row_number, "amount") { |value| parse_amount(value) },
+          currency: parse_field(raw_row, row_number, "currency") { |value| parse_currency(value) },
+          outcome: parse_field(raw_row, row_number, "outcome", &:itself)
         }
       end
+    end
+
+    def parse_field(raw_row, row_number, logical_field)
+      mapped_column = mapping.fetch(logical_field)
+      value = raw_row.fetch(mapped_column)
+      yield value.to_s
+    rescue ArgumentError, TypeError => e
+      raise ParseError.new(
+        row_number: row_number,
+        logical_field: logical_field,
+        mapped_column: mapped_column,
+        value: value,
+        reason: e.message
+      )
     end
 
     # Date.parse alone guesses ambiguously-ordered dates (04/05/2026 could
@@ -70,6 +102,14 @@ module Statements
       return Date.iso8601(value) if value.match?(/\A\d{4}-\d{2}-\d{2}/)
 
       Date.parse(value)
+    rescue ArgumentError, TypeError
+      raise ArgumentError, "invalid date"
+    end
+
+    def parse_amount(value)
+      BigDecimal(value)
+    rescue ArgumentError, TypeError
+      raise ArgumentError, "invalid amount"
     end
 
     # Strict ISO-4217-shaped (3 letters) after normalizing case/whitespace.
@@ -78,7 +118,7 @@ module Statements
     # contain '=', '+', '-', '@', or any other formula-trigger character.
     def parse_currency(value)
       normalized = value.strip.upcase
-      raise ArgumentError, "Invalid currency code: #{value.inspect}" unless normalized.match?(CURRENCY_FORMAT)
+      raise ArgumentError, "invalid currency code" unless normalized.match?(CURRENCY_FORMAT)
 
       normalized
     end

@@ -6,8 +6,11 @@ class ImportProcessingStatementJob < ApplicationJob
   queue_as :default
 
   def perform(processing_statement_id, mapping)
-    statement = ProcessingStatement.find(processing_statement_id)
+    statement = ProcessingStatement.find_by(id: processing_statement_id)
+    return unless statement
+
     Statements::Importer.new(statement, mapping).call
-    broadcast_statement(statement.reload)
+    refreshed_statement = ProcessingStatement.find_by(id: processing_statement_id)
+    broadcast_statement(refreshed_statement) if refreshed_statement
   end
 end

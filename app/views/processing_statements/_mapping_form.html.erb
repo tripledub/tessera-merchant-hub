@@ -1,0 +1,36 @@
+<%= form_with model: processing_statement,
+      url: processing_statement_path(processing_statement),
+      method: :patch,
+      class: "space-y-4" do |f| %>
+  <%= hidden_field_tag :context, context %>
+
+  <% if mapping_error.present? %>
+    <p class="rounded-lg bg-error-50 p-3 text-theme-sm text-error-600 dark:bg-error-500/15 dark:text-error-400"
+       role="alert">
+      <%= mapping_error %>
+    </p>
+  <% end %>
+
+  <% %i[date amount currency outcome].each_with_index do |field, index| %>
+    <div>
+      <%= f.label field, t("processing_statements.edit.#{field}_label"), class: "form-label" %>
+      <%= f.select field,
+            options_for_select(
+              [[t("processing_statements.edit.unmapped"), ""]] + headers.map { |header| [header, header] },
+              mapping.fetch(field.to_s, processing_statement.column_mapping[field.to_s])
+            ),
+            {},
+            class: "form-input",
+            **(mapping_error.present? && index.zero? ? { "data-modal-autofocus": true } : {}) %>
+    </div>
+  <% end %>
+
+  <div class="flex gap-3 pt-2">
+    <%= f.submit t("processing_statements.edit.submit"), class: "btn-primary" %>
+    <% if modal %>
+      <button type="button" data-action="click->modal#close" class="btn-secondary">
+        <%= t("processing_statements.mapping_modal.cancel") %>
+      </button>
+    <% end %>
+  </div>
+<% end %>

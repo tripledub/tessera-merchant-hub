@@ -1,0 +1,39 @@
+<div data-controller="modal"
+     data-modal-frame-value="<%= ProcessingStatementsController::MAPPING_MODAL_ID %>"
+     data-action="keydown.esc@window->modal#close keydown.tab->modal#trapFocus"
+     class="fixed inset-0 z-50 flex items-center justify-center p-5"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="processing-statement-mapping-title"
+     aria-describedby="processing-statement-mapping-intro">
+  <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm"
+       data-action="click->modal#close"
+       aria-hidden="true"></div>
+
+  <div class="relative z-10 max-h-full w-full max-w-xl overflow-y-auto rounded-2xl border border-gray-200 bg-white p-6 shadow-xl dark:border-gray-800 dark:bg-gray-900">
+    <div class="mb-5 flex items-start justify-between gap-4">
+      <div>
+        <h2 id="processing-statement-mapping-title" class="text-base font-semibold text-gray-900 dark:text-white">
+          <%= t("processing_statements.mapping_modal.title") %>
+        </h2>
+        <p id="processing-statement-mapping-intro" class="mt-1 text-theme-sm text-gray-500">
+          <%= t("processing_statements.edit.intro") %>
+        </p>
+      </div>
+      <button type="button"
+              data-action="click->modal#close"
+              aria-label="<%= t("processing_statements.mapping_modal.close") %>"
+              class="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+        <span aria-hidden="true" class="text-xl leading-none">&times;</span>
+      </button>
+    </div>
+
+    <%= render "processing_statements/mapping_form",
+          processing_statement: processing_statement,
+          headers: headers,
+          context: context,
+          mapping_error: mapping_error,
+          mapping: mapping,
+          modal: true %>
+  </div>
+</div>

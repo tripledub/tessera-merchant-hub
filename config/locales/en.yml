@@ -767,6 +767,12 @@ en:
     sign_out: Sign out
     title: Kynetic Portal
   processing_statements:
+    actions:
+      map: Map
+      remap: Remap
+      remove: Remove
+      remove_confirm: Remove this errored processing statement? Any linked KYC document
+        will be retained.
     create:
       no_file: Please choose a file to upload.
     edit:
@@ -790,6 +796,10 @@ en:
         view: View
       title: Processing statements
       upload_new: Upload new statement
+    mapping_modal:
+      cancel: Cancel
+      close: Close column mapping
+      title: Map statement columns
     new:
       back: "← Back to statements"
       file_label: Statement file (.xlsx, .xls or .csv)
@@ -801,7 +811,6 @@ en:
       chargebacks: Chargebacks
       currencies_used: Currencies used
       declined_volume: Declined volume
-      map_columns: Map columns to import this statement
       month: Month
       no_data: "—"
       overall: Overall
@@ -810,6 +819,11 @@ en:
       refunds: Refunds
       title: Processing statement overview
       total_volume: Total volume
+    statuses:
+      error: Error
+      mapped: Processing
+      processed: Processed
+      uploaded: Uploaded
     update:
       missing_fields: 'Missing required field mapping: %{fields}'
       success: Statement queued for import.
