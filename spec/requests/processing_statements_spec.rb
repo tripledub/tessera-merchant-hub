@@ -61,13 +61,15 @@ RSpec.describe "ProcessingStatements", type: :request do
 
       page = Nokogiri::HTML(response.body)
       row = page.at_css("#processing_statement_#{statement.id}")
-      expect(row.at_css("a[href='#{edit_processing_statement_path(statement, context: "index")}']").text.strip)
+      expect(row.at_css("a[data-processing-statement-recovery-target='remap']").text.strip)
         .to eq(I18n.t("processing_statements.actions.remap"))
       remove_form = row.at_css("form[action='#{processing_statement_path(statement)}']")
       expect(remove_form).to be_present
       expect(remove_form.at_css("button")&.text&.strip).to eq(I18n.t("processing_statements.actions.remove"))
       expect(remove_form.at_css("button")&.attr("data-turbo-confirm"))
         .to eq(I18n.t("processing_statements.actions.remove_confirm"))
+      expect(row.at_css("#processing_statement_status_#{statement.id} [data-processing-statement-recovery-target='remap']"))
+        .to be_nil
     end
 
     it "does not offer recovery actions to PSP support users" do
@@ -80,8 +82,9 @@ RSpec.describe "ProcessingStatements", type: :request do
       page = Nokogiri::HTML(response.body)
       [ uploaded, errored ].each do |statement|
         row = page.at_css("#processing_statement_#{statement.id}")
-        expect(row.at_css("a[href^='#{edit_processing_statement_path(statement)}']")).to be_nil
-        expect(row.at_css("form[action='#{processing_statement_path(statement)}']")).to be_nil
+        expect(row.at_css("[data-processing-statement-recovery-target='map']")).to be_nil
+        expect(row.at_css("[data-processing-statement-recovery-target='remap']")).to be_nil
+        expect(row.at_css("[data-processing-statement-recovery-target='remove']")).to be_nil
       end
     end
 
@@ -94,8 +97,9 @@ RSpec.describe "ProcessingStatements", type: :request do
       page = Nokogiri::HTML(response.body)
       [ mapped, processed ].each do |statement|
         row = page.at_css("#processing_statement_#{statement.id}")
-        expect(row.at_css("a[href^='#{edit_processing_statement_path(statement)}']")).to be_nil
-        expect(row.at_css("form[action='#{processing_statement_path(statement)}']")).to be_nil
+        expect(row.at_css("[data-processing-statement-recovery-target='map']").attribute("hidden")).to be_present
+        expect(row.at_css("[data-processing-statement-recovery-target='remap']").attribute("hidden")).to be_present
+        expect(row.at_css("[data-processing-statement-recovery-target='remove']").attribute("hidden")).to be_present
       end
     end
   end
@@ -272,8 +276,8 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
         "processing_statement_row_#{statement.id}",
         hash_including(
-          partial: "processing_statements/statement",
-          locals: { statement: statement, mapping_allowed: false, removal_allowed: false }
+          partial: "processing_statements/statement_status",
+          locals: { statement: statement }
         )
       )
     end
@@ -308,8 +312,8 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
         "processing_statement_#{statement.id}",
         hash_including(
-          partial: "processing_statements/result",
-          locals: { processing_statement: statement, mapping_allowed: false, removal_allowed: false }
+          partial: "processing_statements/result_content",
+          locals: { processing_statement: statement }
         )
       )
     end
@@ -477,9 +481,11 @@ RSpec.describe "ProcessingStatements", type: :request do
       get processing_statement_path(statement)
 
       result = Nokogiri::HTML(response.body).at_css("#processing_statement_#{statement.id}")
-      expect(result.at_css("a[href='#{edit_processing_statement_path(statement, context: "show")}']")&.text&.strip)
+      expect(result.at_css("a[data-processing-statement-recovery-target='remap']")&.text&.strip)
         .to eq(I18n.t("processing_statements.actions.remap"))
       expect(result.at_css("form[action='#{processing_statement_path(statement)}']")).to be_present
+      expect(result.at_css("#processing_statement_result_#{statement.id} [data-processing-statement-recovery-target='remap']"))
+        .to be_nil
     end
 
     it "does not offer recovery actions to a PSP support user" do
@@ -500,8 +506,9 @@ RSpec.describe "ProcessingStatements", type: :request do
         get processing_statement_path(statement)
 
         result = Nokogiri::HTML(response.body).at_css("#processing_statement_#{statement.id}")
-        expect(result.at_css("a[href^='#{edit_processing_statement_path(statement)}']")).to be_nil
-        expect(result.at_css("form[action='#{processing_statement_path(statement)}']")).to be_nil
+        expect(result.at_css("[data-processing-statement-recovery-target='map']").attribute("hidden")).to be_present
+        expect(result.at_css("[data-processing-statement-recovery-target='remap']").attribute("hidden")).to be_present
+        expect(result.at_css("[data-processing-statement-recovery-target='remove']").attribute("hidden")).to be_present
       end
     end
   end

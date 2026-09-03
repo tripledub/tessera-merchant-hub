@@ -12,7 +12,6 @@
 
 <%= render "processing_statements/result",
       processing_statement: processing_statement,
-      mapping_allowed: policy(processing_statement).update?,
-      removal_allowed: policy(processing_statement).destroy? %>
+      recovery_allowed: policy(processing_statement).recover? %>
 
 <%= turbo_frame_tag ProcessingStatementsController::MAPPING_MODAL_ID %>

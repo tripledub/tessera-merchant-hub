@@ -21,6 +21,10 @@ class ProcessingStatementPolicy < ApplicationPolicy
     psp_admin? && record.removable?
   end
 
+  def recover?
+    psp_admin?
+  end
+
   # Only a fully processed statement has real metrics — exporting one
   # that's still queued, mapped, or errored would produce a blank or
   # empty-looking CSV that reads as a legitimate (but wrong) report.

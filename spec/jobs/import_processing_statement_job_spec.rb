@@ -38,15 +38,15 @@ RSpec.describe ImportProcessingStatementJob, type: :job do
 
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
         "processing_statement_row_#{statement.id}",
-        target: "processing_statement_#{statement.id}",
-        partial: "processing_statements/statement",
-        locals: { statement: statement, mapping_allowed: false, removal_allowed: false }
+        target: "processing_statement_status_#{statement.id}",
+        partial: "processing_statements/statement_status",
+        locals: { statement: statement }
       )
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
         "processing_statement_#{statement.id}",
-        target: "processing_statement_#{statement.id}",
-        partial: "processing_statements/result",
-        locals: { processing_statement: statement, mapping_allowed: false, removal_allowed: false }
+        target: "processing_statement_result_#{statement.id}",
+        partial: "processing_statements/result_content",
+        locals: { processing_statement: statement }
       )
     end
 
@@ -59,10 +59,10 @@ RSpec.describe ImportProcessingStatementJob, type: :job do
       expect(statement.status).to eq("error")
       expect(statement.error_message).to match(/exceeds/i)
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
-        "processing_statement_row_#{statement.id}", hash_including(target: "processing_statement_#{statement.id}")
+        "processing_statement_row_#{statement.id}", hash_including(target: "processing_statement_status_#{statement.id}")
       )
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
-        "processing_statement_#{statement.id}", hash_including(target: "processing_statement_#{statement.id}")
+        "processing_statement_#{statement.id}", hash_including(target: "processing_statement_result_#{statement.id}")
       )
     end
 

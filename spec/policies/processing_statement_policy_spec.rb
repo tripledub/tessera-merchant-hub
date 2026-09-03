@@ -41,6 +41,15 @@ RSpec.describe ProcessingStatementPolicy, type: :policy do
     end
   end
 
+  describe "#recover?" do
+    it "allows only PSP admins to receive state-responsive recovery controls" do
+      statement = build(:processing_statement, status: :mapped)
+
+      expect(described_class.new(psp_admin, statement).recover?).to be true
+      expect(described_class.new(psp_support, statement).recover?).to be false
+    end
+  end
+
   describe "#export?" do
     it "allows a processed statement" do
       statement = build(:processing_statement, status: :processed)

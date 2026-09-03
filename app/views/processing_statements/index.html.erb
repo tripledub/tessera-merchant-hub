@@ -32,8 +32,7 @@
         <% @processing_statements.each do |statement| %>
           <%= render "processing_statements/statement",
                 statement: statement,
-                mapping_allowed: policy(statement).update?,
-                removal_allowed: policy(statement).destroy? %>
+                recovery_allowed: policy(statement).recover? %>
         <% end %>
       </tbody>
     </table>
