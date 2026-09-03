@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class ProcessingStatementsController < ApplicationController
+  include ProcessingStatementBroadcaster
+
   MAPPING_MODAL_ID = "processing-statement-mapping-modal"
 
   expose(:processing_statement) { ProcessingStatement.find(params[:id]) }
@@ -91,26 +93,13 @@ class ProcessingStatementsController < ApplicationController
       authorize processing_statement, :update?
       processing_statement.update!(status: :mapped, column_mapping: mapping)
     end
+    broadcast_statement(processing_statement)
     ImportProcessingStatementJob.perform_later(processing_statement.id, mapping)
 
     respond_to do |format|
       format.html { redirect_to processing_statement_path(processing_statement), notice: t(".success") }
       format.turbo_stream do
-        replacement = if mapping_context == "index"
-          turbo_stream.replace(
-            processing_statement,
-            partial: "processing_statements/statement",
-            locals: { statement: processing_statement }
-          )
-        else
-          turbo_stream.replace(
-            processing_statement,
-            partial: "processing_statements/result",
-            locals: { processing_statement: processing_statement }
-          )
-        end
-
-        render turbo_stream: [ turbo_stream.update(MAPPING_MODAL_ID, ""), replacement ]
+        render turbo_stream: turbo_stream.update(MAPPING_MODAL_ID, "")
       end
     end
   end

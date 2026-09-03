@@ -226,7 +226,9 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(statement.status).to eq("uploaded")
     end
 
-    it "closes the modal and replaces the index row after a valid Turbo submission" do
+    it "closes the modal and broadcasts the mapped index row after a valid Turbo submission" do
+      allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
+
       expect {
         patch processing_statement_path(statement), params: {
           context: "index",
@@ -236,24 +238,46 @@ RSpec.describe "ProcessingStatements", type: :request do
 
       streams = Nokogiri::HTML.fragment(response.body)
       modal_stream = streams.at_css("turbo-stream[action='update'][target='#{MAPPING_MODAL_ID}']")
-      row_stream = streams.at_css("turbo-stream[action='replace'][target='processing_statement_#{statement.id}']")
       expect(response.media_type).to eq(Mime[:turbo_stream].to_s)
       expect(modal_stream).to be_present
       expect(modal_stream.at_css("template").text.strip).to be_empty
-      expect(row_stream&.text).to include(I18n.t("processing_statements.statuses.mapped"))
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
+        "processing_statement_row_#{statement.id}",
+        hash_including(partial: "processing_statements/statement", locals: { statement: statement })
+      )
     end
 
-    it "closes the modal and replaces the detail result after a valid Turbo submission" do
+    it "does not overwrite an import that completes before the Turbo response renders" do
+      allow(ImportProcessingStatementJob).to receive(:perform_later) do |statement_id, mapping|
+        ImportProcessingStatementJob.perform_now(statement_id, mapping)
+      end
+
+      patch processing_statement_path(statement), params: {
+        context: "index",
+        processing_statement: { date: "Txn Date", amount: "Value", currency: "Currency", outcome: "Result" }
+      }, headers: { "Accept" => Mime[:turbo_stream].to_s, "Turbo-Frame" => MAPPING_MODAL_ID }
+
+      streams = Nokogiri::HTML.fragment(response.body)
+      row_stream = streams.at_css("turbo-stream[action='replace'][target='processing_statement_#{statement.id}']")
+      expect(statement.reload.status).to eq("processed")
+      expect(row_stream).to be_nil
+    end
+
+    it "closes the modal and broadcasts the mapped detail result after a valid Turbo submission" do
+      allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
+
       patch processing_statement_path(statement), params: {
         context: "show",
         processing_statement: { date: "Txn Date", amount: "Value", currency: "Currency", outcome: "Result" }
       }, headers: { "Accept" => Mime[:turbo_stream].to_s, "Turbo-Frame" => MAPPING_MODAL_ID }
 
       streams = Nokogiri::HTML.fragment(response.body)
-      result_stream = streams.at_css("turbo-stream[action='replace'][target='processing_statement_#{statement.id}']")
       expect(response).to have_http_status(:ok)
       expect(streams.at_css("turbo-stream[action='update'][target='#{MAPPING_MODAL_ID}']")).to be_present
-      expect(result_stream&.text).to include(I18n.t("processing_statements.show.processing"))
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
+        "processing_statement_#{statement.id}",
+        hash_including(partial: "processing_statements/result", locals: { processing_statement: statement })
+      )
     end
 
     it "keeps the modal open with the mapping error after an invalid Turbo submission" do
