@@ -8,6 +8,7 @@ RSpec.describe KycDocument, type: :model do
   it { is_expected.to belong_to(:applicant) }
   it { is_expected.to belong_to(:kyc_principal).optional }
   it { is_expected.to belong_to(:processing_statement).optional }
+  it { is_expected.to belong_to(:applicant_domain).optional }
 
   it "defaults status to pending" do
     expect(document.status).to eq("pending")

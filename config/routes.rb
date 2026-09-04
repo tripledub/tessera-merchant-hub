@@ -48,6 +48,7 @@ Rails.application.routes.draw do
       resources :principals, only: %i[new create show edit update destroy], shallow: true do
         resource :document_links, only: %i[new create], controller: "principal_document_links"
       end
+      resources :applicant_domains, only: %i[new create destroy], shallow: true
       resources :documents, only: %i[create update destroy], shallow: true do
         member { post :retry }
         member { patch :comment_status }

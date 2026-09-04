@@ -279,6 +279,55 @@ RSpec.describe "KycDocuments", type: :request do
     end
   end
 
+  describe "PATCH /kyc_documents/:id linking a proof_of_domain_ownership document to a domain" do
+    let_it_be(:domain) { create(:applicant_domain, applicant: applicant) }
+    let(:document) do
+      create(:kyc_document, applicant: applicant, document_type: :proof_of_domain_ownership,
+             classification_status: :confirmed)
+    end
+
+    before { sign_in psp_admin }
+
+    it "links the document to the domain" do
+      patch kyc_document_path(document),
+        params: { kyc_document: { applicant_domain_id: domain.id } },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      expect(document.reload.applicant_domain).to eq(domain)
+    end
+
+    it "unlinks when given a blank id" do
+      document.update!(applicant_domain: domain)
+
+      patch kyc_document_path(document),
+        params: { kyc_document: { applicant_domain_id: "" } },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      expect(document.reload.applicant_domain).to be_nil
+    end
+
+    it "ignores a domain belonging to a different applicant" do
+      other_domain = create(:applicant_domain)
+
+      patch kyc_document_path(document),
+        params: { kyc_document: { applicant_domain_id: other_domain.id } },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      expect(document.reload.applicant_domain).to be_nil
+    end
+
+    it "ignores applicant_domain_id for a document type other than proof_of_domain_ownership" do
+      other_document = create(:kyc_document, applicant: applicant, document_type: :passport,
+                               classification_status: :confirmed)
+
+      patch kyc_document_path(other_document),
+        params: { kyc_document: { applicant_domain_id: domain.id } },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      expect(other_document.reload.applicant_domain).to be_nil
+    end
+  end
+
   describe "POST /kyc_documents/:id/retry" do
     let_it_be(:document) { create(:kyc_document, applicant: applicant, status: :error) }
 

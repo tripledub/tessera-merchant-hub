@@ -6,6 +6,7 @@ class KycDocument < ApplicationRecord
   belongs_to :corporate_entity, class_name: "Kyc::CorporateEntity", optional: true
   belongs_to :superseded_by_kyc_document, class_name: "KycDocument", optional: true
   belongs_to :processing_statement, optional: true, inverse_of: :kyc_document
+  belongs_to :applicant_domain, foreign_key: :applicant_domain_id, inverse_of: :kyc_documents, optional: true
 
   include Commentable
 

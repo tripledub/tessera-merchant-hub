@@ -69,6 +69,21 @@
       </div>
     <% end %>
 
+    <% if document.proof_of_domain_ownership? && document.applicant.applicant_domains.any? %>
+      <div data-controller="domain-link" data-domain-link-url-value="<%= kyc_document_path(document) %>">
+        <select data-domain-link-target="select"
+                data-action="change->domain-link#change"
+                class="rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-gray-700 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300">
+          <option value=""><%= t("kyc.documents.select_domain") %></option>
+          <% document.applicant.applicant_domains.order(:name).each do |domain| %>
+            <option value="<%= domain.id %>" <%= "selected" if domain.id == document.applicant_domain_id %>>
+              <%= domain.name %>
+            </option>
+          <% end %>
+        </select>
+      </div>
+    <% end %>
+
     <% if document.kyc_principal && (document.kyc_principal.unconfirmed? || document.match_method == "fuzzy") %>
       <%= button_to kyc_document_link_path(document), method: :patch,
               title: t("kyc.documents.confirm_match"),
