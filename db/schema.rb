@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_02_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_04_123056) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -56,6 +56,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_02_100000) do
     t.datetime "updated_at", null: false
     t.index ["addressable_type", "addressable_id", "type", "primary"], name: "index_addresses_on_addressable_and_type_primary", unique: true, where: "(\"primary\" = true)"
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable"
+  end
+
+  create_table "applicant_domains", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.integer "verification_status", default: 0, null: false
+    t.index "applicant_id, lower((name)::text)", name: "index_applicant_domains_on_applicant_id_and_lower_name", unique: true
+    t.index ["applicant_id"], name: "index_applicant_domains_on_applicant_id"
   end
 
   create_table "applicant_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -156,6 +166,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_02_100000) do
   create_table "kyc_documents", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.decimal "address_match_confidence", precision: 4, scale: 3
     t.string "address_match_method"
+    t.uuid "applicant_domain_id"
     t.uuid "applicant_id", null: false
     t.float "classification_confidence"
     t.string "classification_method"
@@ -175,6 +186,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_02_100000) do
     t.datetime "updated_at", null: false
     t.boolean "validity_confirmation_required", default: false, null: false
     t.jsonb "validity_dates", default: {}, null: false
+    t.index ["applicant_domain_id"], name: "index_kyc_documents_on_applicant_domain_id"
     t.index ["applicant_id"], name: "index_kyc_documents_on_applicant_id"
     t.index ["corporate_entity_id"], name: "index_kyc_documents_on_corporate_entity_id"
     t.index ["kyc_principal_id"], name: "index_kyc_documents_on_kyc_principal_id"
@@ -389,6 +401,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_02_100000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "applicant_domains", "merchants", column: "applicant_id"
   add_foreign_key "applicant_users", "merchants", column: "applicant_id"
   add_foreign_key "comments", "users", column: "author_id"
   add_foreign_key "kyc_corporate_entities", "kyc_documents"
@@ -399,6 +412,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_02_100000) do
   add_foreign_key "kyc_document_replacement_requirements", "kyc_documents", column: "superseded_by_kyc_document_id"
   add_foreign_key "kyc_document_validity_assessments", "kyc_document_validity_policies"
   add_foreign_key "kyc_document_validity_assessments", "kyc_documents"
+  add_foreign_key "kyc_documents", "applicant_domains"
   add_foreign_key "kyc_documents", "kyc_corporate_entities", column: "corporate_entity_id"
   add_foreign_key "kyc_documents", "kyc_documents", column: "superseded_by_kyc_document_id", on_delete: :nullify
   add_foreign_key "kyc_documents", "kyc_principals"

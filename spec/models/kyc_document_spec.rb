@@ -8,6 +8,7 @@ RSpec.describe KycDocument, type: :model do
   it { is_expected.to belong_to(:applicant) }
   it { is_expected.to belong_to(:kyc_principal).optional }
   it { is_expected.to belong_to(:processing_statement).optional }
+  it { is_expected.to belong_to(:applicant_domain).optional }
 
   it "defaults status to pending" do
     expect(document.status).to eq("pending")
@@ -49,6 +50,14 @@ RSpec.describe KycDocument, type: :model do
 
   it "defines the processing statement document type" do
     expect(described_class.document_types).to include("processing_statement" => 55)
+  end
+
+  it "defines the proof of domain ownership document type" do
+    expect(described_class.document_types).to include("proof_of_domain_ownership" => 80)
+  end
+
+  it "offers proof of domain ownership as manually selectable" do
+    expect(described_class.manually_selectable_document_types).to include("proof_of_domain_ownership")
   end
 
   it "keeps processing statements out of manually selectable document types" do

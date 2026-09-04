@@ -1,0 +1,17 @@
+<%= form_with model: applicant_domain,
+              url: applicant_kyc_applicant_domains_path(applicant_domain.applicant),
+              class: "space-y-4" do |f| %>
+  <%= render "shared/error_messages", object: applicant_domain %>
+
+  <div>
+    <%= f.label :name, t("kyc.applicant_domains.form.fields.name"), class: "form-label" %>
+    <%= f.text_field :name, class: "form-input", required: true, placeholder: "example.com" %>
+  </div>
+
+  <div class="flex gap-3 pt-2">
+    <%= f.submit t("kyc.applicant_domains.form.submit"), class: "btn-primary" %>
+    <button type="button" data-action="click->modal#close" class="btn-secondary">
+      <%= t("kyc.applicant_domains.form.cancel") %>
+    </button>
+  </div>
+<% end %>

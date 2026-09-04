@@ -101,6 +101,11 @@ class Kyc::DocumentsController < ApplicationController
         attrs[:classification_method] = document.classification_method || "manual" if classification == "confirmed"
       end
 
+      if params[:kyc_document]&.key?(:applicant_domain_id) && document.proof_of_domain_ownership?
+        domain_id = params.dig(:kyc_document, :applicant_domain_id)
+        attrs[:applicant_domain_id] = domain_id if domain_id.blank? || document.applicant.applicant_domains.exists?(domain_id)
+      end
+
       if document.processing_statement? && document.classification_method == "spreadsheet_content_type" &&
           attrs[:document_type].present? && %w[processing_statement other].exclude?(attrs[:document_type])
         attrs[:status] = :pending

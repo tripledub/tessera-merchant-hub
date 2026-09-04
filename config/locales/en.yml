@@ -151,6 +151,7 @@ en:
       general: General
       proprietary_trading: Proprietary trading
     show:
+      add_domain: Add domain
       add_principal: Add principal
       back: "← Back to applicants"
       documents:
@@ -161,6 +162,12 @@ en:
         run_extraction_confirm: Run extraction on all confirmed documents?
         upload_button: Upload
         upload_document: Upload document
+      domains:
+        empty: No domains added yet.
+        table:
+          actions: Actions
+          name: Name
+          status: Status
       edit: Edit
       principals:
         delete: Delete
@@ -180,10 +187,12 @@ en:
       processing_statements: Processing statements
       sections:
         documents: KYC Documents
+        domains: Domains
         principals: Principals
       tabs:
         compliance: Compliance
         documents: Documents
+        domains: Domains
         loading: Loading…
         overview: Overview
         ownership: Ownership
@@ -299,6 +308,9 @@ en:
         invite_success: Invitation sent to %{email}.
         role_updated: Role updated for %{email}.
         unlock_success: "%{email} has been unlocked."
+    applicant_domains:
+      create_success: Domain added.
+      destroy_success: Domain removed.
     applicant_users:
       destroy_success: Portal user removed.
     applicants:
@@ -349,6 +361,20 @@ en:
         create: Create account
         update: Update password
   kyc:
+    applicant_domains:
+      delete: Delete
+      delete_confirm: Delete %{name}? This cannot be undone.
+      form:
+        cancel: Cancel
+        fields:
+          name: Domain
+        submit: Add domain
+      new:
+        page_title: Add domain
+        title: Add domain
+      verification_status:
+        unverified: Unverified
+        verified: Verified
     corporate_entities:
       show:
         back: "← Back to ownership"
@@ -440,6 +466,7 @@ en:
         passport: Passport
         payment_agreement: Payment Agreement
         processing_statement: Processing statement
+        proof_of_domain_ownership: Proof of Domain Ownership
         register_of_members: Register of Members
         share_certificate: Share Certificate
         source_of_wealth_questionnaire: Source of Wealth Questionnaire
@@ -455,6 +482,7 @@ en:
         unconfirmed: Unconfirmed
       reject_match: Reject principal match
       retry: Retry
+      select_domain: Select domain…
       select_type: Select type…
       status:
         complete: Complete
