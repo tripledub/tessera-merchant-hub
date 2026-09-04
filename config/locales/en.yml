@@ -440,6 +440,7 @@ en:
         passport: Passport
         payment_agreement: Payment Agreement
         processing_statement: Processing statement
+        proof_of_domain_ownership: Proof of Domain Ownership
         register_of_members: Register of Members
         share_certificate: Share Certificate
         source_of_wealth_questionnaire: Source of Wealth Questionnaire
