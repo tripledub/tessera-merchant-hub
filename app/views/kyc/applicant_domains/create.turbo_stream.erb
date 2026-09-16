@@ -1,0 +1,5 @@
+<%= turbo_stream.append "applicant-domains-list",
+      partial: "kyc/applicant_domains/domain_row",
+      locals: { applicant_domain: applicant_domain } %>
+<%= turbo_stream.remove "applicant-domains-empty" %>
+<%= turbo_stream.update "applicant-domain-modal", "" %>

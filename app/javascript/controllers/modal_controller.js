@@ -33,6 +33,26 @@ export default class extends Controller {
     }
   }
 
+  trapFocus(event) {
+    const focusableElements = Array.from(this.element.querySelectorAll(
+      'a[href], area[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), iframe, object, embed, [contenteditable], [tabindex]:not([tabindex="-1"])'
+    )).filter((element) => !element.disabled && !element.hasAttribute("hidden") && element.getAttribute("aria-hidden") !== "true")
+
+    if (focusableElements.length === 0) return
+
+    const firstElement = focusableElements[0]
+    const lastElement = focusableElements.at(-1)
+    const activeElement = document.activeElement
+
+    if (event.shiftKey && activeElement === firstElement) {
+      event.preventDefault()
+      lastElement.focus()
+    } else if (!event.shiftKey && activeElement === lastElement) {
+      event.preventDefault()
+      firstElement.focus()
+    }
+  }
+
   disconnect() {
     document.body.style.overflow = ""
 

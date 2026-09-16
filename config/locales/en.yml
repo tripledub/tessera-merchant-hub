@@ -151,15 +151,29 @@ en:
       general: General
       proprietary_trading: Proprietary trading
     show:
+      add_domain: Add domain
       add_principal: Add principal
       back: "← Back to applicants"
       documents:
         confirmed: confirmed
         drag_or_click: Drag and drop files here, or click to browse
         empty: No documents uploaded yet.
+        pending_extraction_count:
+          one: 1 document pending extraction
+          other: "%{count} documents pending extraction"
         run_extraction: Run extraction
-        run_extraction_confirm: Run extraction on all confirmed documents?
+        run_extraction_confirm:
+          one: Run extraction on 1 pending document?
+          other: Run extraction on %{count} pending documents?
+          zero: There are no pending documents to extract.
         upload_button: Upload
+        upload_document: Upload document
+      domains:
+        empty: No domains added yet.
+        table:
+          actions: Actions
+          name: Name
+          status: Status
       edit: Edit
       principals:
         delete: Delete
@@ -179,10 +193,12 @@ en:
       processing_statements: Processing statements
       sections:
         documents: KYC Documents
+        domains: Domains
         principals: Principals
       tabs:
         compliance: Compliance
         documents: Documents
+        domains: Domains
         loading: Loading…
         overview: Overview
         ownership: Ownership
@@ -298,6 +314,9 @@ en:
         invite_success: Invitation sent to %{email}.
         role_updated: Role updated for %{email}.
         unlock_success: "%{email} has been unlocked."
+    applicant_domains:
+      create_success: Domain added.
+      destroy_success: Domain removed.
     applicant_users:
       destroy_success: Portal user removed.
     applicants:
@@ -348,6 +367,20 @@ en:
         create: Create account
         update: Update password
   kyc:
+    applicant_domains:
+      delete: Delete
+      delete_confirm: Delete %{name}? This cannot be undone.
+      form:
+        cancel: Cancel
+        fields:
+          name: Domain
+        submit: Add domain
+      new:
+        page_title: Add domain
+        title: Add domain
+      verification_status:
+        unverified: Unverified
+        verified: Verified
     corporate_entities:
       show:
         back: "← Back to ownership"
@@ -414,6 +447,7 @@ en:
         success: Date confirmed.
         unconfirmed: Not yet confirmed
       delete: Delete document
+      delete_confirm: Delete %{filename}? This cannot be undone.
       document_types:
         aml_ctf_policy: AML/CTF Policy
         aml_ctf_questionnaire: AML/CTF Questionnaire
@@ -437,6 +471,8 @@ en:
         other: Other
         passport: Passport
         payment_agreement: Payment Agreement
+        processing_statement: Processing statement
+        proof_of_domain_ownership: Proof of Domain Ownership
         register_of_members: Register of Members
         share_certificate: Share Certificate
         source_of_wealth_questionnaire: Source of Wealth Questionnaire
@@ -447,10 +483,12 @@ en:
       match_method:
         exact: Exact match
         fuzzy: Fuzzy match
+      preview: Preview document
       principal_status:
         unconfirmed: Unconfirmed
       reject_match: Reject principal match
       retry: Retry
+      select_domain: Select domain…
       select_type: Select type…
       status:
         complete: Complete
@@ -763,6 +801,12 @@ en:
     sign_out: Sign out
     title: Kynetic Portal
   processing_statements:
+    actions:
+      map: Map
+      remap: Remap
+      remove: Remove
+      remove_confirm: Remove this errored processing statement? Any linked KYC document
+        will be retained.
     create:
       no_file: Please choose a file to upload.
     edit:
@@ -786,6 +830,10 @@ en:
         view: View
       title: Processing statements
       upload_new: Upload new statement
+    mapping_modal:
+      cancel: Cancel
+      close: Close column mapping
+      title: Map statement columns
     new:
       back: "← Back to statements"
       file_label: Statement file (.xlsx, .xls or .csv)
@@ -797,7 +845,6 @@ en:
       chargebacks: Chargebacks
       currencies_used: Currencies used
       declined_volume: Declined volume
-      map_columns: Map columns to import this statement
       month: Month
       no_data: "—"
       overall: Overall
@@ -806,6 +853,11 @@ en:
       refunds: Refunds
       title: Processing statement overview
       total_volume: Total volume
+    statuses:
+      error: Error
+      mapped: Processing
+      processed: Processed
+      uploaded: Uploaded
     update:
       missing_fields: 'Missing required field mapping: %{fields}'
       success: Statement queued for import.

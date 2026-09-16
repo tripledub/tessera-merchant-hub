@@ -164,6 +164,93 @@ RSpec.describe "KycDocuments", type: :request do
         expect(document.reload.document_type).to eq("passport")
       end
 
+      it "ignores processing statement for a non-spreadsheet" do
+        patch kyc_document_path(document),
+          params: { kyc_document: { document_type: "processing_statement" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(document.reload.document_type).to eq("passport")
+        expect(document.processing_statement).to be_nil
+      end
+
+      it "routes a suggested spreadsheet after confirmation and reuses its blob" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :ai_suggested, classification_method: "spreadsheet_content_type")
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "statement.csv",
+          content_type: "text/csv"
+        )
+
+        expect {
+          patch kyc_document_path(spreadsheet),
+            params: { kyc_document: { document_type: "processing_statement", classification_status: "confirmed" } },
+            headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        }.to change(ProcessingStatement, :count).by(1)
+
+        statement = spreadsheet.reload.processing_statement
+        expect(spreadsheet.classification_status).to eq("confirmed")
+        expect(statement).to have_attributes(applicant: applicant, status: "uploaded")
+        expect(statement.file.blob).to eq(spreadsheet.file.blob)
+      end
+
+      it "returns a corrected spreadsheet suggestion to pending extraction" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :ai_suggested, classification_method: "spreadsheet_content_type", status: :complete)
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "transactions.csv",
+          content_type: "text/csv"
+        )
+
+        patch kyc_document_path(spreadsheet),
+          params: { kyc_document: { document_type: "transaction_extract", classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(spreadsheet.reload).to have_attributes(
+          document_type: "transaction_extract",
+          classification_status: "confirmed",
+          status: "pending",
+          processing_statement: nil
+        )
+      end
+
+      it "keeps a spreadsheet suggestion complete when corrected to other" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :ai_suggested, classification_method: "spreadsheet_content_type", status: :complete)
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "unknown.csv",
+          content_type: "text/csv"
+        )
+
+        patch kyc_document_path(spreadsheet),
+          params: { kyc_document: { document_type: "other", classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(spreadsheet.reload).to have_attributes(document_type: "other", status: "complete")
+      end
+
+      it "does not reclassify an already routed processing statement" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :confirmed, classification_method: "spreadsheet_content_type", status: :complete)
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "statement.csv",
+          content_type: "text/csv"
+        )
+        statement = ProcessingStatements::RouteFromKycDocument.call(spreadsheet)
+
+        patch kyc_document_path(spreadsheet),
+          params: { kyc_document: { document_type: "transaction_extract" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(spreadsheet.reload).to have_attributes(
+          document_type: "processing_statement",
+          processing_statement: statement
+        )
+      end
+
       it "renders the validity status inside a single dom_id-wrapped element (MH-208)" do
         # A turbo_stream.replace can only remove content living inside its target
         # element. Confirming the classification repeatedly used to leave the
@@ -189,6 +276,55 @@ RSpec.describe "KycDocuments", type: :request do
         patch kyc_document_path(document), params: { kyc_document: { classification_status: "confirmed" } }
         expect(response).to have_http_status(:forbidden)
       end
+    end
+  end
+
+  describe "PATCH /kyc_documents/:id linking a proof_of_domain_ownership document to a domain" do
+    let_it_be(:domain) { create(:applicant_domain, applicant: applicant) }
+    let(:document) do
+      create(:kyc_document, applicant: applicant, document_type: :proof_of_domain_ownership,
+             classification_status: :confirmed)
+    end
+
+    before { sign_in psp_admin }
+
+    it "links the document to the domain" do
+      patch kyc_document_path(document),
+        params: { kyc_document: { applicant_domain_id: domain.id } },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      expect(document.reload.applicant_domain).to eq(domain)
+    end
+
+    it "unlinks when given a blank id" do
+      document.update!(applicant_domain: domain)
+
+      patch kyc_document_path(document),
+        params: { kyc_document: { applicant_domain_id: "" } },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      expect(document.reload.applicant_domain).to be_nil
+    end
+
+    it "ignores a domain belonging to a different applicant" do
+      other_domain = create(:applicant_domain)
+
+      patch kyc_document_path(document),
+        params: { kyc_document: { applicant_domain_id: other_domain.id } },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      expect(document.reload.applicant_domain).to be_nil
+    end
+
+    it "ignores applicant_domain_id for a document type other than proof_of_domain_ownership" do
+      other_document = create(:kyc_document, applicant: applicant, document_type: :passport,
+                               classification_status: :confirmed)
+
+      patch kyc_document_path(other_document),
+        params: { kyc_document: { applicant_domain_id: domain.id } },
+        headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+      expect(other_document.reload.applicant_domain).to be_nil
     end
   end
 
@@ -345,6 +481,121 @@ RSpec.describe "KycDocuments", type: :request do
 
         fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
         expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)} ##{"comments-trigger-#{document.id}"}")).to be_present
+      end
+    end
+  end
+
+  describe "accessible labels on icon-only document row actions" do
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "labels the file preview button" do
+        document = create(:kyc_document, applicant: applicant)
+
+        get tab_applicant_path(applicant, tab: "documents")
+
+        row = row_fragment_for(document)
+        preview_button = row.css("button[data-controller='document-preview']").first
+        expect(preview_button["aria-label"]).to eq(I18n.t("kyc.documents.preview"))
+      end
+
+      it "labels the classification confirm button" do
+        document = create(:kyc_document, applicant: applicant, status: :pending)
+
+        get tab_applicant_path(applicant, tab: "documents")
+
+        row = row_fragment_for(document)
+        confirm_button = row.css("button[data-action='click->classification#confirm']").first
+        expect(confirm_button["aria-label"]).to eq(I18n.t("kyc.documents.confirm"))
+      end
+
+      it "labels the confirm/reject principal match buttons" do
+        principal = create(:kyc_principal, applicant: applicant, status: :unconfirmed)
+        document = create(:kyc_document, applicant: applicant, kyc_principal: principal)
+
+        get tab_applicant_path(applicant, tab: "documents")
+
+        row = row_fragment_for(document)
+        buttons = row.css("form button")
+        confirm_match = buttons.find { |b| b["aria-label"] == I18n.t("kyc.documents.confirm_match") }
+        reject_match = buttons.find { |b| b["aria-label"] == I18n.t("kyc.documents.reject_match") }
+        expect(confirm_match).to be_present
+        expect(reject_match).to be_present
+      end
+
+      it "labels the retry button" do
+        document = create(:kyc_document, applicant: applicant, status: :error)
+
+        get tab_applicant_path(applicant, tab: "documents")
+
+        row = row_fragment_for(document)
+        retry_button = row.css("form button").find { |b| b["aria-label"] == I18n.t("kyc.documents.retry") }
+        expect(retry_button).to be_present
+      end
+
+      it "labels the comments trigger" do
+        document = create(:kyc_document, applicant: applicant)
+
+        get tab_applicant_path(applicant, tab: "documents")
+
+        row = row_fragment_for(document)
+        expect(row.css("#comments-trigger-#{document.id}").first["aria-label"]).to eq(I18n.t("kyc.documents.comments.open"))
+      end
+
+      it "labels the delete button and requires confirmation before submitting" do
+        document = create(:kyc_document, applicant: applicant)
+
+        get tab_applicant_path(applicant, tab: "documents")
+
+        row = row_fragment_for(document)
+        delete_button = row.css("form[action='#{kyc_document_path(document)}'] button").first
+        expect(delete_button["aria-label"]).to eq(I18n.t("kyc.documents.delete"))
+        expect(delete_button["data-turbo-confirm"]).to eq(
+          I18n.t("kyc.documents.delete_confirm", filename: document.file.filename)
+        )
+      end
+    end
+
+    def row_fragment_for(document)
+      fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+      fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}").first
+    end
+  end
+
+  describe "sticky upload shortcut in the documents header" do
+    context "when signed in as psp_admin" do
+      before { sign_in psp_admin }
+
+      it "shows a labelled jump-to-upload shortcut in the sticky header, next to Run extraction, that scrolls without touching the hash-based tab router" do
+        create(:kyc_document, applicant: applicant)
+
+        get tab_applicant_path(applicant, tab: "documents")
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        header = fragment.css(".sticky").first
+        upload_button = header.css("button[data-scroll-to-target-value='kyc-upload']").first
+        expect(upload_button).to be_present
+        expect(upload_button["type"]).to eq("button")
+        expect(upload_button["aria-label"]).to eq(I18n.t("applicants.show.documents.upload_document"))
+        expect(header.css("form[action='#{applicant_kyc_extraction_run_path(applicant)}']")).to be_present
+      end
+
+      it "shows the upload shortcut even when the document list is empty" do
+        get tab_applicant_path(applicant, tab: "documents")
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("button[data-scroll-to-target-value='kyc-upload']")).to be_present
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "does not show the upload shortcut (no create permission)" do
+        get tab_applicant_path(applicant, tab: "documents")
+
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(fragment.css("button[data-scroll-to-target-value='kyc-upload']")).to be_empty
       end
     end
   end

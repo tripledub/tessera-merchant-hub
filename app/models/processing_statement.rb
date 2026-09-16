@@ -13,10 +13,19 @@ class ProcessingStatement < ApplicationRecord
   REQUIRED_FIELDS = %i[date amount currency outcome].freeze
 
   belongs_to :applicant
+  has_one :kyc_document, dependent: :nullify, inverse_of: :processing_statement
 
   has_one_attached :file
 
   enum :status, { uploaded: 0, mapped: 1, processed: 2, error: 3 }, default: :uploaded
 
   validates :file, presence: true, on: :create
+
+  def mappable?
+    uploaded? || error?
+  end
+
+  def removable?
+    error?
+  end
 end
