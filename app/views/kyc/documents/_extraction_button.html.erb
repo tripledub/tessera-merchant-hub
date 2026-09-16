@@ -1,8 +1,14 @@
 <% if policy(applicant).run_extraction? %>
+  <% pending_extraction_count = applicant.kyc_documents.where(classification_status: :confirmed, status: :pending).count %>
+  <% if pending_extraction_count > 0 %>
+    <span id="extraction-pending-count" class="text-theme-sm text-gray-500">
+      <%= t('applicants.show.documents.pending_extraction_count', count: pending_extraction_count) %>
+    </span>
+  <% end %>
   <%= button_to applicant_kyc_extraction_run_path(applicant),
         method: :post,
         class: "btn-primary",
-        data: { turbo_confirm: t('applicants.show.documents.run_extraction_confirm') } do %>
+        data: { turbo_confirm: t('applicants.show.documents.run_extraction_confirm', count: pending_extraction_count) } do %>
     <%= t('applicants.show.documents.run_extraction') %>
   <% end %>
 <% end %>
