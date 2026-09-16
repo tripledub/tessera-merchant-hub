@@ -158,8 +158,14 @@ en:
         confirmed: confirmed
         drag_or_click: Drag and drop files here, or click to browse
         empty: No documents uploaded yet.
+        pending_extraction_count:
+          one: 1 document pending extraction
+          other: "%{count} documents pending extraction"
         run_extraction: Run extraction
-        run_extraction_confirm: Run extraction on all confirmed documents?
+        run_extraction_confirm:
+          one: Run extraction on 1 pending document?
+          other: Run extraction on %{count} pending documents?
+          zero: There are no pending documents to extract.
         upload_button: Upload
         upload_document: Upload document
       domains:

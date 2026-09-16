@@ -136,6 +136,33 @@ RSpec.describe "Applicants", type: :request do
     end
   end
 
+  describe "GET /applicants/:id — Documents tab extraction button (MH-263)" do
+    before { sign_in psp_admin }
+
+    context "when there are pending confirmed documents" do
+      it "states the scope in the count indicator and confirm copy" do
+        create_list(:kyc_document, 2, applicant: applicant_a,
+          classification_status: :confirmed, status: :pending)
+
+        get applicant_path(applicant_a)
+
+        expect(response.body).to include(I18n.t("applicants.show.documents.pending_extraction_count", count: 2))
+        expect(response.body).to include(I18n.t("applicants.show.documents.run_extraction_confirm", count: 2))
+      end
+    end
+
+    context "when there are no pending confirmed documents" do
+      it "omits the count indicator and states there is nothing to extract" do
+        create(:kyc_document, applicant: applicant_a, classification_status: :auto_classified, status: :pending)
+
+        get applicant_path(applicant_a)
+
+        expect(response.body).not_to include("extraction-pending-count")
+        expect(response.body).to include(I18n.t("applicants.show.documents.run_extraction_confirm", count: 0))
+      end
+    end
+  end
+
   describe "GET /applicants/new" do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
