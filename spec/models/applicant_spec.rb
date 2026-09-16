@@ -60,6 +60,12 @@ RSpec.describe Applicant, type: :model do
       .dependent(:destroy)
   end
 
+  it "has many applicant_domains" do
+    expect(applicant).to have_many(:applicant_domains)
+      .with_foreign_key(:applicant_id)
+      .dependent(:destroy)
+  end
+
   it "has one onboarding_session" do
     expect(applicant).to have_one(:onboarding_session)
       .with_foreign_key(:applicant_id)

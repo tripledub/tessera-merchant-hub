@@ -24,17 +24,19 @@ class ClassifyKycDocumentJob < ApplicationJob
 
     classifier = DocumentClassifiers.obtain(condition)
     result = classifier.classify
-    unsupported_content_type = result[:classification_method] == :unsupported_content_type
+    no_extraction = result[:classification_method].in?(%i[unsupported_content_type spreadsheet_content_type])
 
-    document.update!(
-      status: unsupported_content_type ? :complete : :pending,
-      document_type: result[:document_type],
-      classification_status: classification_status_for(result),
-      classification_confidence: result[:confidence],
-      classification_method: result[:classification_method].to_s
-    )
+    KycDocument.transaction do
+      document.update!(
+        status: no_extraction ? :complete : :pending,
+        document_type: result[:document_type],
+        classification_status: classification_status_for(result),
+        classification_confidence: result[:confidence],
+        classification_method: result[:classification_method].to_s
+      )
+    end
     broadcast_document(document)
-    auto_confirm_for_onboarding(document) unless unsupported_content_type
+    auto_confirm_for_onboarding(document) unless no_extraction
   rescue DocumentClassifiers::AiFallback::Error, HandlerRegisterable::NoHandlerAccepted => e
     document&.update!(status: :error, result: { "error" => e.message })
     notify_honeybadger(e, kyc_document_id, document)
@@ -88,7 +90,7 @@ class ClassifyKycDocumentJob < ApplicationJob
 
   def classification_status_for(result)
     case result[:classification_method]
-    when :ai then :ai_suggested
+    when :ai, :spreadsheet_content_type then :ai_suggested
     else :auto_classified
     end
   end

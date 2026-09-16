@@ -33,11 +33,20 @@ RSpec.describe ImportProcessingStatementJob, type: :job do
       expect(statement.metrics["overall"]["total_volume"]).to eq({ "GBP" => "150.0" })
     end
 
-    it "broadcasts the updated statement" do
+    it "broadcasts updated index and detail replacements" do
       described_class.new.perform(statement.id, mapping)
 
       expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
-        "processing_statement_#{statement.id}", hash_including(target: "processing_statement_#{statement.id}")
+        "processing_statement_row_#{statement.id}",
+        target: "processing_statement_status_#{statement.id}",
+        partial: "processing_statements/statement_status",
+        locals: { statement: statement }
+      )
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
+        "processing_statement_#{statement.id}",
+        target: "processing_statement_result_#{statement.id}",
+        partial: "processing_statements/result_content",
+        locals: { processing_statement: statement }
       )
     end
 
@@ -49,6 +58,24 @@ RSpec.describe ImportProcessingStatementJob, type: :job do
       statement.reload
       expect(statement.status).to eq("error")
       expect(statement.error_message).to match(/exceeds/i)
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
+        "processing_statement_row_#{statement.id}", hash_including(target: "processing_statement_status_#{statement.id}")
+      )
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_replace_to).with(
+        "processing_statement_#{statement.id}", hash_including(target: "processing_statement_result_#{statement.id}")
+      )
+    end
+
+    it "finishes quietly when the errored statement is removed before broadcasting" do
+      importer = instance_double(Statements::Importer)
+      allow(Statements::Importer).to receive(:new).with(statement, mapping).and_return(importer)
+      allow(importer).to receive(:call) do
+        statement.update!(status: :error, error_message: "Invalid row")
+        statement.destroy!
+      end
+
+      expect { described_class.new.perform(statement.id, mapping) }.not_to raise_error
+      expect(Turbo::StreamsChannel).not_to have_received(:broadcast_replace_to)
     end
   end
 end

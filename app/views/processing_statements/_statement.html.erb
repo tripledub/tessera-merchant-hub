@@ -1,0 +1,15 @@
+<tr id="<%= dom_id(statement) %>"
+    data-controller="processing-statement-recovery"
+    class="border-t border-gray-100 dark:border-gray-800">
+  <td class="py-2 pr-4 text-gray-900 dark:text-white/90"><%= l(statement.created_at, format: :long) %></td>
+  <%= render "processing_statements/statement_status", statement: statement %>
+  <td class="py-2">
+    <div class="flex flex-wrap items-center justify-end gap-3">
+      <% if recovery_allowed %>
+        <%= render "processing_statements/recovery_controls", processing_statement: statement, context: "index" %>
+      <% end %>
+      <%= link_to t("processing_statements.index.table.view"), processing_statement_path(statement),
+            class: "text-brand-600 hover:text-brand-700" %>
+    </div>
+  </td>
+</tr>

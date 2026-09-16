@@ -2,6 +2,8 @@
 
 <%# Modal frame for Add/Edit Principal %>
 <turbo-frame id="principal-modal"></turbo-frame>
+<%# Modal frame for Add Domain %>
+<turbo-frame id="applicant-domain-modal"></turbo-frame>
 
 <div class="mb-4">
   <%= link_to t('.back'), applicants_path, class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
@@ -36,6 +38,7 @@
         <%= render "applicants/tab_button", tab: "summary", label: t('.tabs.summary'), icon: "chart" %>
         <%= render "applicants/tab_button", tab: "principals", label: t('.tabs.principals'), icon: "users" %>
         <%= render "applicants/tab_button", tab: "documents", label: t('.tabs.documents'), icon: "document" %>
+        <%= render "applicants/tab_button", tab: "domains", label: t('.tabs.domains'), icon: "globe" %>
         <%= render "applicants/tab_button", tab: "ownership", label: t('.tabs.ownership'), icon: "sitemap" %>
         <%= render "applicants/tab_button", tab: "compliance", label: t('.tabs.compliance'), icon: "shield" %>
       </nav>
@@ -62,6 +65,10 @@
 
       <div data-tabs-target="panel" data-tab="documents" hidden>
         <%= render "applicants/tabs/documents", applicant: applicant %>
+      </div>
+
+      <div data-tabs-target="panel" data-tab="domains" hidden>
+        <%= render "applicants/tabs/domains", applicant: applicant %>
       </div>
 
       <div data-tabs-target="panel" data-tab="ownership" hidden data-tab-src="<%= tab_applicant_path(applicant, tab: 'ownership') %>">

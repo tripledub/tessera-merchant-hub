@@ -1,0 +1,19 @@
+<%= link_to t("processing_statements.actions.map"),
+      edit_processing_statement_path(processing_statement, context: context),
+      id: "map-processing-statement-#{processing_statement.id}",
+      class: "text-brand-600 hover:text-brand-700",
+      hidden: !processing_statement.uploaded?,
+      data: { turbo_frame: ProcessingStatementsController::MAPPING_MODAL_ID,
+              processing_statement_recovery_target: "map" } %>
+<%= link_to t("processing_statements.actions.remap"),
+      edit_processing_statement_path(processing_statement, context: context),
+      class: "text-brand-600 hover:text-brand-700",
+      hidden: !processing_statement.error?,
+      data: { turbo_frame: ProcessingStatementsController::MAPPING_MODAL_ID,
+              processing_statement_recovery_target: "remap" } %>
+<span data-processing-statement-recovery-target="remove" <%= "hidden" unless processing_statement.error? %>>
+  <%= button_to t("processing_statements.actions.remove"), processing_statement_path(processing_statement),
+        method: :delete,
+        class: "text-error-600 hover:text-error-700",
+        data: { turbo_confirm: t("processing_statements.actions.remove_confirm") } %>
+</span>

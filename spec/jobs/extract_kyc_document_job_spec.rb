@@ -113,6 +113,42 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       end
     end
 
+    context "when document_type is processing_statement" do
+      let(:document) do
+        create(:kyc_document,
+          applicant: applicant,
+          document_type: :processing_statement,
+          classification_status: :confirmed,
+          status: :pending)
+      end
+
+      it "skips extraction because processing statements use their own import pipeline" do
+        described_class.new.perform(document.id)
+
+        expect(document.reload.status).to eq("pending")
+        expect(Kyc::DocumentExtractorService).not_to have_received(:call)
+      end
+    end
+
+    context "when document_type is proof_of_domain_ownership" do
+      let(:document) do
+        create(:kyc_document,
+          applicant: applicant,
+          document_type: :proof_of_domain_ownership,
+          classification_status: :confirmed,
+          status: :pending)
+      end
+
+      it "skips extraction — reviewed by eyeball only, no extraction schema at this point" do
+        described_class.new.perform(document.id)
+
+        document.reload
+        expect(document.status).to eq("pending")
+        expect(document.result).to be_nil
+        expect(Kyc::DocumentExtractorService).not_to have_received(:call)
+      end
+    end
+
     context "when address matching runs for a utility bill with a principal present" do
       let(:principal_with_address) do
         create(:kyc_principal,

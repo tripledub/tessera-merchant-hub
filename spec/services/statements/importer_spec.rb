@@ -39,6 +39,64 @@ RSpec.describe Statements::Importer do
       expect(statement.metrics["by_month"].keys).to eq(%w[2026-04 2026-05])
     end
 
+    context "when the transaction table is followed by a summary footer" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          2026-04-01,100.00,GBP,approved
+
+          SUMMARY,,,
+          Total transaction count,1,,
+          Total volume,100.00,GBP,
+        CSV
+      end
+
+      it "imports the transactions and ignores the blank separator and summary block" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.status).to eq("processed")
+        expect(statement.row_count).to eq(1)
+        expect(statement.metrics["overall"]["total_volume"]).to eq({ "GBP" => "100.0" })
+      end
+    end
+
+    context "when a non-summary row contains malformed transaction data" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          Notes,,,
+        CSV
+      end
+
+      it "fails rather than silently discarding the row" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.status).to eq("error")
+        expect(statement.error_message).to eq(
+          'Row 2, field "date", column "Txn Date", value "Notes": invalid date'
+        )
+      end
+    end
+
+    context "when a populated transaction row begins with the summary marker" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          SUMMARY,100.00,GBP,approved
+        CSV
+      end
+
+      it "validates the row instead of treating it as a footer" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.status).to eq("error")
+        expect(statement.error_message).to include('value "SUMMARY": invalid date')
+      end
+    end
+
     context "when a required field is not mapped" do
       before { statement.update!(column_mapping: { "date" => "Txn Date" }) }
 
@@ -68,6 +126,72 @@ RSpec.describe Statements::Importer do
       end
     end
 
+    context "when a date cell cannot be parsed" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          not-a-date,100.00,GBP,approved
+          2026-04-15,50.00,GBP,declined
+        CSV
+      end
+
+      it "records the row and field details without exposing another row" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.error_message).to eq(
+          'Row 2, field "date", column "Txn Date", value "not-a-date": invalid date'
+        )
+        expect(statement.error_message).not_to include(
+          "100.00", "GBP", "approved", "2026-04-15", "50.00", "declined"
+        )
+      end
+    end
+
+    context "when an amount cell cannot be parsed" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          2026-04-01,not-an-amount,GBP,approved
+          2026-04-15,50.00,GBP,declined
+        CSV
+      end
+
+      it "records the row and field details without exposing another row" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.error_message).to eq(
+          'Row 2, field "amount", column "Value", value "not-an-amount": invalid amount'
+        )
+        expect(statement.error_message).not_to include(
+          "2026-04-01", "GBP", "approved", "2026-04-15", "50.00", "declined"
+        )
+      end
+    end
+
+    context "when a currency cell cannot be parsed" do
+      let(:csv) do
+        <<~CSV
+          Txn Date,Value,Currency,Result
+          2026-04-01,100.00,not-a-currency,approved
+          2026-04-15,50.00,GBP,declined
+        CSV
+      end
+
+      it "records the row and field details without exposing another row" do
+        described_class.new(statement, mapping).call
+
+        statement.reload
+        expect(statement.error_message).to eq(
+          'Row 2, field "currency", column "Currency", value "not-a-currency": invalid currency code'
+        )
+        expect(statement.error_message).not_to include(
+          "2026-04-01", "100.00", "approved", "2026-04-15", "50.00", "declined"
+        )
+      end
+    end
+
     context "when a mapped column is missing from a row (malformed/ragged file)" do
       it "marks the statement as error without raising a KeyError" do
         reader = instance_double(Statements::SpreadsheetReader, row_count!: 1,
@@ -92,7 +216,7 @@ RSpec.describe Statements::Importer do
 
         statement.reload
         expect(statement.status).to eq("error")
-        expect(statement.error_message).to be_present
+        expect(statement.error_message).to eq("Import failed while processing statement data.")
       end
     end
 

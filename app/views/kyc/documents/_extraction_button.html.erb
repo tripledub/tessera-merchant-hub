@@ -1,8 +1,15 @@
 <% if policy(applicant).run_extraction? %>
-  <%= button_to applicant_kyc_extraction_run_path(applicant),
-        method: :post,
-        class: "btn-primary",
-        data: { turbo_confirm: t('applicants.show.documents.run_extraction_confirm') } do %>
-    <%= t('applicants.show.documents.run_extraction') %>
+  <% present(applicant, Kyc::ExtractionPresenter) do |p| %>
+    <% if p.pending? %>
+      <span id="extraction-pending-count" class="text-theme-sm text-gray-500">
+        <%= p.pending_count_label %>
+      </span>
+    <% end %>
+    <%= button_to applicant_kyc_extraction_run_path(applicant),
+          method: :post,
+          class: "btn-primary",
+          data: { turbo_confirm: p.confirm_message } do %>
+      <%= t('applicants.show.documents.run_extraction') %>
+    <% end %>
   <% end %>
 <% end %>

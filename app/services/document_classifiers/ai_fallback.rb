@@ -4,15 +4,16 @@ module DocumentClassifiers
   class AiFallback < Base
     class Error < StandardError; end
 
-    VALID_TYPES = KycDocument.document_types.keys.freeze
+    VALID_TYPES = KycDocument.manually_selectable_document_types.freeze
 
-    # xlsx/xls resolve to RubyLLM's :document type, which Anthropic's media
-    # formatter can't handle — #classify short-circuits to document_type: :other
-    # for anything outside this list rather than calling the model.
+    SPREADSHEET_CONTENT_TYPES = KycDocument::PROCESSING_STATEMENT_CONTENT_TYPES
+
+    # Spreadsheet uploads reaching this fallback have no matching filename
+    # rule, so they belong to the processing-statement import flow instead of
+    # being sent to the document AI classifier.
     SUPPORTED_CONTENT_TYPES = %w[
       image/jpeg image/png image/webp image/gif
       application/pdf
-      text/csv
     ].freeze
 
     # Scoped per-call via RubyLLM.context, not the global RubyLLM.configure
@@ -53,6 +54,14 @@ module DocumentClassifiers
 
     def classify
       media_type = condition.document.file.content_type
+
+      if SPREADSHEET_CONTENT_TYPES.include?(media_type)
+        return {
+          document_type: :processing_statement,
+          classification_method: :spreadsheet_content_type,
+          confidence: 0.0
+        }
+      end
 
       unless SUPPORTED_CONTENT_TYPES.include?(media_type)
         return {

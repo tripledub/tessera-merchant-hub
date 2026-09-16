@@ -1,0 +1,6 @@
+<td id="processing_statement_status_<%= statement.id %>"
+    data-processing-statement-recovery-target="status"
+    data-status="<%= statement.status %>"
+    class="py-2 pr-4 text-gray-900 dark:text-white/90">
+  <%= t("processing_statements.statuses.#{statement.status}") %>
+</td>
