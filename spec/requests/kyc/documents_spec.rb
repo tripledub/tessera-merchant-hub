@@ -212,6 +212,52 @@ RSpec.describe "KycDocuments", type: :request do
         expect(document.processing_statement).to be_nil
       end
 
+      # MH-287: picking a document type must not itself confirm the
+      # classification — only the explicit Confirm action should. Before this
+      # fix, the dropdown's change handler submitted classification_status:
+      # "confirmed" directly, so selecting Processing Statement immediately
+      # routed the document and hid the dropdown with no way to correct it.
+      it "does not route a spreadsheet to Processing Statements merely from selecting the type, unconfirmed" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :ai_suggested, classification_method: "spreadsheet_content_type")
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "statement.csv",
+          content_type: "text/csv"
+        )
+
+        expect {
+          patch kyc_document_path(spreadsheet),
+            params: { kyc_document: { document_type: "processing_statement", classification_status: "auto_classified" } },
+            headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        }.not_to change(ProcessingStatement, :count)
+
+        expect(spreadsheet.reload.document_type).to eq("processing_statement")
+        expect(spreadsheet.classification_status).to eq("auto_classified")
+        expect(spreadsheet.processing_statement).to be_nil
+      end
+
+      it "lets a Processing Statement pick be changed to another type before it's confirmed (MH-287)" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :ai_suggested, classification_method: "spreadsheet_content_type")
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "statement.csv",
+          content_type: "text/csv"
+        )
+
+        patch kyc_document_path(spreadsheet),
+          params: { kyc_document: { document_type: "processing_statement", classification_status: "auto_classified" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        patch kyc_document_path(spreadsheet),
+          params: { kyc_document: { document_type: "transaction_extract", classification_status: "auto_classified" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(spreadsheet.reload.document_type).to eq("transaction_extract")
+        expect(spreadsheet.processing_statement).to be_nil
+      end
+
       it "routes a suggested spreadsheet after confirmation and reuses its blob" do
         spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
           classification_status: :ai_suggested, classification_method: "spreadsheet_content_type")
