@@ -134,6 +134,11 @@ class Kyc::DocumentsController < ApplicationController
               confirmed_count: docs.where(classification_status: :confirmed).count,
               total_count: docs.count
             }
+          ),
+          turbo_stream.replace(
+            "extraction-controls",
+            partial: "kyc/documents/extraction_button",
+            locals: { applicant: document.applicant }
           )
         ]
       end

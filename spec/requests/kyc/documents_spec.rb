@@ -149,6 +149,28 @@ RSpec.describe "KycDocuments", type: :request do
         expect(ExtractKycDocumentJob).not_to have_been_enqueued
       end
 
+      it "refreshes the extraction pending count when confirming classification (MH-263)" do
+        patch kyc_document_path(document),
+          params: { kyc_document: { classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).to include('target="extraction-controls"')
+        expect(response.body).to include(I18n.t("applicants.show.documents.pending_extraction_count", count: 1))
+      end
+
+      it "refreshes the extraction pending count when un-confirming classification (MH-263)" do
+        document.update!(classification_status: :confirmed, status: :pending)
+
+        patch kyc_document_path(document),
+          params: { kyc_document: { classification_status: "auto_classified" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).to include('target="extraction-controls"')
+        expect(response.body).not_to include(
+          I18n.t("applicants.show.documents.pending_extraction_count", count: 1)
+        )
+      end
+
       it "allows overriding the document type" do
         patch kyc_document_path(document),
           params: { kyc_document: { document_type: "utility_bill", classification_status: "confirmed" } },
