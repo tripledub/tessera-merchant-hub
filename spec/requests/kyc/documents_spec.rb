@@ -81,6 +81,23 @@ RSpec.describe "KycDocuments", type: :request do
         expect(fragment.css("turbo-stream").size).to eq(1)
         expect(fragment.css("turbo-stream[action='append'][target='toast-container']")).to be_present
       end
+
+      # MH-275: the folder-drop case is now caught client-side, but any
+      # unsupported file the server rejects (e.g. an unsupported type) was
+      # previously destroyed with zero feedback to the user.
+      it "surfaces a warning toast naming the skipped count, without destroying the valid file alongside it" do
+        unsupported_file = fixture_file_upload(Rails.root.join("spec/fixtures/files/unsupported.txt"), "text/plain")
+
+        expect {
+          post applicant_kyc_documents_path(applicant),
+            params: { kyc_document: { files: [ file, unsupported_file ] } },
+            headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        }.to change(KycDocument, :count).by(1)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include(I18n.t("flash.kyc_documents.upload_success", count: 1))
+        expect(response.body).to include(I18n.t("flash.kyc_documents.skipped_invalid", count: 1))
+      end
     end
 
     context "when signed in as psp_support" do
