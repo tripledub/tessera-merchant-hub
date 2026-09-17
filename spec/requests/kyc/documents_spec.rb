@@ -81,6 +81,23 @@ RSpec.describe "KycDocuments", type: :request do
         expect(fragment.css("turbo-stream").size).to eq(1)
         expect(fragment.css("turbo-stream[action='append'][target='toast-container']")).to be_present
       end
+
+      # MH-275: the folder-drop case is now caught client-side, but any
+      # unsupported file the server rejects (e.g. an unsupported type) was
+      # previously destroyed with zero feedback to the user.
+      it "surfaces a warning toast naming the skipped count, without destroying the valid file alongside it" do
+        unsupported_file = fixture_file_upload(Rails.root.join("spec/fixtures/files/unsupported.txt"), "text/plain")
+
+        expect {
+          post applicant_kyc_documents_path(applicant),
+            params: { kyc_document: { files: [ file, unsupported_file ] } },
+            headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        }.to change(KycDocument, :count).by(1)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include(I18n.t("flash.kyc_documents.upload_success", count: 1))
+        expect(response.body).to include(I18n.t("flash.kyc_documents.skipped_invalid", count: 1))
+      end
     end
 
     context "when signed in as psp_support" do
@@ -147,6 +164,28 @@ RSpec.describe "KycDocuments", type: :request do
         expect(response.media_type).to eq("text/vnd.turbo-stream.html")
         expect(document.reload.classification_status).to eq("confirmed")
         expect(ExtractKycDocumentJob).not_to have_been_enqueued
+      end
+
+      it "refreshes the extraction pending count when confirming classification (MH-263)" do
+        patch kyc_document_path(document),
+          params: { kyc_document: { classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).to include('target="extraction-controls"')
+        expect(response.body).to include(I18n.t("applicants.show.documents.pending_extraction_count", count: 1))
+      end
+
+      it "refreshes the extraction pending count when un-confirming classification (MH-263)" do
+        document.update!(classification_status: :confirmed, status: :pending)
+
+        patch kyc_document_path(document),
+          params: { kyc_document: { classification_status: "auto_classified" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).to include('target="extraction-controls"')
+        expect(response.body).not_to include(
+          I18n.t("applicants.show.documents.pending_extraction_count", count: 1)
+        )
       end
 
       it "allows overriding the document type" do
