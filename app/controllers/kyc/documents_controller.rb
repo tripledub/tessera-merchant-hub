@@ -27,6 +27,7 @@ class Kyc::DocumentsController < ApplicationController
 
     had_no_documents = applicant.kyc_documents.none?
     saved_documents = []
+    skipped = 0
 
     files.each do |file|
       doc = KycDocument.new(applicant: applicant, status: :pending)
@@ -40,11 +41,13 @@ class Kyc::DocumentsController < ApplicationController
       rescue ArgumentError, ActiveRecord::RecordNotFound, ActiveSupport::MessageVerifier::InvalidSignature => e
         doc.destroy
         Rails.logger.warn("Kyc::DocumentsController: skipping unattachable file — #{e.message}")
+        skipped += 1
         next
       end
 
       unless doc.file.attached? && doc.valid?
         doc.destroy
+        skipped += 1
         next
       end
 
@@ -66,6 +69,13 @@ class Kyc::DocumentsController < ApplicationController
           })
         end
         streams << turbo_stream.append("toast-container", partial: "shared/toast", locals: { message: message, type: type })
+        if skipped.positive?
+          streams << turbo_stream.append(
+            "toast-container",
+            partial: "shared/toast",
+            locals: { message: t("flash.kyc_documents.skipped_invalid", count: skipped), type: :warning }
+          )
+        end
         render turbo_stream: streams
       end
       format.html do
@@ -134,6 +144,11 @@ class Kyc::DocumentsController < ApplicationController
               confirmed_count: docs.where(classification_status: :confirmed).count,
               total_count: docs.count
             }
+          ),
+          turbo_stream.replace(
+            "extraction-controls",
+            partial: "kyc/documents/extraction_button",
+            locals: { applicant: document.applicant }
           )
         ]
       end
