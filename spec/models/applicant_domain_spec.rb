@@ -19,6 +19,37 @@ RSpec.describe ApplicantDomain, type: :model do
     )
   end
 
+  it "defaults review_status to accepted so hand-added domains need no review" do
+    expect(applicant_domain.review_status).to eq("accepted")
+  end
+
+  it "defines the review_status enum" do
+    expect(described_class.review_statuses).to eq(
+      "pending" => 0,
+      "accepted" => 1,
+      "rejected" => 2
+    )
+  end
+
+  it "defaults source to manual" do
+    expect(applicant_domain.source).to eq("manual")
+  end
+
+  it "defines the source enum" do
+    expect(described_class.sources).to eq("manual" => 0, "extracted" => 1)
+  end
+
+  it { is_expected.to belong_to(:source_document).class_name("KycDocument").optional }
+
+  it "nullifies source_document when the document is destroyed" do
+    document = create(:kyc_document)
+    domain = create(:applicant_domain, applicant: document.applicant, source_document: document)
+
+    document.destroy!
+
+    expect(domain.reload.source_document).to be_nil
+  end
+
   it { is_expected.to validate_presence_of(:name) }
 
   it "accepts a plain domain name" do

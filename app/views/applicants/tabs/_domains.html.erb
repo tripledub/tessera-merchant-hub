@@ -13,14 +13,15 @@
   <thead>
     <tr class="border-b border-gray-200 dark:border-gray-800">
       <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('applicants.show.domains.table.name') %></th>
-      <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('applicants.show.domains.table.status') %></th>
+      <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('applicants.show.domains.table.review') %></th>
+      <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('applicants.show.domains.table.verification') %></th>
       <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('applicants.show.domains.table.actions') %></th>
     </tr>
   </thead>
   <tbody id="applicant-domains-list" class="divide-y divide-gray-100 dark:divide-gray-800">
     <% if @applicant_domains.empty? %>
       <tr id="applicant-domains-empty">
-        <td colspan="3" class="py-4 text-theme-sm text-gray-500"><%= t('applicants.show.domains.empty') %></td>
+        <td colspan="4" class="py-4 text-theme-sm text-gray-500"><%= t('applicants.show.domains.empty') %></td>
       </tr>
     <% else %>
       <%= render partial: "kyc/applicant_domains/domain_row", collection: @applicant_domains, as: :applicant_domain %>

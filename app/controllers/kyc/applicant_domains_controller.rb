@@ -27,7 +27,35 @@ class Kyc::ApplicantDomainsController < ApplicationController
     redirect_to applicant_path(applicant), notice: t("flash.applicant_domains.destroy_success")
   end
 
+  def accept
+    authorize applicant_domain
+    review(:accepted)
+  end
+
+  def reject
+    authorize applicant_domain
+    review(:rejected)
+  end
+
   private
+
+  def review(status)
+    applicant_domain.update!(review_status: status)
+
+    respond_to do |format|
+      format.turbo_stream do
+        render turbo_stream: turbo_stream.replace(
+          applicant_domain,
+          partial: "kyc/applicant_domains/domain_row",
+          locals: { applicant_domain: applicant_domain }
+        )
+      end
+      format.html do
+        redirect_to applicant_path(applicant_domain.applicant),
+          notice: t("flash.applicant_domains.#{status}")
+      end
+    end
+  end
 
   def applicant_domain_params
     params.require(:applicant_domain).permit(:name)
