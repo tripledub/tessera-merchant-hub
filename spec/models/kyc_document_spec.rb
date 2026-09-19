@@ -8,7 +8,11 @@ RSpec.describe KycDocument, type: :model do
   it { is_expected.to belong_to(:applicant) }
   it { is_expected.to belong_to(:kyc_principal).optional }
   it { is_expected.to belong_to(:processing_statement).optional }
-  it { is_expected.to belong_to(:applicant_domain).optional }
+
+  it "no longer links to an applicant domain (MH-296)" do
+    expect(described_class.column_names).not_to include("applicant_domain_id")
+    expect(described_class.reflect_on_association(:applicant_domain)).to be_nil
+  end
 
   it "defaults status to pending" do
     expect(document.status).to eq("pending")

@@ -505,7 +505,6 @@ en:
         unconfirmed: Unconfirmed
       reject_match: Reject principal match
       retry: Retry
-      select_domain: Select domain…
       select_type: Select type…
       status:
         complete: Complete
