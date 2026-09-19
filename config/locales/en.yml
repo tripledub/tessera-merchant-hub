@@ -174,7 +174,8 @@ en:
         table:
           actions: Actions
           name: Name
-          status: Status
+          review: Review
+          verification: Verification
       edit: Edit
       principals:
         delete: Delete
@@ -316,8 +317,10 @@ en:
         role_updated: Role updated for %{email}.
         unlock_success: "%{email} has been unlocked."
     applicant_domains:
+      accepted: Domain accepted.
       create_success: Domain added.
       destroy_success: Domain removed.
+      rejected: Domain rejected.
     applicant_users:
       destroy_success: Portal user removed.
     applicants:
@@ -372,6 +375,7 @@ en:
         update: Update password
   kyc:
     applicant_domains:
+      accept: Accept
       delete: Delete
       delete_confirm: Delete %{name}? This cannot be undone.
       form:
@@ -382,6 +386,15 @@ en:
       new:
         page_title: Add domain
         title: Add domain
+      reject: Reject
+      review_status:
+        accepted: Accepted
+        pending: Pending review
+        rejected: Rejected
+      source:
+        document_removed: Extracted from a document that has since been removed
+        extracted_from: Extracted from %{filename}
+      undo_reject: Undo rejection
       verification_status:
         unverified: Unverified
         verified: Verified

@@ -16,4 +16,12 @@ class ApplicantDomainPolicy < ApplicationPolicy
   def destroy?
     psp_admin?
   end
+
+  def accept?
+    psp_admin?
+  end
+
+  def reject?
+    psp_admin?
+  end
 end

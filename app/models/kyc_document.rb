@@ -10,6 +10,8 @@ class KycDocument < ApplicationRecord
 
   include Commentable
 
+  has_many :extracted_domains, class_name: "ApplicantDomain", foreign_key: :source_document_id,
+           dependent: :nullify, inverse_of: :source_document
   has_many :corporate_entities, class_name: "Kyc::CorporateEntity", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
   has_many :validation_warnings, class_name: "Kyc::ValidationWarning", foreign_key: :kyc_document_id,
