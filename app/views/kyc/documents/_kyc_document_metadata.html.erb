@@ -134,7 +134,8 @@
   </div>
   </div>
 
-  <% has_principal_info = document.kyc_principal || document.complete? %>
+  <% unlinked = document.complete? && document.principal_linkable? %>
+  <% has_principal_info = document.kyc_principal || unlinked %>
   <% if has_principal_info || document.document_type.present? || document.comment_status.present? %>
     <div class="mt-2 space-y-1.5 border-t border-gray-100 pt-2 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
       <% if has_principal_info || document.comment_status.present? %>
@@ -156,7 +157,7 @@
                 <%= t("kyc.documents.address_match_method.#{document.address_match_method}") %>
               </span>
             <% end %>
-          <% elsif document.complete? %>
+          <% elsif unlinked %>
             <span class="italic"><%= t("kyc.documents.unlinked") %></span>
           <% end %>
 

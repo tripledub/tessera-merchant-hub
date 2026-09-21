@@ -157,6 +157,15 @@ class KycDocument < ApplicationRecord
     file.attached? && (file.content_type.to_s.start_with?("image/") || file.content_type == "application/pdf")
   end
 
+  # Whether this type of document can be matched to a person (KycPrincipal): only
+  # the extraction schemas that define #to_matcher_hash are (passport, driving
+  # licence, utility bill, bank statement). Everything else is never auto-linked,
+  # so "unlinked" would mean nothing for it (MH-301). Following the schemas, not a
+  # list, means a new linkable type needs no change here.
+  def principal_linkable?
+    document_type.present? && extraction_schema.method_defined?(:to_matcher_hash)
+  end
+
   def needs_review?
     classification_ai_suggested? || classification_unclassified?
   end
