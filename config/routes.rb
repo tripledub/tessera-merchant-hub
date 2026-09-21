@@ -50,6 +50,7 @@ Rails.application.routes.draw do
       end
       resources :applicant_domains, only: %i[new create destroy], shallow: true do
         member do
+          get :accept_form
           patch :accept
           patch :reject
         end

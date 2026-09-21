@@ -3,6 +3,12 @@
 class ApplicantDomain < ApplicationRecord
   DOMAIN_FORMAT = /\A(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}\z/i
 
+  include Commentable
+
+  # The reason a hand-added domain is trusted, entered on the Add domain form.
+  # Not persisted on the domain: Kyc::AddDomainByHand stores it as a Comment.
+  attr_accessor :justification
+
   belongs_to :applicant, foreign_key: :applicant_id, inverse_of: :applicant_domains
   has_many :evidence_links, class_name: "ApplicantDomainDocument", dependent: :delete_all, inverse_of: :applicant_domain
   has_many :evidence_documents, through: :evidence_links, source: :kyc_document

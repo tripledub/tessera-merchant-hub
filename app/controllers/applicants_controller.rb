@@ -113,7 +113,7 @@ class ApplicantsController < ApplicationController
   # Pending domains first so the ones needing a decision are at the top.
   def domains_for_display
     applicant.applicant_domains
-             .includes(evidence_links: { kyc_document: { file_attachment: :blob } })
+             .includes(:comments, evidence_links: { kyc_document: { file_attachment: :blob } })
              .order(Arel.sql("CASE review_status WHEN 0 THEN 0 WHEN 1 THEN 1 ELSE 2 END"), :name)
   end
 
