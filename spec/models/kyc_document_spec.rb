@@ -172,4 +172,30 @@ RSpec.describe KycDocument, type: :model do
       expect(described_class.new).not_to be_previewable
     end
   end
+
+  # MH-301: only documents the matcher can attach to a person can meaningfully be "unlinked".
+  describe "#principal_linkable?" do
+    %w[passport driving_licence utility_bill bank_account_statement].each do |type|
+      it "is true for #{type}, whose extraction schema can be matched to a person" do
+        expect(build(:kyc_document, document_type: type)).to be_principal_linkable
+      end
+    end
+
+    %w[
+      proof_of_domain_ownership processing_statement register_of_members share_certificate
+      articles_of_association certificate_of_incorporation certificate_of_incumbency
+      certificate_of_registered_address group_structure_chart other
+    ].each do |type|
+      it "is false for #{type}, which the matcher never tries to link" do
+        expect(build(:kyc_document, document_type: type)).not_to be_principal_linkable
+      end
+    end
+
+    it "is false, without raising, for a document that has no type yet" do
+      document = build(:kyc_document, document_type: nil)
+
+      expect { document.principal_linkable? }.not_to raise_error
+      expect(document).not_to be_principal_linkable
+    end
+  end
 end
