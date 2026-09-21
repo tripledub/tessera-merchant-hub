@@ -9,3 +9,16 @@ namespace :kyc do
     end
   end
 end
+
+# MH-305: publish validity policies whenever the database is prepared, migrated
+# or set up, so no deploy path depends on bin/docker-entrypoint (UAT runs
+# `db:prepare` under systemd and never touches it). A sync failure, such as a
+# Conflict on a published version, fails the task and stops the deploy.
+#
+# Skipped in the test environment: CI runs `db:migrate` there and specs create
+# their own policies, which would collide with pre-published rows.
+%w[db:prepare db:migrate db:setup].each do |name|
+  Rake::Task[name].enhance do
+    Rake::Task["kyc:policies:sync"].invoke unless Rails.env.test?
+  end
+end

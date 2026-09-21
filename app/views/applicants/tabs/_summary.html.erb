@@ -81,6 +81,7 @@
         <%= t('.compliant_of_total', compliant: p.compliant_entity_count, total: p.compliance_entity_count) %>
       </span>
     </div>
+    <p class="mb-3 text-sm text-gray-600 dark:text-gray-400"><%= p.compliance_outcome_message %></p>
     <% if p.policy_results.any? %>
       <div class="mb-2 space-y-2">
         <% p.policy_results.each do |result| %>

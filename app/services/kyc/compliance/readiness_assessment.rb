@@ -3,6 +3,9 @@
 module Kyc
   module Compliance
     class ReadinessAssessment
+      # MH-251: precedence runs from the least to the most reassuring reading.
+      OUTCOMES = %i[non_compliant not_assessable requires_review compliant].freeze
+
       attr_reader :applicant, :entity_results, :policy_results
 
       def self.for(applicant)
@@ -11,12 +14,30 @@ module Kyc
 
       def initialize(applicant)
         @applicant = applicant
-        @policy_results = PolicyDocumentRequirements.evaluate(applicant)
+        # Applicant-level requirements: sector policy documents, plus any UBO
+        # that has not been captured as an ownership entity.
+        @policy_results = PolicyDocumentRequirements.evaluate(applicant) + UboEntityCoverage.evaluate(applicant)
         @entity_results = build_entity_results
       end
 
+      # MH-251: readiness is one of OUTCOMES. Absence of evidence is never
+      # compliance, so an empty ownership graph is :not_assessable unless staff
+      # attested there are no corporate owners.
+      def outcome
+        @outcome ||=
+          if blocking_unmet?
+            :non_compliant
+          elsif ownership_not_assessable?
+            :not_assessable
+          elsif requires_review?
+            :requires_review
+          else
+            :compliant
+          end
+      end
+
       def compliant?
-        all_results.none?(&:blocks_automated_completion?)
+        outcome == :compliant
       end
 
       def entity_count
@@ -52,6 +73,19 @@ module Kyc
       end
 
       private
+
+      def blocking_unmet?
+        all_results.any? { |result| result.unmet? && result.blocks_automated_completion? }
+      end
+
+      def ownership_not_assessable?
+        entity_results.empty? && !applicant.no_corporate_owners_attested?
+      end
+
+      def requires_review?
+        all_results.any? { |result| result.confirmation_required? && result.blocks_automated_completion? } ||
+          applicant.validation_warnings.unresolved_chain.unacknowledged.exists?
+      end
 
       def build_entity_results
         applicant.corporate_entities.map do |entity|

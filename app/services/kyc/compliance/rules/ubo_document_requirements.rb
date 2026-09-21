@@ -15,10 +15,8 @@ module Kyc
         def applies_to?(entity)
           return false unless entity.individual?
 
-          Kyc::ValidationWarning.exists?(
-            corporate_entity: entity,
-            warning_type: :ubo_threshold_exceeded
-          )
+          Kyc::ValidationWarning.exists?(corporate_entity: entity, warning_type: :ubo_threshold_exceeded) ||
+            Kyc::Compliance::UboEntityCoverage.registry_ubo?(entity.applicant, entity.name)
         end
 
         def evaluate(entity)

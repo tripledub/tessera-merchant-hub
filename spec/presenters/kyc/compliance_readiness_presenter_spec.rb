@@ -297,4 +297,79 @@ RSpec.describe Kyc::ComplianceReadinessPresenter, type: :presenter do
       end
     end
   end
+
+  # MH-251: readiness has four outcomes, each with its own badge, container and
+  # explanation, shared with the Summary tab and the executive summary PDF.
+  describe "readiness outcomes (MH-251)" do
+    let(:staff) { create(:user, :psp_admin) }
+
+    def presenter_for(applicant)
+      described_class.new(Kyc::Compliance::ReadinessAssessment.for(applicant.reload), template)
+    end
+
+    context "when no ownership is captured and nobody has attested" do
+      subject(:presenter) { presenter_for(applicant) }
+
+      it "shows a neutral 'Not Assessable' badge and container" do
+        expect(presenter.overall_status_badge).to include("Not Assessable", "bg-gray-100")
+        expect(presenter.overall_status_container_class).to include("border-gray-300")
+      end
+
+      it "explains why readiness cannot be assessed" do
+        expect(presenter.outcome_message).to include("No ownership has been captured")
+      end
+
+      it "offers the attestation and shows no attestation summary" do
+        expect(presenter).to be_attestation_available
+        expect(presenter.attestation_summary).to be_nil
+      end
+    end
+
+    context "when staff attested there are no corporate owners" do
+      subject(:presenter) do
+        applicant.attest_no_corporate_owners!(by: staff)
+        presenter_for(applicant)
+      end
+
+      it "is compliant, with who and when in the attestation summary" do
+        expect(presenter.overall_status_badge).to include("Compliant", "bg-green-50")
+        expect(presenter.attestation_summary).to include(staff.email, Time.current.strftime("%-d %b %Y"))
+      end
+
+      it "no longer offers the attestation, but offers to remove it" do
+        expect(presenter).not_to be_attestation_available
+        expect(presenter).to be_attestation_revocable
+      end
+    end
+
+    it "only offers the attestation while there are no ownership entities" do
+      entity
+
+      expect(presenter_for(applicant)).not_to be_attestation_available
+    end
+
+    it "keeps the amber 'Awaiting Review' treatment for :requires_review" do
+      entity
+      create(:kyc_validation_warning, applicant: applicant, kyc_document: nil, corporate_entity: nil,
+                                      warning_type: :unresolved_chain, message: "Unresolved ownership chain: Test Corp")
+
+      presenter = presenter_for(applicant)
+
+      expect(presenter.overall_status_badge).to include("Awaiting Review", "bg-amber-50")
+      expect(presenter.overall_status_container_class).to include("border-amber-500")
+      expect(presenter.outcome_message).to include("staff review")
+    end
+
+    it "shows a red 'Not Compliant' outcome for an uncaptured UBO and lists what is missing" do
+      applicant.attest_no_corporate_owners!(by: staff)
+      create(:kyc_validation_warning, applicant: applicant, kyc_document: nil, corporate_entity: nil,
+                                      warning_type: :ubo_threshold_exceeded, message: "UBO identified",
+                                      metadata: { individual_name: "Test Person" })
+
+      presenter = presenter_for(applicant)
+
+      expect(presenter.overall_status_badge).to include("Not Compliant", "bg-red-50")
+      expect(presenter.missing_summary).to eq([ "UBO Test Person: Ownership entity" ])
+    end
+  end
 end
