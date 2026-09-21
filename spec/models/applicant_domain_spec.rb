@@ -39,6 +39,22 @@ RSpec.describe ApplicantDomain, type: :model do
     expect(described_class.sources).to eq("manual" => 0, "extracted" => 1)
   end
 
+  it { is_expected.to have_many(:comments).dependent(:delete_all) }
+
+  it "carries a justification for the Add domain form without persisting it as a column" do
+    applicant_domain.justification = "Seen the registrar account."
+
+    expect(applicant_domain.justification).to eq("Seen the registrar account.")
+    expect(described_class.column_names).not_to include("justification")
+  end
+
+  it "removes its comments when destroyed" do
+    domain = create(:applicant_domain)
+    create(:comment, commentable: domain)
+
+    expect { domain.destroy! }.to change(Comment, :count).by(-1)
+  end
+
   it { is_expected.to have_many(:evidence_links).class_name("ApplicantDomainDocument").dependent(:delete_all) }
   it { is_expected.to have_many(:evidence_documents).through(:evidence_links).source(:kyc_document) }
 

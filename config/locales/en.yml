@@ -1,6 +1,9 @@
 ---
 en:
   activerecord:
+    attributes:
+      applicant_domain:
+        justification: Reason
     errors:
       models:
         applicant:
@@ -378,6 +381,17 @@ en:
   kyc:
     applicant_domains:
       accept: Accept
+      accept_form:
+        cancel: Cancel
+        comment_required: Add a comment explaining why this domain is being accepted
+          without evidence.
+        explanation: There is no evidence document for this domain. Record why you
+          are accepting it, so the decision can be audited later.
+        label: Why is this domain trusted?
+        page_title: Accept domain
+        submit: Accept domain
+        title: Accept %{domain} without evidence
+      accept_without_evidence: Accept (a comment is required, there is no evidence)
       delete: Delete
       delete_confirm: Delete %{name}? This cannot be undone.
       evidence:
@@ -389,11 +403,17 @@ en:
       form:
         cancel: Cancel
         fields:
+          justification: Why is this domain trusted?
           name: Domain
+        justification_hint: Recorded as a comment. A domain added by hand has no evidence
+          document, so say how you know it belongs to the applicant.
         submit: Add domain
       new:
         page_title: Add domain
         title: Add domain
+      note:
+        attribution: "— %{author}, %{date}"
+        label: Note
       reject: Reject
       review_status:
         accepted: Accepted

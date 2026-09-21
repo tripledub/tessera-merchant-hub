@@ -18,6 +18,9 @@ RSpec.describe ApplicantDomainPolicy, type: :policy do
   it("psp_admin can reject")       { expect(described_class.new(psp_admin, applicant_domain).reject?).to be true }
   it("psp_support cannot reject")  { expect(described_class.new(psp_support, applicant_domain).reject?).to be false }
   it("merchant_admin cannot reject") { expect(described_class.new(merchant_admin, applicant_domain).reject?).to be false }
+  it("psp_admin can open the accept form")         { expect(described_class.new(psp_admin, applicant_domain).accept_form?).to be true }
+  it("psp_support cannot open the accept form")    { expect(described_class.new(psp_support, applicant_domain).accept_form?).to be false }
+  it("merchant_admin cannot open the accept form") { expect(described_class.new(merchant_admin, applicant_domain).accept_form?).to be false }
   it("psp_admin can attach evidence")        { expect(described_class.new(psp_admin, applicant_domain).attach_evidence?).to be true }
   it("psp_support cannot attach evidence")   { expect(described_class.new(psp_support, applicant_domain).attach_evidence?).to be false }
   it("merchant_admin cannot attach evidence") { expect(described_class.new(merchant_admin, applicant_domain).attach_evidence?).to be false }
