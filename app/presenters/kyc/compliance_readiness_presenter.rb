@@ -7,27 +7,47 @@ module Kyc
     presents :assessment
 
     def overall_status_badge
-      if assessment.compliant?
-        badge("Compliant", :green)
-      elsif awaiting_confirmation_only?
-        badge(I18n.t("applicants.tabs.overview.awaiting_review_badge"), :amber)
-      else
-        badge("Not Compliant", :red)
-      end
+      badge(Compliance::ReadinessOutcome.label(outcome), Compliance::ReadinessOutcome.badge_colour(outcome))
     end
 
     # MH-200: the container styling around the badge/summary needs a third,
     # visually distinct treatment for "blocked only by confirmation_required
     # results" — amber/neutral, not the red used for an outright rejection
-    # (unmet) and not the green used for fully compliant.
+    # (unmet) and not the green used for fully compliant. MH-251 adds a fourth,
+    # neutral grey for "not assessable": nothing has failed, nothing is known.
     def overall_status_container_class
-      if assessment.compliant?
+      case outcome
+      when :compliant
         "border-success-500 bg-success-50 dark:border-success-500/30 dark:bg-success-500/15"
-      elsif awaiting_confirmation_only?
+      when :not_assessable
+        "border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-white/[0.03]"
+      when :requires_review
         "border-amber-500 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/15"
       else
         "border-error-500 bg-error-50 dark:border-error-500/30 dark:bg-error-500/15"
       end
+    end
+
+    def outcome_message
+      Compliance::ReadinessOutcome.description(outcome)
+    end
+
+    # MH-251: staff can confirm "no corporate owners" only while the ownership
+    # graph is empty and nobody has confirmed it yet.
+    def attestation_available?
+      !applicant.no_corporate_owners_attested? && applicant.can_attest_no_corporate_owners?
+    end
+
+    def attestation_revocable?
+      applicant.no_corporate_owners_attested?
+    end
+
+    def attestation_summary
+      return unless applicant.no_corporate_owners_attested?
+
+      I18n.t("applicants.tabs.overview.attested_by",
+             name: applicant.no_corporate_owners_attested_by&.email || I18n.t("applicants.tabs.overview.former_staff_member"),
+             date: applicant.no_corporate_owners_attested_at.strftime("%-d %b %Y"))
     end
 
     def entity_summary
@@ -81,12 +101,12 @@ module Kyc
       result.entity&.name || result.title
     end
 
-    # True when every blocking result is confirmation_required. Non-blocking
-    # warnings remain visible in unmet_results without turning an otherwise
-    # awaiting-review assessment into an outright rejection.
-    def awaiting_confirmation_only?
-      assessment.unmet_results.none?(&:blocks_automated_completion?) &&
-        assessment.confirmation_required_results.any?
+    def outcome
+      assessment.outcome
+    end
+
+    def applicant
+      assessment.applicant
     end
   end
 end

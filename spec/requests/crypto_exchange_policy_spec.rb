@@ -34,8 +34,15 @@ RSpec.describe "Crypto Exchange policy", type: :request do
     expect(rendered_policy_statuses).to eq(policy_titles.index_with { "Received" })
     readiness = Kyc::Compliance::ReadinessAssessment.for(applicant)
     expect(readiness.policy_results).to all(be_met)
-    expect(readiness).to be_compliant
     expect(compliance_dimension_for(applicant)).to have_attributes(numerator: 2, denominator: 2)
+
+    # MH-251: meeting the policy documents is not enough while ownership is
+    # unknown; staff must capture ownership or attest there are no corporate owners.
+    expect(readiness).not_to be_compliant
+    expect(readiness.outcome).to eq(:not_assessable)
+
+    applicant.attest_no_corporate_owners!(by: create(:user, :psp_admin))
+    expect(Kyc::Compliance::ReadinessAssessment.for(applicant.reload)).to be_compliant
   end
 
   it "does not render Crypto Exchange requirements for a general applicant" do

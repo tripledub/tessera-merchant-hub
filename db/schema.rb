@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_21_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_21_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -273,6 +273,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_120000) do
     t.datetime "executive_narrative_generated_at"
     t.string "merchant_id"
     t.string "name", null: false
+    t.datetime "no_corporate_owners_attested_at"
+    t.bigint "no_corporate_owners_attested_by_id"
     t.string "registry_jurisdiction"
     t.string "sector", default: "general", null: false
     t.string "status", default: "pending", null: false
@@ -281,6 +283,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_120000) do
     t.datetime "updated_at", null: false
     t.index "lower((name)::text)", name: "index_merchants_on_lower_applicant_name", unique: true, where: "((type)::text = 'Applicant'::text)"
     t.index ["merchant_id"], name: "index_merchants_on_merchant_id", unique: true, where: "(merchant_id IS NOT NULL)"
+    t.index ["no_corporate_owners_attested_by_id"], name: "index_merchants_on_no_corporate_owners_attested_by_id"
     t.index ["type"], name: "index_merchants_on_type"
   end
 
@@ -446,6 +449,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_120000) do
   add_foreign_key "kyc_validation_warnings", "kyc_corporate_entities", column: "corporate_entity_id"
   add_foreign_key "kyc_validation_warnings", "kyc_documents"
   add_foreign_key "kyc_validation_warnings", "merchants", column: "applicant_id"
+  add_foreign_key "merchants", "users", column: "no_corporate_owners_attested_by_id", on_delete: :nullify
   add_foreign_key "onboarding_messages", "onboarding_sessions"
   add_foreign_key "onboarding_sessions", "merchants", column: "applicant_id"
   add_foreign_key "processing_statements", "merchants", column: "applicant_id"

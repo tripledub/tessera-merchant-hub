@@ -33,6 +33,12 @@ class ApplicantPolicy < ApplicationPolicy
     psp_admin?
   end
 
+  # MH-251: confirming (or removing) "this applicant has no corporate owners"
+  # is a compliance judgement, so it sits with psp_admin.
+  def attest_no_corporate_owners?
+    psp_admin?
+  end
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       return scope.all if user.psp_role?

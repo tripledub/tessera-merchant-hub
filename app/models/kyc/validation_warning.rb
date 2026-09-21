@@ -10,6 +10,8 @@ module Kyc
 
     enum :warning_type, { percentage_deviation: 0, nominee_detected: 1, unresolved_chain: 2, ubo_threshold_exceeded: 3, cross_reference_discrepancy: 4 }
 
+    scope :unacknowledged, -> { where(acknowledged: false) }
+
     validates :warning_type, presence: true
     validates :message, presence: true
 

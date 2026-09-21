@@ -25,6 +25,12 @@ RSpec.describe ApplicantPolicy, type: :policy do
     it("denies psp_support")  { expect(described_class.new(psp_support, applicant).new?).to be false }
   end
 
+  describe "attest_no_corporate_owners? (MH-251)" do
+    it("permits psp_admin")  { expect(described_class.new(psp_admin,   applicant).attest_no_corporate_owners?).to be true }
+    it("denies psp_support") { expect(described_class.new(psp_support, applicant).attest_no_corporate_owners?).to be false }
+    it("denies merchant_admin") { expect(described_class.new(merchant_admin, applicant).attest_no_corporate_owners?).to be false }
+  end
+
   describe "edit? / update?" do
     it("permits psp_admin")  { expect(described_class.new(psp_admin,   applicant).edit?).to be true }
     it("denies psp_support") { expect(described_class.new(psp_support, applicant).edit?).to be false }
