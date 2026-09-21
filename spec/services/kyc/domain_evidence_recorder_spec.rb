@@ -93,4 +93,62 @@ RSpec.describe Kyc::DomainEvidenceRecorder, type: :service do
   it "does nothing for an empty list" do
     expect { call([]) }.not_to change(ApplicantDomainDocument, :count)
   end
+
+  # MH-298: registrar and similar domains are auto-rejected, but stay visible.
+  context "when a name is on the blocklist" do
+    before { create(:domain_blocklist_entry, name: "godaddy.com") }
+
+    it "creates it rejected as blocklisted, with the document as evidence" do
+      call(%w[godaddy.com])
+
+      domain = applicant.applicant_domains.find_by!(name: "godaddy.com")
+      expect(domain).to be_rejected
+      expect(domain).to be_rejected_as_blocklisted
+      expect(domain).to be_source_extracted
+      expect(domain.evidence_documents).to contain_exactly(document)
+    end
+
+    it "leaves the applicant's other domains pending" do
+      call(%w[example.com godaddy.com])
+
+      expect(applicant.applicant_domains.find_by!(name: "example.com")).to be_pending
+      expect(applicant.applicant_domains.find_by!(name: "godaddy.com")).to be_rejected
+    end
+
+    it "does not change a domain the applicant already had, only adds the evidence" do
+      existing = create(:applicant_domain, applicant: applicant, name: "godaddy.com", review_status: :pending)
+
+      call(%w[godaddy.com])
+
+      expect(existing.reload).to be_pending
+      expect(existing.rejection_reason).to be_nil
+      expect(existing.evidence_documents).to contain_exactly(document)
+    end
+
+    it "counts as reviewed, so it does not hold the completeness score down" do
+      call(%w[godaddy.com])
+
+      dimension = Kyc::CompletenessCalculator.for(applicant).dimensions.find { |d| d.key == :domain_review }
+      expect([ dimension.numerator, dimension.denominator ]).to eq([ 1, 1 ])
+    end
+
+    it "stops applying once the entry is removed, leaving rows already created alone" do
+      call(%w[godaddy.com])
+      DomainBlocklistEntry.find_by!(name: "godaddy.com").destroy!
+      later = create(:kyc_document, applicant: applicant, document_type: :proof_of_domain_ownership)
+
+      call(%w[godaddy.com other-site.net], doc: later)
+
+      expect(applicant.applicant_domains.find_by!(name: "godaddy.com")).to be_rejected_as_blocklisted
+      expect(applicant.applicant_domains.find_by!(name: "other-site.net")).to be_pending
+    end
+  end
+
+  it "does not touch existing domains when a blocklist entry is added later" do
+    existing = create(:applicant_domain, applicant: applicant, name: "godaddy.com", review_status: :pending)
+
+    create(:domain_blocklist_entry, name: "godaddy.com")
+
+    expect(existing.reload).to be_pending
+  end
 end

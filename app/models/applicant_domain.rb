@@ -15,5 +15,17 @@ class ApplicantDomain < ApplicationRecord
   enum :review_status, { pending: 0, accepted: 1, rejected: 2 }, default: :accepted
   enum :source, { manual: 0, extracted: 1 }, default: :manual, prefix: :source
 
+  # Why a rejected domain was rejected: by a person, or by the blocklist (MH-298).
+  # Only meaningful while rejected, so it is defaulted and cleared to match.
+  enum :rejection_reason, { manual: 0, blocklisted: 1 }, prefix: :rejected_as
+
+  before_validation :normalize_rejection_reason
+
   validates :name, presence: true, format: { with: DOMAIN_FORMAT }, uniqueness: { scope: :applicant_id, case_sensitive: false }
+
+  private
+
+  def normalize_rejection_reason
+    self.rejection_reason = rejected? ? (rejection_reason || :manual) : nil
+  end
 end

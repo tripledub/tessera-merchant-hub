@@ -14,6 +14,7 @@
           <% end %>
           <% if current_user.psp_admin? %>
             <%= nav_link_to t("layouts.navigation.users"), admin_users_path, controller: "users" %>
+            <%= nav_link_to t("layouts.navigation.domain_blocklist"), admin_domain_blocklist_entries_path, controller: "domain_blocklist_entries" %>
           <% end %>
         </div>
       </div>
@@ -50,6 +51,7 @@
       <% end %>
       <% if current_user.psp_admin? %>
         <%= nav_link_to t("layouts.navigation.users"), admin_users_path, controller: "users" %>
+        <%= nav_link_to t("layouts.navigation.domain_blocklist"), admin_domain_blocklist_entries_path, controller: "domain_blocklist_entries" %>
       <% end %>
     </div>
     <div class="border-t border-gray-200 px-4 py-3">

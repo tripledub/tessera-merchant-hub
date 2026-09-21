@@ -57,6 +57,45 @@ RSpec.describe ApplicantDomain, type: :model do
     expect(KycDocument.exists?(link.kyc_document_id)).to be(true)
   end
 
+  describe "rejection_reason (MH-298)" do
+    it "defines the reasons" do
+      expect(described_class.rejection_reasons).to eq("manual" => 0, "blocklisted" => 1)
+    end
+
+    it "is empty for a domain that is not rejected" do
+      expect(create(:applicant_domain, review_status: :pending).rejection_reason).to be_nil
+      expect(create(:applicant_domain, review_status: :accepted).rejection_reason).to be_nil
+    end
+
+    it "defaults to manual when a domain is rejected without a reason" do
+      domain = create(:applicant_domain, review_status: :pending)
+
+      domain.rejected!
+
+      expect(domain.reload).to be_rejected_as_manual
+    end
+
+    it "keeps blocklisted when the domain is rejected as blocklisted" do
+      domain = create(:applicant_domain, review_status: :rejected, rejection_reason: :blocklisted)
+
+      expect(domain.reload).to be_rejected_as_blocklisted
+    end
+
+    it "is cleared when a rejected domain is accepted again" do
+      domain = create(:applicant_domain, review_status: :rejected, rejection_reason: :blocklisted)
+
+      domain.accepted!
+
+      expect(domain.reload.rejection_reason).to be_nil
+    end
+
+    it "cannot be set on a domain that is not rejected" do
+      domain = create(:applicant_domain, review_status: :pending, rejection_reason: :blocklisted)
+
+      expect(domain.reload.rejection_reason).to be_nil
+    end
+  end
+
   it { is_expected.to validate_presence_of(:name) }
 
   it "accepts a plain domain name" do

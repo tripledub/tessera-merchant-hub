@@ -39,8 +39,16 @@ module Kyc
       applicant.applicant_domains.find_by("lower(name) = ?", name.downcase)
     end
 
+    # A name on the blocklist is created already rejected (and says so), so it
+    # stays visible and auditable but nobody has to reject it by hand.
     def create_candidate(name)
-      domain = applicant.applicant_domains.create(name: name, source: :extracted, review_status: :pending)
+      status = if DomainBlocklistEntry.blocks?(name)
+        { review_status: :rejected, rejection_reason: :blocklisted }
+      else
+        { review_status: :pending }
+      end
+
+      domain = applicant.applicant_domains.create(name: name, source: :extracted, **status)
       domain if domain.persisted?
     end
 
