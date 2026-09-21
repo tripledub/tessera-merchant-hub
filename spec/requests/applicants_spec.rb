@@ -812,4 +812,21 @@ RSpec.describe "Applicants", type: :request do
       end
     end
   end
+
+  describe "GET /applicants/:id/tab/overview domain review completeness (MH-297)" do
+    before { sign_in psp_admin }
+
+    it "includes the Domain Review dimension in the completeness chart data" do
+      create(:applicant_domain, applicant: applicant_a, review_status: :pending)
+
+      get tab_applicant_path(applicant_a, tab: "overview")
+
+      expect(response).to have_http_status(:ok)
+      chart = Nokogiri::HTML(response.body).at_css("[data-controller='radial-chart']")
+      dimensions = JSON.parse(chart["data-radial-chart-dimensions-value"])
+      domain_review = dimensions.find { |d| d["key"] == "domain_review" }
+
+      expect(domain_review).to include("label" => "Domain Review", "numerator" => 0, "denominator" => 1)
+    end
+  end
 end
