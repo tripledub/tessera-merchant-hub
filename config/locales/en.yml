@@ -250,15 +250,21 @@ en:
       kyc_completeness:
         kyc_completeness: KYC Completeness
       overview:
-        awaiting_review_badge: Awaiting Review
+        attested_by: Confirmed by %{name} on %{date} that this applicant has no corporate
+          owners.
         compliance_readiness: Compliance Readiness
+        confirm_no_corporate_owners: Confirm no corporate owners
+        confirm_no_corporate_owners_prompt: Confirm that this applicant has no corporate
+          owners? This is recorded against your account.
         details: Details
         documents_count: Documents
         entities_count: Entities
+        former_staff_member: a former staff member
         principals_count: Principals
         registry_lookup_missing: Company was found, but the full registry data fetch
           didn't complete.
         registry_lookup_retry: Retry registry lookup
+        remove_attestation: Remove confirmation
         status: Status
         summary: Summary
         warnings_count: Warnings
@@ -383,6 +389,11 @@ en:
       upload_success:
         one: 1 document uploaded and queued for processing.
         other: "%{count} documents uploaded and queued for processing."
+    kyc_ownership_attestations:
+      attested: Confirmed that this applicant has no corporate owners.
+      entities_exist: Ownership has already been captured, so there is nothing to
+        confirm.
+      removed: Confirmation removed. Ownership must be captured or confirmed again.
     kyc_principals:
       create_success: Principal added.
       destroy_success: Principal removed.
@@ -455,6 +466,24 @@ en:
       verification_status:
         unverified: Unverified
         verified: Verified
+    compliance:
+      readiness_outcome:
+        description:
+          compliant: All required ownership and document checks are met.
+          non_compliant: One or more mandatory requirements are not met.
+          not_assessable: No ownership has been captured, so readiness cannot be assessed.
+            Capture ownership, or confirm the applicant has no corporate owners.
+          requires_review: Awaiting staff review of an unresolved ownership chain
+            or an unconfirmed date.
+        label:
+          compliant: Compliant
+          non_compliant: Not Compliant
+          not_assessable: Not Assessable
+          requires_review: Awaiting Review
+      ubo_entity_coverage:
+        guidance: Capture this person as an ownership entity so their identity evidence
+          can be checked.
+        title: UBO %{name}
     corporate_entities:
       show:
         back: "← Back to ownership"

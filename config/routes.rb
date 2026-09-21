@@ -45,6 +45,7 @@ Rails.application.routes.draw do
     namespace :kyc do
       resource :executive_narrative, only: %i[show create]
       resource :extraction_run, only: :create
+      resource :ownership_attestation, only: %i[create destroy]
       resources :principals, only: %i[new create show edit update destroy], shallow: true do
         resource :document_links, only: %i[new create], controller: "principal_document_links"
       end

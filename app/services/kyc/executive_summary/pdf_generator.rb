@@ -109,9 +109,11 @@ module Kyc
         compliance = @data[:compliance]
         section_heading(pdf, "Compliance Readiness")
 
-        status = compliance[:compliant] ? "Compliant" : "Not Compliant"
+        status = Kyc::Compliance::ReadinessOutcome.label(compliance[:outcome])
         pdf.text "#{status} — #{compliance[:compliant_entity_count]} of #{compliance[:entity_count]} entities compliant",
                  size: BODY_SIZE, color: DARK_COLOR
+        pdf.text Kyc::Compliance::ReadinessOutcome.description(compliance[:outcome]),
+                 size: BODY_SIZE, color: SECONDARY_COLOR
         pdf.move_down 6
 
         compliance[:policy_results].each do |result|

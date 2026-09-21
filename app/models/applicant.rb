@@ -14,6 +14,7 @@ class Applicant < Merchant
   has_many :applicant_users, foreign_key: :applicant_id, inverse_of: :applicant
   has_many :registry_profiles, class_name: "Registry::Profile", dependent: :destroy, inverse_of: :applicant
   has_many :addresses, as: :addressable, dependent: :destroy
+  belongs_to :no_corporate_owners_attested_by, class_name: "User", optional: true
   has_one :primary_business_address, -> { where(type: "Address::Business", primary: true) },
           class_name: "Address", as: :addressable
 
@@ -60,6 +61,26 @@ class Applicant < Merchant
   # repoint.
   def validity_reference_date
     created_at.to_date
+  end
+
+  # MH-251: an empty ownership graph is "not assessable", not "compliant". Staff
+  # can explicitly attest the applicant has no corporate owners, which lets an
+  # empty graph count; who and when are kept for audit.
+  def no_corporate_owners_attested?
+    no_corporate_owners_attested_at.present?
+  end
+
+  # An attestation only means something while the ownership graph is empty.
+  def can_attest_no_corporate_owners?
+    corporate_entities.none?
+  end
+
+  def attest_no_corporate_owners!(by:)
+    update!(no_corporate_owners_attested_at: Time.current, no_corporate_owners_attested_by: by)
+  end
+
+  def revoke_no_corporate_owners_attestation!
+    update!(no_corporate_owners_attested_at: nil, no_corporate_owners_attested_by: nil)
   end
 
   def sector_locked?

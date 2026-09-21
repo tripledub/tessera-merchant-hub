@@ -9,3 +9,5 @@ ignore_unused:
   - helpers.submit.applicant_user.*
   # ActiveModel resolves attribute names via human_attribute_name at runtime
   - activerecord.attributes.*
+  # MH-251: readiness outcome labels/descriptions are looked up by outcome symbol
+  - kyc.compliance.readiness_outcome.*

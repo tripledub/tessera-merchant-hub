@@ -38,6 +38,7 @@ module Kyc
 
     # Compliance
     def compliant? = data[:compliance][:compliant]
+    def compliance_outcome = data[:compliance][:outcome]
     def compliant_entity_count = data[:compliance][:compliant_entity_count]
     def compliance_entity_count = data[:compliance][:entity_count]
     def entity_results = data[:compliance][:entity_results]
@@ -65,8 +66,14 @@ module Kyc
       end
     end
 
+    # MH-251: same outcome, wording and colours as the Overview readiness card.
     def compliance_status_badge
-      compliant? ? badge("Compliant", :green) : badge("Not Compliant", :red)
+      badge(Compliance::ReadinessOutcome.label(compliance_outcome),
+            Compliance::ReadinessOutcome.badge_colour(compliance_outcome))
+    end
+
+    def compliance_outcome_message
+      Compliance::ReadinessOutcome.description(compliance_outcome)
     end
 
     private
