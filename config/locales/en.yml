@@ -147,6 +147,9 @@ en:
           pending: Pending
           rejected: Rejected
       title: Applicants
+    jurisdictions:
+      gb: United Kingdom
+      xu: Utopia (test data)
     new:
       back: "← Back to applicants"
       page_title: New applicant
@@ -156,6 +159,7 @@ en:
       fields:
         company_number: Company number
         company_number_placeholder: e.g. 12345678
+        jurisdiction: Registry jurisdiction
       lookup_button: Look up company
       submit: Confirm & Create
     registry_preview:

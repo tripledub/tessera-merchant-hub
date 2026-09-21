@@ -1,0 +1,50 @@
+# Scenarios for Registry::SyntheticClient, the fake registry of the fictional
+# jurisdiction Utopia ("xu"), UAT/dev only (MH-310). The company number selects
+# the scenario. Everything here is invented: never put a real person's or
+# company's details in this file.
+#
+# Officer names use the Companies House format (SURNAME, Forenames). An
+# officer's optional date_of_birth (month, year) appears only in the raw
+# response, as Companies House publishes it; it is not mapped onto directors
+# until MH-303.
+
+XU000001:
+  company_name: Utopia Sample Trading Ltd
+  status: active
+  incorporated_on: "2018-04-02"
+  address:
+    line1: 1 Specimen Street
+    city: Testville
+    postcode: UT1 1AA
+    country: Utopia
+  officers:
+    - name: SAMPLE, Riley
+      role: director
+      appointed_on: "2018-04-02"
+    - name: EXAMPLE, Jordan
+      role: director
+      appointed_on: "2019-06-15"
+
+# Officers named to match the synthetic specimen passports.
+XU000002:
+  company_name: Utopia Specimen Holdings Ltd
+  status: active
+  incorporated_on: "2019-01-10"
+  address:
+    line1: 2 Specimen Street
+    city: Testville
+    postcode: UT1 1AB
+    country: Utopia
+  officers:
+    - name: TESTPERSON, Alex
+      role: director
+      appointed_on: "2019-01-10"
+      date_of_birth:
+        month: 3
+        year: 1980
+    - name: EXAMPLESON, Morgan Lee
+      role: director
+      appointed_on: "2019-01-10"
+      date_of_birth:
+        month: 11
+        year: 1991

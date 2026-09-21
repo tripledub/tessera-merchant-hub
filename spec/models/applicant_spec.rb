@@ -165,9 +165,9 @@ RSpec.describe Applicant, type: :model do
       expect(applicant).to be_valid
     end
 
-    it "defines registry_jurisdiction as an enum limited to gb/mt/cy" do
+    it "defines registry_jurisdiction as an enum limited to gb/mt/cy, plus the UAT-only xu (MH-310)" do
       expect(described_class.registry_jurisdictions).to eq(
-        "gb" => "gb", "mt" => "mt", "cy" => "cy"
+        "gb" => "gb", "mt" => "mt", "cy" => "cy", "xu" => "xu"
       )
     end
 

@@ -50,7 +50,7 @@ class ApplicantsController < ApplicationController
   def registry_preview
     authorize Applicant, :new?
     @company_number = params.dig(:applicant, :company_number).to_s.strip
-    @preview_result = Registry::CompaniesHouseUkClient.new.fetch(company_number: @company_number) if @company_number.present?
+    @preview_result = preview_registry(@company_number) if @company_number.present?
   end
 
   def create
@@ -125,8 +125,26 @@ class ApplicantsController < ApplicationController
     end
   end
 
+  # Jurisdictions that can be requested when creating an applicant. "xu" is
+  # passed through even when the synthetic gate is off, so the Applicant
+  # validation rejects it, rather than silently switching it to gb (MH-310).
+  # Anything else falls back to gb.
+  CREATABLE_JURISDICTIONS = %w[gb xu].freeze
+
   def new_applicant_params
-    params.require(:applicant).permit(:name, :company_number, :sector).merge(registry_jurisdiction: "gb")
+    params.require(:applicant).permit(:name, :company_number, :sector).merge(registry_jurisdiction: requested_jurisdiction)
+  end
+
+  def requested_jurisdiction
+    requested = params.dig(:applicant, :registry_jurisdiction).to_s
+    CREATABLE_JURISDICTIONS.include?(requested) ? requested : "gb"
+  end
+
+  def preview_registry(company_number)
+    client_class = Registry::Lookup.client_class_for(requested_jurisdiction)
+    return Registry::FetchResult.failure(error_type: :not_supported) unless client_class
+
+    client_class.new.fetch(company_number: company_number)
   end
 
   def applicant_params
