@@ -6,7 +6,7 @@ RSpec.describe ApplicantDomain, type: :model do
   subject(:applicant_domain) { build(:applicant_domain) }
 
   it { is_expected.to belong_to(:applicant) }
-  it { is_expected.to have_many(:kyc_documents).dependent(:nullify) }
+  it { expect(described_class.reflect_on_association(:kyc_documents)).to be_nil }
 
   it "defaults verification_status to unverified" do
     expect(applicant_domain.verification_status).to eq("unverified")
@@ -39,15 +39,22 @@ RSpec.describe ApplicantDomain, type: :model do
     expect(described_class.sources).to eq("manual" => 0, "extracted" => 1)
   end
 
-  it { is_expected.to belong_to(:source_document).class_name("KycDocument").optional }
+  it { is_expected.to have_many(:evidence_links).class_name("ApplicantDomainDocument").dependent(:delete_all) }
+  it { is_expected.to have_many(:evidence_documents).through(:evidence_links).source(:kyc_document) }
 
-  it "nullifies source_document when the document is destroyed" do
-    document = create(:kyc_document)
-    domain = create(:applicant_domain, applicant: document.applicant, source_document: document)
+  it "no longer records a single source document (MH-299)" do
+    expect(described_class.column_names).not_to include("source_document_id")
+    expect(described_class.reflect_on_association(:source_document)).to be_nil
+  end
 
-    document.destroy!
+  it "removes its evidence links but not the documents when destroyed" do
+    link = create(:applicant_domain_document)
 
-    expect(domain.reload.source_document).to be_nil
+    link.applicant_domain.destroy!
+
+    expect(described_class.exists?(link.applicant_domain_id)).to be(false)
+    expect(ApplicantDomainDocument.exists?(link.id)).to be(false)
+    expect(KycDocument.exists?(link.kyc_document_id)).to be(true)
   end
 
   it { is_expected.to validate_presence_of(:name) }

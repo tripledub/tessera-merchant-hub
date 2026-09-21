@@ -4,8 +4,8 @@ class ApplicantDomain < ApplicationRecord
   DOMAIN_FORMAT = /\A(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}\z/i
 
   belongs_to :applicant, foreign_key: :applicant_id, inverse_of: :applicant_domains
-  has_many :kyc_documents, foreign_key: :applicant_domain_id, inverse_of: :applicant_domain, dependent: :nullify
-  belongs_to :source_document, class_name: "KycDocument", optional: true, inverse_of: :extracted_domains
+  has_many :evidence_links, class_name: "ApplicantDomainDocument", dependent: :delete_all, inverse_of: :applicant_domain
+  has_many :evidence_documents, through: :evidence_links, source: :kyc_document
 
   enum :verification_status, { unverified: 0, verified: 1 }, default: :unverified
 

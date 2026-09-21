@@ -24,4 +24,12 @@ class ApplicantDomainPolicy < ApplicationPolicy
   def reject?
     psp_admin?
   end
+
+  def attach_evidence?
+    psp_admin?
+  end
+
+  def detach_evidence?
+    psp_admin?
+  end
 end

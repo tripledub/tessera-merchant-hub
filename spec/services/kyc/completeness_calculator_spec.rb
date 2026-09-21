@@ -37,11 +37,19 @@ RSpec.describe Kyc::CompletenessCalculator, type: :service do
   end
 
   describe "#dimensions" do
-    it "returns five dimensions" do
-      expect(calculator.dimensions.size).to eq(5)
+    it "returns six dimensions" do
+      expect(calculator.dimensions.size).to eq(6)
       expect(calculator.dimensions.map(&:key)).to eq(
-        %i[classification extraction identity_verification compliance_rules ownership_resolution]
+        %i[classification extraction identity_verification compliance_rules ownership_resolution domain_review]
       )
+    end
+  end
+
+  describe "WEIGHTS" do
+    it "weights every dimension, equally, summing to 1.0" do
+      expect(described_class::WEIGHTS.keys).to match_array(calculator.dimensions.map(&:key))
+      expect(described_class::WEIGHTS.values.uniq.size).to eq(1)
+      expect(described_class::WEIGHTS.values.sum).to be_within(1e-9).of(1.0)
     end
   end
 
@@ -230,12 +238,82 @@ RSpec.describe Kyc::CompletenessCalculator, type: :service do
     end
   end
 
+  # MH-297: domains awaiting accept/reject hold the score down until reviewed.
+  describe "domain review dimension" do
+    def domain_review
+      calculator.dimensions.find { |d| d.key == :domain_review }
+    end
+
+    it "is labelled Domain Review" do
+      expect(domain_review.label).to eq("Domain Review")
+    end
+
+    it "calculates reviewed (accepted or rejected) / all domains" do
+      create(:applicant_domain, applicant: applicant, review_status: :accepted)
+      create(:applicant_domain, applicant: applicant, review_status: :rejected)
+      create(:applicant_domain, applicant: applicant, review_status: :pending)
+
+      expect(domain_review.numerator).to eq(2)
+      expect(domain_review.denominator).to eq(3)
+      expect(domain_review.percentage).to eq(66.7)
+    end
+
+    it "counts a hand-added (auto-accepted) domain as reviewed" do
+      create(:applicant_domain, applicant: applicant)
+
+      expect(domain_review.numerator).to eq(1)
+      expect(domain_review.denominator).to eq(1)
+      expect(domain_review.percentage).to eq(100.0)
+    end
+
+    it "counts a rejected domain as reviewed" do
+      create(:applicant_domain, applicant: applicant, review_status: :rejected)
+
+      expect(domain_review.percentage).to eq(100.0)
+    end
+
+    it "has an empty denominator when the applicant has no domains" do
+      expect(domain_review.numerator).to eq(0)
+      expect(domain_review.denominator).to eq(0)
+    end
+
+    it "ignores other applicants' domains" do
+      create(:applicant_domain, review_status: :pending)
+
+      expect(domain_review.denominator).to eq(0)
+    end
+
+    describe "effect on the overall score" do
+      before do
+        create(:kyc_document, applicant: applicant, classification_status: :confirmed, status: :complete)
+        create(:kyc_document, applicant: applicant, classification_status: :unclassified)
+      end
+
+      it "leaves the overall score unchanged for an applicant with no domains" do
+        # classification 1/2 = 50, extraction 1/1 = 100 -> mean of the two active dimensions
+        expect(calculator.overall_percentage).to eq(75.0)
+      end
+
+      it "lowers the overall score while a domain is pending" do
+        create(:applicant_domain, applicant: applicant, review_status: :pending)
+
+        expect(calculator.overall_percentage).to eq(50.0)
+      end
+
+      it "restores the score once the domain is reviewed" do
+        create(:applicant_domain, applicant: applicant, review_status: :accepted)
+
+        expect(calculator.overall_percentage).to eq(83.3)
+      end
+    end
+  end
+
   describe "#as_chart_json" do
     it "returns overall and dimensions" do
       json = calculator.as_chart_json
       expect(json).to have_key(:overall)
       expect(json).to have_key(:dimensions)
-      expect(json[:dimensions].size).to eq(5)
+      expect(json[:dimensions].size).to eq(6)
       expect(json[:dimensions].first).to include(:key, :label, :percentage, :numerator, :denominator)
     end
   end

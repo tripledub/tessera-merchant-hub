@@ -364,52 +364,36 @@ RSpec.describe "KycDocuments", type: :request do
     end
   end
 
-  describe "PATCH /kyc_documents/:id linking a proof_of_domain_ownership document to a domain" do
-    let_it_be(:domain) { create(:applicant_domain, applicant: applicant) }
+  # MH-296: domains are now extracted from proof-of-domain documents and
+  # reviewed on the Domains tab, so a document no longer links to a domain.
+  describe "PATCH /kyc_documents/:id for a proof_of_domain_ownership document" do
     let(:document) do
       create(:kyc_document, applicant: applicant, document_type: :proof_of_domain_ownership,
-             classification_status: :confirmed)
+             classification_status: :ai_suggested)
     end
+
+    let!(:domain) { create(:applicant_domain, applicant: applicant) }
 
     before { sign_in psp_admin }
 
-    it "links the document to the domain" do
+    it "ignores a smuggled applicant_domain_id, even a valid one, but still applies the permitted change" do
       patch kyc_document_path(document),
-        params: { kyc_document: { applicant_domain_id: domain.id } },
+        params: { kyc_document: { classification_status: "confirmed", applicant_domain_id: domain.id } },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-      expect(document.reload.applicant_domain).to eq(domain)
+      expect(response).to have_http_status(:ok)
+      expect(document.reload).to be_classification_confirmed
+      expect(document.has_attribute?(:applicant_domain_id)).to be(false)
     end
 
-    it "unlinks when given a blank id" do
-      document.update!(applicant_domain: domain)
-
+    it "renders no domain dropdown on the document row even when the applicant has domains" do
       patch kyc_document_path(document),
-        params: { kyc_document: { applicant_domain_id: "" } },
+        params: { kyc_document: { classification_status: "confirmed" } },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-      expect(document.reload.applicant_domain).to be_nil
-    end
-
-    it "ignores a domain belonging to a different applicant" do
-      other_domain = create(:applicant_domain)
-
-      patch kyc_document_path(document),
-        params: { kyc_document: { applicant_domain_id: other_domain.id } },
-        headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-      expect(document.reload.applicant_domain).to be_nil
-    end
-
-    it "ignores applicant_domain_id for a document type other than proof_of_domain_ownership" do
-      other_document = create(:kyc_document, applicant: applicant, document_type: :passport,
-                               classification_status: :confirmed)
-
-      patch kyc_document_path(other_document),
-        params: { kyc_document: { applicant_domain_id: domain.id } },
-        headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-      expect(other_document.reload.applicant_domain).to be_nil
+      expect(response.body).to include(ActionView::RecordIdentifier.dom_id(document))
+      expect(response.body).not_to include("domain-link")
+      expect(response.body).not_to include("kyc_document[applicant_domain_id]")
     end
   end
 

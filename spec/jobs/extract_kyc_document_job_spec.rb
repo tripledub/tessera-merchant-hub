@@ -446,24 +446,24 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       expect(document.extracted_data).to eq("domains" => extracted_domains)
     end
 
-    it "creates a pending, extracted candidate domain per result linked to the source document" do
+    it "creates a pending, extracted candidate domain per result with the document as evidence" do
       expect { described_class.new.perform(document.id) }
         .to change { applicant.applicant_domains.count }.by(2)
 
       domains = applicant.applicant_domains.order(:name)
       expect(domains.map(&:name)).to eq(%w[example.com other-site.net])
       expect(domains).to all(be_pending.and(be_source_extracted))
-      expect(domains.map(&:source_document)).to all(eq(document))
+      expect(domains.map(&:evidence_documents)).to all(contain_exactly(document))
     end
 
-    it "leaves an existing domain alone, whatever its case or review status" do
+    it "keeps an existing domain's status, whatever its case, and adds the document as evidence" do
       accepted = create(:applicant_domain, applicant: applicant, name: "Example.com")
 
       expect { described_class.new.perform(document.id) }
         .to change { applicant.applicant_domains.count }.by(1)
 
       expect(accepted.reload).to be_accepted.and(be_source_manual)
-      expect(accepted.source_document).to be_nil
+      expect(accepted.evidence_documents).to contain_exactly(document)
     end
 
     it "does not bring back a rejected domain on re-extraction" do
