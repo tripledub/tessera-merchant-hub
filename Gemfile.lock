@@ -214,7 +214,7 @@ GEM
     hashery (2.1.2)
     highline (3.1.2)
       reline
-    honeybadger (6.9.1)
+    honeybadger (6.9.2)
       logger
       ostruct
     i18n (1.15.2)
@@ -757,7 +757,7 @@ CHECKSUMS
   hashdiff (1.2.1) sha256=9c079dbc513dfc8833ab59c0c2d8f230fa28499cc5efb4b8dd276cf931457cd1
   hashery (2.1.2) sha256=d239cc2310401903f6b79d458c2bbef5bf74c46f3f974ae9c1061fb74a404862
   highline (3.1.2) sha256=67cbd34d19f6ef11a7ee1d82ffab5d36dfd5b3be861f450fc1716c7125f4bb4a
-  honeybadger (6.9.1) sha256=3e79543ab171f810306bd152b3f470ce2b905b1a27f766f3138568949078cf68
+  honeybadger (6.9.2) sha256=6f5a9c20f7a6448623c8fdc397fc3c96623b3d8fc85449810d42a0be4f8ae214
   i18n (1.15.2) sha256=00f9eb62412fe593b2a65a97daa75300d37abb8f7202ec748e94b6d46a9dd1b5
   i18n-tasks (1.1.2) sha256=4dcfba49e52a623f30661cb316cb80d84fbba5cb8c6d88ef5e02545fffa3637a
   image_processing (2.1.0) sha256=ca3814b1b909fc5fab68b261c50eaffef11e29a6907143e9cf1efc14b6dc6f47
