@@ -18,6 +18,16 @@ RSpec.describe Kyc::Compliance::Rules::UboDocumentRequirements, type: :service d
       expect(rule.applies_to?(entity)).to be true
     end
 
+    it "returns true for an individual matching a registry-derived UBO warning that has no entity (MH-251)" do
+      entity = create(:kyc_corporate_entity, applicant: applicant, kyc_document: source_document,
+                                              entity_type: :individual, name: "Jan Kowalski")
+      create(:kyc_validation_warning, applicant: applicant, kyc_document: nil, corporate_entity: nil,
+                                      warning_type: :ubo_threshold_exceeded,
+                                      metadata: { individual_name: " jan kowalski" })
+
+      expect(rule.applies_to?(entity)).to be true
+    end
+
     it "returns false for an individual without a UBO threshold warning" do
       entity = create(:kyc_corporate_entity, applicant: applicant, kyc_document: source_document,
                                               entity_type: :individual, name: "Jan Kowalski")

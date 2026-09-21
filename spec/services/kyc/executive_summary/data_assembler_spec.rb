@@ -170,6 +170,18 @@ RSpec.describe Kyc::ExecutiveSummary::DataAssembler, type: :service do
         expect(compliance[:entity_count]).to eq(3)
       end
 
+      it "includes the four-state readiness outcome (MH-251)" do
+        expect(compliance).to have_key(:outcome)
+        expect(Kyc::Compliance::ReadinessAssessment::OUTCOMES).to include(compliance[:outcome])
+      end
+
+      it "reports :not_assessable for an applicant with no ownership captured (MH-251)" do
+        result = described_class.call(create(:applicant))
+
+        expect(result[:compliance][:outcome]).to eq(:not_assessable)
+        expect(result[:compliance][:compliant]).to be false
+      end
+
       it "includes localized applicant policy results alongside entity results" do
         crypto_applicant = create(:applicant, sector: :crypto_exchange)
         source_document = create(:kyc_document, applicant: crypto_applicant, document_type: :group_structure_chart)

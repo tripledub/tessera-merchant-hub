@@ -26,6 +26,23 @@ RSpec.describe Kyc::ExecutiveSummary::PdfGenerator, type: :service do
     expect(text).to include("Document Status")
   end
 
+  context "when no ownership has been captured (MH-251)" do
+    it "reports readiness as not assessable rather than compliant" do
+      text = PDF::Inspector::Text.analyze(described_class.call(applicant)).strings.join(" ")
+
+      expect(text).to include("Not Assessable")
+      expect(text).to include("No ownership has been captured")
+      expect(text).not_to match(/\bCompliant —/)
+    end
+
+    it "reports compliant once staff attested there are no corporate owners" do
+      applicant.attest_no_corporate_owners!(by: create(:user))
+      text = PDF::Inspector::Text.analyze(described_class.call(applicant.reload)).strings.join(" ")
+
+      expect(text).to match(/\bCompliant —/)
+    end
+  end
+
   context "with unmet Crypto Exchange policy evidence" do
     let(:applicant) { create(:applicant, sector: :crypto_exchange) }
 

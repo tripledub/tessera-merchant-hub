@@ -191,4 +191,34 @@ RSpec.describe Applicant, type: :model do
       expect(saved.reload.company_number).to eq("12345678")
     end
   end
+
+  describe "no corporate owners attestation (MH-251)" do
+    let(:applicant) { create(:applicant) }
+    let(:staff) { create(:user, :psp_admin) }
+
+    it "is not attested by default" do
+      expect(applicant).not_to be_no_corporate_owners_attested
+    end
+
+    it "records who attested and when" do
+      freeze_time do
+        applicant.attest_no_corporate_owners!(by: staff)
+
+        applicant.reload
+        expect(applicant).to be_no_corporate_owners_attested
+        expect(applicant.no_corporate_owners_attested_by).to eq(staff)
+        expect(applicant.no_corporate_owners_attested_at).to eq(Time.current)
+      end
+    end
+
+    it "can be revoked" do
+      applicant.attest_no_corporate_owners!(by: staff)
+
+      applicant.revoke_no_corporate_owners_attestation!
+
+      applicant.reload
+      expect(applicant).not_to be_no_corporate_owners_attested
+      expect(applicant.no_corporate_owners_attested_by).to be_nil
+    end
+  end
 end

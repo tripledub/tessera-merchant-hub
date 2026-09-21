@@ -94,6 +94,7 @@ module Kyc
         assessment = Kyc::Compliance::ReadinessAssessment.for(applicant)
         {
           compliant: assessment.compliant?,
+          outcome: assessment.outcome,
           entity_count: assessment.entity_count,
           compliant_entity_count: assessment.compliant_entity_count,
           entity_results: assessment.entity_results.map do |er|
