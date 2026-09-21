@@ -21,6 +21,10 @@ class ApplicantDomainPolicy < ApplicationPolicy
     psp_admin?
   end
 
+  def accept_form?
+    psp_admin?
+  end
+
   def reject?
     psp_admin?
   end

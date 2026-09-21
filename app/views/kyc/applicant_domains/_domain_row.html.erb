@@ -45,6 +45,14 @@
               class: "text-brand-600 hover:underline dark:text-brand-400" %>
       <% end %>
     </div>
+    <% note = applicant_domain.comments.last %>
+    <% if note %>
+      <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <span class="font-medium"><%= t("kyc.applicant_domains.note.label") %>:</span>
+        <span class="line-clamp-2" title="<%= note.body %>"><%= note.body %></span>
+        <span class="italic"><%= t("kyc.applicant_domains.note.attribution", author: note.author.email, date: l(note.created_at.to_date, format: :long)) %></span>
+      </div>
+    <% end %>
   </td>
   <td class="px-4 py-2 text-gray-500 dark:text-gray-400">
     <span class="badge <%= review_badge %>">
@@ -59,13 +67,27 @@
   <td class="px-4 py-2">
     <div class="flex items-center gap-2">
     <% if (applicant_domain.pending? || applicant_domain.rejected?) && policy(applicant_domain).accept? %>
-      <%= button_to accept_kyc_applicant_domain_path(applicant_domain), method: :patch,
-            title: accept_label,
-            "aria-label": accept_label,
-            class: "text-gray-400 hover:text-success-500 dark:hover:text-success-400" do %>
+      <% check_icon = capture do %>
         <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path fill-rule="evenodd" clip-rule="evenodd" d="M20.707 5.293a1 1 0 0 1 0 1.414l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414L9 15.586 19.293 5.293a1 1 0 0 1 1.414 0z" fill=""/>
         </svg>
+      <% end %>
+      <% if evidence_links.any? %>
+        <%= button_to accept_kyc_applicant_domain_path(applicant_domain), method: :patch,
+              title: accept_label,
+              "aria-label": accept_label,
+              class: "text-gray-400 hover:text-success-500 dark:hover:text-success-400" do %>
+          <%= check_icon %>
+        <% end %>
+      <% else %>
+        <%# No evidence: accepting needs a comment saying why (MH-300). %>
+        <%= link_to accept_form_kyc_applicant_domain_path(applicant_domain),
+              title: t("kyc.applicant_domains.accept_without_evidence"),
+              "aria-label": t("kyc.applicant_domains.accept_without_evidence"),
+              data: { turbo_frame: "applicant-domain-modal" },
+              class: "text-gray-400 hover:text-success-500 dark:hover:text-success-400" do %>
+          <%= check_icon %>
+        <% end %>
       <% end %>
     <% end %>
     <% if applicant_domain.pending? && policy(applicant_domain).reject? %>
