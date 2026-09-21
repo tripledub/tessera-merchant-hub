@@ -320,6 +320,8 @@ en:
       accepted: Domain accepted.
       create_success: Domain added.
       destroy_success: Domain removed.
+      evidence_added: Evidence added.
+      evidence_removed: Evidence removed.
       rejected: Domain rejected.
     applicant_users:
       destroy_success: Portal user removed.
@@ -378,6 +380,12 @@ en:
       accept: Accept
       delete: Delete
       delete_confirm: Delete %{name}? This cannot be undone.
+      evidence:
+        add: Add evidence
+        none: No evidence on file
+        unlink: Remove this evidence
+        unlink_confirm: Remove %{filename} as evidence for %{domain}? The document
+          itself is kept.
       form:
         cancel: Cancel
         fields:
@@ -391,9 +399,6 @@ en:
         accepted: Accepted
         pending: Pending review
         rejected: Rejected
-      source:
-        document_removed: Extracted from a document that has since been removed
-        extracted_from: Extracted from %{filename}
       undo_reject: Undo rejection
       verification_status:
         unverified: Unverified
@@ -497,6 +502,7 @@ en:
         utility_bill: Utility Bill
         vasp_registration: VASP Registration
         wallet_custody_infrastructure_attestation: Wallet Custody Infrastructure Attestation
+      evidenced_domains: Domains
       match_method:
         exact: Exact match
         fuzzy: Fuzzy match
@@ -505,7 +511,6 @@ en:
         unconfirmed: Unconfirmed
       reject_match: Reject principal match
       retry: Retry
-      select_domain: Select domain…
       select_type: Select type…
       status:
         complete: Complete
@@ -550,6 +555,18 @@ en:
         empty: All documents are already linked.
         link: Link
         title: Link documents to entity
+    evidence_links:
+      new:
+        cancel: Cancel
+        choose: Choose a document…
+        choose_document: Choose a document to attach.
+        document: Proof of domain ownership document
+        none_available: No proof of domain ownership documents are available to attach.
+          Upload one on the Documents tab, or reclassify an existing document as proof
+          of domain ownership.
+        page_title: Add evidence
+        submit: Attach
+        title: Add evidence for %{domain}
     policy_requirements:
       base:
         passport_validity:

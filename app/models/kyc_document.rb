@@ -6,12 +6,12 @@ class KycDocument < ApplicationRecord
   belongs_to :corporate_entity, class_name: "Kyc::CorporateEntity", optional: true
   belongs_to :superseded_by_kyc_document, class_name: "KycDocument", optional: true
   belongs_to :processing_statement, optional: true, inverse_of: :kyc_document
-  belongs_to :applicant_domain, foreign_key: :applicant_domain_id, inverse_of: :kyc_documents, optional: true
 
   include Commentable
 
-  has_many :extracted_domains, class_name: "ApplicantDomain", foreign_key: :source_document_id,
-           dependent: :nullify, inverse_of: :source_document
+  has_many :domain_links, class_name: "ApplicantDomainDocument", foreign_key: :kyc_document_id,
+           dependent: :delete_all, inverse_of: :kyc_document
+  has_many :evidenced_domains, through: :domain_links, source: :applicant_domain
   has_many :corporate_entities, class_name: "Kyc::CorporateEntity", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
   has_many :validation_warnings, class_name: "Kyc::ValidationWarning", foreign_key: :kyc_document_id,
@@ -150,6 +150,12 @@ class KycDocument < ApplicationRecord
   validates :file, presence: true, on: :create
   validate :file_content_type_allowed, if: -> { file.attached? }
   validate :file_size_allowed, if: -> { file.attached? }
+
+  # Whether the in-app preview modal (document_preview_controller.js) can show
+  # this file: it handles images and PDFs, not spreadsheets or CSVs.
+  def previewable?
+    file.attached? && (file.content_type.to_s.start_with?("image/") || file.content_type == "application/pdf")
+  end
 
   def needs_review?
     classification_ai_suggested? || classification_unclassified?

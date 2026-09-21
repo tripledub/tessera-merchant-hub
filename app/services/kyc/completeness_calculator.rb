@@ -10,12 +10,16 @@ module Kyc
       end
     end
 
+    # Equal weighting across all six dimensions (sums to 1.0). Dimensions with
+    # a zero denominator are dropped and the rest renormalised in
+    # #overall_percentage, so an applicant with no domains scores as before.
     WEIGHTS = {
-      classification: 0.20,
-      extraction: 0.20,
-      identity_verification: 0.20,
-      compliance_rules: 0.20,
-      ownership_resolution: 0.20
+      classification: 1.0 / 6,
+      extraction: 1.0 / 6,
+      identity_verification: 1.0 / 6,
+      compliance_rules: 1.0 / 6,
+      ownership_resolution: 1.0 / 6,
+      domain_review: 1.0 / 6
     }.freeze
 
     attr_reader :applicant, :dimensions
@@ -55,7 +59,8 @@ module Kyc
         extraction_dimension,
         identity_verification_dimension,
         compliance_rules_dimension,
-        ownership_resolution_dimension
+        ownership_resolution_dimension,
+        domain_review_dimension
       ]
     end
 
@@ -128,6 +133,18 @@ module Kyc
 
       Dimension.new(key: :ownership_resolution, label: "Ownership Resolution",
                     numerator: resolved, denominator: total)
+    end
+
+    # MH-297: domains extracted from proof-of-domain documents are pending until
+    # a psp_admin accepts or rejects them, and until then the application isn't
+    # complete. Hand-added domains are accepted on creation, so they count as
+    # reviewed.
+    def domain_review_dimension
+      domains = applicant.applicant_domains
+      reviewed = domains.where.not(review_status: :pending).count
+
+      Dimension.new(key: :domain_review, label: "Domain Review",
+                    numerator: reviewed, denominator: domains.count)
     end
   end
 end
