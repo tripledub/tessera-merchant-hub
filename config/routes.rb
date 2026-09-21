@@ -94,6 +94,7 @@ Rails.application.routes.draw do
   resources :team, only: %i[index new create destroy]
 
   namespace :admin do
+    resources :domain_blocklist_entries, only: %i[index create destroy]
     resources :users, only: %i[index new create] do
       member do
         patch :unlock

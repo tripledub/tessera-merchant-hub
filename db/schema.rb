@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_21_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_21_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -71,6 +71,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_100000) do
     t.uuid "applicant_id", null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
+    t.integer "rejection_reason"
     t.integer "review_status", default: 1, null: false
     t.integer "source", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -104,6 +105,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_100000) do
     t.datetime "updated_at", null: false
     t.index ["author_id"], name: "index_comments_on_author_id"
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
+  end
+
+  create_table "domain_blocklist_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "created_by_id"
+    t.string "name", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_domain_blocklist_entries_on_lower_name", unique: true
+    t.index ["created_by_id"], name: "index_domain_blocklist_entries_on_created_by_id"
   end
 
   create_table "kyc_corporate_entities", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -415,6 +425,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_100000) do
   add_foreign_key "applicant_domains", "merchants", column: "applicant_id"
   add_foreign_key "applicant_users", "merchants", column: "applicant_id"
   add_foreign_key "comments", "users", column: "author_id"
+  add_foreign_key "domain_blocklist_entries", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "kyc_corporate_entities", "kyc_documents"
   add_foreign_key "kyc_corporate_entities", "merchants", column: "applicant_id"
   add_foreign_key "kyc_document_date_confirmations", "kyc_documents"

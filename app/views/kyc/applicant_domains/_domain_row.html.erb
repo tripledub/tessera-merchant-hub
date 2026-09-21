@@ -58,6 +58,9 @@
     <span class="badge <%= review_badge %>">
       <%= t("kyc.applicant_domains.review_status.#{applicant_domain.review_status}") %>
     </span>
+    <% if applicant_domain.rejected_as_blocklisted? %>
+      <span class="ml-1 text-xs italic"><%= t("kyc.applicant_domains.rejection_reason.blocklisted") %></span>
+    <% end %>
   </td>
   <td class="px-4 py-2 text-gray-500 dark:text-gray-400">
     <span class="badge <%= applicant_domain.verified? ? 'badge-success' : 'badge-gray' %>">

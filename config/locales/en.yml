@@ -12,6 +12,33 @@ en:
               locked_after_document_collection: cannot be changed after document collection
                 has begun
   admin:
+    domain_blocklist_entries:
+      errors:
+        not_registrable: must be a registrable domain such as example.com, not a subdomain
+          such as mail.example.com
+      index:
+        form:
+          hint: A registrable domain such as godaddy.com. A pasted URL or www. address
+            is reduced to the domain; subdomains are not accepted.
+          name: Domain
+          submit: Add to blocklist
+        page_title: Domain blocklist
+        subtitle: Domains listed here are automatically rejected when they are extracted
+          from proof of domain ownership documents, so nobody has to reject a registrar's
+          own domain by hand. They still appear on the applicant's Domains tab, marked
+          as rejected. Existing domains are not changed.
+        table:
+          actions: Actions
+          added_by: Added by
+          added_on: Added
+          empty: No domains are blocked yet.
+          name: Domain
+          remove: Remove from blocklist
+          remove_confirm: Remove %{name} from the blocklist? Future extractions will
+            treat it like any other domain. Domains already rejected by the blocklist
+            stay as they are.
+          system: System
+        title: Domain blocklist
     users:
       index:
         filter:
@@ -315,6 +342,9 @@ en:
         other: "%{count} errors prohibited this %{resource} from being saved:"
   flash:
     admin:
+      domain_blocklist_entries:
+        added: "%{name} added to the blocklist."
+        removed: "%{name} removed from the blocklist."
       users:
         invite_success: Invitation sent to %{email}.
         role_updated: Role updated for %{email}.
@@ -415,6 +445,8 @@ en:
         attribution: "— %{author}, %{date}"
         label: Note
       reject: Reject
+      rejection_reason:
+        blocklisted: Blocklisted
       review_status:
         accepted: Accepted
         pending: Pending review
@@ -665,6 +697,7 @@ en:
       app_name: Kynetic
       applicants: Applicants
       close_sidebar: Close sidebar
+      domain_blocklist: Domain blocklist
       kyc: KYC
       menu: Menu
       my_account: My Account

@@ -404,6 +404,20 @@ RSpec.describe "ApplicantDomains", type: :request do
       expect(pending_domain).to be_pending
     end
 
+    describe "blocklisted rejections (MH-298)" do
+      it "tags a domain the blocklist rejected, and only that one" do
+        sign_in psp_admin
+        create(:applicant_domain, applicant: applicant, name: "listed-registrar.com",
+               review_status: :rejected, rejection_reason: :blocklisted, source: :extracted)
+
+        body = domains_tab
+        tag = I18n.t("kyc.applicant_domains.rejection_reason.blocklisted")
+
+        expect(body).to include("listed-registrar.com")
+        expect(body.scan(tag).size).to eq(1) # rejected_domain, rejected by hand, is not tagged
+      end
+    end
+
     describe "accept control and reviewer note (MH-300)" do
       let!(:bare_pending) do
         create(:applicant_domain, applicant: applicant, name: "no-evidence.com", review_status: :pending, source: :extracted)
