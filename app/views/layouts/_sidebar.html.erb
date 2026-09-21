@@ -57,6 +57,7 @@
           <%= t('layouts.navigation.admin') %>
         </p>
         <%= nav_link_to t('layouts.navigation.users'), admin_users_path, controller: "users", icon: :users %>
+        <%= nav_link_to t('layouts.navigation.domain_blocklist'), admin_domain_blocklist_entries_path, controller: "domain_blocklist_entries", icon: :blocklist %>
       <% end %>
 
     <% elsif current_user.merchant_role? %>

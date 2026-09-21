@@ -1,6 +1,9 @@
 ---
 en:
   activerecord:
+    attributes:
+      applicant_domain:
+        justification: Reason
     errors:
       models:
         applicant:
@@ -9,6 +12,33 @@ en:
               locked_after_document_collection: cannot be changed after document collection
                 has begun
   admin:
+    domain_blocklist_entries:
+      errors:
+        not_registrable: must be a registrable domain such as example.com, not a subdomain
+          such as mail.example.com
+      index:
+        form:
+          hint: A registrable domain such as godaddy.com. A pasted URL or www. address
+            is reduced to the domain; subdomains are not accepted.
+          name: Domain
+          submit: Add to blocklist
+        page_title: Domain blocklist
+        subtitle: Domains listed here are automatically rejected when they are extracted
+          from proof of domain ownership documents, so nobody has to reject a registrar's
+          own domain by hand. They still appear on the applicant's Domains tab, marked
+          as rejected. Existing domains are not changed.
+        table:
+          actions: Actions
+          added_by: Added by
+          added_on: Added
+          empty: No domains are blocked yet.
+          name: Domain
+          remove: Remove from blocklist
+          remove_confirm: Remove %{name} from the blocklist? Future extractions will
+            treat it like any other domain. Domains already rejected by the blocklist
+            stay as they are.
+          system: System
+        title: Domain blocklist
     users:
       index:
         filter:
@@ -158,6 +188,7 @@ en:
         confirmed: confirmed
         drag_or_click: Drag and drop files here, or click to browse
         empty: No documents uploaded yet.
+        folder_not_supported: Folders aren't supported — drag individual files instead.
         pending_extraction_count:
           one: 1 document pending extraction
           other: "%{count} documents pending extraction"
@@ -173,7 +204,8 @@ en:
         table:
           actions: Actions
           name: Name
-          status: Status
+          review: Review
+          verification: Verification
       edit: Edit
       principals:
         delete: Delete
@@ -310,13 +342,20 @@ en:
         other: "%{count} errors prohibited this %{resource} from being saved:"
   flash:
     admin:
+      domain_blocklist_entries:
+        added: "%{name} added to the blocklist."
+        removed: "%{name} removed from the blocklist."
       users:
         invite_success: Invitation sent to %{email}.
         role_updated: Role updated for %{email}.
         unlock_success: "%{email} has been unlocked."
     applicant_domains:
+      accepted: Domain accepted.
       create_success: Domain added.
       destroy_success: Domain removed.
+      evidence_added: Evidence added.
+      evidence_removed: Evidence removed.
+      rejected: Domain rejected.
     applicant_users:
       destroy_success: Portal user removed.
     applicants:
@@ -338,6 +377,9 @@ en:
         other: Extraction started for %{count} documents.
         zero: No confirmed documents to extract.
       no_files: Please select at least one file to upload.
+      skipped_invalid:
+        one: 1 file was skipped — unsupported type or invalid file.
+        other: "%{count} files were skipped — unsupported type or invalid file."
       upload_success:
         one: 1 document uploaded and queued for processing.
         other: "%{count} documents uploaded and queued for processing."
@@ -368,16 +410,48 @@ en:
         update: Update password
   kyc:
     applicant_domains:
+      accept: Accept
+      accept_form:
+        cancel: Cancel
+        comment_required: Add a comment explaining why this domain is being accepted
+          without evidence.
+        explanation: There is no evidence document for this domain. Record why you
+          are accepting it, so the decision can be audited later.
+        label: Why is this domain trusted?
+        page_title: Accept domain
+        submit: Accept domain
+        title: Accept %{domain} without evidence
+      accept_without_evidence: Accept (a comment is required, there is no evidence)
       delete: Delete
       delete_confirm: Delete %{name}? This cannot be undone.
+      evidence:
+        add: Add evidence
+        none: No evidence on file
+        unlink: Remove this evidence
+        unlink_confirm: Remove %{filename} as evidence for %{domain}? The document
+          itself is kept.
       form:
         cancel: Cancel
         fields:
+          justification: Why is this domain trusted?
           name: Domain
+        justification_hint: Recorded as a comment. A domain added by hand has no evidence
+          document, so say how you know it belongs to the applicant.
         submit: Add domain
       new:
         page_title: Add domain
         title: Add domain
+      note:
+        attribution: "— %{author}, %{date}"
+        label: Note
+      reject: Reject
+      rejection_reason:
+        blocklisted: Blocklisted
+      review_status:
+        accepted: Accepted
+        pending: Pending review
+        rejected: Rejected
+      undo_reject: Undo rejection
       verification_status:
         unverified: Unverified
         verified: Verified
@@ -480,6 +554,7 @@ en:
         utility_bill: Utility Bill
         vasp_registration: VASP Registration
         wallet_custody_infrastructure_attestation: Wallet Custody Infrastructure Attestation
+      evidenced_domains: Domains
       match_method:
         exact: Exact match
         fuzzy: Fuzzy match
@@ -488,7 +563,6 @@ en:
         unconfirmed: Unconfirmed
       reject_match: Reject principal match
       retry: Retry
-      select_domain: Select domain…
       select_type: Select type…
       status:
         complete: Complete
@@ -533,6 +607,18 @@ en:
         empty: All documents are already linked.
         link: Link
         title: Link documents to entity
+    evidence_links:
+      new:
+        cancel: Cancel
+        choose: Choose a document…
+        choose_document: Choose a document to attach.
+        document: Proof of domain ownership document
+        none_available: No proof of domain ownership documents are available to attach.
+          Upload one on the Documents tab, or reclassify an existing document as proof
+          of domain ownership.
+        page_title: Add evidence
+        submit: Attach
+        title: Add evidence for %{domain}
     policy_requirements:
       base:
         passport_validity:
@@ -611,6 +697,7 @@ en:
       app_name: Kynetic
       applicants: Applicants
       close_sidebar: Close sidebar
+      domain_blocklist: Domain blocklist
       kyc: KYC
       menu: Menu
       my_account: My Account

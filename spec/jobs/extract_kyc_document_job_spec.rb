@@ -130,25 +130,6 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       end
     end
 
-    context "when document_type is proof_of_domain_ownership" do
-      let(:document) do
-        create(:kyc_document,
-          applicant: applicant,
-          document_type: :proof_of_domain_ownership,
-          classification_status: :confirmed,
-          status: :pending)
-      end
-
-      it "skips extraction — reviewed by eyeball only, no extraction schema at this point" do
-        described_class.new.perform(document.id)
-
-        document.reload
-        expect(document.status).to eq("pending")
-        expect(document.result).to be_nil
-        expect(Kyc::DocumentExtractorService).not_to have_received(:call)
-      end
-    end
-
     context "when address matching runs for a utility bill with a principal present" do
       let(:principal_with_address) do
         create(:kyc_principal,
@@ -431,6 +412,127 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
           partial: "shared/toast",
           locals: hash_including(type: :error)
         )
+      end
+    end
+  end
+
+  describe "#perform for a proof_of_domain_ownership document" do
+    let(:document) do
+      create(:kyc_document,
+        applicant: applicant,
+        document_type: :proof_of_domain_ownership,
+        classification_status: :confirmed,
+        status: :pending)
+    end
+
+    let(:extracted_domains) { %w[example.com other-site.net] }
+
+    before do
+      allow(Kyc::DomainExtractorService).to receive(:call).and_return(extracted_domains)
+    end
+
+    it "extracts domains with the domain extractor, not the field-schema extractor" do
+      described_class.new.perform(document.id)
+
+      expect(Kyc::DomainExtractorService).to have_received(:call).with(document)
+      expect(Kyc::DocumentExtractorService).not_to have_received(:call)
+    end
+
+    it "completes the document instead of leaving it pending (MH-290)" do
+      described_class.new.perform(document.id)
+
+      document.reload
+      expect(document.status).to eq("complete")
+      expect(document.extracted_data).to eq("domains" => extracted_domains)
+    end
+
+    it "creates a pending, extracted candidate domain per result with the document as evidence" do
+      expect { described_class.new.perform(document.id) }
+        .to change { applicant.applicant_domains.count }.by(2)
+
+      domains = applicant.applicant_domains.order(:name)
+      expect(domains.map(&:name)).to eq(%w[example.com other-site.net])
+      expect(domains).to all(be_pending.and(be_source_extracted))
+      expect(domains.map(&:evidence_documents)).to all(contain_exactly(document))
+    end
+
+    it "keeps an existing domain's status, whatever its case, and adds the document as evidence" do
+      accepted = create(:applicant_domain, applicant: applicant, name: "Example.com")
+
+      expect { described_class.new.perform(document.id) }
+        .to change { applicant.applicant_domains.count }.by(1)
+
+      expect(accepted.reload).to be_accepted.and(be_source_manual)
+      expect(accepted.evidence_documents).to contain_exactly(document)
+    end
+
+    it "does not bring back a rejected domain on re-extraction" do
+      rejected = create(:applicant_domain, applicant: applicant, name: "example.com", review_status: :rejected)
+
+      described_class.new.perform(document.id)
+
+      expect(rejected.reload).to be_rejected
+      expect(applicant.applicant_domains.where("lower(name) = ?", "example.com").count).to eq(1)
+    end
+
+    it "is idempotent when run twice" do
+      described_class.new.perform(document.id)
+
+      expect { described_class.new.perform(document.id) }
+        .not_to change { applicant.applicant_domains.count }
+    end
+
+    it "only affects the applicant that owns the document" do
+      other = create(:applicant)
+      create(:applicant_domain, applicant: other, name: "example.com")
+
+      described_class.new.perform(document.id)
+
+      expect(applicant.applicant_domains.pluck(:name)).to match_array(extracted_domains)
+      expect(other.applicant_domains.count).to eq(1)
+    end
+
+    context "when the document evidences no domains" do
+      let(:extracted_domains) { [] }
+
+      it "completes with no domains created" do
+        expect { described_class.new.perform(document.id) }
+          .not_to change(ApplicantDomain, :count)
+
+        expect(document.reload.status).to eq("complete")
+      end
+    end
+
+    context "when extraction fails" do
+      before do
+        allow(Kyc::DomainExtractorService).to receive(:call)
+          .and_raise(Kyc::DomainExtractorService::Error, "Inference failed: boom")
+      end
+
+      it "marks the document as errored with the message and creates no domains" do
+        expect { described_class.new.perform(document.id) }
+          .not_to change(ApplicantDomain, :count)
+
+        document.reload
+        expect(document.status).to eq("error")
+        expect(document.result).to eq("error" => "Inference failed: boom")
+      end
+    end
+
+    context "when the classification is not confirmed" do
+      let(:document) do
+        create(:kyc_document,
+          applicant: applicant,
+          document_type: :proof_of_domain_ownership,
+          classification_status: :ai_suggested,
+          status: :pending)
+      end
+
+      it "does not extract" do
+        described_class.new.perform(document.id)
+
+        expect(Kyc::DomainExtractorService).not_to have_received(:call)
+        expect(document.reload.status).to eq("pending")
       end
     end
   end

@@ -17,6 +17,9 @@ gem "stimulus-rails"
 # Build JSON APIs with ease [https://github.com/rails/jbuilder]
 gem "jbuilder"
 
+# Public Suffix List parsing, used to reduce extracted hostnames to registrable domains (MH-295)
+gem "public_suffix"
+
 # Use Active Model has_secure_password [https://guides.rubyonrails.org/active_model_basics.html#securepassword]
 # gem "bcrypt", "~> 3.1.7"
 
@@ -38,7 +41,7 @@ gem "kamal", require: false
 gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-gem "image_processing", "~> 2.0"
+gem "image_processing", "~> 2.1"
 gem "ruby-vips", "~> 2.0"
 
 # Authentication
@@ -61,7 +64,8 @@ gem "faraday"
 gem "jaro_winkler"
 
 # Unified LLM client — Anthropic/Claude, structured output, streaming.
-gem "ruby_llm"
+# Pinned to the 2.0 RC: fixes CVE-2026-67991 (ReDoS), no stable 2.x release yet.
+gem "ruby_llm", "2.0.0.rc4"
 
 # Real-time WebSocket support via AnyCable + Redis pub/sub.
 gem "anycable-rails"

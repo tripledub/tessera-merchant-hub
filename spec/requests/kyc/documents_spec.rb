@@ -81,6 +81,23 @@ RSpec.describe "KycDocuments", type: :request do
         expect(fragment.css("turbo-stream").size).to eq(1)
         expect(fragment.css("turbo-stream[action='append'][target='toast-container']")).to be_present
       end
+
+      # MH-275: the folder-drop case is now caught client-side, but any
+      # unsupported file the server rejects (e.g. an unsupported type) was
+      # previously destroyed with zero feedback to the user.
+      it "surfaces a warning toast naming the skipped count, without destroying the valid file alongside it" do
+        unsupported_file = fixture_file_upload(Rails.root.join("spec/fixtures/files/unsupported.txt"), "text/plain")
+
+        expect {
+          post applicant_kyc_documents_path(applicant),
+            params: { kyc_document: { files: [ file, unsupported_file ] } },
+            headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        }.to change(KycDocument, :count).by(1)
+
+        expect(response).to have_http_status(:ok)
+        expect(response.body).to include(I18n.t("flash.kyc_documents.upload_success", count: 1))
+        expect(response.body).to include(I18n.t("flash.kyc_documents.skipped_invalid", count: 1))
+      end
     end
 
     context "when signed in as psp_support" do
@@ -149,6 +166,28 @@ RSpec.describe "KycDocuments", type: :request do
         expect(ExtractKycDocumentJob).not_to have_been_enqueued
       end
 
+      it "refreshes the extraction pending count when confirming classification (MH-263)" do
+        patch kyc_document_path(document),
+          params: { kyc_document: { classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).to include('target="extraction-controls"')
+        expect(response.body).to include(I18n.t("applicants.show.documents.pending_extraction_count", count: 1))
+      end
+
+      it "refreshes the extraction pending count when un-confirming classification (MH-263)" do
+        document.update!(classification_status: :confirmed, status: :pending)
+
+        patch kyc_document_path(document),
+          params: { kyc_document: { classification_status: "auto_classified" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(response.body).to include('target="extraction-controls"')
+        expect(response.body).not_to include(
+          I18n.t("applicants.show.documents.pending_extraction_count", count: 1)
+        )
+      end
+
       it "allows overriding the document type" do
         patch kyc_document_path(document),
           params: { kyc_document: { document_type: "utility_bill", classification_status: "confirmed" } },
@@ -171,6 +210,52 @@ RSpec.describe "KycDocuments", type: :request do
 
         expect(document.reload.document_type).to eq("passport")
         expect(document.processing_statement).to be_nil
+      end
+
+      # MH-287: picking a document type must not itself confirm the
+      # classification — only the explicit Confirm action should. Before this
+      # fix, the dropdown's change handler submitted classification_status:
+      # "confirmed" directly, so selecting Processing Statement immediately
+      # routed the document and hid the dropdown with no way to correct it.
+      it "does not route a spreadsheet to Processing Statements merely from selecting the type, unconfirmed" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :ai_suggested, classification_method: "spreadsheet_content_type")
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "statement.csv",
+          content_type: "text/csv"
+        )
+
+        expect {
+          patch kyc_document_path(spreadsheet),
+            params: { kyc_document: { document_type: "processing_statement", classification_status: "auto_classified" } },
+            headers: { "Accept" => "text/vnd.turbo-stream.html" }
+        }.not_to change(ProcessingStatement, :count)
+
+        expect(spreadsheet.reload.document_type).to eq("processing_statement")
+        expect(spreadsheet.classification_status).to eq("auto_classified")
+        expect(spreadsheet.processing_statement).to be_nil
+      end
+
+      it "lets a Processing Statement pick be changed to another type before it's confirmed (MH-287)" do
+        spreadsheet = create(:kyc_document, applicant: applicant, document_type: :processing_statement,
+          classification_status: :ai_suggested, classification_method: "spreadsheet_content_type")
+        spreadsheet.file.attach(
+          io: StringIO.new("spreadsheet"),
+          filename: "statement.csv",
+          content_type: "text/csv"
+        )
+
+        patch kyc_document_path(spreadsheet),
+          params: { kyc_document: { document_type: "processing_statement", classification_status: "auto_classified" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        patch kyc_document_path(spreadsheet),
+          params: { kyc_document: { document_type: "transaction_extract", classification_status: "auto_classified" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(spreadsheet.reload.document_type).to eq("transaction_extract")
+        expect(spreadsheet.processing_statement).to be_nil
       end
 
       it "routes a suggested spreadsheet after confirmation and reuses its blob" do
@@ -279,52 +364,36 @@ RSpec.describe "KycDocuments", type: :request do
     end
   end
 
-  describe "PATCH /kyc_documents/:id linking a proof_of_domain_ownership document to a domain" do
-    let_it_be(:domain) { create(:applicant_domain, applicant: applicant) }
+  # MH-296: domains are now extracted from proof-of-domain documents and
+  # reviewed on the Domains tab, so a document no longer links to a domain.
+  describe "PATCH /kyc_documents/:id for a proof_of_domain_ownership document" do
     let(:document) do
       create(:kyc_document, applicant: applicant, document_type: :proof_of_domain_ownership,
-             classification_status: :confirmed)
+             classification_status: :ai_suggested)
     end
+
+    let!(:domain) { create(:applicant_domain, applicant: applicant) }
 
     before { sign_in psp_admin }
 
-    it "links the document to the domain" do
+    it "ignores a smuggled applicant_domain_id, even a valid one, but still applies the permitted change" do
       patch kyc_document_path(document),
-        params: { kyc_document: { applicant_domain_id: domain.id } },
+        params: { kyc_document: { classification_status: "confirmed", applicant_domain_id: domain.id } },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-      expect(document.reload.applicant_domain).to eq(domain)
+      expect(response).to have_http_status(:ok)
+      expect(document.reload).to be_classification_confirmed
+      expect(document.has_attribute?(:applicant_domain_id)).to be(false)
     end
 
-    it "unlinks when given a blank id" do
-      document.update!(applicant_domain: domain)
-
+    it "renders no domain dropdown on the document row even when the applicant has domains" do
       patch kyc_document_path(document),
-        params: { kyc_document: { applicant_domain_id: "" } },
+        params: { kyc_document: { classification_status: "confirmed" } },
         headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-      expect(document.reload.applicant_domain).to be_nil
-    end
-
-    it "ignores a domain belonging to a different applicant" do
-      other_domain = create(:applicant_domain)
-
-      patch kyc_document_path(document),
-        params: { kyc_document: { applicant_domain_id: other_domain.id } },
-        headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-      expect(document.reload.applicant_domain).to be_nil
-    end
-
-    it "ignores applicant_domain_id for a document type other than proof_of_domain_ownership" do
-      other_document = create(:kyc_document, applicant: applicant, document_type: :passport,
-                               classification_status: :confirmed)
-
-      patch kyc_document_path(other_document),
-        params: { kyc_document: { applicant_domain_id: domain.id } },
-        headers: { "Accept" => "text/vnd.turbo-stream.html" }
-
-      expect(other_document.reload.applicant_domain).to be_nil
+      expect(response.body).to include(ActionView::RecordIdentifier.dom_id(document))
+      expect(response.body).not_to include("domain-link")
+      expect(response.body).not_to include("kyc_document[applicant_domain_id]")
     end
   end
 

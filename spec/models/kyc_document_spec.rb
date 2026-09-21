@@ -8,7 +8,23 @@ RSpec.describe KycDocument, type: :model do
   it { is_expected.to belong_to(:applicant) }
   it { is_expected.to belong_to(:kyc_principal).optional }
   it { is_expected.to belong_to(:processing_statement).optional }
-  it { is_expected.to belong_to(:applicant_domain).optional }
+
+  it { is_expected.to have_many(:domain_links).class_name("ApplicantDomainDocument").dependent(:delete_all) }
+  it { is_expected.to have_many(:evidenced_domains).through(:domain_links).source(:applicant_domain) }
+
+  it "removes its evidence links but not the domains when destroyed" do
+    link = create(:applicant_domain_document)
+
+    link.kyc_document.destroy!
+
+    expect(ApplicantDomainDocument.exists?(link.id)).to be(false)
+    expect(ApplicantDomain.exists?(link.applicant_domain_id)).to be(true)
+  end
+
+  it "no longer links to an applicant domain (MH-296)" do
+    expect(described_class.column_names).not_to include("applicant_domain_id")
+    expect(described_class.reflect_on_association(:applicant_domain)).to be_nil
+  end
 
   it "defaults status to pending" do
     expect(document.status).to eq("pending")
@@ -131,6 +147,55 @@ RSpec.describe KycDocument, type: :model do
       processing = create(:kyc_document, applicant: applicant, status: :processing)
 
       expect(applicant.kyc_documents.ordered_by_review_priority).to eq([ processing, pending, error, complete ])
+    end
+  end
+
+  describe "#previewable?" do
+    def document_with(content_type)
+      create(:kyc_document).tap do |doc|
+        doc.file.attach(io: StringIO.new("x"), filename: "f", content_type: content_type)
+      end
+    end
+
+    it "is true for a PDF and for images, which the preview modal can show" do
+      expect(document_with("application/pdf")).to be_previewable
+      expect(document_with("image/png")).to be_previewable
+      expect(document_with("image/jpeg")).to be_previewable
+    end
+
+    it "is false for spreadsheets and CSVs, which it cannot" do
+      expect(document_with("text/csv")).not_to be_previewable
+      expect(document_with("application/vnd.ms-excel")).not_to be_previewable
+    end
+
+    it "is false when no file is attached" do
+      expect(described_class.new).not_to be_previewable
+    end
+  end
+
+  # MH-301: only documents the matcher can attach to a person can meaningfully be "unlinked".
+  describe "#principal_linkable?" do
+    %w[passport driving_licence utility_bill bank_account_statement].each do |type|
+      it "is true for #{type}, whose extraction schema can be matched to a person" do
+        expect(build(:kyc_document, document_type: type)).to be_principal_linkable
+      end
+    end
+
+    %w[
+      proof_of_domain_ownership processing_statement register_of_members share_certificate
+      articles_of_association certificate_of_incorporation certificate_of_incumbency
+      certificate_of_registered_address group_structure_chart other
+    ].each do |type|
+      it "is false for #{type}, which the matcher never tries to link" do
+        expect(build(:kyc_document, document_type: type)).not_to be_principal_linkable
+      end
+    end
+
+    it "is false, without raising, for a document that has no type yet" do
+      document = build(:kyc_document, document_type: nil)
+
+      expect { document.principal_linkable? }.not_to raise_error
+      expect(document).not_to be_principal_linkable
     end
   end
 end

@@ -22,8 +22,8 @@ class ApplicantsController < ApplicationController
   def show
     authorize applicant
     @kyc_principals = applicant.kyc_principals.order(:name)
-    @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal).ordered_by_review_priority
-    @applicant_domains = applicant.applicant_domains.order(:name)
+    @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal, :evidenced_domains).ordered_by_review_priority
+    @applicant_domains = domains_for_display
   end
 
   def tab
@@ -33,8 +33,8 @@ class ApplicantsController < ApplicationController
     head(:not_found) and return unless allowed.include?(tab_name)
 
     @kyc_principals = applicant.kyc_principals.order(:name) if tab_name == "principals"
-    @kyc_documents = applicant.kyc_documents.includes(:kyc_principal).ordered_by_review_priority if tab_name == "documents"
-    @applicant_domains = applicant.applicant_domains.order(:name) if tab_name == "domains"
+    @kyc_documents = applicant.kyc_documents.includes(:kyc_principal, :evidenced_domains).ordered_by_review_priority if tab_name == "documents"
+    @applicant_domains = domains_for_display if tab_name == "domains"
 
     locals = { applicant: applicant }
     locals[:calculator] = Kyc::CompletenessCalculator.for(applicant) if tab_name == "overview"
@@ -109,6 +109,13 @@ class ApplicantsController < ApplicationController
   end
 
   private
+
+  # Pending domains first so the ones needing a decision are at the top.
+  def domains_for_display
+    applicant.applicant_domains
+             .includes(:comments, evidence_links: { kyc_document: { file_attachment: :blob } })
+             .order(Arel.sql("CASE review_status WHEN 0 THEN 0 WHEN 1 THEN 1 ELSE 2 END"), :name)
+  end
 
   def redirect_after_registry_lookup(result)
     if result.success
