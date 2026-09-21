@@ -6,7 +6,7 @@ RSpec.describe ApplicantDomain, type: :model do
   subject(:applicant_domain) { build(:applicant_domain) }
 
   it { is_expected.to belong_to(:applicant) }
-  it { is_expected.to have_many(:kyc_documents).dependent(:nullify) }
+  it { expect(described_class.reflect_on_association(:kyc_documents)).to be_nil }
 
   it "defaults verification_status to unverified" do
     expect(applicant_domain.verification_status).to eq("unverified")
