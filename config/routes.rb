@@ -53,6 +53,7 @@ Rails.application.routes.draw do
           patch :accept
           patch :reject
         end
+        resources :evidence_links, only: %i[new create destroy]
       end
       resources :documents, only: %i[create update destroy], shallow: true do
         member { post :retry }

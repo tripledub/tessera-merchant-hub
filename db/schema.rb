@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_19_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_21_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,18 +58,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_150000) do
     t.index ["addressable_type", "addressable_id"], name: "index_addresses_on_addressable"
   end
 
+  create_table "applicant_domain_documents", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_domain_id", null: false
+    t.datetime "created_at", null: false
+    t.uuid "kyc_document_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_domain_id", "kyc_document_id"], name: "index_applicant_domain_documents_on_domain_and_document", unique: true
+    t.index ["kyc_document_id"], name: "index_applicant_domain_documents_on_kyc_document_id"
+  end
+
   create_table "applicant_domains", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "applicant_id", null: false
     t.datetime "created_at", null: false
     t.string "name", null: false
     t.integer "review_status", default: 1, null: false
     t.integer "source", default: 0, null: false
-    t.uuid "source_document_id"
     t.datetime "updated_at", null: false
     t.integer "verification_status", default: 0, null: false
     t.index "applicant_id, lower((name)::text)", name: "index_applicant_domains_on_applicant_id_and_lower_name", unique: true
     t.index ["applicant_id"], name: "index_applicant_domains_on_applicant_id"
-    t.index ["source_document_id"], name: "index_applicant_domains_on_source_document_id"
   end
 
   create_table "applicant_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -403,7 +410,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_19_150000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "applicant_domains", "kyc_documents", column: "source_document_id", on_delete: :nullify
+  add_foreign_key "applicant_domain_documents", "applicant_domains", on_delete: :cascade
+  add_foreign_key "applicant_domain_documents", "kyc_documents", on_delete: :cascade
   add_foreign_key "applicant_domains", "merchants", column: "applicant_id"
   add_foreign_key "applicant_users", "merchants", column: "applicant_id"
   add_foreign_key "comments", "users", column: "author_id"
