@@ -6,7 +6,7 @@ RSpec.describe ApplicantDomain, type: :model do
   subject(:applicant_domain) { build(:applicant_domain) }
 
   it { is_expected.to belong_to(:applicant) }
-  it { is_expected.to have_many(:kyc_documents).dependent(:nullify) }
+  it { expect(described_class.reflect_on_association(:kyc_documents)).to be_nil }
 
   it "defaults verification_status to unverified" do
     expect(applicant_domain.verification_status).to eq("unverified")
@@ -17,6 +17,99 @@ RSpec.describe ApplicantDomain, type: :model do
       "unverified" => 0,
       "verified" => 1
     )
+  end
+
+  it "defaults review_status to accepted so hand-added domains need no review" do
+    expect(applicant_domain.review_status).to eq("accepted")
+  end
+
+  it "defines the review_status enum" do
+    expect(described_class.review_statuses).to eq(
+      "pending" => 0,
+      "accepted" => 1,
+      "rejected" => 2
+    )
+  end
+
+  it "defaults source to manual" do
+    expect(applicant_domain.source).to eq("manual")
+  end
+
+  it "defines the source enum" do
+    expect(described_class.sources).to eq("manual" => 0, "extracted" => 1)
+  end
+
+  it { is_expected.to have_many(:comments).dependent(:delete_all) }
+
+  it "carries a justification for the Add domain form without persisting it as a column" do
+    applicant_domain.justification = "Seen the registrar account."
+
+    expect(applicant_domain.justification).to eq("Seen the registrar account.")
+    expect(described_class.column_names).not_to include("justification")
+  end
+
+  it "removes its comments when destroyed" do
+    domain = create(:applicant_domain)
+    create(:comment, commentable: domain)
+
+    expect { domain.destroy! }.to change(Comment, :count).by(-1)
+  end
+
+  it { is_expected.to have_many(:evidence_links).class_name("ApplicantDomainDocument").dependent(:delete_all) }
+  it { is_expected.to have_many(:evidence_documents).through(:evidence_links).source(:kyc_document) }
+
+  it "no longer records a single source document (MH-299)" do
+    expect(described_class.column_names).not_to include("source_document_id")
+    expect(described_class.reflect_on_association(:source_document)).to be_nil
+  end
+
+  it "removes its evidence links but not the documents when destroyed" do
+    link = create(:applicant_domain_document)
+
+    link.applicant_domain.destroy!
+
+    expect(described_class.exists?(link.applicant_domain_id)).to be(false)
+    expect(ApplicantDomainDocument.exists?(link.id)).to be(false)
+    expect(KycDocument.exists?(link.kyc_document_id)).to be(true)
+  end
+
+  describe "rejection_reason (MH-298)" do
+    it "defines the reasons" do
+      expect(described_class.rejection_reasons).to eq("manual" => 0, "blocklisted" => 1)
+    end
+
+    it "is empty for a domain that is not rejected" do
+      expect(create(:applicant_domain, review_status: :pending).rejection_reason).to be_nil
+      expect(create(:applicant_domain, review_status: :accepted).rejection_reason).to be_nil
+    end
+
+    it "defaults to manual when a domain is rejected without a reason" do
+      domain = create(:applicant_domain, review_status: :pending)
+
+      domain.rejected!
+
+      expect(domain.reload).to be_rejected_as_manual
+    end
+
+    it "keeps blocklisted when the domain is rejected as blocklisted" do
+      domain = create(:applicant_domain, review_status: :rejected, rejection_reason: :blocklisted)
+
+      expect(domain.reload).to be_rejected_as_blocklisted
+    end
+
+    it "is cleared when a rejected domain is accepted again" do
+      domain = create(:applicant_domain, review_status: :rejected, rejection_reason: :blocklisted)
+
+      domain.accepted!
+
+      expect(domain.reload.rejection_reason).to be_nil
+    end
+
+    it "cannot be set on a domain that is not rejected" do
+      domain = create(:applicant_domain, review_status: :pending, rejection_reason: :blocklisted)
+
+      expect(domain.reload.rejection_reason).to be_nil
+    end
   end
 
   it { is_expected.to validate_presence_of(:name) }

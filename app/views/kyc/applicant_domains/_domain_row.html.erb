@@ -1,6 +1,66 @@
-<tr id="<%= dom_id(applicant_domain) %>" class="hover:bg-gray-50 dark:hover:bg-white/[0.03]">
-  <td class="py-2 pr-4 font-medium text-gray-900 dark:text-white/90">
-    <%= applicant_domain.name %>
+<% accept_label = applicant_domain.rejected? ? t("kyc.applicant_domains.undo_reject") : t("kyc.applicant_domains.accept") %>
+<% review_badge = { "pending" => "badge-warning", "accepted" => "badge-success", "rejected" => "badge-error" }.fetch(applicant_domain.review_status) %>
+<tr id="<%= dom_id(applicant_domain) %>" class="hover:bg-gray-50 dark:hover:bg-white/[0.03] <%= "opacity-60" if applicant_domain.rejected? %>">
+  <td class="py-2 pr-4">
+    <div class="font-medium text-gray-900 dark:text-white/90 <%= "line-through" if applicant_domain.rejected? %>">
+      <%= applicant_domain.name %>
+    </div>
+    <% evidence_links = applicant_domain.evidence_links.sort_by(&:created_at) %>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+      <% evidence_links.each do |link| %>
+        <% document = link.kyc_document %>
+        <span class="inline-flex items-center gap-1">
+          <% if document.previewable? %>
+            <button type="button"
+                    data-controller="document-preview"
+                    data-document-preview-url-value="<%= rails_blob_path(document.file, disposition: :inline) %>"
+                    data-document-preview-content-type-value="<%= document.file.content_type %>"
+                    data-action="click->document-preview#open"
+                    title="<%= t("kyc.documents.preview") %>"
+                    class="text-brand-600 hover:underline dark:text-brand-400"><%= document.file.filename %></button>
+          <% else %>
+            <span><%= document.file.filename %></span>
+          <% end %>
+          <% if policy(applicant_domain).detach_evidence? %>
+            <%= button_to kyc_evidence_link_path(link), method: :delete,
+                  form: { class: "inline" },
+                  title: t("kyc.applicant_domains.evidence.unlink"),
+                  "aria-label": t("kyc.applicant_domains.evidence.unlink"),
+                  data: { turbo_confirm: t("kyc.applicant_domains.evidence.unlink_confirm", filename: document.file.filename, domain: applicant_domain.name) },
+                  class: "text-gray-400 hover:text-error-500 dark:hover:text-error-400" do %>
+              <svg class="fill-current" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 5.293a1 1 0 0 1 1.414 0L12 10.586l5.293-5.293a1 1 0 1 1 1.414 1.414L13.414 12l5.293 5.293a1 1 0 0 1-1.414 1.414L12 13.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L10.586 12 5.293 6.707a1 1 0 0 1 0-1.414z" fill=""/>
+              </svg>
+            <% end %>
+          <% end %>
+        </span>
+      <% end %>
+      <% if evidence_links.empty? %>
+        <span class="italic"><%= t("kyc.applicant_domains.evidence.none") %></span>
+      <% end %>
+      <% if policy(applicant_domain).attach_evidence? %>
+        <%= link_to t("kyc.applicant_domains.evidence.add"),
+              new_kyc_applicant_domain_evidence_link_path(applicant_domain),
+              data: { turbo_frame: "applicant-domain-modal" },
+              class: "text-brand-600 hover:underline dark:text-brand-400" %>
+      <% end %>
+    </div>
+    <% note = applicant_domain.comments.last %>
+    <% if note %>
+      <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+        <span class="font-medium"><%= t("kyc.applicant_domains.note.label") %>:</span>
+        <span class="line-clamp-2" title="<%= note.body %>"><%= note.body %></span>
+        <span class="italic"><%= t("kyc.applicant_domains.note.attribution", author: note.author.email, date: l(note.created_at.to_date, format: :long)) %></span>
+      </div>
+    <% end %>
+  </td>
+  <td class="px-4 py-2 text-gray-500 dark:text-gray-400">
+    <span class="badge <%= review_badge %>">
+      <%= t("kyc.applicant_domains.review_status.#{applicant_domain.review_status}") %>
+    </span>
+    <% if applicant_domain.rejected_as_blocklisted? %>
+      <span class="ml-1 text-xs italic"><%= t("kyc.applicant_domains.rejection_reason.blocklisted") %></span>
+    <% end %>
   </td>
   <td class="px-4 py-2 text-gray-500 dark:text-gray-400">
     <span class="badge <%= applicant_domain.verified? ? 'badge-success' : 'badge-gray' %>">
@@ -8,6 +68,41 @@
     </span>
   </td>
   <td class="px-4 py-2">
+    <div class="flex items-center gap-2">
+    <% if (applicant_domain.pending? || applicant_domain.rejected?) && policy(applicant_domain).accept? %>
+      <% check_icon = capture do %>
+        <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M20.707 5.293a1 1 0 0 1 0 1.414l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414L9 15.586 19.293 5.293a1 1 0 0 1 1.414 0z" fill=""/>
+        </svg>
+      <% end %>
+      <% if evidence_links.any? %>
+        <%= button_to accept_kyc_applicant_domain_path(applicant_domain), method: :patch,
+              title: accept_label,
+              "aria-label": accept_label,
+              class: "text-gray-400 hover:text-success-500 dark:hover:text-success-400" do %>
+          <%= check_icon %>
+        <% end %>
+      <% else %>
+        <%# No evidence: accepting needs a comment saying why (MH-300). %>
+        <%= link_to accept_form_kyc_applicant_domain_path(applicant_domain),
+              title: t("kyc.applicant_domains.accept_without_evidence"),
+              "aria-label": t("kyc.applicant_domains.accept_without_evidence"),
+              data: { turbo_frame: "applicant-domain-modal" },
+              class: "text-gray-400 hover:text-success-500 dark:hover:text-success-400" do %>
+          <%= check_icon %>
+        <% end %>
+      <% end %>
+    <% end %>
+    <% if applicant_domain.pending? && policy(applicant_domain).reject? %>
+      <%= button_to reject_kyc_applicant_domain_path(applicant_domain), method: :patch,
+            title: t("kyc.applicant_domains.reject"),
+            "aria-label": t("kyc.applicant_domains.reject"),
+            class: "text-gray-400 hover:text-error-500 dark:hover:text-error-400" do %>
+        <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 5.293a1 1 0 0 1 1.414 0L12 10.586l5.293-5.293a1 1 0 1 1 1.414 1.414L13.414 12l5.293 5.293a1 1 0 0 1-1.414 1.414L12 13.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L10.586 12 5.293 6.707a1 1 0 0 1 0-1.414z" fill=""/>
+        </svg>
+      <% end %>
+    <% end %>
     <% if policy(applicant_domain).destroy? %>
       <%= button_to kyc_applicant_domain_path(applicant_domain), method: :delete,
             title: t('kyc.applicant_domains.delete'),
@@ -18,5 +113,6 @@
         </svg>
       <% end %>
     <% end %>
+    </div>
   </td>
 </tr>

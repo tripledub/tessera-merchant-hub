@@ -7,3 +7,5 @@ ignore_unused:
   - devise.failure.deactivated
   # Rails form builder resolves these at runtime
   - helpers.submit.applicant_user.*
+  # ActiveModel resolves attribute names via human_attribute_name at runtime
+  - activerecord.attributes.*

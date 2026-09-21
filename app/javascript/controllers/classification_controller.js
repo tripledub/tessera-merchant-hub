@@ -5,8 +5,14 @@ export default class extends Controller {
   static targets = ["select"]
   static values = { url: String, status: String }
 
+  // Picking a document type is not the same as confirming it (MH-287) —
+  // confirming is what the checkmark button (#confirm) is for. Submitting
+  // "confirmed" here meant merely opening the dropdown instantly counted the
+  // document as confirmed: for a processing_statement document, that
+  // triggered RouteFromKycDocument immediately, which hides this dropdown as
+  // a side effect, before the user had any chance to correct a mis-pick.
   change() {
-    this.#submit("confirmed")
+    this.#submit("auto_classified")
   }
 
   confirm() {

@@ -15,7 +15,7 @@ class ExtractKycDocumentJob < ApplicationJob
 
     # These types are handled outside the KYC extraction pipeline and have no
     # dedicated ExtractionData schema.
-    if document.other? || document.processing_statement? || document.proof_of_domain_ownership?
+    if document.other? || document.processing_statement?
       Rails.logger.warn("ExtractKycDocumentJob: skipping #{document.id} — document_type is '#{document.document_type}', not extractable")
       return
     end
@@ -25,6 +25,8 @@ class ExtractKycDocumentJob < ApplicationJob
 
     if document.group_structure_chart?
       extract_group_structure(document)
+    elsif document.proof_of_domain_ownership?
+      extract_proof_of_domain(document)
     else
       extract_standard(document)
     end
@@ -33,7 +35,8 @@ class ExtractKycDocumentJob < ApplicationJob
     broadcast_toast(document)
     send_onboarding_feedback(document)
   rescue KyneticOcrClient::Error, ClaudeOcrAdapter::Error, Kyc::Inference::Error,
-         Kyc::GroupStructureExtractorService::ExtractionError, Kyc::DocumentExtractorService::Error => e
+         Kyc::GroupStructureExtractorService::ExtractionError, Kyc::DocumentExtractorService::Error,
+         Kyc::DomainExtractorService::Error => e
     document&.update!(status: :error, result: { "error" => e.message })
     if document
       broadcast_document(document)
@@ -53,6 +56,15 @@ class ExtractKycDocumentJob < ApplicationJob
   def extract_group_structure(document)
     Kyc::GroupStructureExtractorService.call(document)
     document.update!(status: :complete)
+  end
+
+  # Proof-of-domain documents yield candidate domains for a psp_admin to accept
+  # or reject on the Domains tab rather than field data, and become evidence for
+  # any domain the applicant already has (see Kyc::DomainEvidenceRecorder).
+  def extract_proof_of_domain(document)
+    domains = Kyc::DomainExtractorService.call(document)
+    Kyc::DomainEvidenceRecorder.call(document: document, names: domains)
+    document.update!(status: :complete, extracted_data: { "domains" => domains })
   end
 
   def extract_standard(document)

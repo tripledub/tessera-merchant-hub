@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "rails_helper"
-require "ruby_llm/schema"
+require "schematist"
 
 RSpec.describe Kyc::Inference::ClaudeAdapter, type: :service do
   let(:mock_response) { instance_double(RubyLLM::Message, content: { "result" => "some data" }) }
@@ -50,7 +50,7 @@ RSpec.describe Kyc::Inference::ClaudeAdapter, type: :service do
     end
 
     context "when a schema is provided" do
-      let(:schema) { Class.new(RubyLLM::Schema) }
+      let(:schema) { Class.new(Schematist::Schema) }
 
       it "requests structured output and returns the parsed Hash" do
         adapter = described_class.new(client: mock_chat)
@@ -100,7 +100,7 @@ RSpec.describe Kyc::Inference::ClaudeAdapter, type: :service do
     end
 
     context "when a schema is provided" do
-      let(:schema) { Class.new(RubyLLM::Schema) }
+      let(:schema) { Class.new(Schematist::Schema) }
 
       it "requests structured output and returns the parsed Hash" do
         adapter = described_class.new(client: mock_chat)

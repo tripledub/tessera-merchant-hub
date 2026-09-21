@@ -53,7 +53,11 @@
 <% if policy(KycDocument).create? %>
   <div id="kyc-upload" class="mt-4 border-t border-gray-200 pt-4">
     <%= form_with url: applicant_kyc_documents_path(applicant),
-          data: { controller: "dropzone", "dropzone-url-value": rails_direct_uploads_url } do %>
+          data: {
+            controller: "dropzone",
+            "dropzone-url-value": rails_direct_uploads_url,
+            "dropzone-folder-message-value": t('applicants.show.documents.folder_not_supported')
+          } do %>
       <div data-dropzone-target="zone"
            class="flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-gray-300 p-6 text-center cursor-pointer"
            data-action="click->dropzone#browse dragover->dropzone#dragover dragleave->dropzone#dragleave drop->dropzone#drop">
