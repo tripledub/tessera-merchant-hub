@@ -22,7 +22,7 @@ class ApplicantsController < ApplicationController
   def show
     authorize applicant
     @kyc_principals = applicant.kyc_principals.order(:name)
-    @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal).ordered_by_review_priority
+    @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal, :evidenced_domains).ordered_by_review_priority
     @applicant_domains = domains_for_display
   end
 
@@ -33,7 +33,7 @@ class ApplicantsController < ApplicationController
     head(:not_found) and return unless allowed.include?(tab_name)
 
     @kyc_principals = applicant.kyc_principals.order(:name) if tab_name == "principals"
-    @kyc_documents = applicant.kyc_documents.includes(:kyc_principal).ordered_by_review_priority if tab_name == "documents"
+    @kyc_documents = applicant.kyc_documents.includes(:kyc_principal, :evidenced_domains).ordered_by_review_priority if tab_name == "documents"
     @applicant_domains = domains_for_display if tab_name == "domains"
 
     locals = { applicant: applicant }
@@ -113,7 +113,7 @@ class ApplicantsController < ApplicationController
   # Pending domains first so the ones needing a decision are at the top.
   def domains_for_display
     applicant.applicant_domains
-             .includes(source_document: { file_attachment: :blob })
+             .includes(evidence_links: { kyc_document: { file_attachment: :blob } })
              .order(Arel.sql("CASE review_status WHEN 0 THEN 0 WHEN 1 THEN 1 ELSE 2 END"), :name)
   end
 

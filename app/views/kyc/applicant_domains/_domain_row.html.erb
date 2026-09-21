@@ -5,15 +5,46 @@
     <div class="font-medium text-gray-900 dark:text-white/90 <%= "line-through" if applicant_domain.rejected? %>">
       <%= applicant_domain.name %>
     </div>
-    <% if applicant_domain.source_extracted? %>
-      <div class="text-xs text-gray-500 dark:text-gray-400">
-        <% if applicant_domain.source_document %>
-          <%= t("kyc.applicant_domains.source.extracted_from", filename: applicant_domain.source_document.file.filename) %>
-        <% else %>
-          <%= t("kyc.applicant_domains.source.document_removed") %>
-        <% end %>
-      </div>
-    <% end %>
+    <% evidence_links = applicant_domain.evidence_links.sort_by(&:created_at) %>
+    <div class="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+      <% evidence_links.each do |link| %>
+        <% document = link.kyc_document %>
+        <span class="inline-flex items-center gap-1">
+          <% if document.previewable? %>
+            <button type="button"
+                    data-controller="document-preview"
+                    data-document-preview-url-value="<%= rails_blob_path(document.file, disposition: :inline) %>"
+                    data-document-preview-content-type-value="<%= document.file.content_type %>"
+                    data-action="click->document-preview#open"
+                    title="<%= t("kyc.documents.preview") %>"
+                    class="text-brand-600 hover:underline dark:text-brand-400"><%= document.file.filename %></button>
+          <% else %>
+            <span><%= document.file.filename %></span>
+          <% end %>
+          <% if policy(applicant_domain).detach_evidence? %>
+            <%= button_to kyc_evidence_link_path(link), method: :delete,
+                  form: { class: "inline" },
+                  title: t("kyc.applicant_domains.evidence.unlink"),
+                  "aria-label": t("kyc.applicant_domains.evidence.unlink"),
+                  data: { turbo_confirm: t("kyc.applicant_domains.evidence.unlink_confirm", filename: document.file.filename, domain: applicant_domain.name) },
+                  class: "text-gray-400 hover:text-error-500 dark:hover:text-error-400" do %>
+              <svg class="fill-current" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M5.293 5.293a1 1 0 0 1 1.414 0L12 10.586l5.293-5.293a1 1 0 1 1 1.414 1.414L13.414 12l5.293 5.293a1 1 0 0 1-1.414 1.414L12 13.414l-5.293 5.293a1 1 0 0 1-1.414-1.414L10.586 12 5.293 6.707a1 1 0 0 1 0-1.414z" fill=""/>
+              </svg>
+            <% end %>
+          <% end %>
+        </span>
+      <% end %>
+      <% if evidence_links.empty? %>
+        <span class="italic"><%= t("kyc.applicant_domains.evidence.none") %></span>
+      <% end %>
+      <% if policy(applicant_domain).attach_evidence? %>
+        <%= link_to t("kyc.applicant_domains.evidence.add"),
+              new_kyc_applicant_domain_evidence_link_path(applicant_domain),
+              data: { turbo_frame: "applicant-domain-modal" },
+              class: "text-brand-600 hover:underline dark:text-brand-400" %>
+      <% end %>
+    </div>
   </td>
   <td class="px-4 py-2 text-gray-500 dark:text-gray-400">
     <span class="badge <%= review_badge %>">

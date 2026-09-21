@@ -168,6 +168,20 @@
         </div>
       <% end %>
 
+      <% if document.proof_of_domain_ownership? && document.evidenced_domains.any? %>
+        <%# Read-only: accepting, rejecting and (un)linking evidence happen on the Domains tab (MH-299). %>
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <span><%= t("kyc.documents.evidenced_domains") %></span>
+          <% document.evidenced_domains.sort_by(&:name).each do |evidenced_domain| %>
+            <% status_text = t("kyc.applicant_domains.review_status.#{evidenced_domain.review_status}") %>
+            <span class="badge <%= { "pending" => "badge-warning", "accepted" => "badge-success", "rejected" => "badge-error" }.fetch(evidenced_domain.review_status) %>"
+                  title="<%= status_text %>">
+              <%= evidenced_domain.name %><span class="sr-only"> — <%= status_text %></span>
+            </span>
+          <% end %>
+        </div>
+      <% end %>
+
       <% if document.document_type.present? %>
         <% present(document, Kyc::DocumentValidityPresenter) do |vp| %>
           <%= render "kyc/documents/validity_status", presenter: vp %>
