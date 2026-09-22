@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_21_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_22_110300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -194,6 +194,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_140000) do
     t.integer "comment_status"
     t.uuid "corporate_entity_id"
     t.datetime "created_at", null: false
+    t.uuid "dob_mismatch_kyc_principal_id"
     t.integer "document_type"
     t.jsonb "extracted_data", default: {}
     t.uuid "kyc_principal_id"
@@ -208,6 +209,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_140000) do
     t.jsonb "validity_dates", default: {}, null: false
     t.index ["applicant_id"], name: "index_kyc_documents_on_applicant_id"
     t.index ["corporate_entity_id"], name: "index_kyc_documents_on_corporate_entity_id"
+    t.index ["dob_mismatch_kyc_principal_id"], name: "index_kyc_documents_on_dob_mismatch_kyc_principal_id"
     t.index ["kyc_principal_id"], name: "index_kyc_documents_on_kyc_principal_id"
     t.index ["processing_statement_id"], name: "index_kyc_documents_on_processing_statement_id", unique: true
     t.index ["superseded_by_kyc_document_id"], name: "index_kyc_documents_on_superseded_by_kyc_document_id"
@@ -227,6 +229,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_140000) do
     t.index ["source_document_id"], name: "index_kyc_ownership_edges_on_source_document_id"
   end
 
+  create_table "kyc_principal_match_overrides", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.uuid "kyc_document_id", null: false
+    t.uuid "kyc_principal_id", null: false
+    t.text "reason", null: false
+    t.integer "resolution", null: false
+    t.bigint "resolved_by_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["kyc_document_id"], name: "index_kyc_principal_match_overrides_on_kyc_document_id"
+    t.index ["kyc_principal_id"], name: "index_kyc_principal_match_overrides_on_kyc_principal_id"
+    t.index ["resolved_by_id"], name: "index_kyc_principal_match_overrides_on_resolved_by_id"
+  end
+
   create_table "kyc_principals", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "address_line1"
     t.string "address_line2"
@@ -235,6 +250,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_140000) do
     t.string "country"
     t.datetime "created_at", null: false
     t.date "date_of_birth"
+    t.integer "date_of_birth_month"
+    t.integer "date_of_birth_year"
     t.string "email"
     t.string "name", null: false
     t.string "postcode"
@@ -337,6 +354,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_140000) do
   create_table "registry_directors", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.date "appointed_on"
     t.datetime "created_at", null: false
+    t.integer "date_of_birth_month"
+    t.integer "date_of_birth_year"
     t.string "name", null: false
     t.uuid "registry_profile_id", null: false
     t.date "resigned_on"
@@ -440,11 +459,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_140000) do
   add_foreign_key "kyc_documents", "kyc_corporate_entities", column: "corporate_entity_id"
   add_foreign_key "kyc_documents", "kyc_documents", column: "superseded_by_kyc_document_id", on_delete: :nullify
   add_foreign_key "kyc_documents", "kyc_principals"
+  add_foreign_key "kyc_documents", "kyc_principals", column: "dob_mismatch_kyc_principal_id"
   add_foreign_key "kyc_documents", "merchants", column: "applicant_id"
   add_foreign_key "kyc_documents", "processing_statements"
   add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "child_entity_id"
   add_foreign_key "kyc_ownership_edges", "kyc_corporate_entities", column: "parent_entity_id"
   add_foreign_key "kyc_ownership_edges", "kyc_documents", column: "source_document_id"
+  add_foreign_key "kyc_principal_match_overrides", "kyc_documents"
+  add_foreign_key "kyc_principal_match_overrides", "kyc_principals"
+  add_foreign_key "kyc_principal_match_overrides", "users", column: "resolved_by_id"
   add_foreign_key "kyc_principals", "merchants", column: "applicant_id"
   add_foreign_key "kyc_validation_warnings", "kyc_corporate_entities", column: "corporate_entity_id"
   add_foreign_key "kyc_validation_warnings", "kyc_documents"

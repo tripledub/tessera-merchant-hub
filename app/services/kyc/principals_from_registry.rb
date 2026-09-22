@@ -16,7 +16,12 @@ module Kyc
         role = role_for(director)
         next unless role
 
-        create_principal(name: director.name, role: role)
+        create_principal(
+          name: director.name,
+          role: role,
+          date_of_birth_month: director.date_of_birth_month,
+          date_of_birth_year: director.date_of_birth_year
+        )
       end
     end
 
@@ -28,10 +33,16 @@ module Kyc
       :secretary if director.role&.include?("secretary")
     end
 
-    def create_principal(name:, role:)
+    def create_principal(name:, role:, date_of_birth_month:, date_of_birth_year:)
       return if @applicant.kyc_principals.where("LOWER(name) = ?", name.downcase).exists?
 
-      @applicant.kyc_principals.create!(name: name, role: role, source: :registry_fetched)
+      @applicant.kyc_principals.create!(
+        name: name,
+        role: role,
+        source: :registry_fetched,
+        date_of_birth_month: date_of_birth_month,
+        date_of_birth_year: date_of_birth_year
+      )
     end
   end
 end

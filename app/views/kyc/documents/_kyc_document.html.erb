@@ -1,6 +1,13 @@
 <div id="<%= dom_id(document) %>">
   <%= render "kyc/documents/kyc_document_metadata", document: document %>
 
+  <% if document.dob_mismatch_kyc_principal && viewer_can?(document, :resolve_dob_mismatch?) %>
+    <div class="mt-2">
+      <%= render "kyc/principal_match_overrides/mismatch", document: document,
+            errors: local_assigns[:override_errors] %>
+    </div>
+  <% end %>
+
   <% if document.validity_dates.present? && viewer_can?(document, :confirm_dates?) %>
     <% present(document, Kyc::DocumentDateConfirmationPresenter) do |presenter| %>
       <div class="mt-2 space-y-2">

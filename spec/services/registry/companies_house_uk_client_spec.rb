@@ -33,6 +33,13 @@ RSpec.describe Registry::CompaniesHouseUkClient do
           "name" => "DOE, Jane",
           "officer_role" => "director",
           "appointed_on" => "2020-01-01",
+          "resigned_on" => nil,
+          "date_of_birth" => { "month" => 4, "year" => 1985 }
+        },
+        {
+          "name" => "SMITH, John",
+          "officer_role" => "director",
+          "appointed_on" => "2021-03-01",
           "resigned_on" => nil
         }
       ]
@@ -170,8 +177,23 @@ RSpec.describe Registry::CompaniesHouseUkClient do
         result = client.fetch(company_number: company_number)
 
         expect(result.directors).to eq([
-          { name: "DOE, Jane", role: "director", appointed_on: Date.new(2020, 1, 1), resigned_on: nil }
+          { name: "DOE, Jane", role: "director", appointed_on: Date.new(2020, 1, 1), resigned_on: nil,
+            date_of_birth_month: 4, date_of_birth_year: 1985 },
+          { name: "SMITH, John", role: "director", appointed_on: Date.new(2021, 3, 1), resigned_on: nil,
+            date_of_birth_month: nil, date_of_birth_year: nil }
         ])
+      end
+
+      it "maps an officer's month/year date of birth onto the director (MH-303)" do
+        result = client.fetch(company_number: company_number)
+
+        expect(result.directors.first).to include(date_of_birth_month: 4, date_of_birth_year: 1985)
+      end
+
+      it "leaves date of birth nil for an officer Companies House published none for" do
+        result = client.fetch(company_number: company_number)
+
+        expect(result.directors.second).to include(date_of_birth_month: nil, date_of_birth_year: nil)
       end
 
       it "maps the registered office address" do

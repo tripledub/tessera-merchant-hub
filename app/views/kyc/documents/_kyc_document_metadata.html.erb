@@ -147,6 +147,16 @@
                 <%= t("kyc.documents.match_method.fuzzy") %>
               </span>
             <% end %>
+            <% if document.match_method == "registry_corroborated" %>
+              <span class="inline-flex items-center whitespace-nowrap rounded-full bg-green-100 px-1.5 py-0.5 font-medium text-green-700">
+                <%= t("kyc.documents.match_method.registry_corroborated") %>
+              </span>
+            <% end %>
+            <% if document.match_method == "override_linked" %>
+              <span class="inline-flex items-center whitespace-nowrap rounded-full bg-blue-100 px-1.5 py-0.5 font-medium text-blue-700">
+                <%= t("kyc.documents.match_method.override_linked") %>
+              </span>
+            <% end %>
             <% if document.kyc_principal.unconfirmed? %>
               <span class="inline-flex items-center whitespace-nowrap rounded-full bg-orange-100 px-1.5 py-0.5 font-medium text-orange-700">
                 <%= t("kyc.documents.principal_status.unconfirmed") %>

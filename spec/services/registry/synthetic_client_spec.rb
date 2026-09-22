@@ -45,14 +45,20 @@ RSpec.describe Registry::SyntheticClient do
         expect(result.directors.pluck(:name)).to contain_exactly("TESTPERSON, Alex", "EXAMPLESON, Morgan Lee")
       end
 
-      it "records each officer's month and year of birth in the raw response only, as Companies House does for PSCs" do
+      it "records each officer's month and year of birth in the raw response, as Companies House does for PSCs" do
         officers = result.raw_response.dig("officers", "items")
 
         expect(officers.map { |o| [ o["name"], o["date_of_birth"] ] }).to contain_exactly(
           [ "TESTPERSON, Alex", { "month" => 3, "year" => 1980 } ],
           [ "EXAMPLESON, Morgan Lee", { "month" => 11, "year" => 1991 } ]
         )
-        expect(result.directors).to all(satisfy { |d| d.keys.exclude?(:date_of_birth) })
+      end
+
+      it "maps each officer's month and year of birth onto the director (MH-303)" do
+        expect(result.directors).to contain_exactly(
+          hash_including(name: "TESTPERSON, Alex", date_of_birth_month: 3, date_of_birth_year: 1980),
+          hash_including(name: "EXAMPLESON, Morgan Lee", date_of_birth_month: 11, date_of_birth_year: 1991)
+        )
       end
     end
 
