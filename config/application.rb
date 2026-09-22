@@ -26,7 +26,13 @@ module TesseraMerchantHub
     # Please, add to the `ignore` list any other `lib` subdirectories that do
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
-    config.autoload_lib(ignore: %w[assets tasks])
+    #
+    # qase_id_formatter.rb (MH-314): a standalone RSpec formatter, `require`d
+    # explicitly by name from `bin/rails qase:report` — never meant to be
+    # autoloaded/eager-loaded as an app constant. It `require`s rspec/core,
+    # which isn't in the production bundle (rspec-rails is dev/test only);
+    # eager loading it crashed every boot in production/UAT (MH-316).
+    config.autoload_lib(ignore: %w[assets tasks qase_id_formatter.rb])
 
     # Configuration for the application, engines, and railties goes here.
     #
