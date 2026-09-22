@@ -11,6 +11,16 @@ Everything in the "Document journey" suite is written as concrete steps + expect
 To run a case: create/open an applicant, follow the case's steps, and record the result as a Qase test run. Two pieces of synthetic test data make this possible without real KYC documents or a real company:
 
 - **Synthetic passports** — `spec/fixtures/files/specimen_passport_*.pdf`. Fictional issuing state ("Republic of Utopia"), watermarked "SPECIMEN", a silhouette instead of a photo, and a machine-readable zone with valid ICAO check digits. Verified against the real passport-extraction prompt, so they behave like a real scan.
+- **Synthetic utility bills** ([MH-320](https://shipcode.atlassian.net/browse/MH-320)) — `spec/fixtures/files/specimen_utilitybill_*.pdf`. Fictional provider ("Utopia Power & Light"), watermarked "SPECIMEN", account holder "Alex Testperson" at the same address as `spec/services/address_matcher_service_spec.rb`'s principal fixture. **Filename matters**: `DocumentClassifiers::UtilityBill.pattern` is `/utility\s*bill/i` matched against the filename, which does *not* match an underscore between the words — hence `utilitybill`, not `utility_bill`. Two variants:
+
+  | File | Purpose |
+  |---|---|
+  | `specimen_utilitybill_alex_testperson.pdf` | Address printed cleanly: "12 High Street, London, SW1A 1AA, United Kingdom". |
+  | `specimen_utilitybill_address_formatting.pdf` | Same address, printed as "12 HIGH STREET LONDON SW1A1AA UNITED KINGDOM" — different casing, no punctuation, no postcode space. |
+
+  **Finding, not a bug**: verifying the formatting variant against the real Claude endpoint showed the model normalizes the printed formatting back to clean, correctly-split fields — identical to the tidy fixture's. `AddressMatcherService`'s own unit spec shows an already-differently-formatted *string* handed directly to the matcher scores only "fuzzy", but that gap doesn't reach a real scanned document: extraction normalizes the formatting away first. See `spec/jobs/extract_kyc_document_job_spec.rb`'s two `utility_bill` address-matching contexts for the full explanation.
+
+  Utility bills also never auto-resolve their issued date — `Kyc::DocumentExtractorService` supplies no per-field confidence for them (no MRZ-equivalent signal exists), so `Kyc::DocumentValidity::DateExtractor` always routes the date to staff confirmation regardless of how legible the printed date is. The 3-month freshness boundary (`base.utility_bill_freshness`, `max_age_months: 3`) is exercised through that real confirm-date endpoint in `spec/requests/kyc/utility_bill_freshness_boundary_spec.rb`, not by baking multiple near-duplicate PDFs with different printed dates.
 - **The synthetic Utopia registry** ([MH-310](https://shipcode.atlassian.net/browse/MH-310)) — a fictional jurisdiction, code `xu`, behind the `SYNTHETIC_DATA_ENABLED` env flag (off by default, **never set in production**; see `.env.example` and `config/initializers/synthetic_data.rb`). With it on, the applicant form offers "Utopia (test data)" as a jurisdiction, and its company numbers return invented data from `config/synthetic/registry_scenarios.yml` — no real Companies House company needed. Current scenarios:
 
   | Number | Scenario |
