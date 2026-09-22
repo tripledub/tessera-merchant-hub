@@ -4,9 +4,9 @@
 # company's details in this file.
 #
 # Officer names use the Companies House format (SURNAME, Forenames). An
-# officer's optional date_of_birth (month, year) appears only in the raw
-# response, as Companies House publishes it; it is not mapped onto directors
-# until MH-303.
+# officer's optional date_of_birth (month, year) is mapped onto the officer's
+# registry_directors row and carried onto the principal (MH-303), exactly as
+# Companies House publishes it.
 
 XU000001:
   company_name: Utopia Sample Trading Ltd

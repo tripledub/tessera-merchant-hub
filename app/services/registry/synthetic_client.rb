@@ -39,11 +39,16 @@ module Registry
 
     def map_directors(officers)
       officers.map do |officer|
+        dob = officer["date_of_birth"] || {}
+
         {
           name: officer["name"],
           role: officer["role"],
           appointed_on: parse_date(officer["appointed_on"]),
-          resigned_on: parse_date(officer["resigned_on"])
+          resigned_on: parse_date(officer["resigned_on"]),
+          # MH-303: mirrors Registry::CompaniesHouseUkClient#map_directors.
+          date_of_birth_month: dob["month"],
+          date_of_birth_year: dob["year"]
         }
       end
     end

@@ -72,6 +72,7 @@ Rails.application.routes.draw do
   namespace :kyc do
     resources :document_links, only: %i[update destroy]
     resources :document_date_confirmations, only: :create
+    resources :principal_match_overrides, only: :create
     resources :validation_warnings, only: :update
     resources :corporate_entities, only: :show do
       resources :entity_document_links, only: %i[new create destroy]

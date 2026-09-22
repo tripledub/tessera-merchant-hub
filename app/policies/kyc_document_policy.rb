@@ -33,6 +33,10 @@ class KycDocumentPolicy < ApplicationPolicy
     psp_admin?
   end
 
+  def resolve_dob_mismatch?
+    psp_admin?
+  end
+
   def update_comment_status?
     psp_role?
   end

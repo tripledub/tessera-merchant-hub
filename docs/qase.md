@@ -6,6 +6,8 @@ MerchantHub's document-journey scenarios live in [Qase](https://app.qase.io) —
 
 Everything in the "Document journey" suite is written as concrete steps + expected results, using synthetic data only — never real names, DOBs, or documents (see AGENTS.md → Data & Privacy).
 
+**⚠️ UAT test data does not persist across deploys (MH-315).** Every UAT deploy runs `db:reset_and_seed`, which drops, recreates, schema-loads and reseeds the database — any applicant, document, or principal created while running a case is gone after the next deploy. Only the seeded demo accounts (`psp-admin@tessera.test` etc.) come back automatically. Don't build up UAT test data expecting it to survive; re-run the case's setup steps fresh each time, and record results in Qase as you go rather than relying on the app state as evidence later. A Qase run's own history is unaffected — it lives in Qase, not the app database.
+
 To run a case: create/open an applicant, follow the case's steps, and record the result as a Qase test run. Two pieces of synthetic test data make this possible without real KYC documents or a real company:
 
 - **Synthetic passports** — `spec/fixtures/files/specimen_passport_*.pdf`. Fictional issuing state ("Republic of Utopia"), watermarked "SPECIMEN", a silhouette instead of a photo, and a machine-readable zone with valid ICAO check digits. Verified against the real passport-extraction prompt, so they behave like a real scan.
