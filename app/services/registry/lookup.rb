@@ -16,9 +16,30 @@ module Registry
       "gb" => Registry::CompaniesHouseUkClient
     }.freeze
 
+    # MH-310: UAT/dev-only registries. Resolvable only when SYNTHETIC_DATA_ENABLED
+    # is on, so with the gate off (production) they are simply unsupported
+    # jurisdictions.
+    SYNTHETIC_CLIENTS = {
+      "xu" => Registry::SyntheticClient
+    }.freeze
+
     def self.call(applicant:, company_number: applicant.company_number, jurisdiction: applicant.registry_jurisdiction)
       new(applicant: applicant, company_number: company_number, jurisdiction: jurisdiction).call
     end
+
+    def self.client_class_for(jurisdiction)
+      CLIENTS[jurisdiction] || (SYNTHETIC_CLIENTS[jurisdiction] if synthetic_data_enabled?)
+    end
+
+    # Jurisdictions a user can pick when creating an applicant.
+    def self.selectable_jurisdictions
+      CLIENTS.keys + (synthetic_data_enabled? ? SYNTHETIC_CLIENTS.keys : [])
+    end
+
+    def self.synthetic_data_enabled?
+      Rails.application.config.x.synthetic_data_enabled.present?
+    end
+    private_class_method :synthetic_data_enabled?
 
     def initialize(applicant:, company_number: applicant.company_number, jurisdiction: applicant.registry_jurisdiction)
       @applicant = applicant
@@ -27,7 +48,7 @@ module Registry
     end
 
     def call
-      client_class = CLIENTS[@jurisdiction]
+      client_class = self.class.client_class_for(@jurisdiction)
       return Result.failure(:not_supported) unless client_class
       return Result.failure(:invalid_number) if @company_number.blank?
 

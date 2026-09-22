@@ -27,9 +27,11 @@ class Applicant < Merchant
     format: { with: URI::MailTo::EMAIL_REGEXP },
     allow_blank: true
   validate :sector_unchanged_after_document_collection, if: :persisted_sector_change?
+  validate :synthetic_jurisdiction_enabled, if: :registry_jurisdiction_changed?
 
   enum :status, { pending: "pending", approved: "approved", rejected: "rejected" }, default: "pending"
-  enum :registry_jurisdiction, { gb: "gb", mt: "mt", cy: "cy" }, validate: { allow_nil: true }
+  # "xu" is the fictional Utopia registry (MH-310): UAT/dev only, see synthetic_jurisdiction_enabled.
+  enum :registry_jurisdiction, { gb: "gb", mt: "mt", cy: "cy", xu: "xu" }, validate: { allow_nil: true }
   enum :sector, {
     general: "general",
     crypto_exchange: "crypto_exchange",
@@ -102,5 +104,15 @@ class Applicant < Merchant
 
     # i18n-tasks-use t("activerecord.errors.models.applicant.attributes.sector.locked_after_document_collection")
     errors.add(:sector, :locked_after_document_collection)
+  end
+
+  # MH-310: Utopia is UAT/dev only. Only checked when the jurisdiction is being
+  # set, so an existing Utopia applicant stays editable if the gate is later
+  # switched off.
+  def synthetic_jurisdiction_enabled
+    return unless xu?
+    return if Rails.application.config.x.synthetic_data_enabled
+
+    errors.add(:registry_jurisdiction, :inclusion)
   end
 end
