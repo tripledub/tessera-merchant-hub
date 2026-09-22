@@ -63,6 +63,9 @@ RSpec.describe "Registry-filled applicant: unmatched passport creates a new prin
     )
     new_principal = applicant.kyc_principals.find_by!(name: "Morgan Lee Exampleson")
     expect(new_principal.date_of_birth).to eq(Date.new(1991, 11, 2))
+    # MH-307: a passport alone is no evidence of role, even when the
+    # applicant otherwise has registry-fetched directors.
+    expect(new_principal).to be_unspecified
     expect(new_principal).to be_unconfirmed
     expect(new_principal).to be_document_extracted
   end
