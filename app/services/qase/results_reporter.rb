@@ -7,8 +7,12 @@ module Qase
   # creates a run, and posts one result per qase_id-tagged example.
   #
   # Used by bin/rails qase:report, not by the specs themselves: running
-  # `bundle exec rspec` never needs QASE_API_TOKEN or makes a network call —
-  # reporting is a separate, explicit step.
+  # `bundle exec rspec` never needs a Qase credential or makes a network
+  # call — reporting is a separate, explicit step.
+  #
+  # Token resolution mirrors Registry::CompaniesHouseUkClient: prefer the
+  # `qase.api_key` Rails credential (`rails credentials:edit`), fall back to
+  # the QASE_API_TOKEN env var for anyone who'd rather not touch credentials.
   class ResultsReporter
     class Error < StandardError; end
 
@@ -17,14 +21,15 @@ module Qase
 
     def self.call(...) = new(...).call
 
-    def initialize(report_path:, run_title:, api_token: ENV.fetch("QASE_API_TOKEN", nil))
+    def initialize(report_path:, run_title:,
+      api_token: Rails.application.credentials.dig(:qase, :api_key) || ENV.fetch("QASE_API_TOKEN", nil))
       @report_path = report_path
       @run_title = run_title
       @api_token = api_token
     end
 
     def call
-      raise Error, "QASE_API_TOKEN is not set" if @api_token.blank?
+      raise Error, "No Qase API token: set qase.api_key in credentials or QASE_API_TOKEN" if @api_token.blank?
       raise Error, "No report at #{@report_path} — run rspec with QaseIdFormatter first" unless File.exist?(@report_path)
 
       results = JSON.parse(File.read(@report_path)).map(&:symbolize_keys)
