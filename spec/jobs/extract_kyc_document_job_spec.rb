@@ -206,6 +206,102 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       end
     end
 
+    # MH-320: ground truth verified directly against the real Claude
+    # extraction endpoint for both specimen_utilitybill_*.pdf fixtures
+    # (spec/fixtures/files) before writing these expectations — see
+    # docs/qase.md's "synthetic specimen" discipline.
+    context "when a utility bill's printed address is cleanly formatted" do
+      let(:principal_with_address) do
+        create(:kyc_principal,
+          applicant: applicant,
+          name: "Alex Testperson",
+          address_line1: "12 High Street",
+          city: "London",
+          postcode: "SW1A 1AA",
+          country: "United Kingdom")
+      end
+
+      let(:document) do
+        create(:kyc_document, applicant: applicant, document_type: :utility_bill, classification_status: :confirmed)
+      end
+
+      before do
+        principal_with_address
+        allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+          "full_name" => "Alex Testperson",
+          "account_holder_address_line1" => "12 High Street",
+          "account_holder_city" => "London",
+          "account_holder_postcode" => "SW1A 1AA",
+          "account_holder_country" => "United Kingdom",
+          "provider" => "Utopia Power & Light",
+          "provider_address" => "1 Substation Road, Utopia City, UT1 2AA, Republic of Utopia",
+          "issue_date" => "2020-01-15",
+          "account_number" => "UTL-0001-9284"
+        )
+      end
+
+      it "matches the principal's address exactly" do
+        described_class.new.perform(document.id)
+        document.reload
+
+        expect(document.address_match_method).to eq("exact")
+      end
+    end
+
+    # specimen_utilitybill_address_formatting.pdf prints the SAME address
+    # with different casing, no punctuation, and a squished postcode
+    # ("12 HIGH STREET LONDON SW1A1AA UNITED KINGDOM"). Verifying it against
+    # the real Claude endpoint showed the model normalizes this back to
+    # clean, correctly-split fields identical to the tidy fixture's — so the
+    # extracted data below is (correctly) the same as the clean fixture's,
+    # not a verbatim transcription of the messy printed text. This means the
+    # known AddressMatcherService gap
+    # (spec/services/address_matcher_service_spec.rb:74-79, where an
+    # already-differently-formatted *string* handed directly to the matcher
+    # scores only "fuzzy") does not reproduce for a real scanned document:
+    # extraction normalizes the formatting away before the matcher ever sees
+    # it. Documented per this ticket's AC3 as the actual, current behaviour.
+    context "when a utility bill's printed address has different casing, punctuation, and postcode spacing" do
+      let(:principal_with_address) do
+        create(:kyc_principal,
+          applicant: applicant,
+          name: "Alex Testperson",
+          address_line1: "12 High Street",
+          city: "London",
+          postcode: "SW1A 1AA",
+          country: "United Kingdom")
+      end
+
+      let(:document) do
+        create(:kyc_document, applicant: applicant, document_type: :utility_bill, classification_status: :confirmed)
+      end
+
+      before do
+        principal_with_address
+        # Ground truth from the real extraction endpoint: normalized, not
+        # the verbatim "12 HIGH STREET LONDON SW1A1AA UNITED KINGDOM" printed
+        # on the document.
+        allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+          "full_name" => "Alex Testperson",
+          "account_holder_address_line1" => "12 High Street",
+          "account_holder_city" => "London",
+          "account_holder_postcode" => "SW1A 1AA",
+          "account_holder_country" => "United Kingdom",
+          "provider" => "Utopia Power & Light",
+          "provider_address" => "1 Substation Road, Utopia City, UT1 2AA, Republic of Utopia",
+          "issue_date" => "2020-01-15",
+          "account_number" => "UTL-0001-9284"
+        )
+      end
+
+      it "still matches the principal's address exactly, because extraction normalized the formatting" do
+        described_class.new.perform(document.id)
+        document.reload
+
+        expect(document.address_match_method).to eq("exact")
+      end
+    end
+
     context "when a bank account statement is matched to a principal without an address" do
       let(:principal_no_address) do
         create(:kyc_principal, applicant: applicant, name: "Pieter Bakker")
