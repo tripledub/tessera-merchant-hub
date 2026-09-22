@@ -1,0 +1,30 @@
+<div id="dob_mismatch_<%= dom_id(document) %>" class="rounded-md border border-warning-200 bg-warning-50 p-3 text-theme-sm dark:border-warning-800 dark:bg-warning-900/20">
+  <p class="font-medium text-warning-700 dark:text-warning-400">
+    <%= t("kyc.documents.principal_match_overrides.mismatch_heading", name: document.dob_mismatch_kyc_principal.name) %>
+  </p>
+  <p class="text-gray-600 dark:text-gray-400"><%= t("kyc.documents.principal_match_overrides.mismatch_reason") %></p>
+
+  <% if errors.present? %>
+    <p class="text-error-500"><%= errors.full_messages.to_sentence %></p>
+  <% end %>
+
+  <%= form_with url: kyc_principal_match_overrides_path, method: :post, local: false, class: "mt-2 flex flex-col gap-2" do %>
+    <%= hidden_field_tag :kyc_document_id, document.id %>
+
+    <label>
+      <%= t("kyc.documents.principal_match_overrides.reason") %>
+      <%= text_field_tag :reason, nil,
+            placeholder: t("kyc.documents.principal_match_overrides.reason_placeholder"),
+            class: "w-full rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800" %>
+    </label>
+
+    <div class="flex gap-2">
+      <%= button_tag t("kyc.documents.principal_match_overrides.link_anyway"),
+            type: "submit", name: "resolution", value: "link_anyway",
+            class: "rounded-md bg-brand-500 px-3 py-1 text-xs font-medium text-white hover:bg-brand-600" %>
+      <%= button_tag t("kyc.documents.principal_match_overrides.different_person"),
+            type: "submit", name: "resolution", value: "different_person",
+            class: "rounded-md border border-gray-300 px-3 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-300" %>
+    </div>
+  <% end %>
+</div>

@@ -65,11 +65,16 @@ module Registry
 
     def map_directors(items)
       Array(items).map do |item|
+        dob = item["date_of_birth"] || {}
+
         {
           name: item["name"],
           role: item["officer_role"],
           appointed_on: parse_date(item["appointed_on"]),
-          resigned_on: parse_date(item["resigned_on"])
+          resigned_on: parse_date(item["resigned_on"]),
+          # MH-303: month/year only — Companies House never publishes the day.
+          date_of_birth_month: dob["month"],
+          date_of_birth_year: dob["year"]
         }
       end
     end

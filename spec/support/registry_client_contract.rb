@@ -8,7 +8,7 @@
 #
 # The including group must define `result` (a Registry::FetchResult).
 RSpec.shared_examples "a registry client success result" do
-  let(:director_keys) { %i[name role appointed_on resigned_on] }
+  let(:director_keys) { %i[name role appointed_on resigned_on date_of_birth_month date_of_birth_year] }
   let(:address_keys) { %i[kind line1 city postcode country] }
   let(:psc_keys) do
     %i[

@@ -6,6 +6,11 @@ class KycDocument < ApplicationRecord
   belongs_to :corporate_entity, class_name: "Kyc::CorporateEntity", optional: true
   belongs_to :superseded_by_kyc_document, class_name: "KycDocument", optional: true
   belongs_to :processing_statement, optional: true, inverse_of: :kyc_document
+  # MH-303: set when PrincipalMatcherService finds a name match whose
+  # registry month/year of birth disagrees with this document's extracted
+  # date of birth. The auto-link is blocked (kyc_principal stays nil) until
+  # a reviewer resolves it via Kyc::PrincipalMatchOverrideService.
+  belongs_to :dob_mismatch_kyc_principal, class_name: "KycPrincipal", optional: true
 
   include Commentable
 
@@ -19,6 +24,8 @@ class KycDocument < ApplicationRecord
   has_many :date_confirmations, class_name: "Kyc::DocumentDateConfirmation", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
   has_many :validity_assessments, class_name: "Kyc::DocumentValidityAssessment", foreign_key: :kyc_document_id,
+           dependent: :destroy, inverse_of: :kyc_document
+  has_many :principal_match_overrides, class_name: "Kyc::PrincipalMatchOverride", foreign_key: :kyc_document_id,
            dependent: :destroy, inverse_of: :kyc_document
   has_one :replacement_requirement, class_name: "Kyc::DocumentReplacementRequirement",
           foreign_key: :kyc_document_id, dependent: :destroy, inverse_of: :kyc_document

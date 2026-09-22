@@ -22,6 +22,28 @@ RSpec.describe Kyc::PrincipalsFromRegistry do
       expect(principal.source).to eq("registry_fetched")
     end
 
+    it "carries the director's month/year of birth onto the principal (MH-303)" do
+      create(:registry_director, registry_profile: registry_profile, name: "DOE, Jane",
+        resigned_on: nil, date_of_birth_month: 4, date_of_birth_year: 1985)
+
+      call
+
+      principal = applicant.kyc_principals.last
+      expect(principal.date_of_birth_month).to eq(4)
+      expect(principal.date_of_birth_year).to eq(1985)
+      expect(principal.date_of_birth).to be_nil
+    end
+
+    it "leaves month/year of birth nil when the director has none" do
+      create(:registry_director, registry_profile: registry_profile, name: "DOE, Jane", resigned_on: nil)
+
+      call
+
+      principal = applicant.kyc_principals.last
+      expect(principal.date_of_birth_month).to be_nil
+      expect(principal.date_of_birth_year).to be_nil
+    end
+
     it "creates a principal for a corporate-nominee-director" do
       create(:registry_director, registry_profile: registry_profile, name: "Nominee Co Ltd", role: "corporate-nominee-director", resigned_on: nil)
 

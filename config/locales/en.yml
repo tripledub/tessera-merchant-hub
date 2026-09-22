@@ -592,7 +592,19 @@ en:
       match_method:
         exact: Exact match
         fuzzy: Fuzzy match
+        override_linked: Linked by reviewer
+        registry_corroborated: DOB corroborated by registry
       preview: Preview document
+      principal_match_overrides:
+        different_person: Different person
+        link_anyway: Link anyway
+        mismatch_heading: 'Date of birth does not match registry: %{name}'
+        mismatch_reason: The passport's date of birth does not match the month and
+          year Companies House has on file for this director. Link anyway, or mark
+          this as a different person.
+        reason: Reason (required)
+        reason_placeholder: Explain why you're resolving this manually
+        success: Resolved.
       principal_status:
         unconfirmed: Unconfirmed
       reject_match: Reject principal match
