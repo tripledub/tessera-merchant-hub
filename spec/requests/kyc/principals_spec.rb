@@ -61,6 +61,31 @@ RSpec.describe "KycPrincipals", type: :request do
     end
   end
 
+  # MH-307: staff pick a real role here; "unspecified" is only ever set by
+  # the passport auto-creation path, never a deliberate human choice.
+  describe "GET /applicants/:applicant_id/kyc_principals/new — role options" do
+    before { sign_in psp_admin }
+
+    it "does not offer unspecified as a selectable role" do
+      get new_applicant_kyc_principal_path(applicant)
+
+      select = Nokogiri::HTML(response.body).at_css("select[name='kyc_principal[role]']")
+      expect(select.css("option").map { |o| o["value"] }).not_to include("unspecified")
+    end
+  end
+
+  describe "GET /applicants/:id — an unspecified-role principal" do
+    let_it_be(:unspecified_principal) { create(:kyc_principal, applicant: applicant, role: :unspecified) }
+
+    before { sign_in psp_admin }
+
+    it "shows the unspecified label, not a blank or director role" do
+      get applicant_path(applicant)
+
+      expect(response.body).to include(I18n.t("applicants.show.principals.roles.unspecified"))
+    end
+  end
+
   describe "GET /kyc_principals/:id/edit" do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }

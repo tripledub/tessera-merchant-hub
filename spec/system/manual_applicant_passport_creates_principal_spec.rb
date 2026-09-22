@@ -8,6 +8,9 @@ require "rails_helper"
 # itself is stubbed with the ground truth already verified against the real
 # Claude endpoint for this fixture (see MH-309/MH-310 session notes), so the
 # spec is fast and deterministic and exercises our app logic, not Claude's OCR.
+#
+# Role updated for MH-307: a passport alone is no evidence of a directorship,
+# so the auto-created principal's role is :unspecified, not :director.
 RSpec.describe "Manual-filled applicant: passport creates principal with DOB", qase_id: 1, type: :system do
   let_it_be(:psp_admin) { create(:user, :psp_admin) }
 
@@ -32,7 +35,7 @@ RSpec.describe "Manual-filled applicant: passport creates principal with DOB", q
   # (upload -> classify -> confirm -> extract -> verify); splitting it up
   # would just move shared browser state between examples, which Capybara
   # system specs don't support cleanly.
-  it "creates an unconfirmed director principal with the extracted date of birth" do
+  it "creates an unconfirmed principal, role unspecified, with the extracted date of birth" do
     visit new_applicant_path
     fill_in "applicant_name", with: "System Spec Manual Co"
     click_button "Confirm & Create"
@@ -60,11 +63,12 @@ RSpec.describe "Manual-filled applicant: passport creates principal with DOB", q
     principal = applicant.kyc_principals.sole
     expect(principal.name).to eq("ALEX TESTPERSON")
     expect(principal.date_of_birth).to eq(Date.new(1980, 3, 15))
-    expect(principal).to be_director
+    expect(principal).to be_unspecified
     expect(principal).to be_unconfirmed
     expect(principal).to be_document_extracted
 
     click_on "Principals"
+    expect(page).to have_content(I18n.t("applicants.show.principals.roles.unspecified"))
     click_link "ALEX TESTPERSON"
     expect(page).to have_content("15 March 1980")
   end

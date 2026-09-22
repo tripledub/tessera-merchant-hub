@@ -222,6 +222,7 @@ en:
           psc: PSC
           secretary: Secretary
           shareholder: Shareholder
+          unspecified: Not yet specified
         table:
           actions: Actions
           name: Name
