@@ -115,9 +115,22 @@ RSpec.describe Kyc::DocumentExtractorService, type: :service do
     it "includes all schema field names in the prompt" do
       prompt = service.send(:build_prompt, ExtractionData::Passport)
 
-      %w[full_name date_of_birth document_number expiry_date issuing_country nationality issuing_authority].each do |field|
+      %w[full_name date_of_birth document_number expiry_date issuing_country nationality issuing_authority
+         mrz_line1 mrz_line2].each do |field|
         expect(prompt).to include(%("#{field}"))
       end
+    end
+
+    # MH-306: mrz_line1/mrz_line2 need a transcription-specific hint, not the
+    # generic "string or null" — a vague hint risks the model paraphrasing or
+    # tidying up the MRZ instead of transcribing it character-for-character,
+    # which would silently break the check-digit cross-check.
+    it "uses a character-exact transcription hint for MRZ fields, not the generic string hint" do
+      prompt = service.send(:build_prompt, ExtractionData::Passport)
+
+      expect(prompt).to include('"mrz_line1": "' + Kyc::DocumentExtractorService::MRZ_HINT + '"')
+      expect(prompt).to include('"mrz_line2": "' + Kyc::DocumentExtractorService::MRZ_HINT + '"')
+      expect(prompt).not_to include('"mrz_line1": "string or null"')
     end
 
     it "uses YYYY-MM-DD hint for date fields" do

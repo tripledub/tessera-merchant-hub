@@ -345,6 +345,68 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       end
     end
 
+    # MH-306: a passport whose MRZ agrees with the printed expiry is
+    # auto-accepted end to end — no staff confirmation needed.
+    context "when the passport's MRZ expiry agrees with the printed expiry" do
+      let(:agreeing_line2) { "AB12345671GBR8503150F3006151<<<<<<<<<<<<<<04" }
+
+      before do
+        Kyc::DocumentValidityPolicy.publish!(
+          document_type: "passport",
+          effective_from: 1.year.ago.to_date,
+          mode: :expires,
+          required_dates: [ "expiry" ]
+        )
+        allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+          "full_name" => "Jane Smith",
+          "expiry_date" => "2030-06-15",
+          "mrz_line2" => agreeing_line2
+        )
+      end
+
+      it "does not require validity confirmation and records the extracted source" do
+        described_class.new.perform(document.id)
+        document.reload
+
+        expect(document.validity_confirmation_required).to be(false)
+        expect(document.validity_dates["expiry"]["confidence"]).to eq(1.0)
+      end
+
+      it "persists the MRZ-derived confidence on extracted_data too, alongside the raw MRZ" do
+        described_class.new.perform(document.id)
+        document.reload
+
+        expect(document.extracted_data["expiry_date_confidence"]).to eq(1.0)
+        expect(document.extracted_data["mrz_line2"]).to eq(agreeing_line2)
+      end
+    end
+
+    context "when the passport's MRZ expiry disagrees with the printed expiry" do
+      let(:agreeing_line2) { "AB12345671GBR8503150F3006151<<<<<<<<<<<<<<04" }
+
+      before do
+        Kyc::DocumentValidityPolicy.publish!(
+          document_type: "passport",
+          effective_from: 1.year.ago.to_date,
+          mode: :expires,
+          required_dates: [ "expiry" ]
+        )
+        allow(Kyc::DocumentExtractorService).to receive(:call).and_return(
+          "full_name" => "Jane Smith",
+          "expiry_date" => "2031-06-15",
+          "mrz_line2" => agreeing_line2
+        )
+      end
+
+      it "still requires validity confirmation, exactly like a document with no MRZ at all" do
+        described_class.new.perform(document.id)
+        document.reload
+
+        expect(document.validity_confirmation_required).to be(true)
+        expect(document.validity_dates["expiry"]["confidence"]).to be_nil
+      end
+    end
+
     context "when the document type has no resolvable validity policy (outside rollout)" do
       let(:document) do
         create(:kyc_document,

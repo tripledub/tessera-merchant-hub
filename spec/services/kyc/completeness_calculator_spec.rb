@@ -188,6 +188,19 @@ RSpec.describe Kyc::CompletenessCalculator, type: :service do
       expect(dim.numerator).to eq(1)
       expect(dim.denominator).to eq(1)
     end
+
+    # MH-307: this dimension is about "has this person's identity been
+    # verified by a document", independent of role — an unspecified-role
+    # principal already has one by construction (that's how they were
+    # created) and must count the same as any other role.
+    it "counts an unspecified-role principal the same as any other role" do
+      p1 = create(:kyc_principal, applicant: applicant, role: :unspecified)
+      create(:kyc_document, applicant: applicant, kyc_principal: p1, document_type: :passport)
+
+      dim = calculator.dimensions.find { |d| d.key == :identity_verification }
+      expect(dim.numerator).to eq(1)
+      expect(dim.denominator).to eq(1)
+    end
   end
 
   describe "compliance rules dimension" do
