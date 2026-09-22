@@ -13,6 +13,13 @@ module ExtractionData
     attribute :issuing_country, :string
     attribute :nationality, :string
     attribute :issuing_authority, :string
+    # MH-306: the two 44-character machine-readable-zone lines, transcribed
+    # character-for-character (see Kyc::DocumentExtractorService::MRZ_HINT).
+    # Used to cross-check expiry_date via Kyc::DocumentValidity::MrzExpiryConfidence
+    # before extraction reaches DateExtractor; not required, since older
+    # scans/whichever documents lack a legible MRZ still extract normally.
+    attribute :mrz_line1, :string
+    attribute :mrz_line2, :string
 
     validates :full_name, :document_number, :expiry_date, presence: true
 
