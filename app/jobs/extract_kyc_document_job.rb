@@ -106,6 +106,10 @@ class ExtractKycDocumentJob < ApplicationJob
       kyc_principal: match.principal,
       match_method: match.match_method,
       match_confidence: match.match_confidence,
+      # MH-303: set only when the matcher blocked an auto-link over a
+      # disagreeing registry date of birth; nil clears any stale value from a
+      # prior extraction of this same document.
+      dob_mismatch_kyc_principal: match.dob_mismatch_principal,
       address_match_method: address_match&.match_method,
       address_match_confidence: address_match&.match_confidence,
       validity_dates: validity[:validity_dates],
