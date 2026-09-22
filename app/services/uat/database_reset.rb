@@ -20,6 +20,19 @@ module Uat
   # db:seed is called explicitly rather than relied on implicitly: db:prepare
   # only auto-seeds a database on its first-ever creation, not on a later
   # db:schema:load against a freshly dropped-and-recreated one.
+  #
+  # db:drop and db:schema:load both depend on Rails' own
+  # ActiveRecord::Tasks::DatabaseTasks.check_protected_environments!, which
+  # refuses to run against an environment named "production" — UAT included,
+  # since it runs RAILS_ENV=production (MH-316's note applies here too: there
+  # is no Rails.env-based way to tell UAT and production apart). That check
+  # reads ENV["DISABLE_DATABASE_ENVIRONMENT_CHECK"] at task-invocation time
+  # (activerecord/lib/active_record/tasks/database_tasks.rb), which this sets
+  # only for the duration of this call. UAT_DB_RESET_ENABLED is already the
+  # deliberate, gated confirmation Rails is asking for — this doesn't bypass
+  # a safety check so much as supply the answer it wants, the same way an
+  # operator would by hand (`DISABLE_DATABASE_ENVIRONMENT_CHECK=1 rails
+  # db:drop`).
   class DatabaseReset
     class NotEnabled < StandardError; end
 
@@ -38,13 +51,23 @@ module Uat
         raise NotEnabled, "UAT_DB_RESET_ENABLED is not set — refusing to reset the database"
       end
 
-      TASKS.each { |task| @task_invoker.call(task) }
+      with_database_environment_check_disabled do
+        TASKS.each { |task| @task_invoker.call(task) }
+      end
     end
 
     private
 
     def enabled?
       Rails.application.config.x.uat_db_reset_enabled
+    end
+
+    def with_database_environment_check_disabled
+      original = ENV["DISABLE_DATABASE_ENVIRONMENT_CHECK"]
+      ENV["DISABLE_DATABASE_ENVIRONMENT_CHECK"] = "1"
+      yield
+    ensure
+      ENV["DISABLE_DATABASE_ENVIRONMENT_CHECK"] = original
     end
   end
 end
