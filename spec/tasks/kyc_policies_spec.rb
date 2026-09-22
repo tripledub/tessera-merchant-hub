@@ -25,7 +25,9 @@ RSpec.describe "kyc:policies:sync" do
   # the entrypoint ran. Hanging the sync off the database tasks covers every
   # deploy path, including local resets.
   describe "database task hooks" do
-    %w[db:prepare db:migrate db:setup].each do |name|
+    # db:schema:load added for MH-315's db:reset_and_seed, which loads
+    # db/schema.rb directly rather than replaying every migration.
+    %w[db:prepare db:migrate db:setup db:schema:load].each do |name|
       context "when #{name} finishes outside the test environment" do
         # The hook is the last action enhance appended; earlier ones are Rails'.
         let(:hook) { Rake::Task[name].actions.last }
