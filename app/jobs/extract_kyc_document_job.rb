@@ -85,14 +85,24 @@ class ExtractKycDocumentJob < ApplicationJob
       )
     end
 
+    # MH-306: adds expiry_date_confidence when the MRZ cross-check agrees, so
+    # DateExtractor below can auto-accept the date instead of always routing
+    # to staff confirmation. A no-op for document types with no MRZ. Kept
+    # separate from `response`/typed_data above: ExtractionData::Passport has
+    # no expiry_date_confidence attribute, and typed_data/matcher_hash only
+    # ever needed the raw OCR fields.
+    enriched_response = Kyc::DocumentValidity::MrzExpiryConfidence.enrich(
+      document_type: document.document_type, raw_extraction: response
+    )
+
     validity = Kyc::DocumentValidity::DateExtractor.call(
       document_type: document.document_type,
-      raw_extraction: response
+      raw_extraction: enriched_response
     )
 
     document.update!(
       status: :complete,
-      extracted_data: response,
+      extracted_data: enriched_response,
       kyc_principal: match.principal,
       match_method: match.match_method,
       match_confidence: match.match_confidence,

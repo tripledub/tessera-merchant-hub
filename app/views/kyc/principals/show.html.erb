@@ -25,7 +25,9 @@
       </div>
       <div class="flex justify-between">
         <dt class="font-medium text-gray-500"><%= t('.fields.role') %></dt>
-        <dd class="text-gray-900 dark:text-white/90"><%= t("applicants.show.principals.roles.#{kyc_principal.role}") %></dd>
+        <dd class="<%= kyc_principal.unspecified? ? 'text-gray-400 italic' : 'text-gray-900 dark:text-white/90' %>">
+          <%= t("applicants.show.principals.roles.#{kyc_principal.role}") %>
+        </dd>
       </div>
       <div class="flex justify-between">
         <dt class="font-medium text-gray-500"><%= t('.fields.date_of_birth') %></dt>

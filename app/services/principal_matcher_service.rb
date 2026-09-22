@@ -9,6 +9,7 @@
 #   Exact name + DOB match → :exact
 #   Jaro-Winkler name similarity >= FUZZY_THRESHOLD → :fuzzy with confidence
 #   No match on a passport specifically → creates new unconfirmed KycPrincipal
+#     with role :unspecified (MH-307 — a passport alone is no evidence of role)
 #   No match on a non-passport identity document → returns nil (left unlinked;
 #     auto-creation is deliberately passport-only, see MH-175 design spec)
 #
@@ -98,12 +99,15 @@ class PrincipalMatcherService
     "#{parts.first} #{parts.last}"
   end
 
+  # MH-307: a passport alone is no evidence of a directorship — role stays
+  # :unspecified until a registry match, a company document, or a reviewer
+  # sets the real one.
   def create_unconfirmed_principal
     @applicant.kyc_principals.create!(
       name:          @full_name,
       date_of_birth: @date_of_birth,
       status:        :unconfirmed,
-      role:          :director
+      role:          :unspecified
     )
   end
 

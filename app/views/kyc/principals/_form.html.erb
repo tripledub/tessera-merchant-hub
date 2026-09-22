@@ -11,8 +11,10 @@
 
     <div>
       <%= f.label :role, t("kyc.principals.form.fields.role"), class: "form-label" %>
+      <%# MH-307: "unspecified" is the auto-created, no-evidence-yet default —
+          staff pick a real role here, never deliberately set "unspecified". %>
       <%= f.select :role,
-            KycPrincipal.roles.keys.map { |r| [t("applicants.show.principals.roles.#{r}"), r] },
+            (KycPrincipal.roles.keys - [ "unspecified" ]).map { |r| [t("applicants.show.principals.roles.#{r}"), r] },
             {},
             class: "form-input" %>
     </div>

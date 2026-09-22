@@ -126,7 +126,8 @@ RSpec.describe PrincipalMatcherService, type: :model do
 
         expect(result.principal.name).to eq("Completely Unknown Person")
         expect(result.principal.status).to eq("unconfirmed")
-        expect(result.principal.role).to eq("director")
+        # MH-307: a passport alone is no evidence of a directorship.
+        expect(result.principal.role).to eq("unspecified")
         expect(result.match_method).to eq("exact")
         expect(result.match_confidence).to eq(1.0)
       end

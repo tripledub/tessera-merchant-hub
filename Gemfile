@@ -84,6 +84,8 @@ group :development, :test do
   gem "shoulda-matchers"
   gem "webmock"
   gem "test-prof"
+  gem "capybara"
+  gem "cuprite" # Headless Chrome via Ferrum — no chromedriver to keep in sync (MH-314)
   gem "simplecov", require: false
   gem "rubocop-performance", require: false
   gem "rubocop-rspec", require: false
