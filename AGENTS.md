@@ -72,6 +72,8 @@ production-ready).
   (FactoryProf). Compare against the MH-280 baseline (1862 examples, ~40s,
   `kyc_document`'s ActiveStorage `.attach` in its factory as the single
   largest cost) before assuming a new slowdown is code, not data volume.
+- Document-journey scenarios (manual and automated, plus synthetic test
+  data) are tracked in Qase, not just RSpec — see `docs/qase.md`.
 
 ## Architecture Orientation (lightweight)
 
