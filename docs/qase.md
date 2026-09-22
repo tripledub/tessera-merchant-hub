@@ -48,6 +48,8 @@ This runs the `qase_id`-tagged specs, then creates a **new** test run in the Qas
 
 **Credential:** `Qase::ResultsReporter` reads `qase.api_key` from Rails credentials first (`rails credentials:edit`; committed, shared with the team — generate one in Qase under your profile's API tokens), falling back to the `QASE_API_TOKEN` env var for a local-only token. Never paste a token into chat, a commit, or a PR description.
 
+**⚠️ On `lib/*.rb` files (MH-316):** `lib/qase_id_formatter.rb` briefly crashed every UAT/production boot. It sits directly under `lib/`, which `config.autoload_lib` (`config/application.rb`) both autoloads *and eager-loads* except for `lib/assets`/`lib/tasks` — and the formatter's own `require "rspec/core"` only resolves where rspec-rails is installed, i.e. dev and test, **never** the production bundle. Every check in this repo's normal dev loop (`zeitwerk:check`, the full suite, the pre-commit gate) runs where that gem *is* present, so this was invisible until it hit a real production-shaped bundle. It's now excluded via `config.autoload_lib(ignore: [...])`, same as `lib/tasks`. If you add another standalone script-like file under `lib/` (not a proper `Module::Class` meant to be autoloaded), either add it to that ignore list or move it somewhere Zeitwerk won't eager-load — there is no automated check that catches this class of bug today.
+
 ### Adding a new automated case
 
 1. Write the manual case in Qase first (or confirm one already exists) — the `qase_id` must match a real case, or the run-creation API call fails.
