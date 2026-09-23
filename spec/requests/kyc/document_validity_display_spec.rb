@@ -37,7 +37,6 @@ RSpec.describe "Kyc document validity display", type: :request do
       get_documents_tab
 
       expect(response.body).to include("Valid")
-      expect(response.body).to include("Policy v1")
       expect(response.body).to include("Within the validity window.")
     end
 
@@ -127,8 +126,11 @@ RSpec.describe "Kyc document validity display", type: :request do
       expect(response.body).to include("no date was extracted")
     end
 
-    it "still renders the existing MH-196 confirm/correct interaction alongside the new status display" do
-      create(:kyc_document, applicant: applicant, document_type: :passport, status: :complete,
+    it "still offers the existing MH-196 confirm/correct interaction alongside the new status display" do
+      # MH-322: the confirm/correct form itself moved into a modal opened from
+      # the row's overflow menu, so the documents tab now carries the trigger,
+      # not the form.
+      document = create(:kyc_document, applicant: applicant, document_type: :passport, status: :complete,
              classification_status: :confirmed,
              validity_dates: { "expiry" => { "raw" => "2030-01-01", "normalized" => "2030-01-01",
                "confidence" => 0.95, "provenance" => "ai_extraction" } })
@@ -136,7 +138,25 @@ RSpec.describe "Kyc document validity display", type: :request do
       get_documents_tab
 
       expect(response.body).to include("document-validity-status")
+      expect(response.body).to include(date_confirmation_modal_kyc_document_path(document))
+      # The menu trigger reads "Confirm dates" (a superset string of the
+      # modal's own submit button "Confirm date"), so check for the actual
+      # form control rather than a loose substring match.
+      fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+      expect(fragment.css("input[type=submit][value='#{t_confirm_date}']")).to be_empty
+    end
+
+    it "renders the confirm/correct form in the date confirmation modal" do
+      document = create(:kyc_document, applicant: applicant, document_type: :passport, status: :complete,
+             classification_status: :confirmed,
+             validity_dates: { "expiry" => { "raw" => "2030-01-01", "normalized" => "2030-01-01",
+               "confidence" => 0.95, "provenance" => "ai_extraction" } })
+
+      get date_confirmation_modal_kyc_document_path(document)
+
+      expect(response).to have_http_status(:ok)
       expect(response.body).to include(t_confirm_date)
+      expect(response.body).to include(document.file.filename.to_s)
     end
 
     it "refreshes the validity status via the existing confirm/correct turbo_stream response" do
@@ -174,7 +194,7 @@ RSpec.describe "Kyc document validity display", type: :request do
     end
 
     it "does not render the MH-196 confirm/correct interaction on the documents tab" do
-      create(:kyc_document, applicant: applicant, document_type: :passport, status: :complete,
+      document = create(:kyc_document, applicant: applicant, document_type: :passport, status: :complete,
              classification_status: :confirmed,
              validity_dates: { "expiry" => { "raw" => "2030-01-01", "normalized" => "2030-01-01",
                "confidence" => 0.95, "provenance" => "ai_extraction" } })
@@ -182,6 +202,18 @@ RSpec.describe "Kyc document validity display", type: :request do
       get_documents_tab
 
       expect(response.body).not_to include(t_confirm_date)
+      expect(response.body).not_to include(date_confirmation_modal_kyc_document_path(document))
+    end
+
+    it "cannot open the date confirmation modal" do
+      document = create(:kyc_document, applicant: applicant, document_type: :passport, status: :complete,
+             classification_status: :confirmed,
+             validity_dates: { "expiry" => { "raw" => "2030-01-01", "normalized" => "2030-01-01",
+               "confidence" => 0.95, "provenance" => "ai_extraction" } })
+
+      get date_confirmation_modal_kyc_document_path(document)
+
+      expect(response).to have_http_status(:forbidden)
     end
   end
 

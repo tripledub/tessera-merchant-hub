@@ -1,4 +1,10 @@
-<div id="<%= dom_id(document) %>">
+<%# MH-322: distinct id from the wrapping turbo-frame (see _kyc_document_row.html.erb),
+    which shares the plain dom_id(document). turbo_stream.replace(dom_id(document), ...)
+    would otherwise resolve to the FIRST element with that id — the frame — replacing it
+    wholesale and destroying data-document-row, the anchor document_panels_controller.js
+    needs to relocate the row between Documents-tab panels. Controllers doing that replace
+    target "#{dom_id(document)}_content" instead. %>
+<div id="<%= dom_id(document) %>_content">
   <%= render "kyc/documents/kyc_document_metadata", document: document %>
 
   <% if document.dob_mismatch_kyc_principal && viewer_can?(document, :resolve_dob_mismatch?) %>
@@ -8,15 +14,7 @@
     </div>
   <% end %>
 
-  <% if document.validity_dates.present? && viewer_can?(document, :confirm_dates?) %>
-    <% present(document, Kyc::DocumentDateConfirmationPresenter) do |presenter| %>
-      <div class="mt-2 space-y-2">
-        <% presenter.date_roles.each do |date_role| %>
-          <%= render "kyc/document_date_confirmations/date_confirmation",
-                document: document, date_role: date_role, presenter: presenter,
-                errors: (local_assigns[:errored_role] == date_role ? local_assigns[:errors] : nil) %>
-        <% end %>
-      </div>
-    <% end %>
-  <% end %>
+  <%# MH-322: date confirmation moved into a modal, opened from the row's
+      overflow menu (kyc/documents/_kyc_document_metadata.html.erb) instead of
+      always rendering inline here. See kyc/document_date_confirmations/_modal. %>
 </div>

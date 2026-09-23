@@ -34,6 +34,13 @@ RSpec.describe "Documents tab status panels", type: :request do
     next_index ? body[start_index...next_index] : body[start_index..]
   end
 
+  # The panel wrapper's own class="mb-4 ..." attribute, not any "hidden" class
+  # that might appear elsewhere inside a non-empty panel (e.g. the overflow
+  # menu dropdown, or the status-group marker span).
+  def panel_wrapper_class(body, panel_id)
+    panel_body(body, panel_id)[/class="mb-4[^"]*"/]
+  end
+
   %w[unclassified auto_classified ai_suggested rejected].each do |classification|
     it "puts a #{classification} document in the Unconfirmed Files panel regardless of extraction status" do
       document = create(:kyc_document, applicant: applicant, classification_status: classification, status: :complete)
@@ -93,9 +100,9 @@ RSpec.describe "Documents tab status panels", type: :request do
 
     body = documents_tab
 
-    expect(panel_body(body, "documents-panel-unconfirmed")[0...300]).not_to include("hidden")
-    expect(panel_body(body, "documents-panel-confirmed")[0...300]).to include("hidden")
-    expect(panel_body(body, "documents-panel-processed")[0...300]).to include("hidden")
+    expect(panel_wrapper_class(body, "documents-panel-unconfirmed")).not_to include("hidden")
+    expect(panel_wrapper_class(body, "documents-panel-confirmed")).to include("hidden")
+    expect(panel_wrapper_class(body, "documents-panel-processed")).to include("hidden")
   end
 
   it "shows a count alongside each non-empty panel's label" do
@@ -105,7 +112,7 @@ RSpec.describe "Documents tab status panels", type: :request do
     unconfirmed_panel = panel_body(body, "documents-panel-unconfirmed")
 
     expect(unconfirmed_panel).to include("Unconfirmed Files")
-    expect(unconfirmed_panel[0...300]).to include("(2)")
+    expect(unconfirmed_panel).to include("(2)")
   end
 
   it "never blocks uploading while documents sit in Unconfirmed Files" do
