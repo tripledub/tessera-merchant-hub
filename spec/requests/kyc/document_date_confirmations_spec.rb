@@ -110,17 +110,25 @@ RSpec.describe "Kyc::DocumentDateConfirmations", type: :request do
         # date confirmation card used to render the same entries again via
         # Kyc::DocumentDateConfirmationPresenter#history_for, which was
         # confusing duplication when a document has a single date role.
+        #
+        # MH-322: the per-role card now lives only in the date-confirmation
+        # modal (closed automatically on a successful submit), so this checks
+        # the modal's own GET response rather than the create turbo_stream
+        # response, which no longer carries the card on success.
         document.update!(document_type: :passport)
+
+        get date_confirmation_modal_kyc_document_path(document)
+        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        card = fragment.css("#date_confirmation_#{ActionView::RecordIdentifier.dom_id(document)}_expiry")
+
+        expect(card.first.css("li")).to be_empty
 
         post kyc_document_date_confirmations_path,
              params: { kyc_document_id: document.id, date_role: "expiry", confirmed_value: "2030-01-01" },
              headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
-        fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
-        card = fragment.css("#date_confirmation_#{ActionView::RecordIdentifier.dom_id(document)}_expiry")
-
-        expect(card.first.css("li")).to be_empty
-        expect(fragment.css("[data-testid='confirmation-history']").size).to eq(1)
+        row_fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        expect(row_fragment.css("[data-testid='confirmation-history']").size).to eq(1)
       end
 
       it "shows only the latest confirmation in the document-level history, not a growing list" do

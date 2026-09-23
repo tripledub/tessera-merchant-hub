@@ -34,11 +34,28 @@ class Kyc::DocumentDateConfirmationsController < ApplicationController
       # this used to replace. errored_role/errors thread validation
       # failures back to just the role that was submitted.
       format.turbo_stream do
-        render turbo_stream: turbo_stream.replace(
-          dom_id(document),
-          partial: "kyc/documents/kyc_document",
-          locals: { document: document, errored_role: params[:date_role], errors: result.errors }
-        ), status: status
+        # MH-322: date confirmation now lives in a modal, not inline in the
+        # row, so its own frame needs updating too: closed on success, or
+        # re-rendered with the error so the reviewer sees why it failed
+        # without losing their place.
+        streams = [
+          # MH-322: "#{dom_id(document)}_content" — see kyc/documents/_kyc_document.html.erb.
+          turbo_stream.replace(
+            "#{dom_id(document)}_content",
+            partial: "kyc/documents/kyc_document",
+            locals: { document: document }
+          )
+        ]
+        streams << if result.success?
+                     turbo_stream.update("document-date-confirmation-modal", "")
+        else
+                     turbo_stream.update(
+                       "document-date-confirmation-modal",
+                       partial: "kyc/document_date_confirmations/modal_content",
+                       locals: { document: document, errored_role: params[:date_role], errors: result.errors }
+                     )
+        end
+        render turbo_stream: streams, status: status
       end
       format.html do
         if result.success?

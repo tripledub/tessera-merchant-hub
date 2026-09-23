@@ -1,11 +1,7 @@
 <div class="space-y-1.5">
   <div class="flex flex-wrap items-center gap-2" data-testid="document-validity-status">
+    <%# MH-322: policy version dropped from this line — not useful to a reviewer. %>
     <%= presenter.outcome_badge %>
-    <% if presenter.policy_version %>
-      <span class="text-gray-500 dark:text-gray-400">
-        <%= t("kyc.documents.validity.policy_version", version: presenter.policy_version) %>
-      </span>
-    <% end %>
     <% if presenter.reason_text %>
       <span class="text-gray-500 dark:text-gray-400"><%= presenter.reason_text %></span>
     <% end %>
