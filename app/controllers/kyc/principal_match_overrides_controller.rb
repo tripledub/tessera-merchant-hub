@@ -24,8 +24,9 @@ class Kyc::PrincipalMatchOverridesController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
+        # MH-322: "#{dom_id(document)}_content" — see kyc/documents/_kyc_document.html.erb.
         render turbo_stream: turbo_stream.replace(
-          dom_id(document),
+          "#{dom_id(document)}_content",
           partial: "kyc/documents/kyc_document",
           locals: { document: document, override_errors: result.errors }
         ), status: status

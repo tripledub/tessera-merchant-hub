@@ -19,17 +19,17 @@
     <%= hidden_field_tag :kyc_document_id, document.id %>
     <%= hidden_field_tag :date_role, date_role %>
 
-    <label>
+    <label class="text-gray-700 dark:text-gray-300">
       <%= t("kyc.documents.date_confirmations.confirmed_value") %>
       <%= date_field_tag :confirmed_value, presenter.form_default_value_for(date_role),
-            class: "rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800" %>
+            class: "rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white" %>
     </label>
 
-    <label>
+    <label class="text-gray-700 dark:text-gray-300">
       <%= t("kyc.documents.date_confirmations.reason") %>
       <%= text_field_tag :reason, nil,
             placeholder: t("kyc.documents.date_confirmations.reason_placeholder"),
-            class: "w-full rounded-md border border-gray-300 px-2 py-1 text-xs dark:border-gray-600 dark:bg-gray-800" %>
+            class: "w-full rounded-md border border-gray-300 px-2 py-1 text-xs text-gray-900 dark:border-gray-600 dark:bg-gray-800 dark:text-white" %>
     </label>
 
     <%= submit_tag t("kyc.documents.date_confirmations.submit"),

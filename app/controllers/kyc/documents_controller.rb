@@ -129,8 +129,10 @@ class Kyc::DocumentsController < ApplicationController
       format.turbo_stream do
         docs = document.applicant.kyc_documents
         render turbo_stream: [
+          # MH-322: "#{dom_id(document)}_content", not dom_id(document) — see the
+          # comment on kyc/documents/_kyc_document.html.erb's outer div.
           turbo_stream.replace(
-            dom_id(document),
+            "#{dom_id(document)}_content",
             partial: "kyc/documents/kyc_document",
             locals: { document: document }
           ),
@@ -163,8 +165,9 @@ class Kyc::DocumentsController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: [
+          # MH-322: "#{dom_id(document)}_content" — see kyc/documents/_kyc_document.html.erb.
           turbo_stream.replace(
-            dom_id(document),
+            "#{dom_id(document)}_content",
             partial: "kyc/documents/kyc_document",
             locals: { document: document }
           ),
@@ -190,5 +193,11 @@ class Kyc::DocumentsController < ApplicationController
     ClassifyKycDocumentJob.perform_later(document.id)
     broadcast_document(document)
     head :ok
+  end
+
+  # MH-322: opens the date-confirmation modal from the row's overflow menu.
+  def date_confirmation_modal
+    authorize document, :confirm_dates?
+    render partial: "kyc/document_date_confirmations/modal", locals: { document: document }, layout: false
   end
 end

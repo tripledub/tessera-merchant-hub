@@ -4,11 +4,15 @@
 <div id="documents-panel-<%= group %>"
      class="mb-4 <%= "hidden" if documents.empty? %>"
      data-document-panels-target="panel">
-  <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
-    <%= t("applicants.show.documents.panels.#{group}") %>
-    <span data-document-panels-target="count">(<%= documents.size %>)</span>
-  </h3>
-  <div id="documents-panel-<%= group %>-list" class="space-y-2" data-document-panels-target="list" data-group="<%= group %>">
-    <%= render partial: "kyc/documents/kyc_document_row", collection: documents, as: :document %>
+  <div class="overflow-hidden rounded-xl border border-gray-200 dark:border-gray-800">
+    <h3 class="border-b border-gray-100 px-4 py-3 text-sm font-bold text-gray-800 dark:border-gray-800 dark:text-white/90">
+      <%= t("applicants.show.documents.panels.#{group}") %>
+      <span data-document-panels-target="count" class="font-normal text-gray-400">(<%= documents.size %>)</span>
+    </h3>
+    <div id="documents-panel-<%= group %>-list"
+         class="divide-y divide-gray-100 dark:divide-gray-800"
+         data-document-panels-target="list" data-group="<%= group %>">
+      <%= render partial: "kyc/documents/kyc_document_row", collection: documents, as: :document %>
+    </div>
   </div>
 </div>
