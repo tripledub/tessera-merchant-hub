@@ -2,6 +2,7 @@
 
 class ExtractKycDocumentJob < ApplicationJob
   include KycDocumentBroadcaster
+  include ApplicantDomainBroadcaster
 
   queue_as :default
 
@@ -63,7 +64,8 @@ class ExtractKycDocumentJob < ApplicationJob
   # any domain the applicant already has (see Kyc::DomainEvidenceRecorder).
   def extract_proof_of_domain(document)
     domains = Kyc::DomainExtractorService.call(document)
-    Kyc::DomainEvidenceRecorder.call(document: document, names: domains)
+    new_domains = Kyc::DomainEvidenceRecorder.call(document: document, names: domains)
+    new_domains.each { |domain| broadcast_new_applicant_domain(domain) }
     document.update!(status: :complete, extracted_data: { "domains" => domains })
   end
 

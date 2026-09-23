@@ -20,17 +20,24 @@ module Kyc
       @names = names
     end
 
+    # Returns the domains newly visible to the applicant as a result of this
+    # call (MH-328) — so a caller in a layer allowed to touch presentation
+    # (e.g. ExtractKycDocumentJob, via ApplicantDomainBroadcaster) can
+    # broadcast them. Excludes a name that already had a domain row before
+    # this call: nothing changed for the Domains tab to show.
     def call
-      @names.each { |name| record(name) }
+      @names.filter_map { |name| record(name) }
     end
 
     private
 
     def record(name)
-      domain = find_domain(name) || create_candidate(name) || find_domain(name)
+      existing = find_domain(name)
+      domain = existing || create_candidate(name) || find_domain(name)
       return unless domain
 
       ApplicantDomainDocument.find_or_create_by!(applicant_domain_id: domain.id, kyc_document_id: @document.id)
+      domain unless existing
     rescue ActiveRecord::RecordNotUnique
       nil # lost a race to a concurrent insert of the same domain or link
     end

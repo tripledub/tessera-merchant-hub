@@ -21,6 +21,21 @@ RSpec.describe Kyc::DomainEvidenceRecorder, type: :service do
     expect(domain.evidence_documents).to contain_exactly(document)
   end
 
+  it "returns the newly created domain, for the caller to broadcast (MH-328)" do
+    result = call(%w[example.com])
+
+    expect(result).to contain_exactly(applicant.applicant_domains.find_by!(name: "example.com"))
+  end
+
+  it "does not return a domain the applicant already had — nothing new for the Domains tab" do
+    existing = create(:applicant_domain, applicant: applicant, name: "example.com")
+
+    result = call(%w[example.com])
+
+    expect(result).to be_empty
+    expect(existing.reload.evidence_documents).to contain_exactly(document)
+  end
+
   it "handles several names in one call" do
     call(%w[example.com other-site.net])
 
