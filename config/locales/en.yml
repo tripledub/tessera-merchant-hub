@@ -193,6 +193,10 @@ en:
         drag_or_click: Drag and drop files here, or click to browse
         empty: No documents uploaded yet.
         folder_not_supported: Folders aren't supported — drag individual files instead.
+        panels:
+          confirmed: Confirmed Files
+          processed: Processed Files
+          unconfirmed: Unconfirmed Files
         pending_extraction_count:
           one: 1 document pending extraction
           other: "%{count} documents pending extraction"
@@ -545,6 +549,8 @@ en:
       date_confirmations:
         confirmed: 'Confirmed: %{value}'
         confirmed_value: Date
+        menu_label: Confirm dates
+        modal_title: Date confirmation
         no_reason: no reason given
         reason: Reason (required if you change the extracted date)
         reason_placeholder: Explain why this differs from the extracted date
@@ -594,6 +600,7 @@ en:
         fuzzy: Fuzzy match
         override_linked: Linked by reviewer
         registry_corroborated: DOB corroborated by registry
+      more_actions: More actions
       preview: Preview document
       principal_match_overrides:
         different_person: Different person
@@ -629,7 +636,6 @@ en:
           no_assessment: Not tracked
           stale: No longer current
           valid: Valid
-        policy_version: Policy v%{version}
         reasons:
           missing_required_date: A required date could not be confirmed.
           older_than_max_age: Older than the maximum age allowed for this document

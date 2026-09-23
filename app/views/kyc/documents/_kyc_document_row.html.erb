@@ -1,0 +1,14 @@
+<%# MH-302: the unit document_panels_controller.js relocates between panels.
+    data-document-row marks the OUTER boundary — the turbo-frame, not the div
+    nested inside it. MH-322: that inner div now has its own distinct id
+    (dom_id(document) + "_content", see _kyc_document.html.erb) specifically so
+    turbo_stream.replace targeting an update can swap its content without ever
+    touching (and destroying) this frame — replacing an element with the same
+    id as this frame used to wipe out data-document-row along with it, silently
+    freezing the row in whatever panel it started in. Used both for the initial
+    per-panel render and for a freshly-uploaded document appended by
+    Kyc::DocumentsController#create, so every render path produces the same
+    structure. %>
+<%= turbo_frame_tag "kyc_document_#{document.id}", data: { document_row: true } do %>
+  <%= render "kyc/documents/kyc_document", document: document %>
+<% end %>

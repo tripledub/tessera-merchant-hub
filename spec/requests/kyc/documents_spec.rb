@@ -347,7 +347,11 @@ RSpec.describe "KycDocuments", type: :request do
           headers: { "Accept" => "text/vnd.turbo-stream.html" }
 
         fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
-        wrapper = fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}")
+        # MH-322: the replaced element is "#{dom_id}_content", not the bare
+        # dom_id — that id now belongs only to the outer turbo-frame wrapper,
+        # which a turbo_stream.replace of the content never touches (see
+        # kyc/documents/_kyc_document.html.erb).
+        wrapper = fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}_content")
 
         expect(wrapper.size).to eq(1)
         expect(wrapper.first.css("[data-testid='document-validity-status']")).to be_present
@@ -457,7 +461,7 @@ RSpec.describe "KycDocuments", type: :request do
 
         expect(response).to have_http_status(:ok)
         fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
-        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}")).to be_present
+        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}_content")).to be_present
       end
 
       it "returns a turbo stream response also updating the comments modal content with the updated highlight" do
@@ -467,7 +471,7 @@ RSpec.describe "KycDocuments", type: :request do
 
         expect(response).to have_http_status(:ok)
         fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
-        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}")).to be_present
+        expect(fragment.css("##{ActionView::RecordIdentifier.dom_id(document)}_content")).to be_present
 
         modal_stream = fragment.css('turbo-stream[target="document-comments-modal"]')
         expect(modal_stream).to be_present
@@ -578,27 +582,26 @@ RSpec.describe "KycDocuments", type: :request do
         expect(confirm_button["aria-label"]).to eq(I18n.t("kyc.documents.confirm"))
       end
 
-      it "labels the confirm/reject principal match buttons" do
+      it "labels the confirm principal match button and offers reject from the overflow menu" do
         principal = create(:kyc_principal, applicant: applicant, status: :unconfirmed)
         document = create(:kyc_document, applicant: applicant, kyc_principal: principal)
 
         get tab_applicant_path(applicant, tab: "documents")
 
         row = row_fragment_for(document)
-        buttons = row.css("form button")
-        confirm_match = buttons.find { |b| b["aria-label"] == I18n.t("kyc.documents.confirm_match") }
-        reject_match = buttons.find { |b| b["aria-label"] == I18n.t("kyc.documents.reject_match") }
+        confirm_match = row.css("form button").find { |b| b["aria-label"] == I18n.t("kyc.documents.confirm_match") }
+        reject_match = row.css("form button").find { |b| b.text.strip == I18n.t("kyc.documents.reject_match") }
         expect(confirm_match).to be_present
         expect(reject_match).to be_present
       end
 
-      it "labels the retry button" do
+      it "offers retry from the overflow menu" do
         document = create(:kyc_document, applicant: applicant, status: :error)
 
         get tab_applicant_path(applicant, tab: "documents")
 
         row = row_fragment_for(document)
-        retry_button = row.css("form button").find { |b| b["aria-label"] == I18n.t("kyc.documents.retry") }
+        retry_button = row.css("form button").find { |b| b.text.strip == I18n.t("kyc.documents.retry") }
         expect(retry_button).to be_present
       end
 
@@ -608,7 +611,7 @@ RSpec.describe "KycDocuments", type: :request do
         get tab_applicant_path(applicant, tab: "documents")
 
         row = row_fragment_for(document)
-        expect(row.css("#comments-trigger-#{document.id}").first["aria-label"]).to eq(I18n.t("kyc.documents.comments.open"))
+        expect(row.css("#comments-trigger-#{document.id}").first.text.strip).to eq(I18n.t("kyc.documents.comments.open"))
       end
 
       it "labels the delete button and requires confirmation before submitting" do
@@ -618,7 +621,7 @@ RSpec.describe "KycDocuments", type: :request do
 
         row = row_fragment_for(document)
         delete_button = row.css("form[action='#{kyc_document_path(document)}'] button").first
-        expect(delete_button["aria-label"]).to eq(I18n.t("kyc.documents.delete"))
+        expect(delete_button.text.strip).to eq(I18n.t("kyc.documents.delete"))
         expect(delete_button["data-turbo-confirm"]).to eq(
           I18n.t("kyc.documents.delete_confirm", filename: document.file.filename)
         )

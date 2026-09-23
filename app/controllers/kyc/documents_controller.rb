@@ -64,8 +64,10 @@ class Kyc::DocumentsController < ApplicationController
         streams = []
         if saved_documents.any?
           streams << turbo_stream.remove("kyc-documents-empty") if had_no_documents
+          # MH-302: a freshly-uploaded document always starts unclassified, so
+          # it always belongs in the Unconfirmed Files panel.
           streams.concat(saved_documents.map { |doc|
-            turbo_stream.append("kyc-documents-list", partial: "kyc/documents/kyc_document", locals: { document: doc })
+            turbo_stream.append("documents-panel-unconfirmed-list", partial: "kyc/documents/kyc_document_row", locals: { document: doc })
           })
         end
         streams << turbo_stream.append("toast-container", partial: "shared/toast", locals: { message: message, type: type })
@@ -127,8 +129,10 @@ class Kyc::DocumentsController < ApplicationController
       format.turbo_stream do
         docs = document.applicant.kyc_documents
         render turbo_stream: [
+          # MH-322: "#{dom_id(document)}_content", not dom_id(document) — see the
+          # comment on kyc/documents/_kyc_document.html.erb's outer div.
           turbo_stream.replace(
-            dom_id(document),
+            "#{dom_id(document)}_content",
             partial: "kyc/documents/kyc_document",
             locals: { document: document }
           ),
@@ -161,8 +165,9 @@ class Kyc::DocumentsController < ApplicationController
     respond_to do |format|
       format.turbo_stream do
         render turbo_stream: [
+          # MH-322: "#{dom_id(document)}_content" — see kyc/documents/_kyc_document.html.erb.
           turbo_stream.replace(
-            dom_id(document),
+            "#{dom_id(document)}_content",
             partial: "kyc/documents/kyc_document",
             locals: { document: document }
           ),
@@ -188,5 +193,11 @@ class Kyc::DocumentsController < ApplicationController
     ClassifyKycDocumentJob.perform_later(document.id)
     broadcast_document(document)
     head :ok
+  end
+
+  # MH-322: opens the date-confirmation modal from the row's overflow menu.
+  def date_confirmation_modal
+    authorize document, :confirm_dates?
+    render partial: "kyc/document_date_confirmations/modal", locals: { document: document }, layout: false
   end
 end
