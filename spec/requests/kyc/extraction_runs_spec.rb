@@ -23,6 +23,22 @@ RSpec.describe "ExtractionRuns", type: :request do
         expect(response.body).to include("turbo-stream")
       end
 
+      it "scopes the progress bar to exactly the documents queued by this run (MH-326)" do
+        queued = create(:kyc_document, applicant: applicant, document_type: :passport,
+          classification_status: :confirmed, status: :pending)
+        already_processed = create(:kyc_document, applicant: applicant, document_type: :passport,
+          classification_status: :confirmed, status: :complete)
+
+        post applicant_kyc_extraction_run_path(applicant),
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        document_ids = Nokogiri::HTML::DocumentFragment.parse(response.body)
+          .at_css("#extraction-progress")["data-extraction-progress-document-ids-value"]
+
+        expect(JSON.parse(document_ids)).to contain_exactly(queued.id)
+        expect(JSON.parse(document_ids)).not_to include(already_processed.id)
+      end
+
       it "falls back to redirect for non-Turbo requests" do
         create(:kyc_document, applicant: applicant, document_type: :passport,
           classification_status: :confirmed, status: :pending)
