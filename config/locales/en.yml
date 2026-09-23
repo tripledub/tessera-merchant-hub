@@ -193,6 +193,10 @@ en:
         drag_or_click: Drag and drop files here, or click to browse
         empty: No documents uploaded yet.
         folder_not_supported: Folders aren't supported — drag individual files instead.
+        panels:
+          confirmed: Confirmed Files
+          processed: Processed Files
+          unconfirmed: Unconfirmed Files
         pending_extraction_count:
           one: 1 document pending extraction
           other: "%{count} documents pending extraction"

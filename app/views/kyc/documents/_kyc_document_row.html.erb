@@ -1,0 +1,11 @@
+<%# MH-302: the unit document_panels_controller.js relocates between panels.
+    data-document-row marks the OUTER boundary — the turbo-frame, not the div
+    nested inside it (that div shares the same id via dom_id(document), so
+    .closest() must have exactly one match here or it grabs the wrong node
+    and leaves an empty frame behind). Used both for the initial per-panel
+    render and for a freshly-uploaded document appended by
+    Kyc::DocumentsController#create, so every render path produces the same
+    structure. %>
+<%= turbo_frame_tag "kyc_document_#{document.id}", data: { document_row: true } do %>
+  <%= render "kyc/documents/kyc_document", document: document %>
+<% end %>

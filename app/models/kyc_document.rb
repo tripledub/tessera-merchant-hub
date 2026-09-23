@@ -173,6 +173,16 @@ class KycDocument < ApplicationRecord
     document_type.present? && extraction_schema.method_defined?(:to_matcher_hash)
   end
 
+  # MH-302: which Documents-tab panel this document belongs in. Unconfirmed
+  # takes priority regardless of extraction status — a reviewer's classification
+  # call always comes first. Errored documents stay in "confirmed" (not their
+  # own group): they're still actionable (retry), not done.
+  def status_group
+    return :unconfirmed unless classification_confirmed?
+
+    complete? ? :processed : :confirmed
+  end
+
   def needs_review?
     classification_ai_suggested? || classification_unclassified?
   end
