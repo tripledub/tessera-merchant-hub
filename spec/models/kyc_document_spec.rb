@@ -198,4 +198,29 @@ RSpec.describe KycDocument, type: :model do
       expect(document).not_to be_principal_linkable
     end
   end
+
+  # MH-302: which Documents-tab panel a document belongs in.
+  describe "#status_group" do
+    %w[unclassified auto_classified ai_suggested rejected].each do |classification|
+      it "is :unconfirmed when classification_status is #{classification}, regardless of status" do
+        document = build(:kyc_document, classification_status: classification, status: :complete)
+
+        expect(document.status_group).to eq(:unconfirmed)
+      end
+    end
+
+    %w[pending processing error].each do |status|
+      it "is :confirmed when classification is confirmed but status is #{status}" do
+        document = build(:kyc_document, classification_status: :confirmed, status: status)
+
+        expect(document.status_group).to eq(:confirmed)
+      end
+    end
+
+    it "is :processed when classification is confirmed and status is complete" do
+      document = build(:kyc_document, classification_status: :confirmed, status: :complete)
+
+      expect(document.status_group).to eq(:processed)
+    end
+  end
 end

@@ -64,8 +64,10 @@ class Kyc::DocumentsController < ApplicationController
         streams = []
         if saved_documents.any?
           streams << turbo_stream.remove("kyc-documents-empty") if had_no_documents
+          # MH-302: a freshly-uploaded document always starts unclassified, so
+          # it always belongs in the Unconfirmed Files panel.
           streams.concat(saved_documents.map { |doc|
-            turbo_stream.append("kyc-documents-list", partial: "kyc/documents/kyc_document", locals: { document: doc })
+            turbo_stream.append("documents-panel-unconfirmed-list", partial: "kyc/documents/kyc_document_row", locals: { document: doc })
           })
         end
         streams << turbo_stream.append("toast-container", partial: "shared/toast", locals: { message: message, type: type })

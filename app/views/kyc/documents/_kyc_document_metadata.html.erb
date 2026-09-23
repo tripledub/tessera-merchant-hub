@@ -1,4 +1,9 @@
 <div id="kyc_document_<%= document.id %>_metadata">
+  <%# MH-302: read by document_panels_controller.js to move this row into the
+      right Documents-tab panel. Lives in this safely-broadcastable partial (see
+      KycDocumentBroadcaster) so it's fresh after every job-triggered update, not
+      just ones the acting user's own request re-renders. %>
+  <span class="hidden" data-status-group="<%= document.status_group %>"></span>
   <div class="rounded-md border border-gray-200 px-4 py-3 text-theme-sm dark:border-gray-700 dark:bg-white/[0.03]">
   <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
   <div class="flex items-center gap-3 min-w-0">

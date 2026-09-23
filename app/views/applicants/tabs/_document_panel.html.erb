@@ -1,0 +1,14 @@
+<%# MH-302: one of the three Documents-tab panels (unconfirmed / confirmed / processed).
+    Always rendered, even when empty, so document-panels_controller.js has a target
+    to append newly-moved rows into and to toggle visibility on live. %>
+<div id="documents-panel-<%= group %>"
+     class="mb-4 <%= "hidden" if documents.empty? %>"
+     data-document-panels-target="panel">
+  <h3 class="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-500">
+    <%= t("applicants.show.documents.panels.#{group}") %>
+    <span data-document-panels-target="count">(<%= documents.size %>)</span>
+  </h3>
+  <div id="documents-panel-<%= group %>-list" class="space-y-2" data-document-panels-target="list" data-group="<%= group %>">
+    <%= render partial: "kyc/documents/kyc_document_row", collection: documents, as: :document %>
+  </div>
+</div>
