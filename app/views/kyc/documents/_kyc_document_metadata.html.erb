@@ -194,7 +194,12 @@
           </div>
         <% end %>
 
-        <% if document.document_type.present? %>
+        <%# MH-323: gated on classification_confirmed? too, not just document_type —
+            ExtractKycDocumentJob (which populates validity_dates) refuses to run
+            until classification is confirmed, so before that point the assessor's
+            "missing_required_date" reads as "extraction ran and found nothing"
+            when really extraction was never attempted. %>
+        <% if document.document_type.present? && document.classification_confirmed? %>
           <% present(document, Kyc::DocumentValidityPresenter) do |vp| %>
             <%= render "kyc/documents/validity_status", presenter: vp %>
           <% end %>
