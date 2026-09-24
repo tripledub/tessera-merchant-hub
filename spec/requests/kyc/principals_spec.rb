@@ -98,6 +98,23 @@ RSpec.describe "KycPrincipals", type: :request do
       expect(row.text).to include(I18n.t("kyc.documents.document_types.passport"))
       expect(response.body).to include(I18n.t("kyc.principals.show.documents.table.type"))
     end
+
+    it "labels a manually-linked document distinctly from an automated exact match (MH-333)" do
+      manual = create(:kyc_document, applicant: applicant, kyc_principal: principal,
+        match_method: "override_linked", match_confidence: 1.0)
+      automated = create(:kyc_document, applicant: applicant, kyc_principal: principal,
+        match_method: "exact", match_confidence: 1.0)
+
+      get kyc_principal_path(principal)
+
+      fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+      manual_row = fragment.at_css("##{ActionView::RecordIdentifier.dom_id(manual)}")
+      automated_row = fragment.at_css("##{ActionView::RecordIdentifier.dom_id(automated)}")
+
+      expect(manual_row.text).to include(I18n.t("kyc.documents.match_method.override_linked"))
+      expect(manual_row.text).not_to include(I18n.t("kyc.documents.match_method.exact"))
+      expect(automated_row.text).to include(I18n.t("kyc.documents.match_method.exact"))
+    end
   end
 
   describe "GET /kyc_principals/:id/edit" do
