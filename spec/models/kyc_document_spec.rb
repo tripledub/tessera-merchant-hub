@@ -73,6 +73,15 @@ RSpec.describe KycDocument, type: :model do
     )
   end
 
+  it "defines the forex policy document types" do
+    expect(described_class.document_types).to include(
+      "regulatory_authorisation" => 81,
+      "client_fund_segregation_evidence" => 82,
+      "capital_adequacy_evidence" => 83,
+      "negative_balance_protection_policy" => 84
+    )
+  end
+
   it "defines the processing statement document type" do
     expect(described_class.document_types).to include("processing_statement" => 55)
   end

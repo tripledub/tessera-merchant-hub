@@ -103,5 +103,27 @@ RSpec.describe Kyc::EffectivePolicy do
         ]
       )
     end
+
+    it "defines only the four blocking Forex Brokerage document requirements" do
+      forex_requirements = described_class.for(build(:applicant, sector: :forex_brokerage)).drop(2)
+
+      expect(forex_requirements.map { |requirement| [ requirement.id, requirement.outcome, requirement.source ] }).to eq(
+        [
+          [ "forex.regulatory_authorisation", "blocking", "3.1" ],
+          [ "forex.client_fund_segregation_evidence", "blocking", "3.1" ],
+          [ "forex.capital_adequacy_evidence", "blocking", "3.3" ],
+          [ "forex.negative_balance_protection_policy", "blocking", "3.5" ]
+        ]
+      )
+      expect(forex_requirements.map(&:rule).uniq).to eq([ "required_document" ])
+      expect(forex_requirements.map { |requirement| requirement.parameters.fetch("document_type") }).to eq(
+        %w[
+          regulatory_authorisation
+          client_fund_segregation_evidence
+          capital_adequacy_evidence
+          negative_balance_protection_policy
+        ]
+      )
+    end
   end
 end

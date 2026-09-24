@@ -89,6 +89,10 @@ class KycDocument < ApplicationRecord
     player_fund_segregation_evidence: 77,
     responsible_gambling_policy: 78,
     chargeback_dispute_procedure: 79,
+    regulatory_authorisation: 81,
+    client_fund_segregation_evidence: 82,
+    capital_adequacy_evidence: 83,
+    negative_balance_protection_policy: 84,
     # Proof of ownership
     proof_of_domain_ownership: 80,
     # Content type the AI classifier can't process at all (e.g. xlsx/xls —
