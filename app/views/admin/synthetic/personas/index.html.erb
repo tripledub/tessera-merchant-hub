@@ -1,0 +1,40 @@
+<% content_for :title, t('.page_title') %>
+
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= t('.title') %></h1>
+    <p class="mt-1 max-w-2xl text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.subtitle') %></p>
+  </div>
+  <% if policy(Synthetic::Persona).new? %>
+    <%= link_to t('.new_persona'), new_admin_synthetic_persona_path, class: "btn-primary" %>
+  <% end %>
+</div>
+
+<div class="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-white/[0.05] dark:bg-white/[0.03]">
+  <table class="w-full text-left text-theme-sm">
+    <thead>
+      <tr class="border-b border-gray-100 dark:border-white/[0.05]">
+        <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.name') %></th>
+        <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.date_of_birth') %></th>
+        <th class="px-5 py-3 font-medium text-gray-500 dark:text-gray-400"><%= t('.table.slug') %></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 dark:divide-white/[0.05]">
+      <% if @personas.empty? %>
+        <tr id="synthetic-personas-empty">
+          <td colspan="3" class="px-5 py-10 text-center text-theme-sm text-gray-500"><%= t('.table.empty') %></td>
+        </tr>
+      <% else %>
+        <% @personas.each do |persona| %>
+          <tr class="hover:bg-gray-50 dark:hover:bg-white/[0.02]">
+            <td class="px-5 py-4 font-medium text-gray-800 dark:text-white/90">
+              <%= link_to persona.full_name, admin_synthetic_persona_path(persona), class: "hover:text-brand-600" %>
+            </td>
+            <td class="px-5 py-4 text-gray-500 dark:text-gray-400"><%= persona.date_of_birth.strftime("%-d %b %Y") %></td>
+            <td class="px-5 py-4 text-gray-400"><%= persona.slug %></td>
+          </tr>
+        <% end %>
+      <% end %>
+    </tbody>
+  </table>
+</div>

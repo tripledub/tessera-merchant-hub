@@ -1,0 +1,86 @@
+<% content_for :title, persona.full_name %>
+
+<div class="mb-4">
+  <%= link_to t('.back'), admin_synthetic_personas_path, class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<div class="mb-6 flex items-start justify-between">
+  <div>
+    <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= persona.full_name %></h1>
+    <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.slug', slug: persona.slug) %></p>
+  </div>
+  <%= button_to t('.export'), export_admin_synthetic_persona_path(persona), method: :post, class: "btn-secondary" %>
+</div>
+
+<div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+  <div class="card">
+    <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.sections.details') %></h2>
+    <dl class="space-y-3 text-theme-sm">
+      <div class="flex justify-between">
+        <dt class="font-medium text-gray-500"><%= t('.fields.date_of_birth') %></dt>
+        <dd class="text-gray-900 dark:text-white/90"><%= persona.date_of_birth.strftime("%-d %B %Y") %></dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="font-medium text-gray-500"><%= t('.fields.sex') %></dt>
+        <dd class="text-gray-900 dark:text-white/90"><%= t(".sexes.#{persona.sex}") %></dd>
+      </div>
+      <div class="flex justify-between">
+        <dt class="font-medium text-gray-500"><%= t('.fields.jurisdiction') %></dt>
+        <dd class="text-gray-900 dark:text-white/90"><%= persona.jurisdiction %></dd>
+      </div>
+    </dl>
+  </div>
+
+  <div class="card">
+    <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.sections.generate') %></h2>
+    <%= form_with url: admin_synthetic_persona_documents_path(persona), method: :post, class: "space-y-3" do |f| %>
+      <input type="hidden" name="document_type" value="passport">
+
+      <div>
+        <%= f.label :place_of_birth, t('.fields.place_of_birth'), class: "form-label" %>
+        <%= f.text_field "options[place_of_birth]", class: "form-input", value: "Testville", required: true %>
+      </div>
+
+      <div>
+        <%= f.label :passport_number, t('.fields.passport_number'), class: "form-label" %>
+        <%= f.text_field "options[passport_number]", class: "form-input", value: "L898902C3", maxlength: 9, required: true %>
+      </div>
+
+      <div>
+        <%= f.label :expiry_preset, t('.fields.expiry_preset'), class: "form-label" %>
+        <%= f.select "options[expiry_preset]",
+              Kyc::Synthetic::PassportPdf::EXPIRY_PRESETS.keys.map { |value| [ t(".expiry_presets.#{value}"), value ] },
+              {}, class: "form-input" %>
+      </div>
+
+      <%= f.submit t('.generate_passport'), class: "btn-primary" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="card">
+  <h2 class="mb-4 text-xs font-semibold uppercase tracking-wider text-gray-500"><%= t('.sections.generated_documents') %></h2>
+
+  <% if @generated_documents.empty? %>
+    <p id="generated-documents-empty" class="text-theme-sm text-gray-400 italic"><%= t('.generated_documents.empty') %></p>
+  <% else %>
+    <table class="w-full text-left text-theme-sm">
+      <thead>
+        <tr class="border-b border-gray-200 dark:border-gray-800">
+          <th class="py-2 pr-4 font-medium text-gray-500 dark:text-gray-400"><%= t('.generated_documents.table.type') %></th>
+          <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.generated_documents.table.generated_by') %></th>
+          <th class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400"><%= t('.generated_documents.table.generated_at') %></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+        <% @generated_documents.each do |document| %>
+          <tr>
+            <td class="py-2 pr-4 text-gray-900 dark:text-white/90"><%= document.document_type.titleize %></td>
+            <td class="px-4 py-2 text-gray-500 dark:text-gray-400"><%= document.generated_by.email %></td>
+            <td class="px-4 py-2 text-gray-500 dark:text-gray-400"><%= l(document.created_at, format: :long) %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>
