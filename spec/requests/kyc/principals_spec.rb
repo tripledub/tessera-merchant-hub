@@ -115,6 +115,15 @@ RSpec.describe "KycPrincipals", type: :request do
       expect(manual_row.text).not_to include(I18n.t("kyc.documents.match_method.exact"))
       expect(automated_row.text).to include(I18n.t("kyc.documents.match_method.exact"))
     end
+
+    it "always shows Link documents, even when every document is already linked (MH-335)" do
+      create(:kyc_document, applicant: applicant, kyc_principal: principal)
+
+      get kyc_principal_path(principal)
+
+      expect(response.body).to include(new_kyc_principal_document_links_path(principal))
+      expect(response.body).to include(I18n.t("kyc.principals.show.link_documents"))
+    end
   end
 
   describe "GET /kyc_principals/:id/edit" do
