@@ -106,6 +106,14 @@ Rails.application.routes.draw do
         patch :update_role
       end
     end
+    # MH-309: unlinked, UAT/dev-only synthetic test-data surface, gated by
+    # SYNTHETIC_DATA_ENABLED (see Admin::Synthetic::PersonasController).
+    namespace :synthetic do
+      resources :personas, only: %i[index new create show] do
+        post :export, on: :member
+        resources :documents, only: :create, controller: "persona_documents"
+      end
+    end
   end
 
   mount LetterOpenerWeb::Engine, at: "/letter_opener" if Rails.env.development?
