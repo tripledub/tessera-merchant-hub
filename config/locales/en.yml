@@ -101,6 +101,17 @@ en:
             male: Male
             unspecified: Unspecified
           slug: 'Slug: %{slug}'
+      scenarios:
+        index:
+          company_number: 'Company: %{number}'
+          download: Download document pack
+          empty: No scenarios defined yet.
+          page_title: Synthetic scenarios
+          qase_cases: Qase cases
+          subtitle: UAT/dev only. Each scenario ties a fake registry company, its
+            personas and their generated documents together, so test data never drifts
+            out of sync.
+          title: Synthetic scenarios
     users:
       index:
         filter:

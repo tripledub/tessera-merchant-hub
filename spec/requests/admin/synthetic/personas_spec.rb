@@ -90,7 +90,9 @@ RSpec.describe "Admin::Synthetic::Personas", type: :request do
       get admin_synthetic_persona_path(persona)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include(persona.full_name)
+      # CGI-escaped: Faker names occasionally include an apostrophe (e.g.
+      # "O'Keefe"), which ERB renders as &#39; in the HTML response.
+      expect(response.body).to include(CGI.escapeHTML(persona.full_name))
     end
 
     it "returns 403 for show when signed in as psp_support" do
