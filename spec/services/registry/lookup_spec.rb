@@ -220,4 +220,28 @@ RSpec.describe Registry::Lookup do
       end
     end
   end
+
+  # MH-312: end to end through Lookup, against the real (unstubbed)
+  # SyntheticClient — not just a generic error_type passthrough.
+  describe ".call against the synthetic Utopia registry (MH-312)" do
+    include_context "with synthetic data enabled"
+
+    {
+      "XU000404" => :not_found,
+      "XU000401" => :unauthorized,
+      "XU000429" => :rate_limited,
+      "XU000503" => :unavailable
+    }.each do |number, error_type|
+      it "returns #{error_type} for #{number} and persists nothing" do
+        applicant = create(:applicant, registry_jurisdiction: "xu", company_number: number)
+
+        result = nil
+        expect { result = described_class.call(applicant: applicant) }
+          .not_to change { applicant.registry_profiles.count }
+
+        expect(result.success).to be(false)
+        expect(result.error_type).to eq(error_type)
+      end
+    end
+  end
 end
