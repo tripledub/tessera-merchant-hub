@@ -23,12 +23,25 @@
   </td>
   <td class="border-r border-gray-100 px-4 py-3 dark:border-gray-800">
     <% if document.match_method.present? %>
-      <% if document.match_method == "fuzzy" %>
+      <%# MH-333: match_method distinguishes how the link happened — an
+          automated exact match reads differently from a reviewer's manual
+          pick, so each gets its own label rather than collapsing everything
+          that isn't "fuzzy" into "Exact match". %>
+      <% case document.match_method %>
+      <% when "fuzzy" %>
         <span class="badge badge-warning">
           <%= t("kyc.documents.match_method.fuzzy") %>
           <% if document.match_confidence.present? %>
             &nbsp;(<%= (document.match_confidence * 100).round %>%)
           <% end %>
+        </span>
+      <% when "registry_corroborated" %>
+        <span class="badge badge-success">
+          <%= t("kyc.documents.match_method.registry_corroborated") %>
+        </span>
+      <% when "override_linked" %>
+        <span class="badge badge-info">
+          <%= t("kyc.documents.match_method.override_linked") %>
         </span>
       <% else %>
         <span class="badge badge-success">
