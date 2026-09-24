@@ -97,7 +97,7 @@ class PrincipalMatcherService
   end
 
   def principals
-    @principals ||= @applicant.kyc_principals.to_a
+    @principals ||= @applicant.kyc_principals.active.to_a
   end
 
   def find_exact_match

@@ -24,4 +24,8 @@ class KycPrincipalPolicy < ApplicationPolicy
   def destroy?
     psp_admin?
   end
+
+  def merge?
+    psp_admin?
+  end
 end

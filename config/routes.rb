@@ -48,6 +48,7 @@ Rails.application.routes.draw do
       resource :ownership_attestation, only: %i[create destroy]
       resources :principals, only: %i[new create show edit update destroy], shallow: true do
         resource :document_links, only: %i[new create], controller: "principal_document_links"
+        resource :merge, only: %i[new create], controller: "principal_merges"
       end
       resources :applicant_domains, only: %i[new create destroy], shallow: true do
         member do
@@ -61,6 +62,7 @@ Rails.application.routes.draw do
         member { post :retry }
         member { patch :comment_status }
         member { get :date_confirmation_modal }
+        resource :review, only: :create, controller: "document_reviews"
         resources :comments, only: %i[index create], controller: "document_comments"
       end
     end

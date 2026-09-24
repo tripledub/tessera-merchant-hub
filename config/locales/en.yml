@@ -406,6 +406,7 @@ en:
     kyc_principals:
       create_success: Principal added.
       destroy_success: Principal removed.
+      merge_success: Principals merged.
       update_success: Principal updated.
     merchants:
       admin_create_failed: 'Could not create the admin user: %{errors}'
@@ -595,6 +596,7 @@ en:
         vasp_registration: VASP Registration
         wallet_custody_infrastructure_attestation: Wallet Custody Infrastructure Attestation
       evidenced_domains: Domains
+      mark_reviewed: Mark as reviewed
       match_method:
         exact: Exact match
         fuzzy: Fuzzy match
@@ -692,6 +694,14 @@ en:
         empty: All documents for this applicant are already linked.
         link: Link
         title: Link a document
+    principal_merges:
+      new:
+        empty: There are no other principals for this applicant to merge with.
+        merge: Merge
+        merge_confirm: Merge %{name} into %{into}? %{name} will no longer appear on
+          its own — its existing fields will only fill gaps in %{into} and never overwrite
+          what's already there. This cannot be undone.
+        title: Merge a duplicate into %{name}
     principals:
       edit:
         back: "← Back to applicant"
@@ -734,6 +744,7 @@ en:
           name: Full name
           role: Role
         link_documents: Link documents
+        merge: Merge duplicate
         not_provided: Not provided
         search_placeholder: Search files…
         sections:
@@ -951,6 +962,7 @@ en:
       no_file: Please choose a file to upload.
     edit:
       amount_label: Amount column
+      auto_selected: Auto-selected — please confirm
       currency_label: Currency column
       date_label: Transaction date column
       intro: Match each column from your file to the fields we need, then import.

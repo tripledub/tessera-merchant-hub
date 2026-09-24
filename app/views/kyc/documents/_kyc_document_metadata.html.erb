@@ -152,6 +152,15 @@
                       form_class: "w-full" %>
             <% end %>
 
+            <%# MH-327: other-typed documents have no extraction handler, so
+                status never advances past :pending on its own — this is the
+                only way one can ever reach the Processed panel. %>
+            <% if document.other? && document.classification_confirmed? && !document.complete? && viewer_can?(document, :mark_reviewed?) %>
+              <%= button_to t("kyc.documents.mark_reviewed"), kyc_document_review_path(document), method: :post,
+                      class: "block w-full whitespace-nowrap px-3 py-1.5 text-left text-xs text-gray-700 hover:bg-gray-50 dark:text-gray-300 dark:hover:bg-gray-700",
+                      form_class: "w-full" %>
+            <% end %>
+
             <%= link_to t("kyc.documents.comments.open"),
                     kyc_document_comments_path(document),
                     id: "comments-trigger-#{document.id}",

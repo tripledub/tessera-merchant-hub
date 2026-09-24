@@ -56,6 +56,16 @@ class ProcessingStatementsController < ApplicationController
       Rails.logger.warn("ProcessingStatementsController: could not read processing statement #{processing_statement.id} — #{e.class}: #{e.message}")
       processing_statement.update!(status: :error, error_message: t(".read_error"))
       redirect_to processing_statement_path(processing_statement), alert: t(".read_error")
+      return
+    end
+
+    # MH-325: only suggest when nothing has been mapped yet — a statement
+    # being re-opened after a real mapping (or a previous manual choice) is
+    # left exactly as the reviewer set it, never silently replaced with a
+    # fresh guess.
+    if processing_statement.column_mapping.blank?
+      @mapping = Statements::ColumnMappingSuggester.call(headers: @headers)
+      @suggested_fields = @mapping.keys
     end
   end
 

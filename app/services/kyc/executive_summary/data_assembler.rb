@@ -81,7 +81,7 @@ module Kyc
       end
 
       def principals_section
-        applicant.kyc_principals.includes(:kyc_documents).map do |principal|
+        applicant.kyc_principals.active.includes(:kyc_documents).map do |principal|
           {
             name: principal.name,
             principal_id: principal.id,

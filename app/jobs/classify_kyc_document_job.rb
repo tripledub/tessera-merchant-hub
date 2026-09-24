@@ -88,9 +88,16 @@ class ClassifyKycDocumentJob < ApplicationJob
     ExtractKycDocumentJob.perform_later(document.id)
   end
 
+  # MH-337: AiFallback deliberately returns document_type: nil when the
+  # model can't determine a type — :ai_suggested is only accurate when it
+  # actually suggested something, otherwise it reads as a genuine proposal
+  # to a reviewer when the AI found nothing at all. :spreadsheet_content_type
+  # always carries a real document_type (:processing_statement), so it
+  # doesn't need the same check.
   def classification_status_for(result)
     case result[:classification_method]
-    when :ai, :spreadsheet_content_type then :ai_suggested
+    when :ai then result[:document_type].present? ? :ai_suggested : :unclassified
+    when :spreadsheet_content_type then :ai_suggested
     else :auto_classified
     end
   end
