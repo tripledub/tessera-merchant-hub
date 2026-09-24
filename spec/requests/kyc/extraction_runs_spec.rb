@@ -66,4 +66,20 @@ RSpec.describe "ExtractionRuns", type: :request do
       end
     end
   end
+
+  describe "the Run extraction button (MH-334)" do
+    before { sign_in psp_admin }
+
+    it "carries the submit-once guard so a rapid double-click can't fire the request twice" do
+      create(:kyc_document, applicant: applicant, document_type: :passport,
+        classification_status: :confirmed, status: :pending)
+
+      get tab_applicant_path(applicant, tab: "documents")
+
+      form = Nokogiri::HTML::DocumentFragment.parse(response.body)
+        .at_css("#extraction-controls form")
+      expect(form["data-controller"]).to eq("submit-once")
+      expect(form.at_css("button")["data-submit-once-target"]).to eq("button")
+    end
+  end
 end
