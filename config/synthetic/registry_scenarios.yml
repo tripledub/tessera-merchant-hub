@@ -48,3 +48,21 @@ XU000002:
       date_of_birth:
         month: 11
         year: 1991
+
+# MH-312: deterministic error-path scenarios, one company number per
+# Registry::FetchResult failure type Registry::CompaniesHouseUkClient can
+# produce. An "error" entry has no company data — Registry::SyntheticClient
+# returns FetchResult.failure(error_type: ...) for it instead of a success
+# profile, and Registry::SyntheticClient.scenario_numbers excludes these from
+# the success-scenario list.
+#
+# not_found (XU000404) needs no entry here — any company number absent from
+# this file already returns not_found, the same as a real 404.
+XU000401:
+  error: unauthorized
+
+XU000429:
+  error: rate_limited
+
+XU000503:
+  error: unavailable

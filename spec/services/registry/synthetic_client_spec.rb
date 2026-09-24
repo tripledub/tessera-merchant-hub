@@ -85,6 +85,30 @@ RSpec.describe Registry::SyntheticClient do
 
       expect(WebMock).not_to have_requested(:any, /.*/)
     end
+
+    # MH-312: deterministic error-path numbers, one per Registry::FetchResult
+    # failure type Registry::CompaniesHouseUkClient can produce.
+    {
+      "XU000404" => :not_found,
+      "XU000401" => :unauthorized,
+      "XU000429" => :rate_limited,
+      "XU000503" => :unavailable
+    }.each do |number, error_type|
+      it "returns #{error_type} for #{number}" do
+        result = client.fetch(company_number: number)
+
+        expect(result.success).to be(false)
+        expect(result.error_type).to eq(error_type)
+      end
+
+      it "never notifies Honeybadger for #{number}, unlike the real client's own failures" do
+        allow(Honeybadger).to receive(:notify)
+
+        client.fetch(company_number: number)
+
+        expect(Honeybadger).not_to have_received(:notify)
+      end
+    end
   end
 
   it "is a Registry::Client" do

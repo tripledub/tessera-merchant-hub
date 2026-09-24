@@ -136,5 +136,25 @@ RSpec.describe "Applicants: synthetic Utopia registry", type: :request do
         expect(Registry::CompaniesHouseUkClient).not_to have_received(:new)
       end
     end
+
+    # MH-312: the same error message and recovery affordance as the real
+    # client's failure of that type — the view renders purely off error_type.
+    context "when synthetic data is enabled and the company number is an error-path scenario" do
+      include_context "with synthetic data enabled"
+
+      {
+        "XU000404" => :not_found,
+        "XU000401" => :unauthorized,
+        "XU000429" => :rate_limited,
+        "XU000503" => :unavailable
+      }.each do |number, error_type|
+        it "shows the #{error_type} message for #{number}" do
+          post registry_preview_applicants_path,
+            params: { applicant: { company_number: number, registry_jurisdiction: "xu" } }, as: :turbo_stream
+
+          expect(response.body).to include(ERB::Util.html_escape(I18n.t("applicants.registry_preview.errors.#{error_type}")))
+        end
+      end
+    end
   end
 end

@@ -16,14 +16,20 @@ module Registry
       @scenarios ||= YAML.safe_load_file(SCENARIOS_PATH).freeze
     end
 
+    # Excludes MH-312's error entries — those aren't a company profile to run
+    # the shared success-result examples against.
     def self.scenario_numbers
-      scenarios.keys
+      scenarios.reject { |_, data| data["error"] }.keys
     end
 
     def fetch(company_number:)
       number = company_number.to_s.strip.upcase
       scenario = self.class.scenarios[number]
       return FetchResult.failure(error_type: :not_found) if scenario.nil?
+      # MH-312: a deterministic error-path number (e.g. XU000401 -> unauthorized)
+      # — never reported to Honeybadger, unlike the real client's own failures,
+      # since nothing here is an actual incident.
+      return FetchResult.failure(error_type: scenario["error"].to_sym) if scenario["error"]
 
       FetchResult.success(
         company_name: scenario["company_name"],
