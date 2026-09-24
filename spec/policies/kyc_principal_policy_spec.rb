@@ -14,4 +14,6 @@ RSpec.describe KycPrincipalPolicy, type: :policy do
   it("psp_support cannot destroy") { expect(described_class.new(psp_support, principal).destroy?).to be false }
   it("psp_support can show")     { expect(described_class.new(psp_support, principal).show?).to be true }
   it("merchant_admin cannot show") { expect(described_class.new(merchant_admin, principal).show?).to be false }
+  it("psp_admin can merge")      { expect(described_class.new(psp_admin,   principal).merge?).to be true }
+  it("psp_support cannot merge") { expect(described_class.new(psp_support, principal).merge?).to be false }
 end

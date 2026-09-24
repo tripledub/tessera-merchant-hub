@@ -48,6 +48,7 @@ Rails.application.routes.draw do
       resource :ownership_attestation, only: %i[create destroy]
       resources :principals, only: %i[new create show edit update destroy], shallow: true do
         resource :document_links, only: %i[new create], controller: "principal_document_links"
+        resource :merge, only: %i[new create], controller: "principal_merges"
       end
       resources :applicant_domains, only: %i[new create destroy], shallow: true do
         member do

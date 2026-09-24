@@ -15,7 +15,7 @@ class ApplicantPresenter < BasePresenter
   end
 
   def principal_count
-    applicant.kyc_principals.count
+    applicant.kyc_principals.active.count
   end
 
   def document_count

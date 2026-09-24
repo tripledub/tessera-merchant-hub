@@ -50,6 +50,7 @@ module Registry
 
     def backfill_principal(profile, director, dob)
       principal = profile.applicant.kyc_principals
+        .active
         .registry_fetched
         .where("LOWER(name) = ?", director.name.downcase)
         .where(date_of_birth: nil, date_of_birth_month: nil, date_of_birth_year: nil)

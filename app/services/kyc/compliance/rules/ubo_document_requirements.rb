@@ -48,7 +48,7 @@ module Kyc
         end
 
         def find_matched_principal(entity)
-          entity.applicant.kyc_principals.find do |p|
+          entity.applicant.kyc_principals.active.find do |p|
             p.name.downcase.strip == entity.name.downcase.strip
           end
         end
