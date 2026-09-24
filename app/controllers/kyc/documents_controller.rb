@@ -203,19 +203,6 @@ class Kyc::DocumentsController < ApplicationController
     head :ok
   end
 
-  # MH-327: for a document type with no extraction handler (currently just
-  # `other`), ExtractKycDocumentJob never runs, so status never advances
-  # past :pending on its own — a reviewer marking it reviewed is the only
-  # way it can ever reach the Processed panel.
-  def mark_reviewed
-    authorize document, :mark_reviewed?
-    return head :unprocessable_content unless document.other?
-
-    document.update!(status: :complete)
-    broadcast_document(document)
-    head :ok
-  end
-
   # MH-322: opens the date-confirmation modal from the row's overflow menu.
   def date_confirmation_modal
     authorize document, :confirm_dates?

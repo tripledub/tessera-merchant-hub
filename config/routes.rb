@@ -59,9 +59,9 @@ Rails.application.routes.draw do
       end
       resources :documents, only: %i[create update destroy], shallow: true do
         member { post :retry }
-        member { post :mark_reviewed }
         member { patch :comment_status }
         member { get :date_confirmation_modal }
+        resource :review, only: :create, controller: "document_reviews"
         resources :comments, only: %i[index create], controller: "document_comments"
       end
     end
