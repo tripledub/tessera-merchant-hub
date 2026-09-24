@@ -72,11 +72,6 @@
                data-table-search-target="input"
                class="form-input pl-8 py-1.5 text-theme-sm w-48" />
       </div>
-      <% if policy(KycDocument).create? && @unlinked_documents.any? %>
-        <%= link_to t('.link_documents'), new_kyc_principal_document_links_path(kyc_principal),
-              class: "btn-secondary",
-              data: { turbo_frame: "link-documents-modal" } %>
-      <% end %>
     </div>
   </div>
 
@@ -89,6 +84,7 @@
       <thead>
         <tr class="border-b border-gray-200 dark:border-gray-800">
           <th class="py-2 pr-4 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.documents.table.filename') %></th>
+          <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.documents.table.type') %></th>
           <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.documents.table.status') %></th>
           <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.documents.table.match') %></th>
           <th class="px-4 py-2 font-medium text-gray-500 border-r border-gray-100 dark:border-gray-800 dark:text-gray-400"><%= t('.documents.table.uploaded') %></th>
@@ -99,5 +95,18 @@
         <%= render partial: "kyc/principals/document_row", collection: @kyc_documents, as: :document %>
       </tbody>
     </table>
+  <% end %>
+
+  <%# MH-335: always rendered (not gated on @unlinked_documents.any?) — it
+      used to disappear once everything was already linked, which sat right
+      next to the search box and read as though search itself had broken.
+      Clicking it with nothing left to link shows the modal's own existing
+      empty state instead. %>
+  <% if policy(KycDocument).create? %>
+    <div class="mt-4">
+      <%= link_to t('.link_documents'), new_kyc_principal_document_links_path(kyc_principal),
+            class: "btn-secondary",
+            data: { turbo_frame: "link-documents-modal" } %>
+    </div>
   <% end %>
 </div>

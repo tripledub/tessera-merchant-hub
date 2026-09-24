@@ -92,10 +92,16 @@
                 </option>
               <% end %>
             </select>
-            <button type="button" data-action="click->classification#confirm"
+            <%# MH-332: disabled whenever no real type is selected (either
+                pre-selected, e.g. an AI/rule-based suggestion, or picked in
+                this render) — confirming without one leaves the document
+                permanently "Unclassified" with no way to extract it. %>
+            <button type="button" data-classification-target="confirmButton"
+                    data-action="click->classification#confirm"
                     title="<%= t('kyc.documents.confirm') %>"
                     aria-label="<%= t('kyc.documents.confirm') %>"
-                    class="text-gray-400 hover:text-success-500 dark:hover:text-success-400">
+                    <%= "disabled" if document.document_type.blank? %>
+                    class="text-gray-400 hover:text-success-500 dark:hover:text-success-400 disabled:opacity-40 disabled:pointer-events-none">
               <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M20.707 5.293a1 1 0 0 1 0 1.414l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414L9 15.586 19.293 5.293a1 1 0 0 1 1.414 0z" fill=""/>
               </svg>
@@ -127,8 +133,12 @@
             </svg>
           </button>
 
+          <%# MH-336: position is set to fixed by overflow_menu_controller.js
+              on open, computed from the trigger's live position — not
+              absolute/right-0 here, which used to clip against the
+              Documents panel's overflow-hidden for the last row. %>
           <div data-overflow-menu-target="menu"
-               class="hidden absolute right-0 z-10 mt-1 min-w-[10rem] rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+               class="hidden z-10 min-w-[10rem] rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
             <% if document.validity_dates.present? && viewer_can?(document, :confirm_dates?) %>
               <%= link_to t("kyc.documents.date_confirmations.menu_label"),
                       date_confirmation_modal_kyc_document_path(document),
@@ -194,7 +204,12 @@
           </div>
         <% end %>
 
-        <% if document.document_type.present? %>
+        <%# MH-323: gated on classification_confirmed? too, not just document_type —
+            ExtractKycDocumentJob (which populates validity_dates) refuses to run
+            until classification is confirmed, so before that point the assessor's
+            "missing_required_date" reads as "extraction ran and found nothing"
+            when really extraction was never attempted. %>
+        <% if document.document_type.present? && document.classification_confirmed? %>
           <% present(document, Kyc::DocumentValidityPresenter) do |vp| %>
             <%= render "kyc/documents/validity_status", presenter: vp %>
           <% end %>

@@ -624,6 +624,28 @@ RSpec.describe ExtractKycDocumentJob, type: :job do
       expect(accepted.evidence_documents).to contain_exactly(document)
     end
 
+    it "broadcasts each newly created domain to the applicant's Domains tab (MH-328)" do
+      stream = "applicant_#{applicant.id}_domains"
+      allow(Turbo::StreamsChannel).to receive(:broadcast_remove_to)
+      allow(Turbo::StreamsChannel).to receive(:broadcast_append_to)
+
+      described_class.new.perform(document.id)
+
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_append_to)
+        .with(stream, hash_including(target: "applicant-domains-list")).twice
+    end
+
+    it "does not broadcast a domain the applicant already had" do
+      create(:applicant_domain, applicant: applicant, name: "Example.com")
+      allow(Turbo::StreamsChannel).to receive(:broadcast_remove_to)
+      allow(Turbo::StreamsChannel).to receive(:broadcast_append_to)
+
+      described_class.new.perform(document.id)
+
+      expect(Turbo::StreamsChannel).to have_received(:broadcast_append_to)
+        .with(anything, hash_including(locals: { applicant_domain: an_object_having_attributes(name: "other-site.net") })).once
+    end
+
     it "does not bring back a rejected domain on re-extraction" do
       rejected = create(:applicant_domain, applicant: applicant, name: "example.com", review_status: :rejected)
 

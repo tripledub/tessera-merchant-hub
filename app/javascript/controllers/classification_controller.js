@@ -2,8 +2,12 @@ import { Controller } from "@hotwired/stimulus"
 import { Turbo } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
-  static targets = ["select"]
+  static targets = ["select", "confirmButton"]
   static values = { url: String, status: String }
+
+  connect() {
+    this.#syncConfirmAvailability()
+  }
 
   // Picking a document type is not the same as confirming it (MH-287) —
   // confirming is what the checkmark button (#confirm) is for. Submitting
@@ -13,11 +17,27 @@ export default class extends Controller {
   // a side effect, before the user had any chance to correct a mis-pick.
   change() {
     this.#submit("auto_classified")
+    this.#syncConfirmAvailability()
   }
 
+  // MH-332: without a real type selected, this.selectTarget.value is the
+  // disabled placeholder option's empty string — submitting that leaves the
+  // document confirmed but permanently "Unclassified", since the server
+  // silently drops a blank document_type rather than rejecting the whole
+  // update. The button is already disabled in that state (see the ERB and
+  // #syncConfirmAvailability), but this guard covers it regardless of how
+  // the click was triggered.
   confirm() {
     const newStatus = this.statusValue === "confirmed" ? "auto_classified" : "confirmed"
+    if (newStatus === "confirmed" && !this.selectTarget.value) return
+
     this.#submit(newStatus)
+  }
+
+  #syncConfirmAvailability() {
+    if (!this.hasConfirmButtonTarget) return
+
+    this.confirmButtonTarget.disabled = !this.selectTarget.value
   }
 
   #submit(status) {

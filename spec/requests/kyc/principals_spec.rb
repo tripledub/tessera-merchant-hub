@@ -86,6 +86,46 @@ RSpec.describe "KycPrincipals", type: :request do
     end
   end
 
+  describe "GET /kyc_principals/:id — linked documents table" do
+    before { sign_in psp_admin }
+
+    it "renders each document's type, so the search box can filter by it (MH-329)" do
+      document = create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
+
+      get kyc_principal_path(principal)
+
+      row = Nokogiri::HTML::DocumentFragment.parse(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(document)}")
+      expect(row.text).to include(I18n.t("kyc.documents.document_types.passport"))
+      expect(response.body).to include(I18n.t("kyc.principals.show.documents.table.type"))
+    end
+
+    it "labels a manually-linked document distinctly from an automated exact match (MH-333)" do
+      manual = create(:kyc_document, applicant: applicant, kyc_principal: principal,
+        match_method: "override_linked", match_confidence: 1.0)
+      automated = create(:kyc_document, applicant: applicant, kyc_principal: principal,
+        match_method: "exact", match_confidence: 1.0)
+
+      get kyc_principal_path(principal)
+
+      fragment = Nokogiri::HTML::DocumentFragment.parse(response.body)
+      manual_row = fragment.at_css("##{ActionView::RecordIdentifier.dom_id(manual)}")
+      automated_row = fragment.at_css("##{ActionView::RecordIdentifier.dom_id(automated)}")
+
+      expect(manual_row.text).to include(I18n.t("kyc.documents.match_method.override_linked"))
+      expect(manual_row.text).not_to include(I18n.t("kyc.documents.match_method.exact"))
+      expect(automated_row.text).to include(I18n.t("kyc.documents.match_method.exact"))
+    end
+
+    it "always shows Link documents, even when every document is already linked (MH-335)" do
+      create(:kyc_document, applicant: applicant, kyc_principal: principal)
+
+      get kyc_principal_path(principal)
+
+      expect(response.body).to include(new_kyc_principal_document_links_path(principal))
+      expect(response.body).to include(I18n.t("kyc.principals.show.link_documents"))
+    end
+  end
+
   describe "GET /kyc_principals/:id/edit" do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }

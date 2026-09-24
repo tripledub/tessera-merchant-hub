@@ -6,10 +6,15 @@
           <%= p.pending_count_label %>
         </span>
       <% end %>
+      <%# MH-334: submit-once disables this button for the duration of the
+          request, so a rapid double-click (or a slow response re-clicked)
+          can't fire extraction_run twice and produce a misleading "nothing
+          to extract" toast from the second, already-empty request. %>
       <%= button_to applicant_kyc_extraction_run_path(applicant),
             method: :post,
             class: "btn-primary",
-            data: { turbo_confirm: p.confirm_message } do %>
+            form: { data: { controller: "submit-once" } },
+            data: { turbo_confirm: p.confirm_message, "submit-once-target": "button" } do %>
         <%= t('applicants.show.documents.run_extraction') %>
       <% end %>
     <% end %>

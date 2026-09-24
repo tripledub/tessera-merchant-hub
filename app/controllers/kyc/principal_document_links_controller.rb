@@ -11,7 +11,11 @@ class Kyc::PrincipalDocumentLinksController < ApplicationController
   def create
     authorize kyc_principal, :update?
     @document = kyc_principal.applicant.kyc_documents.find(params[:document_id])
-    @document.update!(kyc_principal: kyc_principal, match_method: "exact", match_confidence: 1.0)
+    # MH-333: "override_linked", not "exact" — this is a reviewer's manual
+    # pick, not an algorithmic name/DOB match, and the two need to read
+    # differently. Matches Kyc::PrincipalMatchOverrideService's own use of
+    # override_linked for its manual-link path.
+    @document.update!(kyc_principal: kyc_principal, match_method: "override_linked", match_confidence: 1.0)
     Kyc::AddressPopulationService.call(@document)
     Kyc::BusinessAddressPopulationService.call(@document)
     respond_to do |format|

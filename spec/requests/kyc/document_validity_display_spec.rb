@@ -176,6 +176,16 @@ RSpec.describe "Kyc document validity display", type: :request do
       expect(response.body).to include("Valid")
       expect(response.body).to include("document-validity-status")
     end
+
+    it "does not show a validity assessment before classification is confirmed (MH-323)" do
+      create(:kyc_document, applicant: applicant, document_type: :passport, status: :pending,
+             classification_status: :ai_suggested)
+
+      get_documents_tab
+
+      expect(response.body).not_to include("Awaiting review")
+      expect(response.body).not_to include("A required date could not be confirmed")
+    end
   end
 
   context "when signed in as psp_support" do

@@ -32,10 +32,9 @@
 <%= turbo_stream_from "applicant_#{applicant.id}_documents" %>
 
 <div id="extraction-progress-container">
-  <% processing_count = applicant.kyc_documents.where(status: [:processing, :pending]).where(classification_status: :confirmed).count %>
-  <% if processing_count > 0 %>
-    <% total = processing_count %>
-    <%= render "kyc/documents/extraction_progress", total: total %>
+  <% in_flight_document_ids = applicant.kyc_documents.where(status: [:processing, :pending]).where(classification_status: :confirmed).pluck(:id) %>
+  <% if in_flight_document_ids.any? %>
+    <%= render "kyc/documents/extraction_progress", document_ids: in_flight_document_ids %>
   <% end %>
 </div>
 

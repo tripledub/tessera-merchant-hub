@@ -129,12 +129,23 @@ class PrincipalMatcherService
     Kyc::CompaniesHouseName.normalize(principal.name)
   end
 
+  # MH-330: Jaro-Winkler is character-based, not word-order invariant — it
+  # weights matching prefixes heavily, so the same two words in reversed
+  # order (a registry name normalized to "Forenames Surname" vs. a
+  # passport's own extraction producing "Surname Forenames") score low
+  # despite being the same name. Comparing each name's words sorted
+  # alphabetically catches an exact reordering (both names collapse to the
+  # same sorted string, scoring 1.0) without assuming either input's word
+  # order is authoritative.
   def best_name_score(a, b)
     full_score = JaroWinkler.similarity(a, b)
     return full_score if full_score >= FUZZY_THRESHOLD
 
+    reordered_score = JaroWinkler.similarity(sorted_tokens(a), sorted_tokens(b))
+    return reordered_score if reordered_score >= FUZZY_THRESHOLD
+
     first_last_score = JaroWinkler.similarity(first_and_last(a), first_and_last(b))
-    [ full_score, first_last_score ].max
+    [ full_score, reordered_score, first_last_score ].max
   end
 
   def first_and_last(name)
@@ -142,6 +153,10 @@ class PrincipalMatcherService
     return name if parts.size <= 2
 
     "#{parts.first} #{parts.last}"
+  end
+
+  def sorted_tokens(name)
+    name.strip.split.sort.join(" ")
   end
 
   # MH-307: a passport alone is no evidence of a directorship — role stays
@@ -156,8 +171,14 @@ class PrincipalMatcherService
     )
   end
 
+  # MH-330: same word-order gap as best_name_score — a straight string
+  # comparison after normalization still assumes both names agree on which
+  # word comes first, so the sorted-token comparison is checked too.
   def names_match_exactly?(a, b)
-    Kyc::CompaniesHouseName.normalize(a).downcase.strip == Kyc::CompaniesHouseName.normalize(b).downcase.strip
+    normalized_a = Kyc::CompaniesHouseName.normalize(a).downcase.strip
+    normalized_b = Kyc::CompaniesHouseName.normalize(b).downcase.strip
+
+    normalized_a == normalized_b || sorted_tokens(normalized_a) == sorted_tokens(normalized_b)
   end
 
   def dob_aware_identity?

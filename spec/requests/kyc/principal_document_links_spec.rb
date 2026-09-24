@@ -63,7 +63,9 @@ RSpec.describe "Kyc::PrincipalDocumentLinks", type: :request do
         expect(response).to have_http_status(:ok)
         unlinked_doc.reload
         expect(unlinked_doc.kyc_principal).to eq(principal)
-        expect(unlinked_doc.match_method).to eq("exact")
+        # MH-333: a manual link is a reviewer's choice, not an algorithmic
+        # match — override_linked ("Linked by reviewer"), not exact.
+        expect(unlinked_doc.match_method).to eq("override_linked")
         expect(unlinked_doc.match_confidence).to eq(1.0)
       end
     end

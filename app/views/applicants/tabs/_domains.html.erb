@@ -1,3 +1,8 @@
+<%# MH-328: domains extracted from a document arrive asynchronously, from
+    ExtractKycDocumentJob well after this tab was first rendered — this
+    stream is what lets a newly-discovered domain appear without a reload. %>
+<%= turbo_stream_from "applicant_#{applicant.id}_domains" %>
+
 <div class="mb-4 flex items-center justify-between">
   <h2 class="text-xs font-semibold uppercase tracking-wider text-gray-500">
     <%= t('applicants.show.sections.domains') %>
