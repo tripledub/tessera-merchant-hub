@@ -61,6 +61,23 @@ RSpec.describe "Documents tab row actions", type: :request do
     expect(row_for(without_dates).to_s).not_to include("date_confirmation_modal")
   end
 
+  it "offers Mark as reviewed from the overflow menu only for a confirmed, pending 'other' document (MH-327)" do
+    other_pending = create(:kyc_document, applicant: applicant, document_type: :other,
+      classification_status: :confirmed, status: :pending)
+    other_complete = create(:kyc_document, applicant: applicant, document_type: :other,
+      classification_status: :confirmed, status: :complete)
+    other_unconfirmed = create(:kyc_document, applicant: applicant, document_type: :other,
+      classification_status: :ai_suggested, status: :pending)
+    passport_pending = create(:kyc_document, applicant: applicant, document_type: :passport,
+      classification_status: :confirmed, status: :pending)
+
+    label = I18n.t("kyc.documents.mark_reviewed")
+    expect(row_for(other_pending).css("form button").map(&:text).map(&:strip)).to include(label)
+    expect(row_for(other_complete).css("form button").map(&:text).map(&:strip)).not_to include(label)
+    expect(row_for(other_unconfirmed).css("form button").map(&:text).map(&:strip)).not_to include(label)
+    expect(row_for(passport_pending).css("form button").map(&:text).map(&:strip)).not_to include(label)
+  end
+
   it "renders a single overflow menu trigger per row, the same across Unconfirmed, Confirmed and Processed panels" do
     unconfirmed = create(:kyc_document, applicant: applicant, classification_status: :unclassified)
     confirmed = create(:kyc_document, applicant: applicant, classification_status: :confirmed, status: :pending)

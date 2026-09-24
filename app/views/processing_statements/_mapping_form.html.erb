@@ -11,9 +11,13 @@
     </p>
   <% end %>
 
+  <% suggested_fields = local_assigns.fetch(:suggested_fields, []) %>
   <% %i[date amount currency outcome].each_with_index do |field, index| %>
     <div>
       <%= f.label field, t("processing_statements.edit.#{field}_label"), class: "form-label" %>
+      <% if suggested_fields.include?(field.to_s) %>
+        <span class="text-warning-500" title="<%= t("processing_statements.edit.auto_selected") %>" aria-label="<%= t("processing_statements.edit.auto_selected") %>">⚠️</span>
+      <% end %>
       <%= f.select field,
             options_for_select(
               [[t("processing_statements.edit.unmapped"), ""]] + headers.map { |header| [header, header] },

@@ -596,6 +596,7 @@ en:
         vasp_registration: VASP Registration
         wallet_custody_infrastructure_attestation: Wallet Custody Infrastructure Attestation
       evidenced_domains: Domains
+      mark_reviewed: Mark as reviewed
       match_method:
         exact: Exact match
         fuzzy: Fuzzy match
@@ -961,6 +962,7 @@ en:
       no_file: Please choose a file to upload.
     edit:
       amount_label: Amount column
+      auto_selected: Auto-selected — please confirm
       currency_label: Currency column
       date_label: Transaction date column
       intro: Match each column from your file to the fields we need, then import.
