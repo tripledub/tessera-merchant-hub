@@ -37,6 +37,8 @@ module Registry
         incorporated_on: Date.iso8601(scenario["incorporated_on"]),
         directors: map_directors(scenario["officers"]),
         addresses: [ map_address(scenario["address"]) ],
+        # MH-313: "pscs" is optional — most scenarios have none.
+        people_with_significant_control: map_pscs(scenario["pscs"] || []),
         raw_response: raw_response(number, scenario)
       )
     end
@@ -55,6 +57,33 @@ module Registry
           # MH-303: mirrors Registry::CompaniesHouseUkClient#map_directors.
           date_of_birth_month: dob["month"],
           date_of_birth_year: dob["year"]
+        }
+      end
+    end
+
+    # MH-313: mirrors Registry::CompaniesHouseUkClient#map_pscs.
+    def map_pscs(pscs)
+      pscs.map do |psc|
+        dob = psc["date_of_birth"] || {}
+        address = psc["address"] || {}
+
+        {
+          name: psc["name"],
+          kind: psc["kind"],
+          natures_of_control: Array(psc["natures_of_control"]),
+          notified_on: parse_date(psc["notified_on"]),
+          ceased_on: parse_date(psc["ceased_on"]),
+          nationality: psc["nationality"],
+          date_of_birth_month: dob["month"],
+          date_of_birth_year: dob["year"],
+          line1: address["line1"],
+          city: address["city"],
+          postcode: address["postcode"],
+          # MH-313: for a corporate PSC, "country" is where it's registered
+          # (not the correspondence address) — the field Kyc::OwnershipFromRegistry
+          # checks against Kyc::NomineeDetector::NOMINEE_JURISDICTIONS.
+          country: psc["country"] || address["country"],
+          registration_number: psc["registration_number"]
         }
       end
     end
@@ -86,7 +115,7 @@ module Registry
           }
         },
         "officers" => { "items" => scenario["officers"].map { |officer| raw_officer(officer) } },
-        "persons_with_significant_control" => { "items" => [] }
+        "persons_with_significant_control" => { "items" => (scenario["pscs"] || []).map { |psc| raw_psc(psc) } }
       }
     end
 
@@ -98,6 +127,21 @@ module Registry
         "resigned_on" => officer["resigned_on"]
       }
       raw["date_of_birth"] = officer["date_of_birth"] if officer["date_of_birth"]
+      raw
+    end
+
+    def raw_psc(psc)
+      raw = {
+        "name" => psc["name"],
+        "kind" => psc["kind"],
+        "natures_of_control" => Array(psc["natures_of_control"]),
+        "notified_on" => psc["notified_on"],
+        "ceased_on" => psc["ceased_on"],
+        "nationality" => psc["nationality"],
+        "address" => (psc["address"] || {}).merge("country" => psc["country"] || psc.dig("address", "country")),
+        "identification" => { "registration_number" => psc["registration_number"] }
+      }
+      raw["date_of_birth"] = psc["date_of_birth"] if psc["date_of_birth"]
       raw
     end
 

@@ -8,8 +8,14 @@ RSpec.describe Registry::SyntheticClient do
   subject(:client) { described_class.new }
 
   describe ".scenario_numbers" do
-    it "lists the initial scenarios" do
-      expect(described_class.scenario_numbers).to eq(%w[XU000001 XU000002])
+    it "lists every non-error scenario" do
+      expect(described_class.scenario_numbers).to eq(
+        %w[XU000001 XU000002 XU000003 XU000010 XU000004 XU000005 XU000006]
+      )
+    end
+
+    it "excludes MH-312's error-path numbers" do
+      expect(described_class.scenario_numbers).not_to include("XU000401", "XU000429", "XU000503")
     end
   end
 
@@ -58,6 +64,53 @@ RSpec.describe Registry::SyntheticClient do
         expect(result.directors).to contain_exactly(
           hash_including(name: "TESTPERSON, Alex", date_of_birth_month: 3, date_of_birth_year: 1980),
           hash_including(name: "EXAMPLESON, Morgan Lee", date_of_birth_month: 11, date_of_birth_year: 1991)
+        )
+      end
+    end
+
+    # MH-313
+    context "with XU000003 (corporate PSC chain)" do
+      let(:result) { client.fetch(company_number: "XU000003") }
+
+      it "has a corporate PSC pointing at XU000010's registration number" do
+        expect(result.people_with_significant_control).to contain_exactly(
+          hash_including(
+            name: "Utopia Intermediate Holdings Ltd",
+            kind: "corporate-entity-person-with-significant-control",
+            registration_number: "XU000010"
+          )
+        )
+      end
+    end
+
+    context "with XU000004 (nominee)" do
+      let(:result) { client.fetch(company_number: "XU000004") }
+
+      it "has a corporate PSC registered in Cyprus" do
+        expect(result.people_with_significant_control).to contain_exactly(
+          hash_including(name: "Cyprus Nominee Holdings Ltd", country: "CY")
+        )
+      end
+    end
+
+    context "with XU000005 (resigned director)" do
+      let(:result) { client.fetch(company_number: "XU000005") }
+
+      it "has one active and one resigned director" do
+        expect(result.directors).to contain_exactly(
+          hash_including(name: "ACTIVE, Morgan", resigned_on: nil),
+          hash_including(name: "RESIGNED, Taylor", resigned_on: Date.new(2020, 6, 1))
+        )
+      end
+    end
+
+    context "with XU000006 (ownership overshoot)" do
+      let(:result) { client.fetch(company_number: "XU000006") }
+
+      it "has two PSCs whose lower-bound percentages sum past 100%" do
+        expect(result.people_with_significant_control.size).to eq(2)
+        expect(result.people_with_significant_control.map { |p| p[:natures_of_control] }).to contain_exactly(
+          [ "ownership-of-shares-50-to-75-percent" ], [ "ownership-of-shares-75-to-100-percent" ]
         )
       end
     end

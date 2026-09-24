@@ -49,6 +49,130 @@ XU000002:
         month: 11
         year: 1991
 
+# MH-313: ownership-structure scenarios — the awkward cases the KYC pipeline
+# must handle (chained corporate PSCs, nominee jurisdictions, resigned
+# officers, percentages that overshoot 100%). A "pscs" entry mirrors
+# "officers": mapped through Registry::SyntheticClient#map_pscs into the same
+# shape Registry::CompaniesHouseUkClient#map_pscs produces. A PSC's "country"
+# is its correspondence-address country (Companies House shape) — for a
+# corporate PSC this is what Kyc::OwnershipFromRegistry checks against
+# Kyc::NomineeDetector::NOMINEE_JURISDICTIONS.
+
+# Corporate PSC chain: XU000003's own PSC is another Utopia company
+# (XU000010, below), which in turn has an individual PSC — end to end via
+# Kyc::PscChainFollower (POST .../trace_psc_chain/:psc_id).
+XU000003:
+  company_name: Utopia Chain Holdings Ltd
+  status: active
+  incorporated_on: "2017-05-01"
+  address:
+    line1: 3 Specimen Street
+    city: Testville
+    postcode: UT1 1AC
+    country: Utopia
+  officers:
+    - name: CHAIN, Robin
+      role: director
+      appointed_on: "2017-05-01"
+  pscs:
+    - name: Utopia Intermediate Holdings Ltd
+      kind: corporate-entity-person-with-significant-control
+      natures_of_control: [ "ownership-of-shares-75-to-100-percent" ]
+      notified_on: "2017-05-01"
+      registration_number: XU000010
+      country: Utopia
+
+# The intermediate company in XU000003's chain — its own PSC is an
+# individual, so the chain terminates here.
+XU000010:
+  company_name: Utopia Intermediate Holdings Ltd
+  status: active
+  incorporated_on: "2016-01-01"
+  address:
+    line1: 10 Specimen Street
+    city: Testville
+    postcode: UT1 1AJ
+    country: Utopia
+  officers:
+    - name: INTERMEDIATE, Casey
+      role: director
+      appointed_on: "2016-01-01"
+  pscs:
+    - name: FINALOWNER, Jordan
+      kind: individual-person-with-significant-control
+      natures_of_control: [ "ownership-of-shares-75-to-100-percent" ]
+      notified_on: "2016-01-01"
+
+# Nominee: the corporate PSC's correspondence address is in Cyprus (CY) — a
+# real listed nominee jurisdiction on an obviously-fake Utopia company (see
+# MH-313's grooming note; Kyc::NomineeDetector's own jurisdiction list is
+# never touched by this).
+XU000004:
+  company_name: Utopia Nominee Chain Ltd
+  status: active
+  incorporated_on: "2019-03-01"
+  address:
+    line1: 4 Specimen Street
+    city: Testville
+    postcode: UT1 1AD
+    country: Utopia
+  officers:
+    - name: NOMINEE, Drew
+      role: director
+      appointed_on: "2019-03-01"
+  pscs:
+    - name: Cyprus Nominee Holdings Ltd
+      kind: corporate-entity-person-with-significant-control
+      natures_of_control: [ "ownership-of-shares-75-to-100-percent" ]
+      notified_on: "2019-03-01"
+      registration_number: "HE123456"
+      country: CY
+
+# Resigned director: only the active one becomes a principal
+# (Kyc::PrincipalsFromRegistry already filters on resigned_on: nil).
+XU000005:
+  company_name: Utopia Resignation Ltd
+  status: active
+  incorporated_on: "2015-01-01"
+  address:
+    line1: 5 Specimen Street
+    city: Testville
+    postcode: UT1 1AE
+    country: Utopia
+  officers:
+    - name: ACTIVE, Morgan
+      role: director
+      appointed_on: "2015-01-01"
+    - name: RESIGNED, Taylor
+      role: director
+      appointed_on: "2015-01-01"
+      resigned_on: "2020-06-01"
+
+# Ownership overshooting 100%: two PSCs whose own lower-bound percentages
+# already sum past 100% (50 + 75 = 125), a plain logical impossibility.
+XU000006:
+  company_name: Utopia Percentage Ltd
+  status: active
+  incorporated_on: "2021-02-01"
+  address:
+    line1: 6 Specimen Street
+    city: Testville
+    postcode: UT1 1AF
+    country: Utopia
+  officers:
+    - name: OWNER, Jamie
+      role: director
+      appointed_on: "2021-02-01"
+  pscs:
+    - name: OWNER, Jamie
+      kind: individual-person-with-significant-control
+      natures_of_control: [ "ownership-of-shares-50-to-75-percent" ]
+      notified_on: "2021-02-01"
+    - name: PARTNER, Casey
+      kind: individual-person-with-significant-control
+      natures_of_control: [ "ownership-of-shares-75-to-100-percent" ]
+      notified_on: "2021-02-01"
+
 # MH-312: deterministic error-path scenarios, one company number per
 # Registry::FetchResult failure type Registry::CompaniesHouseUkClient can
 # produce. An "error" entry has no company data — Registry::SyntheticClient
