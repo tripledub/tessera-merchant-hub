@@ -14,4 +14,4 @@
       processing_statement: processing_statement,
       recovery_allowed: policy(processing_statement).recover? %>
 
-<%= turbo_frame_tag ProcessingStatementsController::MAPPING_MODAL_ID %>
+<%= render "processing_statements/mapping_modal_frame" %>

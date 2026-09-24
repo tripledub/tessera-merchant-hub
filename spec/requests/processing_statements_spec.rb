@@ -54,6 +54,17 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(page.at_css("turbo-frame##{MAPPING_MODAL_ID}")).to be_present
     end
 
+    it "gives the mapping frame a loading spinner shown only while busy, so a slow Map click doesn't look broken (MH-324)" do
+      create(:processing_statement, applicant: applicant, status: :uploaded)
+
+      get applicant_processing_statements_path(applicant)
+
+      frame = Nokogiri::HTML(response.body).at_css("turbo-frame##{MAPPING_MODAL_ID}")
+      spinner = frame.at_css("svg.animate-spin")
+      expect(spinner).to be_present
+      expect(spinner.ancestors.first["class"]).to include("hidden")
+    end
+
     it "offers errored statements for remapping and removal" do
       statement = create(:processing_statement, applicant: applicant, status: :error)
 
