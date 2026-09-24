@@ -108,7 +108,15 @@ class Kyc::DocumentsController < ApplicationController
       end
 
       classification = params.dig(:kyc_document, :classification_status)
-      if classification.present? && KycDocument.classification_statuses.key?(classification)
+      # MH-332: confirming with no document_type (neither already set nor
+      # submitted alongside it here) leaves a document permanently
+      # "Unclassified" — nothing ever extracts it, and nothing prompts a
+      # reviewer to fix it. The classification UI already blocks this, but
+      # this is the same rule enforced server-side, since document_type is
+      # otherwise silently dropped rather than rejected when blank.
+      resulting_document_type = attrs[:document_type] || document.document_type
+      if classification.present? && KycDocument.classification_statuses.key?(classification) &&
+          (classification != "confirmed" || resulting_document_type.present?)
         attrs[:classification_status] = classification
         attrs[:classification_method] = document.classification_method || "manual" if classification == "confirmed"
       end
