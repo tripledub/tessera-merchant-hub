@@ -3,6 +3,13 @@
     <%= document.file.filename %>
   </td>
   <td class="border-r border-gray-100 px-4 py-3 dark:border-gray-800">
+    <% if document.document_type.present? %>
+      <span class="badge badge-info"><%= t("kyc.documents.document_types.#{document.document_type}") %></span>
+    <% else %>
+      <span class="text-gray-400 dark:text-gray-600">&mdash;</span>
+    <% end %>
+  </td>
+  <td class="border-r border-gray-100 px-4 py-3 dark:border-gray-800">
     <% case document.status %>
     <% when "pending" %>
       <span class="badge badge-gray"><%= t("kyc.documents.status.pending") %></span>

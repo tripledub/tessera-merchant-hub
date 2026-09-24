@@ -724,6 +724,7 @@ en:
             filename: File
             match: Match
             status: Status
+            type: Type
             uploaded: Uploaded
           unlink: Unlink document
         edit: Edit

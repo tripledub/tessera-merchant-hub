@@ -86,6 +86,20 @@ RSpec.describe "KycPrincipals", type: :request do
     end
   end
 
+  describe "GET /kyc_principals/:id — linked documents table" do
+    before { sign_in psp_admin }
+
+    it "renders each document's type, so the search box can filter by it (MH-329)" do
+      document = create(:kyc_document, applicant: applicant, kyc_principal: principal, document_type: :passport)
+
+      get kyc_principal_path(principal)
+
+      row = Nokogiri::HTML::DocumentFragment.parse(response.body).at_css("##{ActionView::RecordIdentifier.dom_id(document)}")
+      expect(row.text).to include(I18n.t("kyc.documents.document_types.passport"))
+      expect(response.body).to include(I18n.t("kyc.principals.show.documents.table.type"))
+    end
+  end
+
   describe "GET /kyc_principals/:id/edit" do
     context "when signed in as psp_admin" do
       before { sign_in psp_admin }
