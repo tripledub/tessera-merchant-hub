@@ -1,0 +1,15 @@
+<%= turbo_frame_tag ProcessingStatementsController::MAPPING_MODAL_ID do %>
+  <%# MH-324: shown only while this frame is loading — Turbo sets a
+      [busy] attribute on the turbo-frame element itself during any
+      navigation targeting it, including one triggered from an external
+      link like "Map"/"Remap", so no JS is needed to drive this. Mapping a
+      large statement can take several seconds with the current synchronous
+      xlsx header read, and without this the click looked like it did
+      nothing. %>
+  <div class="fixed inset-0 z-50 hidden items-center justify-center bg-gray-900/50 backdrop-blur-sm [turbo-frame[busy]_&]:flex">
+    <svg class="h-8 w-8 animate-spin text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </div>
+<% end %>
