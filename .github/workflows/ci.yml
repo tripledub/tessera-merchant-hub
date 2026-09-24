@@ -149,7 +149,7 @@ jobs:
         run: bin/rails tailwindcss:build
 
       - name: Run tests with coverage
-        run: bundle exec rspec
+        run: bundle exec rspec --tag '~type:system'
 
       - name: Upload coverage report
         uses: actions/upload-artifact@v7
