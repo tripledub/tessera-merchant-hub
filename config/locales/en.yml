@@ -951,6 +951,7 @@ en:
       no_file: Please choose a file to upload.
     edit:
       amount_label: Amount column
+      auto_selected: Auto-selected — please confirm
       currency_label: Currency column
       date_label: Transaction date column
       intro: Match each column from your file to the fields we need, then import.
