@@ -641,12 +641,14 @@ en:
       delete: Delete document
       delete_confirm: Delete %{filename}? This cannot be undone.
       document_types:
+        algorithmic_trading_controls: Algorithmic Trading Controls
         aml_ctf_policy: AML/CTF Policy
         aml_ctf_questionnaire: AML/CTF Questionnaire
         aml_kyc_requirements: AML/KYC Requirements
         apm_summary: APM Summary
         articles_of_association: Articles of Association
         bank_account_statement: Bank Account Statement
+        business_continuity_plan: Business Continuity Plan
         business_plan: Business Plan
         capital_adequacy_evidence: Capital Adequacy Evidence
         certificate_of_amendment: Certificate of Amendment
@@ -676,6 +678,8 @@ en:
         responsible_gambling_policy: Responsible Gambling Policy
         share_certificate: Share Certificate
         source_of_wealth_questionnaire: Source of Wealth Questionnaire
+        trading_capital_source_evidence: Trading Capital Source Evidence
+        trading_track_record: Trading Track Record
         transaction_extract: Transaction Extract
         utility_bill: Utility Bill
         vasp_registration: VASP Registration
@@ -805,6 +809,27 @@ en:
           guidance: Upload the applicant's responsible-gambling and social-responsibility
             policy.
           title: Responsible gambling policy
+      proprietary_trading:
+        algorithmic_trading_controls:
+          guidance: Upload evidence of the applicant's algorithmic-trading and pre-trade
+            risk controls.
+          title: Algorithmic trading controls
+        business_continuity_plan:
+          guidance: Upload the applicant's incident-response and business-continuity
+            plan.
+          title: Business continuity plan
+        capital_adequacy_evidence:
+          guidance: Upload evidence of the applicant's capital adequacy for its trading
+            activities.
+          title: Capital adequacy evidence
+        trading_capital_source_evidence:
+          guidance: Upload evidence explaining the source of the applicant's trading
+            capital.
+          title: Trading capital source evidence
+        trading_track_record:
+          guidance: Upload evidence of the applicant's existing account or trading
+            track record.
+          title: Trading track record
     principal_document_links:
       new:
         empty: All documents for this applicant are already linked.
