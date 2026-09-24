@@ -298,6 +298,36 @@ RSpec.describe PrincipalMatcherService, type: :model do
       end
     end
 
+    # MH-330: CompaniesHouseName.normalize rewrites "SURNAME, Forenames" into
+    # forename-first order, but a document's own extraction can produce
+    # surname-first — the same words, reversed. Jaro-Winkler alone scores
+    # that low (it isn't word-order invariant), so this used to fall
+    # through to auto-creating a duplicate principal instead of matching.
+    context "when a document's extracted name is in surname-first order, reversed from the normalized registry name (MH-330)" do
+      let!(:principal) { create(:kyc_principal, applicant: applicant, name: "EXAMPLESON, Morgan Lee", source: :registry_fetched) }
+      let(:result_data) { { "full_name" => "Exampleson Morgan Lee", "date_of_birth" => nil } }
+
+      it "still matches the registry principal instead of creating a duplicate" do
+        expect {
+          result = described_class.call(applicant: applicant, document_type: "passport", result: result_data)
+
+          expect(result.principal).to eq(principal)
+        }.not_to change(KycPrincipal, :count)
+      end
+    end
+
+    context "when a fuzzy match candidate's name is word-order-reversed relative to the extracted name (MH-330)" do
+      let!(:principal) { create(:kyc_principal, applicant: applicant, name: "Sample Riley") }
+      let(:result_data) { { "full_name" => "Riley Sammple", "date_of_birth" => nil } }
+
+      it "matches fuzzily across the reordering plus the typo" do
+        result = described_class.call(applicant: applicant, document_type: "utility_bill", result: result_data)
+
+        expect(result.principal).to eq(principal)
+        expect(result.match_method).to eq("fuzzy")
+      end
+    end
+
     context "when a registry-fetched principal already has a full date of birth" do
       let!(:principal) do
         create(:kyc_principal, applicant: applicant, name: "SAMPLE, Riley", source: :registry_fetched,

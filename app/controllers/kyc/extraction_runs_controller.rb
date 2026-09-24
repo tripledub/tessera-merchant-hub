@@ -10,7 +10,7 @@ class Kyc::ExtractionRunsController < ApplicationController
 
     respond_to do |format|
       format.turbo_stream do
-        total = docs.size
+        document_ids = docs.pluck(:id)
         render turbo_stream: [
           turbo_stream.append(
             "toast-container",
@@ -20,7 +20,7 @@ class Kyc::ExtractionRunsController < ApplicationController
           turbo_stream.update(
             "extraction-progress-container",
             partial: "kyc/documents/extraction_progress",
-            locals: { total: total }
+            locals: { document_ids: document_ids }
           )
         ]
       end

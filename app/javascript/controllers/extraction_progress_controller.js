@@ -2,11 +2,10 @@ import { Controller } from "@hotwired/stimulus"
 
 export default class extends Controller {
   static targets = ["bar", "counter", "label"]
-  static values = { total: Number }
+  static values = { documentIds: Array }
 
   connect() {
-    this.baselineComplete = this.countComplete()
-    this.update(0)
+    this.update(this.countComplete())
 
     document.addEventListener("turbo:before-stream-render", this.boundRecalculate = () => {
       setTimeout(() => this.recalculate(), 100)
@@ -20,18 +19,17 @@ export default class extends Controller {
   }
 
   recalculate() {
-    if (this.totalValue === 0) return
-    const newlyDone = this.countComplete() - this.baselineComplete
-    this.update(Math.max(0, newlyDone))
+    this.update(this.countComplete())
   }
 
   update(done) {
-    const pct = this.totalValue > 0 ? Math.round((done / this.totalValue) * 100) : 0
+    const total = this.documentIdsValue.length
+    const pct = total > 0 ? Math.round((done / total) * 100) : 0
 
     if (this.hasBarTarget) this.barTarget.style.width = `${pct}%`
-    if (this.hasCounterTarget) this.counterTarget.textContent = `${done} of ${this.totalValue}`
+    if (this.hasCounterTarget) this.counterTarget.textContent = `${done} of ${total}`
 
-    if (done >= this.totalValue && done > 0 && this.hasLabelTarget) {
+    if (done >= total && done > 0 && this.hasLabelTarget) {
       this.labelTarget.textContent = "Extraction complete"
       if (this.hasBarTarget) {
         this.barTarget.classList.remove("bg-brand-500")
@@ -40,10 +38,16 @@ export default class extends Controller {
     }
   }
 
+  // Only the content div — the single element that actually carries the
+  // document's current status text — is queried per id, and only for the
+  // ids this run queued, so a document already Complete/Error elsewhere on
+  // the Documents tab (or the same document's other nested elements, e.g.
+  // its turbo-frame or metadata div) can never inflate the count.
   countComplete() {
     let count = 0
-    document.querySelectorAll("[id^='kyc_document_']").forEach(card => {
-      if (card.textContent.includes("Complete") || card.textContent.includes("Error")) count++
+    this.documentIdsValue.forEach(id => {
+      const content = document.getElementById(`kyc_document_${id}_content`)
+      if (content && (content.textContent.includes("Complete") || content.textContent.includes("Error"))) count++
     })
     return count
   }

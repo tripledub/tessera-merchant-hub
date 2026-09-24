@@ -21,7 +21,7 @@
           <% else %>
             <span><%= document.file.filename %></span>
           <% end %>
-          <% if policy(applicant_domain).detach_evidence? %>
+          <% if viewer_can?(applicant_domain, :detach_evidence?) %>
             <%= button_to kyc_evidence_link_path(link), method: :delete,
                   form: { class: "inline" },
                   title: t("kyc.applicant_domains.evidence.unlink"),
@@ -38,7 +38,7 @@
       <% if evidence_links.empty? %>
         <span class="italic"><%= t("kyc.applicant_domains.evidence.none") %></span>
       <% end %>
-      <% if policy(applicant_domain).attach_evidence? %>
+      <% if viewer_can?(applicant_domain, :attach_evidence?) %>
         <%= link_to t("kyc.applicant_domains.evidence.add"),
               new_kyc_applicant_domain_evidence_link_path(applicant_domain),
               data: { turbo_frame: "applicant-domain-modal" },
@@ -69,7 +69,7 @@
   </td>
   <td class="px-4 py-2">
     <div class="flex items-center gap-2">
-    <% if (applicant_domain.pending? || applicant_domain.rejected?) && policy(applicant_domain).accept? %>
+    <% if (applicant_domain.pending? || applicant_domain.rejected?) && viewer_can?(applicant_domain, :accept?) %>
       <% check_icon = capture do %>
         <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path fill-rule="evenodd" clip-rule="evenodd" d="M20.707 5.293a1 1 0 0 1 0 1.414l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414L9 15.586 19.293 5.293a1 1 0 0 1 1.414 0z" fill=""/>
@@ -93,7 +93,7 @@
         <% end %>
       <% end %>
     <% end %>
-    <% if applicant_domain.pending? && policy(applicant_domain).reject? %>
+    <% if applicant_domain.pending? && viewer_can?(applicant_domain, :reject?) %>
       <%= button_to reject_kyc_applicant_domain_path(applicant_domain), method: :patch,
             title: t("kyc.applicant_domains.reject"),
             "aria-label": t("kyc.applicant_domains.reject"),
@@ -103,7 +103,7 @@
         </svg>
       <% end %>
     <% end %>
-    <% if policy(applicant_domain).destroy? %>
+    <% if viewer_can?(applicant_domain, :destroy?) %>
       <%= button_to kyc_applicant_domain_path(applicant_domain), method: :delete,
             title: t('kyc.applicant_domains.delete'),
             data: { turbo_confirm: t('kyc.applicant_domains.delete_confirm', name: applicant_domain.name) },

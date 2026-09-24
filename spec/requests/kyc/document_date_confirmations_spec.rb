@@ -10,7 +10,7 @@ RSpec.describe "Kyc::DocumentDateConfirmations", type: :request do
   let_it_be(:applicant) { create(:applicant) }
 
   let!(:document) do
-    create(:kyc_document, applicant: applicant, validity_dates: {
+    create(:kyc_document, applicant: applicant, classification_status: :confirmed, validity_dates: {
       "expiry" => { "raw" => "2030-01-01", "normalized" => "2030-01-01", "confidence" => 0.95,
                     "provenance" => "ai_extraction" },
       "issued" => { "raw" => nil, "normalized" => nil, "confidence" => nil, "provenance" => "ai_extraction" }
