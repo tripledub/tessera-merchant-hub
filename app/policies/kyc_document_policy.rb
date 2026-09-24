@@ -17,6 +17,10 @@ class KycDocumentPolicy < ApplicationPolicy
     psp_admin?
   end
 
+  def mark_reviewed?
+    psp_admin?
+  end
+
   def update?
     psp_admin?
   end
