@@ -218,6 +218,44 @@ RSpec.describe "ProcessingStatements", type: :request do
     end
   end
 
+  describe "GET /processing_statements/:id/edit — auto-suggested column mapping (MH-325)" do
+    it "pre-selects a matched field and flags it with the auto-selected warning" do
+      statement = create(:processing_statement, applicant: applicant)
+
+      get edit_processing_statement_path(statement)
+
+      page = Nokogiri::HTML(response.body)
+      selected_option = page.at_css("select#processing_statement_date option[selected]")
+      expect(selected_option&.text).to eq("Date")
+      expect(page.at_css("[title='#{I18n.t("processing_statements.edit.auto_selected")}']")).to be_present
+    end
+
+    it "leaves the dropdown unmapped when no header matches, without a warning icon for it" do
+      statement = create(:processing_statement, applicant: applicant)
+      statement.file.attach(
+        io: StringIO.new("Reference,Notes\nfoo,bar\n"), filename: "statement.csv", content_type: "text/csv"
+      )
+
+      get edit_processing_statement_path(statement)
+
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("select#processing_statement_date option[selected]")).to be_nil
+      expect(page.at_css("[title='#{I18n.t("processing_statements.edit.auto_selected")}']")).to be_nil
+    end
+
+    it "does not override an already-mapped statement with a fresh guess" do
+      statement = create(:processing_statement, applicant: applicant,
+        column_mapping: { "date" => "Amount", "amount" => "Date", "currency" => "Currency", "outcome" => "Status" })
+
+      get edit_processing_statement_path(statement)
+
+      page = Nokogiri::HTML(response.body)
+      selected_option = page.at_css("select#processing_statement_date option[selected]")
+      expect(selected_option&.text).to eq("Amount")
+      expect(page.at_css("[title='#{I18n.t("processing_statements.edit.auto_selected")}']")).to be_nil
+    end
+  end
+
   describe "PATCH /processing_statements/:id then GET show" do
     let!(:statement) do
       s = create(:processing_statement, applicant: applicant)
