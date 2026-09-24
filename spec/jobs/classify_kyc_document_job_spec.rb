@@ -54,6 +54,27 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
       end
     end
 
+    context "when the AI classifier cannot determine a document type (MH-337)" do
+      let(:mock_chat) { instance_double(RubyLLM::Chat) }
+
+      before do
+        allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("mystery_doc.pdf"))
+        allow(KycDocument).to receive(:find).with(document.id).and_return(document)
+        allow(RubyLLM).to receive(:context).and_return(instance_double(RubyLLM::Context, chat: mock_chat))
+        allow(mock_chat).to receive(:ask).and_return(
+          instance_double(RubyLLM::Message, content: '{"document_type": null, "confidence": 0.0}')
+        )
+      end
+
+      it "does not claim a suggestion was made — unclassified, not ai_suggested" do
+        described_class.new.perform(document.id)
+        document.reload
+        expect(document.classification_status).to eq("unclassified")
+        expect(document.document_type).to be_nil
+        expect(document.classification_method).to eq("ai")
+      end
+    end
+
     context "when auto_classified with onboarding in document_collection stage" do
       before do
         checklist = [
