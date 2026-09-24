@@ -73,6 +73,54 @@ RSpec.describe "Applicants: synthetic Utopia registry", type: :request do
         expect(created.registry_profiles).to be_empty
         expect(flash[:alert]).to eq(I18n.t("flash.applicants.registry_lookup_failed"))
       end
+
+      # MH-313: ownership-structure scenarios.
+      it "creates a principal only for the active director on XU000005 (resigned director)" do
+        post applicants_path, params: { applicant: xu_params.merge(company_number: "XU000005") }
+
+        created = Applicant.find_by!(name: "Utopia Test Co")
+        expect(created.kyc_principals.pluck(:name)).to eq([ "ACTIVE, Morgan" ])
+      end
+
+      it "flags a nominee_detected warning on XU000004 (corporate PSC in a nominee jurisdiction)" do
+        post applicants_path, params: { applicant: xu_params.merge(company_number: "XU000004") }
+
+        created = Applicant.find_by!(name: "Utopia Test Co")
+        warning = created.validation_warnings.find_by(warning_type: :nominee_detected)
+        expect(warning).to be_present
+        expect(warning.message).to include("Cyprus Nominee Holdings Ltd")
+      end
+
+      it "flags a percentage_deviation warning on XU000006 (PSC percentages overshoot 100%)" do
+        post applicants_path, params: { applicant: xu_params.merge(company_number: "XU000006") }
+
+        created = Applicant.find_by!(name: "Utopia Test Co")
+        warning = created.validation_warnings.find_by(warning_type: :percentage_deviation)
+        expect(warning).to be_present
+        expect(warning.typed_metadata.actual).to eq(125.0)
+      end
+
+      it "follows XU000003's corporate PSC chain to the individual PSC end to end" do
+        post applicants_path, params: { applicant: xu_params.merge(company_number: "XU000003") }
+        created = Applicant.find_by!(name: "Utopia Test Co")
+        psc = Registry::PersonWithSignificantControl.joins(:registry_profile)
+          .where(registry_profiles: { applicant_id: created.id }).sole
+
+        post trace_psc_chain_applicant_path(created, psc.id)
+
+        expect(response).to redirect_to(applicant_path(created))
+        expect(flash[:notice]).to eq(I18n.t("flash.applicants.trace_psc_chain_success"))
+        intermediate_profile = created.registry_profiles.find_by(company_number: "XU000010")
+        expect(intermediate_profile).to be_present
+        expect(intermediate_profile.people_with_significant_control.pluck(:name)).to eq([ "FINALOWNER, Jordan" ])
+
+        warning = created.validation_warnings.where(warning_type: :ubo_threshold_exceeded)
+          .find { |w| w.message.include?("FINALOWNER, Jordan") }
+        expect(warning).to be_present
+        # 75% (XU000003's PSC) compounded with 75% (the individual's own
+        # share of the intermediate company) = 56.25% effective ownership.
+        expect(warning.typed_metadata.effective_percentage).to eq(56.25)
+      end
     end
 
     context "when synthetic data is disabled" do

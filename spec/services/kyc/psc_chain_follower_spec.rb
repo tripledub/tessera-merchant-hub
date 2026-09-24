@@ -88,6 +88,34 @@ RSpec.describe Kyc::PscChainFollower do
       end
     end
 
+    # MH-313: was hardcoded to "gb" — must resolve through the applicant's
+    # own registry_jurisdiction so a Utopia (xu) applicant's corporate PSC
+    # chains through the fake registry rather than always missing against
+    # the real Companies House client.
+    context "when the applicant's own jurisdiction is not gb" do
+      include_context "with synthetic data enabled"
+
+      let(:applicant) { create(:applicant, registry_jurisdiction: "xu", company_number: "XU000003", company_name: "Utopia Chain Holdings Ltd") }
+      let(:registry_profile) { create(:registry_profile, applicant: applicant, jurisdiction: "xu", company_number: "XU000003") }
+      let(:psc) do
+        create(:registry_person_with_significant_control,
+          registry_profile: registry_profile, name: "Utopia Intermediate Holdings Ltd",
+          kind: "corporate-entity-person-with-significant-control", registration_number: "XU000010",
+          natures_of_control: [ "ownership-of-shares-75-to-100-percent" ])
+      end
+
+      it "fetches the sub-company from the fake Utopia registry, not Companies House" do
+        allow(Registry::CompaniesHouseUkClient).to receive(:new)
+
+        result = call(psc)
+
+        expect(result.success).to be(true)
+        expect(result.registry_profile.company_name).to eq("Utopia Intermediate Holdings Ltd")
+        expect(result.registry_profile.jurisdiction).to eq("xu")
+        expect(Registry::CompaniesHouseUkClient).not_to have_received(:new)
+      end
+    end
+
     context "when the corporate PSC's own registry fetch succeeds" do
       let(:psc) do
         create(:registry_person_with_significant_control,

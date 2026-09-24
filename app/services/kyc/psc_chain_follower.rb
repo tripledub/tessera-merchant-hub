@@ -59,10 +59,16 @@ module Kyc
     end
 
     def fetch_or_use_cached(registration_number)
-      cached = @applicant.registry_profiles.find_by(company_number: registration_number, jurisdiction: "gb")
+      # MH-313: was hardcoded to "gb" — a corporate PSC almost always shares
+      # its parent's jurisdiction (this is a same-registry chain, not a
+      # cross-border one), and this is what lets a Utopia (xu) applicant's
+      # corporate PSC chain through the fake registry instead of always
+      # missing against the real Companies House client.
+      jurisdiction = @applicant.registry_jurisdiction
+      cached = @applicant.registry_profiles.find_by(company_number: registration_number, jurisdiction: jurisdiction)
       return Registry::Lookup::Result.success(cached) if cached
 
-      Registry::Lookup.call(applicant: @applicant, company_number: registration_number, jurisdiction: "gb")
+      Registry::Lookup.call(applicant: @applicant, company_number: registration_number, jurisdiction: jurisdiction)
     end
 
     def process_sub_pscs(profile)
