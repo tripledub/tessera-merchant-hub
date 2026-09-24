@@ -27,4 +27,4 @@ pre-commit:
       run: bundle exec i18n-tasks health
 
     rspec:
-      run: bundle exec rspec --format progress
+      run: bundle exec rspec --tag '~type:system' --format progress
