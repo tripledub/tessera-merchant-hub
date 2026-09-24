@@ -28,7 +28,7 @@ module Kyc
 
     def matched_principal
       return nil unless entity.individual?
-      entity.applicant.kyc_principals.find { |p| p.name.downcase.strip == entity.name.downcase.strip }
+      entity.applicant.kyc_principals.active.find { |p| p.name.downcase.strip == entity.name.downcase.strip }
     end
 
     def relationship_type_badge(edge)

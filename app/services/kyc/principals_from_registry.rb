@@ -34,7 +34,7 @@ module Kyc
     end
 
     def create_principal(name:, role:, date_of_birth_month:, date_of_birth_year:)
-      return if @applicant.kyc_principals.where("LOWER(name) = ?", name.downcase).exists?
+      return if @applicant.kyc_principals.active.where("LOWER(name) = ?", name.downcase).exists?
 
       @applicant.kyc_principals.create!(
         name: name,

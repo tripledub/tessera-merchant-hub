@@ -54,6 +54,17 @@ RSpec.describe "ProcessingStatements", type: :request do
       expect(page.at_css("turbo-frame##{MAPPING_MODAL_ID}")).to be_present
     end
 
+    it "gives the mapping frame a loading spinner shown only while busy, so a slow Map click doesn't look broken (MH-324)" do
+      create(:processing_statement, applicant: applicant, status: :uploaded)
+
+      get applicant_processing_statements_path(applicant)
+
+      frame = Nokogiri::HTML(response.body).at_css("turbo-frame##{MAPPING_MODAL_ID}")
+      spinner = frame.at_css("svg.animate-spin")
+      expect(spinner).to be_present
+      expect(spinner.ancestors.first["class"]).to include("hidden")
+    end
+
     it "offers errored statements for remapping and removal" do
       statement = create(:processing_statement, applicant: applicant, status: :error)
 
@@ -204,6 +215,44 @@ RSpec.describe "ProcessingStatements", type: :request do
 
       expect(response).to have_http_status(:forbidden)
       expect(statement.reload.status).to eq("uploaded")
+    end
+  end
+
+  describe "GET /processing_statements/:id/edit — auto-suggested column mapping (MH-325)" do
+    it "pre-selects a matched field and flags it with the auto-selected warning" do
+      statement = create(:processing_statement, applicant: applicant)
+
+      get edit_processing_statement_path(statement)
+
+      page = Nokogiri::HTML(response.body)
+      selected_option = page.at_css("select#processing_statement_date option[selected]")
+      expect(selected_option&.text).to eq("Date")
+      expect(page.at_css("[title='#{I18n.t("processing_statements.edit.auto_selected")}']")).to be_present
+    end
+
+    it "leaves the dropdown unmapped when no header matches, without a warning icon for it" do
+      statement = create(:processing_statement, applicant: applicant)
+      statement.file.attach(
+        io: StringIO.new("Reference,Notes\nfoo,bar\n"), filename: "statement.csv", content_type: "text/csv"
+      )
+
+      get edit_processing_statement_path(statement)
+
+      page = Nokogiri::HTML(response.body)
+      expect(page.at_css("select#processing_statement_date option[selected]")).to be_nil
+      expect(page.at_css("[title='#{I18n.t("processing_statements.edit.auto_selected")}']")).to be_nil
+    end
+
+    it "does not override an already-mapped statement with a fresh guess" do
+      statement = create(:processing_statement, applicant: applicant,
+        column_mapping: { "date" => "Amount", "amount" => "Date", "currency" => "Currency", "outcome" => "Status" })
+
+      get edit_processing_statement_path(statement)
+
+      page = Nokogiri::HTML(response.body)
+      selected_option = page.at_css("select#processing_statement_date option[selected]")
+      expect(selected_option&.text).to eq("Amount")
+      expect(page.at_css("[title='#{I18n.t("processing_statements.edit.auto_selected")}']")).to be_nil
     end
   end
 

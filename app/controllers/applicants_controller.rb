@@ -21,7 +21,7 @@ class ApplicantsController < ApplicationController
 
   def show
     authorize applicant
-    @kyc_principals = applicant.kyc_principals.order(:name)
+    @kyc_principals = applicant.kyc_principals.active.order(:name)
     @kyc_documents  = applicant.kyc_documents.includes(:kyc_principal, :evidenced_domains).ordered_by_review_priority
     @applicant_domains = domains_for_display
   end
@@ -32,7 +32,7 @@ class ApplicantsController < ApplicationController
     allowed = %w[overview principals documents domains ownership compliance summary]
     head(:not_found) and return unless allowed.include?(tab_name)
 
-    @kyc_principals = applicant.kyc_principals.order(:name) if tab_name == "principals"
+    @kyc_principals = applicant.kyc_principals.active.order(:name) if tab_name == "principals"
     @kyc_documents = applicant.kyc_documents.includes(:kyc_principal, :evidenced_domains).ordered_by_review_priority if tab_name == "documents"
     @applicant_domains = domains_for_display if tab_name == "domains"
 
