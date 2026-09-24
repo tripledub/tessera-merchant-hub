@@ -81,5 +81,27 @@ RSpec.describe Kyc::EffectivePolicy do
         [ "vasp_registration", "wallet_custody_infrastructure_attestation" ]
       )
     end
+
+    it "defines only the four blocking Gambling document requirements" do
+      gambling_requirements = described_class.for(build(:applicant, sector: :gambling)).drop(2)
+
+      expect(gambling_requirements.map { |requirement| [ requirement.id, requirement.outcome, requirement.source ] }).to eq(
+        [
+          [ "gambling.gaming_licence", "blocking", "2.1" ],
+          [ "gambling.player_fund_segregation_evidence", "blocking", "2.3" ],
+          [ "gambling.responsible_gambling_policy", "blocking", "2.5" ],
+          [ "gambling.chargeback_dispute_procedure", "blocking", "2.5" ]
+        ]
+      )
+      expect(gambling_requirements.map(&:rule).uniq).to eq([ "required_document" ])
+      expect(gambling_requirements.map { |requirement| requirement.parameters.fetch("document_type") }).to eq(
+        %w[
+          gaming_licence
+          player_fund_segregation_evidence
+          responsible_gambling_policy
+          chargeback_dispute_procedure
+        ]
+      )
+    end
   end
 end
