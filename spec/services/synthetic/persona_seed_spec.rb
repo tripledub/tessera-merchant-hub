@@ -32,7 +32,13 @@ RSpec.describe Synthetic::PersonaSeed do
 
   it "is idempotent — updates the existing row rather than duplicating it" do
     Synthetic::PersonaExport.call(persona)
+    described_class.call
 
-    expect { described_class.call }.not_to change(Synthetic::Persona, :count)
+    # Scoped to this persona's own slug, not a blanket count: other
+    # committed persona fixtures (e.g. MH-311's scenario personas) are also
+    # seeded by this call and are irrelevant to this persona's idempotency.
+    expect {
+      described_class.call
+    }.not_to change { Synthetic::Persona.where(slug: persona.slug).count }
   end
 end

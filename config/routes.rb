@@ -113,6 +113,11 @@ Rails.application.routes.draw do
         post :export, on: :member
         resources :documents, only: :create, controller: "persona_documents"
       end
+      # MH-311: the scenario catalogue (config/synthetic/scenarios) — no
+      # create/edit here, scenarios are hand-authored YAML, not admin-created.
+      resources :scenarios, only: :index do
+        get :download, on: :member
+      end
     end
   end
 
