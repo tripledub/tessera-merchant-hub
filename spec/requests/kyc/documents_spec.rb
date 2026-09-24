@@ -453,6 +453,47 @@ RSpec.describe "KycDocuments", type: :request do
     end
   end
 
+  describe "POST /kyc_documents/:id/mark_reviewed (MH-327)" do
+    context "when signed in as psp_admin" do
+      before do
+        sign_in psp_admin
+        allow(Turbo::StreamsChannel).to receive(:broadcast_replace_to)
+      end
+
+      it "completes an other-typed, confirmed document" do
+        document = create(:kyc_document, applicant: applicant, document_type: :other,
+          classification_status: :confirmed, status: :pending)
+
+        post mark_reviewed_kyc_document_path(document)
+
+        expect(response).to have_http_status(:ok)
+        expect(document.reload.status).to eq("complete")
+      end
+
+      it "rejects a document that isn't other-typed" do
+        document = create(:kyc_document, applicant: applicant, document_type: :passport,
+          classification_status: :confirmed, status: :pending)
+
+        post mark_reviewed_kyc_document_path(document)
+
+        expect(response).to have_http_status(:unprocessable_content)
+        expect(document.reload.status).to eq("pending")
+      end
+    end
+
+    context "when signed in as psp_support" do
+      before { sign_in psp_support }
+
+      it "returns 403" do
+        document = create(:kyc_document, applicant: applicant, document_type: :other,
+          classification_status: :confirmed, status: :pending)
+
+        post mark_reviewed_kyc_document_path(document)
+        expect(response).to have_http_status(:forbidden)
+      end
+    end
+  end
+
   describe "PATCH /kyc_documents/:id/comment_status" do
     let_it_be(:merchant_admin) { create(:user, :merchant_admin) }
     let!(:document) { create(:kyc_document, applicant: applicant) }
