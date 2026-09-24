@@ -92,10 +92,16 @@
                 </option>
               <% end %>
             </select>
-            <button type="button" data-action="click->classification#confirm"
+            <%# MH-332: disabled whenever no real type is selected (either
+                pre-selected, e.g. an AI/rule-based suggestion, or picked in
+                this render) — confirming without one leaves the document
+                permanently "Unclassified" with no way to extract it. %>
+            <button type="button" data-classification-target="confirmButton"
+                    data-action="click->classification#confirm"
                     title="<%= t('kyc.documents.confirm') %>"
                     aria-label="<%= t('kyc.documents.confirm') %>"
-                    class="text-gray-400 hover:text-success-500 dark:hover:text-success-400">
+                    <%= "disabled" if document.document_type.blank? %>
+                    class="text-gray-400 hover:text-success-500 dark:hover:text-success-400 disabled:opacity-40 disabled:pointer-events-none">
               <svg class="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M20.707 5.293a1 1 0 0 1 0 1.414l-11 11a1 1 0 0 1-1.414 0l-5-5a1 1 0 1 1 1.414-1.414L9 15.586 19.293 5.293a1 1 0 0 1 1.414 0z" fill=""/>
               </svg>

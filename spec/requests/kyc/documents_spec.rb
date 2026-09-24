@@ -196,6 +196,30 @@ RSpec.describe "KycDocuments", type: :request do
         expect(document.classification_status).to eq("confirmed")
       end
 
+      it "does not confirm classification without a document type, existing or submitted (MH-332)" do
+        unclassified = create(:kyc_document, applicant: applicant, document_type: nil,
+          classification_status: :ai_suggested)
+
+        patch kyc_document_path(unclassified),
+          params: { kyc_document: { classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(unclassified.reload.classification_status).to eq("ai_suggested")
+        expect(unclassified.document_type).to be_nil
+      end
+
+      it "confirms classification when a document type is submitted alongside it (MH-332)" do
+        unclassified = create(:kyc_document, applicant: applicant, document_type: nil,
+          classification_status: :ai_suggested)
+
+        patch kyc_document_path(unclassified),
+          params: { kyc_document: { document_type: "passport", classification_status: "confirmed" } },
+          headers: { "Accept" => "text/vnd.turbo-stream.html" }
+
+        expect(unclassified.reload.classification_status).to eq("confirmed")
+        expect(unclassified.document_type).to eq("passport")
+      end
+
       it "ignores invalid document types" do
         patch kyc_document_path(document),
           params: { kyc_document: { document_type: "invalid_type" } },
