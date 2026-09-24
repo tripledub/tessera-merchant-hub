@@ -102,7 +102,7 @@ module Kyc
     end
 
     def identity_verification_dimension
-      principals = applicant.kyc_principals
+      principals = applicant.kyc_principals.active
       total = principals.count
       identity_types = KycDocument.document_types.values_at(*Kyc::DocumentCategory.types_for(:identity)).compact
       with_identity = principals.joins(:kyc_documents)

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_22_110300) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -253,6 +253,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_110300) do
     t.integer "date_of_birth_month"
     t.integer "date_of_birth_year"
     t.string "email"
+    t.uuid "merged_into_id"
     t.string "name", null: false
     t.string "postcode"
     t.integer "role", default: 0, null: false
@@ -260,6 +261,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_110300) do
     t.integer "status", default: 1, null: false
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_kyc_principals_on_applicant_id"
+    t.index ["merged_into_id"], name: "index_kyc_principals_on_merged_into_id"
   end
 
   create_table "kyc_validation_warnings", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -468,6 +470,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_22_110300) do
   add_foreign_key "kyc_principal_match_overrides", "kyc_documents"
   add_foreign_key "kyc_principal_match_overrides", "kyc_principals"
   add_foreign_key "kyc_principal_match_overrides", "users", column: "resolved_by_id"
+  add_foreign_key "kyc_principals", "kyc_principals", column: "merged_into_id"
   add_foreign_key "kyc_principals", "merchants", column: "applicant_id"
   add_foreign_key "kyc_validation_warnings", "kyc_corporate_entities", column: "corporate_entity_id"
   add_foreign_key "kyc_validation_warnings", "kyc_documents"

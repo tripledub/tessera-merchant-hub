@@ -6,10 +6,19 @@
 
 <div class="mb-6 flex items-start justify-between">
   <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= kyc_principal.name %></h1>
-  <% if policy(kyc_principal).edit? %>
-    <%= link_to t('.edit'), edit_kyc_principal_path(kyc_principal), class: "btn-secondary" %>
-  <% end %>
+  <div class="flex items-center gap-2">
+    <% if policy(kyc_principal).merge? %>
+      <%= link_to t('.merge'), new_kyc_principal_merge_path(kyc_principal),
+            class: "btn-secondary",
+            data: { turbo_frame: "merge-principal-modal" } %>
+    <% end %>
+    <% if policy(kyc_principal).edit? %>
+      <%= link_to t('.edit'), edit_kyc_principal_path(kyc_principal), class: "btn-secondary" %>
+    <% end %>
+  </div>
 </div>
+
+<turbo-frame id="merge-principal-modal"></turbo-frame>
 
 <%# Detail cards %>
 <div class="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
