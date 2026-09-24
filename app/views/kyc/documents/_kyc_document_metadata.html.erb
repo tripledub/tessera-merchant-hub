@@ -133,8 +133,12 @@
             </svg>
           </button>
 
+          <%# MH-336: position is set to fixed by overflow_menu_controller.js
+              on open, computed from the trigger's live position — not
+              absolute/right-0 here, which used to clip against the
+              Documents panel's overflow-hidden for the last row. %>
           <div data-overflow-menu-target="menu"
-               class="hidden absolute right-0 z-10 mt-1 min-w-[10rem] rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
+               class="hidden z-10 min-w-[10rem] rounded-md border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
             <% if document.validity_dates.present? && viewer_can?(document, :confirm_dates?) %>
               <%= link_to t("kyc.documents.date_confirmations.menu_label"),
                       date_confirmation_modal_kyc_document_path(document),
