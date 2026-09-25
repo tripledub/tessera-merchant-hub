@@ -33,6 +33,10 @@ RSpec.describe ExtractionData do
         player_fund_segregation_evidence
         responsible_gambling_policy
         chargeback_dispute_procedure
+        regulatory_authorisation
+        client_fund_segregation_evidence
+        capital_adequacy_evidence
+        negative_balance_protection_policy
       ]
 
       (KycDocument.document_types.keys - without_structured_extraction).each do |type|
@@ -50,6 +54,10 @@ RSpec.describe ExtractionData do
         player_fund_segregation_evidence
         responsible_gambling_policy
         chargeback_dispute_procedure
+        regulatory_authorisation
+        client_fund_segregation_evidence
+        capital_adequacy_evidence
+        negative_balance_protection_policy
       ]
 
       expect(without_structured_extraction.map { |type| ExtractionData::Base.for(type) })

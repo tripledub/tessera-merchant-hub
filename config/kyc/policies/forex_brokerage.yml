@@ -1,0 +1,31 @@
+schema_version: 1
+sector: forex_brokerage
+requirements:
+  - id: forex.regulatory_authorisation
+    rule: required_document
+    outcome: blocking
+    source: "3.1"
+    parameters:
+      document_type: regulatory_authorisation
+      subject: applicant
+  - id: forex.client_fund_segregation_evidence
+    rule: required_document
+    outcome: blocking
+    source: "3.1"
+    parameters:
+      document_type: client_fund_segregation_evidence
+      subject: applicant
+  - id: forex.capital_adequacy_evidence
+    rule: required_document
+    outcome: blocking
+    source: "3.3"
+    parameters:
+      document_type: capital_adequacy_evidence
+      subject: applicant
+  - id: forex.negative_balance_protection_policy
+    rule: required_document
+    outcome: blocking
+    source: "3.5"
+    parameters:
+      document_type: negative_balance_protection_policy
+      subject: applicant
