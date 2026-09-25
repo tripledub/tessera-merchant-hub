@@ -73,6 +73,7 @@ Rails.application.routes.draw do
 
   # RESTful link management: PATCH to confirm a link, DELETE to reject/unlink
   namespace :kyc do
+    resources :policies, only: :index
     resources :document_links, only: %i[update destroy]
     resources :document_date_confirmations, only: :create
     resources :principal_match_overrides, only: :create
