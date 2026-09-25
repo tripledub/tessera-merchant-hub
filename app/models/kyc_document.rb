@@ -85,6 +85,10 @@ class KycDocument < ApplicationRecord
     aml_ctf_questionnaire: 73,
     vasp_registration: 74,
     wallet_custody_infrastructure_attestation: 75,
+    gaming_licence: 76,
+    player_fund_segregation_evidence: 77,
+    responsible_gambling_policy: 78,
+    chargeback_dispute_procedure: 79,
     # Proof of ownership
     proof_of_domain_ownership: 80,
     # Content type the AI classifier can't process at all (e.g. xlsx/xls —

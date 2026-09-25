@@ -64,6 +64,15 @@ RSpec.describe KycDocument, type: :model do
     )
   end
 
+  it "defines the gambling policy document types" do
+    expect(described_class.document_types).to include(
+      "gaming_licence" => 76,
+      "player_fund_segregation_evidence" => 77,
+      "responsible_gambling_policy" => 78,
+      "chargeback_dispute_procedure" => 79
+    )
+  end
+
   it "defines the processing statement document type" do
     expect(described_class.document_types).to include("processing_statement" => 55)
   end

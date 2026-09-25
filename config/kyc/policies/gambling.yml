@@ -1,0 +1,31 @@
+schema_version: 1
+sector: gambling
+requirements:
+  - id: gambling.gaming_licence
+    rule: required_document
+    outcome: blocking
+    source: "2.1"
+    parameters:
+      document_type: gaming_licence
+      subject: applicant
+  - id: gambling.player_fund_segregation_evidence
+    rule: required_document
+    outcome: blocking
+    source: "2.3"
+    parameters:
+      document_type: player_fund_segregation_evidence
+      subject: applicant
+  - id: gambling.responsible_gambling_policy
+    rule: required_document
+    outcome: blocking
+    source: "2.5"
+    parameters:
+      document_type: responsible_gambling_policy
+      subject: applicant
+  - id: gambling.chargeback_dispute_procedure
+    rule: required_document
+    outcome: blocking
+    source: "2.5"
+    parameters:
+      document_type: chargeback_dispute_procedure
+      subject: applicant
