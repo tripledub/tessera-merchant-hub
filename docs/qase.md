@@ -21,14 +21,9 @@ To run a case: create/open an applicant, follow the case's steps, and record the
   **Finding, not a bug**: verifying the formatting variant against the real Claude endpoint showed the model normalizes the printed formatting back to clean, correctly-split fields — identical to the tidy fixture's. `AddressMatcherService`'s own unit spec shows an already-differently-formatted *string* handed directly to the matcher scores only "fuzzy", but that gap doesn't reach a real scanned document: extraction normalizes the formatting away first. See `spec/jobs/extract_kyc_document_job_spec.rb`'s two `utility_bill` address-matching contexts for the full explanation.
 
   Utility bills also never auto-resolve their issued date — `Kyc::DocumentExtractorService` supplies no per-field confidence for them (no MRZ-equivalent signal exists), so `Kyc::DocumentValidity::DateExtractor` always routes the date to staff confirmation regardless of how legible the printed date is. The 3-month freshness boundary (`base.utility_bill_freshness`, `max_age_months: 3`) is exercised through that real confirm-date endpoint in `spec/requests/kyc/utility_bill_freshness_boundary_spec.rb`, not by baking multiple near-duplicate PDFs with different printed dates.
-- **The synthetic Utopia registry** ([MH-310](https://shipcode.atlassian.net/browse/MH-310)) — a fictional jurisdiction, code `xu`, behind the `SYNTHETIC_DATA_ENABLED` env flag (off by default, **never set in production**; see `.env.example` and `config/initializers/synthetic_data.rb`). With it on, the applicant form offers "Utopia (test data)" as a jurisdiction, and its company numbers return invented data from `config/synthetic/registry_scenarios.yml` — no real Companies House company needed. Current scenarios:
+- **The synthetic Utopia registry** ([MH-310](https://shipcode.atlassian.net/browse/MH-310)) — a fictional jurisdiction, code `xu`, behind the `SYNTHETIC_DATA_ENABLED` env flag (off by default, **never set in production**; see `.env.example` and `config/initializers/synthetic_data.rb`). With it on, the applicant form offers "Utopia (test data)" as a jurisdiction, and its company numbers return invented data from `config/synthetic/registry_scenarios.yml` — no real Companies House company needed. The full list of company numbers (success, ownership-structure and failure scenarios), the persona and scenario admin pages, and how to keep personas across UAT deploys are in [Testing on UAT with synthetic data](uat-synthetic-data.md).
 
-  | Number | Scenario |
-  |---|---|
-  | `XU000001` | Two active directors, one registered address |
-  | `XU000002` | Officers named to match the synthetic specimen passports |
-
-Set the flag locally with `SYNTHETIC_DATA_ENABLED=true bin/rails server` (or export it for the session). More scenarios (error paths, PSC chains, nominees) are tracked as follow-on stories under [MH-230](https://shipcode.atlassian.net/browse/MH-230).
+Set the flag locally with `SYNTHETIC_DATA_ENABLED=true bin/rails server` (or export it for the session). Further synthetic-data stories are tracked under [MH-230](https://shipcode.atlassian.net/browse/MH-230).
 
 ## The automated layer
 
