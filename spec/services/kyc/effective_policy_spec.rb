@@ -8,6 +8,19 @@ RSpec.describe Kyc::EffectivePolicy do
   end
 
   describe ".for" do
+    let(:prop_trading_requirements) do
+      described_class.for(build(:applicant, sector: :proprietary_trading)).drop(2)
+    end
+    let(:prop_trading_metadata) do
+      [
+        [ "proprietary_trading.trading_track_record", "blocking", "4.3" ],
+        [ "proprietary_trading.trading_capital_source_evidence", "blocking", "4.3" ],
+        [ "proprietary_trading.capital_adequacy_evidence", "blocking", "4.3" ],
+        [ "proprietary_trading.algorithmic_trading_controls", "blocking", "4.5" ],
+        [ "proprietary_trading.business_continuity_plan", "blocking", "4.5" ]
+      ]
+    end
+
     it "returns the immutable base policy for a general applicant" do
       applicant = build(:applicant, sector: :general)
 
@@ -122,6 +135,22 @@ RSpec.describe Kyc::EffectivePolicy do
           client_fund_segregation_evidence
           capital_adequacy_evidence
           negative_balance_protection_policy
+        ]
+      )
+    end
+
+    it "defines only the five blocking Proprietary Trading document requirements" do
+      expect(prop_trading_requirements.map do |requirement|
+        [ requirement.id, requirement.outcome, requirement.source ]
+      end).to eq(prop_trading_metadata)
+      expect(prop_trading_requirements.map(&:rule).uniq).to eq([ "required_document" ])
+      expect(prop_trading_requirements.map { |requirement| requirement.parameters.fetch("document_type") }).to eq(
+        %w[
+          trading_track_record
+          trading_capital_source_evidence
+          capital_adequacy_evidence
+          algorithmic_trading_controls
+          business_continuity_plan
         ]
       )
     end

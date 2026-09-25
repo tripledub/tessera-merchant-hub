@@ -4,6 +4,26 @@ require "rails_helper"
 
 RSpec.describe ExtractionData do
   describe "Base.for" do
+    let(:without_structured_extraction) do
+      %w[
+        other
+        processing_statement
+        proof_of_domain_ownership
+        gaming_licence
+        player_fund_segregation_evidence
+        responsible_gambling_policy
+        chargeback_dispute_procedure
+        regulatory_authorisation
+        client_fund_segregation_evidence
+        capital_adequacy_evidence
+        negative_balance_protection_policy
+        trading_track_record
+        trading_capital_source_evidence
+        algorithmic_trading_controls
+        business_continuity_plan
+      ]
+    end
+
     it "returns Passport model for passport type" do
       expect(ExtractionData::Base.for(:passport)).to eq(ExtractionData::Passport)
     end
@@ -25,20 +45,6 @@ RSpec.describe ExtractionData do
     it "has every document type registered, except types intentionally without structured extraction" do
       # The gambling documents are presence-only in MH-213. Content assessment
       # is explicitly deferred, so they deliberately use the generic schema.
-      without_structured_extraction = %w[
-        other
-        processing_statement
-        proof_of_domain_ownership
-        gaming_licence
-        player_fund_segregation_evidence
-        responsible_gambling_policy
-        chargeback_dispute_procedure
-        regulatory_authorisation
-        client_fund_segregation_evidence
-        capital_adequacy_evidence
-        negative_balance_protection_policy
-      ]
-
       (KycDocument.document_types.keys - without_structured_extraction).each do |type|
         model = ExtractionData::Base.for(type)
         expect(model).not_to eq(ExtractionData::Generic), "Expected #{type} to have a registered ExtractionData model"
@@ -46,20 +52,6 @@ RSpec.describe ExtractionData do
     end
 
     it "falls back to Generic for document types without structured extraction" do
-      without_structured_extraction = %i[
-        other
-        processing_statement
-        proof_of_domain_ownership
-        gaming_licence
-        player_fund_segregation_evidence
-        responsible_gambling_policy
-        chargeback_dispute_procedure
-        regulatory_authorisation
-        client_fund_segregation_evidence
-        capital_adequacy_evidence
-        negative_balance_protection_policy
-      ]
-
       expect(without_structured_extraction.map { |type| ExtractionData::Base.for(type) })
         .to all(eq(ExtractionData::Generic))
     end

@@ -82,6 +82,15 @@ RSpec.describe KycDocument, type: :model do
     )
   end
 
+  it "defines the proprietary trading policy document types" do
+    expect(described_class.document_types).to include(
+      "trading_track_record" => 85,
+      "trading_capital_source_evidence" => 86,
+      "algorithmic_trading_controls" => 87,
+      "business_continuity_plan" => 88
+    )
+  end
+
   it "defines the processing statement document type" do
     expect(described_class.document_types).to include("processing_statement" => 55)
   end
