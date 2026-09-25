@@ -1,0 +1,31 @@
+# MH-311: composes MH-310's fake Utopia registry (XU000002), two
+# Synthetic::Persona records (MH-309) and a generated passport into one
+# named, versioned scenario. See config/synthetic/registry_scenarios.yml for
+# the registry side of XU000002 and config/synthetic/personas/ for the
+# persona records referenced below by slug. Everything here is invented:
+# never put a real person's or company's details in this file.
+id: two-directors-one-passport
+title: Two directors, one uploaded passport
+company_number: XU000002
+people:
+  - persona: alex-testperson
+    role: director
+    documents:
+      - type: passport
+        options:
+          place_of_birth: Testville
+          passport_number: L898902C3
+          expiry_preset: valid
+  - persona: morgan-lee-exampleson
+    role: director
+    documents: []
+ground_truth: >
+  Both directors are created as unconfirmed KYC principals from the registry
+  lookup, with a partial (month/year) date of birth. Uploading Alex
+  Testperson's generated passport auto-links to their principal via an exact
+  name and full date-of-birth match (registry_corroborated), backfilling the
+  principal's complete date of birth and moving it to Confirmed once
+  classification is confirmed. Morgan Lee Exampleson stays unconfirmed with
+  no document to auto-link.
+qase_cases:
+  - KYN-29

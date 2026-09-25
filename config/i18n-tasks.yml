@@ -11,3 +11,5 @@ ignore_unused:
   - activerecord.attributes.*
   # MH-251: readiness outcome labels/descriptions are looked up by outcome symbol
   - kyc.compliance.readiness_outcome.*
+  # Policy requirement IDs are loaded from config/kyc/policies/*.yml and resolved dynamically.
+  - kyc.policy_requirements.*
