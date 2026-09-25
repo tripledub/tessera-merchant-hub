@@ -762,6 +762,60 @@ en:
         page_title: Add evidence
         submit: Attach
         title: Add evidence for %{domain}
+    policies:
+      index:
+        boundary:
+          receipt: A required-document rule confirms that the expected document category
+            has been received. Receipt does not mean approval.
+          review: It does not prove that evidence is authentic, current, suitable
+            for the jurisdiction, or substantively adequate. Extraction, validity
+            checks, and human review may still apply.
+          title: What this view tells you
+        date_fields:
+          expiry: Expiry
+          issued: Issued
+        details:
+          effective_from: 'Effective from: %{value}'
+          expiry_warnings: 'Warnings: %{value} days before expiry'
+          freshness_warnings: 'Warnings: after %{value} days'
+          maximum_age:
+            one: 'Maximum age: 1 month'
+            other: 'Maximum age: %{count} months'
+          mode: 'Mode: %{value}'
+          required_dates:
+            one: 'Required date: %{value}'
+            other: 'Required dates: %{value}'
+          version: 'Policy version: %{value}'
+        effective_policy: The effective policy combines shared requirements with any
+          requirements specific to this sector.
+        fields:
+          document: Document
+          evaluation: What the system evaluates
+          source: Policy source
+        groups:
+          inherited: Applies to every sector
+          sector_badge: Sector-specific requirement
+          sector_specific: Sector-specific requirements
+          shared: Shared requirements
+          shared_badge: Shared requirement
+        outcomes:
+          blocking: Blocking
+          warning: Warning
+        page_title: KYC policies
+        rules:
+          document_validity:
+            summary: The %{document} document is evaluated using the validity settings
+              shown below.
+          required_document:
+            summary: A current, non-superseded %{document} document must be present
+              for the applicant.
+        sector_navigation: Policy sectors
+        subtitle: A read-only view of the onboarding policy currently deployed with
+          Merchant Hub.
+        title: KYC policies
+        validity_modes:
+          expires: Expiry
+          freshness: Freshness
     policy_requirements:
       base:
         passport_validity:
@@ -907,6 +961,7 @@ en:
       menu: Menu
       my_account: My Account
       new_application: New Application
+      policies: Policies
       shops: Shops
       sign_out: Sign out
       team: Team
