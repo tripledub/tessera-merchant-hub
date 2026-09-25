@@ -64,6 +64,33 @@ RSpec.describe KycDocument, type: :model do
     )
   end
 
+  it "defines the gambling policy document types" do
+    expect(described_class.document_types).to include(
+      "gaming_licence" => 76,
+      "player_fund_segregation_evidence" => 77,
+      "responsible_gambling_policy" => 78,
+      "chargeback_dispute_procedure" => 79
+    )
+  end
+
+  it "defines the forex policy document types" do
+    expect(described_class.document_types).to include(
+      "regulatory_authorisation" => 81,
+      "client_fund_segregation_evidence" => 82,
+      "capital_adequacy_evidence" => 83,
+      "negative_balance_protection_policy" => 84
+    )
+  end
+
+  it "defines the proprietary trading policy document types" do
+    expect(described_class.document_types).to include(
+      "trading_track_record" => 85,
+      "trading_capital_source_evidence" => 86,
+      "algorithmic_trading_controls" => 87,
+      "business_continuity_plan" => 88
+    )
+  end
+
   it "defines the processing statement document type" do
     expect(described_class.document_types).to include("processing_statement" => 55)
   end

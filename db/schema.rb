@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -416,6 +416,29 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_130000) do
     t.index ["shop_id"], name: "index_shops_on_shop_id", unique: true
   end
 
+  create_table "synthetic_generated_documents", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "document_type", null: false
+    t.bigint "generated_by_id", null: false
+    t.jsonb "options", default: {}, null: false
+    t.uuid "synthetic_persona_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["generated_by_id"], name: "index_synthetic_generated_documents_on_generated_by_id"
+    t.index ["synthetic_persona_id"], name: "index_synthetic_generated_documents_on_synthetic_persona_id"
+  end
+
+  create_table "synthetic_personas", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.date "date_of_birth", null: false
+    t.string "given_names", null: false
+    t.string "jurisdiction", default: "xu", null: false
+    t.string "sex", default: "unspecified", null: false
+    t.string "slug", null: false
+    t.string "surname", null: false
+    t.datetime "updated_at", null: false
+    t.index ["slug"], name: "index_synthetic_personas_on_slug", unique: true
+  end
+
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "current_sign_in_at"
@@ -483,4 +506,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_130000) do
   add_foreign_key "registry_directors", "registry_profiles"
   add_foreign_key "registry_people_with_significant_control", "registry_profiles"
   add_foreign_key "registry_profiles", "merchants", column: "applicant_id"
+  add_foreign_key "synthetic_generated_documents", "synthetic_personas"
+  add_foreign_key "synthetic_generated_documents", "users", column: "generated_by_id"
 end

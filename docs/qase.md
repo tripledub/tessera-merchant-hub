@@ -34,6 +34,8 @@ Set the flag locally with `SYNTHETIC_DATA_ENABLED=true bin/rails server` (or exp
 
 Some manual cases have an RSpec system spec exercising the same journey in a real, local, headless Chrome browser ([MH-314](https://shipcode.atlassian.net/browse/MH-314)). These are fast, deterministic regression checks — they don't replace the manual suite, which stays the place a reviewer signs off and where new scenarios get designed first.
 
+System specs are deliberately excluded from the mandatory CI and pre-commit RSpec runs. Those gates run the deterministic non-browser suite with `--tag '~type:system'`; browser journeys are an explicit local smoke-test activity. This avoids making pull requests depend on Chromium process startup on shared CI runners while keeping the journeys available on demand and through Qase reporting.
+
 - **Driver:** Capybara + [Cuprite](https://github.com/rubycc/cuprite) (Ferrum), driving a local Chrome install directly — no chromedriver to keep in sync. System specs are **local only**; there's no browser in the CI image yet.
 - **Extraction is stubbed**, not live: `Kyc::DocumentExtractorService.call` returns ground truth already verified against the real Claude endpoint for that fixture. The specs exercise our app logic (matching, principal creation, the UI) — not Claude's OCR.
 - **Linking to Qase:** tag the example with the case's ID, `qase_id: <n>`, matching an existing case in the `MH` project. The tag never triggers anything by itself.
@@ -46,6 +48,12 @@ Run just the automated, Qase-linked specs:
 
 ```bash
 bundle exec rspec --tag qase_id
+```
+
+Run every local browser system spec, including any that are not linked to Qase:
+
+```bash
+bundle exec rspec spec/system
 ```
 
 ### Reporting results to Qase

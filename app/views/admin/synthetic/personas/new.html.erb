@@ -1,0 +1,46 @@
+<% content_for :title, t('.page_title') %>
+
+<div class="mb-4">
+  <%= link_to t('.back'), admin_synthetic_personas_path, class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<h1 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white/90"><%= t('.title') %></h1>
+<p class="mb-6 max-w-2xl text-theme-sm text-warning-600"><%= t('.warning') %></p>
+
+<div class="card max-w-lg">
+  <%= form_with model: persona, url: admin_synthetic_personas_path, class: "space-y-4" do |f| %>
+    <%= render "shared/error_messages", object: persona %>
+
+    <div>
+      <%= f.label :given_names, t('.fields.given_names'), class: "form-label" %>
+      <%= f.text_field :given_names, class: "form-input", value: persona.given_names.presence || "Alex", required: true %>
+    </div>
+
+    <div>
+      <%= f.label :surname, t('.fields.surname'), class: "form-label" %>
+      <%= f.text_field :surname, class: "form-input", value: persona.surname.presence || "Testperson", required: true %>
+    </div>
+
+    <div>
+      <%= f.label :date_of_birth, t('.fields.date_of_birth'), class: "form-label" %>
+      <%= f.date_field :date_of_birth, class: "form-input", value: persona.date_of_birth || 30.years.ago.to_date, required: true %>
+    </div>
+
+    <div>
+      <%= f.label :sex, t('.fields.sex'), class: "form-label" %>
+      <%= f.select :sex,
+            Synthetic::Persona.sexes.keys.map { |value| [ t(".sexes.#{value}"), value ] },
+            {}, class: "form-input" %>
+    </div>
+
+    <div>
+      <%= f.label :jurisdiction, t('.fields.jurisdiction'), class: "form-label" %>
+      <%= f.text_field :jurisdiction, class: "form-input", value: persona.jurisdiction.presence || "xu" %>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <%= f.submit t('.submit'), class: "btn-primary" %>
+      <%= link_to t('.cancel'), admin_synthetic_personas_path, class: "btn-secondary" %>
+    </div>
+  <% end %>
+</div>

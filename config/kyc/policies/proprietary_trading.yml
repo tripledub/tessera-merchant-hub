@@ -1,0 +1,38 @@
+schema_version: 1
+sector: proprietary_trading
+requirements:
+  - id: proprietary_trading.trading_track_record
+    rule: required_document
+    outcome: blocking
+    source: "4.3"
+    parameters:
+      document_type: trading_track_record
+      subject: applicant
+  - id: proprietary_trading.trading_capital_source_evidence
+    rule: required_document
+    outcome: blocking
+    source: "4.3"
+    parameters:
+      document_type: trading_capital_source_evidence
+      subject: applicant
+  - id: proprietary_trading.capital_adequacy_evidence
+    rule: required_document
+    outcome: blocking
+    source: "4.3"
+    parameters:
+      document_type: capital_adequacy_evidence
+      subject: applicant
+  - id: proprietary_trading.algorithmic_trading_controls
+    rule: required_document
+    outcome: blocking
+    source: "4.5"
+    parameters:
+      document_type: algorithmic_trading_controls
+      subject: applicant
+  - id: proprietary_trading.business_continuity_plan
+    rule: required_document
+    outcome: blocking
+    source: "4.5"
+    parameters:
+      document_type: business_continuity_plan
+      subject: applicant

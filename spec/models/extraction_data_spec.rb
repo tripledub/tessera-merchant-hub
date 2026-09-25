@@ -4,6 +4,26 @@ require "rails_helper"
 
 RSpec.describe ExtractionData do
   describe "Base.for" do
+    let(:without_structured_extraction) do
+      %w[
+        other
+        processing_statement
+        proof_of_domain_ownership
+        gaming_licence
+        player_fund_segregation_evidence
+        responsible_gambling_policy
+        chargeback_dispute_procedure
+        regulatory_authorisation
+        client_fund_segregation_evidence
+        capital_adequacy_evidence
+        negative_balance_protection_policy
+        trading_track_record
+        trading_capital_source_evidence
+        algorithmic_trading_controls
+        business_continuity_plan
+      ]
+    end
+
     it "returns Passport model for passport type" do
       expect(ExtractionData::Base.for(:passport)).to eq(ExtractionData::Passport)
     end
@@ -22,21 +42,18 @@ RSpec.describe ExtractionData do
       )
     end
 
-    it "has every document type registered, except types intentionally never extracted" do
-      # These document types are handled outside the KYC extraction pipeline
-      # and deliberately have no dedicated schema to extract into.
-      never_extracted = %w[other processing_statement proof_of_domain_ownership]
-
-      (KycDocument.document_types.keys - never_extracted).each do |type|
+    it "has every document type registered, except types intentionally without structured extraction" do
+      # The gambling documents are presence-only in MH-213. Content assessment
+      # is explicitly deferred, so they deliberately use the generic schema.
+      (KycDocument.document_types.keys - without_structured_extraction).each do |type|
         model = ExtractionData::Base.for(type)
         expect(model).not_to eq(ExtractionData::Generic), "Expected #{type} to have a registered ExtractionData model"
       end
     end
 
-    it "falls back to Generic for document types that are never extracted" do
-      expect(ExtractionData::Base.for(:other)).to eq(ExtractionData::Generic)
-      expect(ExtractionData::Base.for(:processing_statement)).to eq(ExtractionData::Generic)
-      expect(ExtractionData::Base.for(:proof_of_domain_ownership)).to eq(ExtractionData::Generic)
+    it "falls back to Generic for document types without structured extraction" do
+      expect(without_structured_extraction.map { |type| ExtractionData::Base.for(type) })
+        .to all(eq(ExtractionData::Generic))
     end
   end
 
