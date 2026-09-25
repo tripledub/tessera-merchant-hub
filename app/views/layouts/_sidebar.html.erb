@@ -48,6 +48,7 @@
       </p>
       <%= nav_link_to t('layouts.navigation.applicants'),     applicants_path,     controller: "applicants", icon: :applicants %>
       <%= nav_link_to t('layouts.navigation.transcripts'), transcripts_path, controller: "transcripts", icon: :transcripts %>
+      <%= nav_link_to t('layouts.navigation.policies'), kyc_policies_path, controller: "kyc/policies" %>
       <% if current_user.psp_admin? %>
         <%= nav_link_to t('layouts.navigation.new_application'), new_applicant_path, controller: "applicants" %>
       <% end %>
