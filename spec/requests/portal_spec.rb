@@ -4,43 +4,70 @@ require "rails_helper"
 
 RSpec.describe "Onboarding authentication", type: :request do
   describe "GET /portal/sign_up" do
-    it "renders the dark mode toggle" do
+    it "does not allow open registration" do
       get new_applicant_user_registration_path
+
+      expect(response).to have_http_status(:not_found)
+    end
+
+    it "renders registration for a usable invitation with a fixed email address" do
+      invitation, token = ApplicantInvitation.issue!(
+        applicant: create(:applicant), email: "invited@example.com", invited_by: create(:user, :psp_admin)
+      )
+
+      get new_applicant_user_registration_path(invitation_token: token)
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include('data-controller="dark-mode"')
       expect(response.body).to include('aria-label="Toggle dark mode"')
+      email = Nokogiri::HTML(response.body).at_css("input[name='applicant_user[email]']")
+      expect(email["value"]).to eq(invitation.email)
+      expect(email.attribute("readonly")).to be_present
     end
   end
 
   describe "POST /portal (sign up)" do
+    let(:applicant) { create(:applicant, name: "Test Company") }
+    let(:invitation_and_token) do
+      ApplicantInvitation.issue!(
+        applicant: applicant, email: "invited@example.com", invited_by: create(:user, :psp_admin)
+      )
+    end
+    let(:invitation) { invitation_and_token.first }
+    let(:token) { invitation_and_token.second }
     let(:sign_up_params) do
       {
+        invitation_token: token,
         applicant_user: {
           first_name: "Jane",
           last_name: "Doe",
-          email: "jane.doe@example.com",
+          email: "attacker@example.com",
           password: "password123!",
           password_confirmation: "password123!"
         }
       }
     end
 
-    it "creates an ApplicantUser and associated Applicant" do
+    it "creates an unconfirmed user for the invited applicant and claims the invitation" do
+      invitation
+      applicant_count = Applicant.count
+
       expect {
         post applicant_user_registration_path, params: sign_up_params
       }.to change(ApplicantUser, :count).by(1)
-        .and change(Applicant, :count).by(1)
+      expect(Applicant.count).to eq(applicant_count)
 
-      expect(response).to redirect_to(portal_root_path)
-      follow_redirect!
-      expect(response).to have_http_status(:ok)
-    end
-
-    it "sets the applicant name from first and last name" do
-      post applicant_user_registration_path, params: sign_up_params
-      applicant = ApplicantUser.last.applicant
-      expect(applicant.name).to eq("Jane Doe")
+      applicant_user = ApplicantUser.last
+      expect(applicant_user).to have_attributes(
+        applicant: applicant,
+        email: invitation.email,
+        confirmed_at: nil
+      )
+      expect(applicant_user.confirmation_sent_at).to be_present
+      expect(applicant_user.confirmation_token).to be_present
+      expect(invitation.reload).to have_attributes(claimed_by: applicant_user)
+      expect(invitation.claimed_at).to be_present
+      expect(response).to redirect_to(new_applicant_user_session_path)
     end
 
     it "rejects sign up with missing password confirmation" do
@@ -62,6 +89,16 @@ RSpec.describe "Onboarding authentication", type: :request do
       }.not_to change(Applicant, :count)
 
       expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it "rejects registration without a usable invitation" do
+      sign_up_params[:invitation_token] = "unknown"
+
+      expect {
+        post applicant_user_registration_path, params: sign_up_params
+      }.not_to change(ApplicantUser, :count)
+
+      expect(response).to have_http_status(:not_found)
     end
   end
 
@@ -105,6 +142,27 @@ RSpec.describe "Onboarding authentication", type: :request do
       get portal_root_path
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("Welcome, Alex!")
+    end
+
+    it "does not allow an unconfirmed applicant user to sign in" do
+      applicant_user = create(:applicant_user, :unconfirmed)
+
+      post new_applicant_user_session_path, params: {
+        applicant_user: { email: applicant_user.email, password: applicant_user.password }
+      }
+
+      expect(response).to redirect_to(new_applicant_user_session_path)
+    end
+
+    it "allows an applicant user to sign in after confirming their email" do
+      applicant_user = create(:applicant_user, :unconfirmed)
+      applicant_user.confirm
+
+      post new_applicant_user_session_path, params: {
+        applicant_user: { email: applicant_user.email, password: applicant_user.password }
+      }
+
+      expect(response).to redirect_to(portal_root_path)
     end
 
     it "links authenticated applicant users to the onboarding chat" do

@@ -7,5 +7,10 @@ FactoryBot.define do
     password { "password123!" }
     first_name { "Test" }
     last_name { "Applicant" }
+    confirmed_at { Time.current }
+
+    trait :unconfirmed do
+      confirmed_at { nil }
+    end
   end
 end

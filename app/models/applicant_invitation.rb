@@ -2,6 +2,7 @@
 
 class ApplicantInvitation < ApplicationRecord
   TOKEN_BYTES = 32
+  class NotClaimable < StandardError; end
 
   belongs_to :applicant
   belongs_to :invited_by, class_name: "User"
@@ -36,4 +37,15 @@ class ApplicantInvitation < ApplicationRecord
     Digest::SHA256.hexdigest(token)
   end
   private_class_method :digest
+
+  def claim!(applicant_user)
+    with_lock do
+      unless claimed_at.nil? && revoked_at.nil? && applicant_user.applicant_id == applicant_id &&
+          applicant_user.email.casecmp?(email)
+        raise NotClaimable
+      end
+
+      update!(claimed_by: applicant_user, claimed_at: Time.current)
+    end
+  end
 end
