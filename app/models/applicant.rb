@@ -12,6 +12,7 @@ class Applicant < Merchant
   has_many :validation_warnings, class_name: "Kyc::ValidationWarning", foreign_key: :applicant_id,
            dependent: :destroy, inverse_of: :applicant
   has_many :applicant_users, foreign_key: :applicant_id, inverse_of: :applicant
+  has_many :applicant_invitations, dependent: :destroy, inverse_of: :applicant
   has_many :registry_profiles, class_name: "Registry::Profile", dependent: :destroy, inverse_of: :applicant
   has_many :addresses, as: :addressable, dependent: :destroy
   belongs_to :no_corporate_owners_attested_by, class_name: "User", optional: true

@@ -17,6 +17,9 @@
     <% end %>
   </div>
   <div class="flex items-center gap-2">
+    <% if policy(ApplicantInvitation.new(applicant: applicant)).new? %>
+      <%= link_to t('.invite_applicant'), new_applicant_applicant_invitation_path(applicant), class: "btn-secondary" %>
+    <% end %>
     <% if policy(ProcessingStatement).index? %>
       <%= link_to t('.processing_statements'), applicant_processing_statements_path(applicant), class: "btn-secondary" %>
     <% end %>

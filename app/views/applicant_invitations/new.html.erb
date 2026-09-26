@@ -1,0 +1,26 @@
+<% content_for :title, t("applicant_invitations.new.title") %>
+
+<div class="mb-4">
+  <%= link_to t("applicant_invitations.new.back"), applicant_path(applicant), class: "text-theme-sm font-medium text-brand-600 hover:text-brand-700" %>
+</div>
+
+<div class="card max-w-2xl">
+  <h1 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white/90"><%= t("applicant_invitations.new.title") %></h1>
+  <p class="mb-6 text-sm text-gray-500 dark:text-gray-400"><%= t("applicant_invitations.new.subtitle", applicant: applicant.name) %></p>
+
+  <%= form_with model: [ applicant, applicant_invitation ] do |form| %>
+    <% if applicant_invitation.errors.any? %>
+      <div class="mb-4 text-sm text-error-600"><%= applicant_invitation.errors.full_messages.to_sentence %></div>
+    <% end %>
+
+    <div class="mb-6">
+      <%= form.label :email, t("applicant_invitations.new.email"), class: "form-label" %>
+      <%= form.email_field :email, required: true, autocomplete: "email", class: "form-input" %>
+    </div>
+
+    <div class="flex gap-3">
+      <%= form.submit t("applicant_invitations.new.submit"), class: "btn-primary" %>
+      <%= link_to t("applicant_invitations.new.cancel"), applicant_path(applicant), class: "btn-secondary" %>
+    </div>
+  <% end %>
+</div>
