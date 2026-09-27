@@ -10,6 +10,7 @@ Rails.application.routes.draw do
 
   namespace :portal do
     root to: "dashboard#show"
+    resource :application, only: %i[show update]
   end
 
   scope :portal, as: :portal do

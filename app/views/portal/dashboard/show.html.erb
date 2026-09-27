@@ -7,6 +7,8 @@
   </p>
 
   <div class="mt-6">
+    <%= link_to t("portal.dashboard.show.continue_application"), portal_application_path,
+          class: "btn-primary mr-3" %>
     <%= link_to portal_onboarding_path,
           class: "inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 dark:focus:ring-offset-gray-950" do %>
       Continue KYC onboarding
