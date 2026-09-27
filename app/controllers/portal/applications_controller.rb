@@ -18,6 +18,7 @@ class Portal::ApplicationsController < Portal::BaseController
     authorize @application
     step = params.require(:step)
     return update_company if step == "company"
+    return update_fulfilment if step == "fulfilment"
 
     OnboardingApplications::Advance.call(application: @application, step: step)
     redirect_to portal_application_path(step: @application.current_step)
@@ -43,6 +44,15 @@ class Portal::ApplicationsController < Portal::BaseController
     @application.applicant.applicant_domains.build if @application.applicant.applicant_domains.empty?
   end
 
+  def update_fulfilment
+    if OnboardingApplications::SaveFulfilmentDetails.call(application: @application, attributes: fulfilment_params)
+      redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
+    else
+      @step = "fulfilment"
+      render :show, status: :unprocessable_content
+    end
+  end
+
   def company_params
     params.require(:onboarding_application).permit(
       :eu_entity_details,
@@ -59,6 +69,18 @@ class Portal::ApplicationsController < Portal::BaseController
           trading_address_attributes: %i[id line1 line2 city postcode country],
           applicant_domains_attributes: %i[id name _destroy] }
       ]
+    )
+  end
+
+  def fulfilment_params
+    params.require(:onboarding_application).permit(
+      :delivery_over_seven_days,
+      :full_payment_before_delivery,
+      :takes_deposits,
+      :deposit_percentage,
+      :remaining_balance_due,
+      :service_requirements,
+      :integration_type
     )
   end
 end
