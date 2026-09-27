@@ -1,0 +1,44 @@
+<% content_for :title, t("portal.applications.title") %>
+
+<% present(@application) do |application_presenter| %>
+  <div class="mx-auto max-w-5xl">
+    <div class="mb-8">
+      <h1 class="text-2xl font-semibold text-gray-900 dark:text-white"><%= t("portal.applications.title") %></h1>
+      <p class="mt-2 text-sm text-gray-500 dark:text-gray-400"><%= t("portal.applications.saved_progress") %></p>
+      <div class="mt-4 h-2 overflow-hidden rounded-full bg-gray-200 dark:bg-gray-800" role="progressbar"
+           aria-valuenow="<%= application_presenter.progress_percentage %>" aria-valuemin="0" aria-valuemax="100">
+        <div class="h-full bg-brand-500" style="width: <%= application_presenter.progress_percentage %>%"></div>
+      </div>
+    </div>
+
+    <div class="grid gap-8 lg:grid-cols-[16rem_1fr]">
+      <nav aria-label="<%= t("portal.applications.progress") %>">
+        <ol class="space-y-2">
+          <% application_presenter.steps.each do |step| %>
+            <li>
+              <%= link_to portal_application_path(step: step[:key]),
+                    class: "block rounded-lg px-3 py-2 text-sm #{step[:key] == @step ? 'bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/10' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'}" do %>
+                <span aria-hidden="true"><%= step[:completed] ? "✓" : "○" %></span>
+                <%= step[:label] %>
+              <% end %>
+            </li>
+          <% end %>
+        </ol>
+      </nav>
+
+      <section class="card">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-white"><%= t("portal.applications.steps.#{@step}") %></h2>
+        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400"><%= t("portal.applications.section_placeholder") %></p>
+
+        <% if @step == @application.current_step %>
+          <%= form_with url: portal_application_path, method: :patch, class: "mt-8" do %>
+            <%= hidden_field_tag :step, @step %>
+            <%= submit_tag t("portal.applications.continue"), class: "btn-primary" %>
+          <% end %>
+        <% else %>
+          <p class="mt-8 text-sm text-gray-500"><%= t("portal.applications.revisiting") %></p>
+        <% end %>
+      </section>
+    </div>
+  </div>
+<% end %>

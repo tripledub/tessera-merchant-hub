@@ -2,6 +2,7 @@
 
 class Applicant < Merchant
   has_one :onboarding_session, foreign_key: :applicant_id, inverse_of: :applicant, dependent: :destroy
+  has_one :onboarding_application, dependent: :destroy, inverse_of: :applicant
 
   has_many :kyc_principals, foreign_key: :applicant_id, inverse_of: :applicant, dependent: :destroy
   has_many :kyc_documents,  foreign_key: :applicant_id, inverse_of: :applicant, dependent: :destroy
