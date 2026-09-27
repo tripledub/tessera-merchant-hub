@@ -1252,6 +1252,9 @@ en:
       header:
         one: '1 error prevented this from being saved:'
         other: "%{count} errors prevented this from being saved:"
+    repeatable_fields:
+      added: Item added
+      removed: Item removed
   shop_credentials:
     show_once:
       back: "← Back to %{name}"
