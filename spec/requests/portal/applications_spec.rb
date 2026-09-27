@@ -93,6 +93,73 @@ RSpec.describe "Portal application shell", type: :request do
     expect(website_item).to have_css(".form-error", text: "Name is invalid")
   end
 
+  it "renders saved fulfilment answers and conditionally exposes deposit fields" do
+    applicant_user = create(:applicant_user)
+    application = fulfilment_application_for(
+      applicant_user,
+      delivery_over_seven_days: false,
+      full_payment_before_delivery: true,
+      takes_deposits: true,
+      deposit_percentage: 30,
+      remaining_balance_due: "On dispatch",
+      service_requirements: "Hosted checkout",
+      integration_type: "API"
+    )
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "fulfilment")
+
+    expect(response).to have_http_status(:ok)
+    page = Capybara.string(response.body)
+    expect(page).to have_checked_field("onboarding_application[takes_deposits]", with: "true")
+    expect(page).to have_field("onboarding_application[deposit_percentage]", with: "30.0", disabled: false)
+    expect(page).to have_field("onboarding_application[remaining_balance_due]", with: "On dispatch", disabled: false)
+    expect(response.body).to include("conditional-fields#toggle", "Hosted checkout", "API")
+  end
+
+  it "does not require or submit deposit details when deposits are not taken" do
+    applicant_user = create(:applicant_user)
+    application = fulfilment_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "fulfilment",
+      onboarding_application: {
+        delivery_over_seven_days: "false",
+        full_payment_before_delivery: "true",
+        takes_deposits: "false",
+        service_requirements: "Hosted checkout",
+        integration_type: "API"
+      }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "currencies"))
+    expect(application.reload).to have_attributes(takes_deposits: false, deposit_percentage: nil, remaining_balance_due: nil)
+  end
+
+  it "renders fulfilment validation errors without advancing" do
+    applicant_user = create(:applicant_user)
+    application = fulfilment_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "fulfilment",
+      onboarding_application: {
+        delivery_over_seven_days: "true",
+        full_payment_before_delivery: "false",
+        takes_deposits: "true",
+        deposit_percentage: "",
+        remaining_balance_due: "",
+        service_requirements: "Hosted checkout",
+        integration_type: "API"
+      }
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Deposit percentage can&#39;t be blank", "Remaining balance due can&#39;t be blank")
+    expect(application.reload.current_step).to eq("fulfilment")
+  end
+
   it "lets an applicant revisit a completed step without changing saved progress" do
     applicant_user = create(:applicant_user)
     application = create(
@@ -164,5 +231,15 @@ RSpec.describe "Portal application shell", type: :request do
         }
       }
     }
+  end
+
+  def fulfilment_application_for(applicant_user, **attributes)
+    create(
+      :onboarding_application,
+      applicant: applicant_user.applicant,
+      current_step: "fulfilment",
+      completed_steps: [ "company" ],
+      **attributes
+    )
   end
 end
