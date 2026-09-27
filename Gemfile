@@ -65,7 +65,7 @@ gem "jaro_winkler"
 
 # Unified LLM client — Anthropic/Claude, structured output, streaming.
 # Pinned to the 2.0 RC: fixes CVE-2026-67991 (ReDoS), no stable 2.x release yet.
-gem "ruby_llm", "2.0.0.rc4"
+gem "ruby_llm", "2.0.0"
 
 # Real-time WebSocket support via AnyCable + Redis pub/sub.
 gem "anycable-rails"
