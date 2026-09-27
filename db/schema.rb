@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_27_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_27_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -330,11 +330,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_100000) do
 
   create_table "onboarding_applications", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "applicant_id", null: false
+    t.text "business_model_description"
     t.string "completed_steps", default: [], null: false, array: true
     t.datetime "created_at", null: false
     t.string "current_step", default: "company", null: false
+    t.text "eu_entity_details"
+    t.text "operating_licence"
+    t.string "referrer"
     t.integer "status", default: 0, null: false
     t.datetime "submitted_at"
+    t.text "test_login_details"
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_onboarding_applications_on_applicant_id", unique: true
   end

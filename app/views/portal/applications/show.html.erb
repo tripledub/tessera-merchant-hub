@@ -28,9 +28,10 @@
 
       <section class="card">
         <h2 class="text-xl font-semibold text-gray-900 dark:text-white"><%= t("portal.applications.steps.#{@step}") %></h2>
-        <p class="mt-2 text-sm text-gray-500 dark:text-gray-400"><%= t("portal.applications.section_placeholder") %></p>
-
-        <% if @step == @application.current_step %>
+        <% if @step == "company" %>
+          <%= render "portal/applications/company_fields", application: @application %>
+        <% elsif @step == @application.current_step %>
+          <p class="mt-2 text-sm text-gray-500 dark:text-gray-400"><%= t("portal.applications.section_placeholder") %></p>
           <%= form_with url: portal_application_path, method: :patch, class: "mt-8" do %>
             <%= hidden_field_tag :step, @step %>
             <%= submit_tag t("portal.applications.continue"), class: "btn-primary" %>

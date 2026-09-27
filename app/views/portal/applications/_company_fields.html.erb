@@ -1,0 +1,70 @@
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6" do |form| %>
+  <%= hidden_field_tag :step, "company" %>
+  <%= render "shared/error_messages", object: application %>
+
+  <%= form.fields_for :applicant do |applicant_form| %>
+    <%= applicant_form.hidden_field :id %>
+
+    <div class="grid gap-4 sm:grid-cols-2">
+      <div>
+        <%= applicant_form.label :company_name, t("portal.applications.company.company_name"), class: "form-label" %>
+        <%= applicant_form.text_field :company_name, required: true, class: "form-input" %>
+      </div>
+      <div>
+        <%= applicant_form.label :company_number, t("portal.applications.company.company_number"), class: "form-label" %>
+        <%= applicant_form.text_field :company_number, required: true, class: "form-input" %>
+      </div>
+    </div>
+
+    <%= applicant_form.fields_for :registered_address do |address_form| %>
+      <%= render "portal/applications/address_fields", form: address_form, title: t("portal.applications.company.registered_address") %>
+    <% end %>
+
+    <%= applicant_form.fields_for :trading_address do |address_form| %>
+      <%= render "portal/applications/address_fields", form: address_form, title: t("portal.applications.company.trading_address") %>
+    <% end %>
+
+    <fieldset>
+      <legend class="form-label"><%= t("portal.applications.company.domains") %></legend>
+      <%= render "shared/repeatable_fields/component",
+            form: applicant_form,
+            association: :applicant_domains,
+            new_child: ApplicantDomain.new,
+            fields_partial: "portal/applications/domain_fields",
+            add_label: t("portal.applications.company.add_domain"),
+            remove_label: t("portal.applications.company.remove_domain"),
+            min: 1 %>
+    </fieldset>
+
+    <div>
+      <%= applicant_form.label :sector, t("portal.applications.company.sector"), class: "form-label" %>
+      <%= applicant_form.select :sector,
+            Applicant.sectors.keys.map { |sector| [t("applicants.sectors.#{sector}"), sector] },
+            {}, class: "form-select" %>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :eu_entity_details, t("portal.applications.company.eu_entity_details"), class: "form-label" %>
+    <%= form.text_area :eu_entity_details, rows: 3, class: "form-input" %>
+  </div>
+  <div>
+    <%= form.label :referrer, t("portal.applications.company.referrer"), class: "form-label" %>
+    <%= form.text_field :referrer, class: "form-input" %>
+  </div>
+  <div>
+    <%= form.label :business_model_description, t("portal.applications.company.business_model_description"), class: "form-label" %>
+    <%= form.text_area :business_model_description, rows: 5, required: true, class: "form-input" %>
+  </div>
+  <div>
+    <%= form.label :test_login_details, t("portal.applications.company.test_login_details"), class: "form-label" %>
+    <p class="mb-2 text-xs text-gray-500"><%= t("portal.applications.company.test_login_warning") %></p>
+    <%= form.text_area :test_login_details, rows: 3, class: "form-input", autocomplete: "off" %>
+  </div>
+  <div>
+    <%= form.label :operating_licence, t("portal.applications.company.operating_licence"), class: "form-label" %>
+    <%= form.text_area :operating_licence, rows: 3, required: true, class: "form-input" %>
+  </div>
+
+  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+<% end %>
