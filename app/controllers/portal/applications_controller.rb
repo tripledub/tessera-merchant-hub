@@ -22,6 +22,7 @@ class Portal::ApplicationsController < Portal::BaseController
     return update_fulfilment if step == "fulfilment"
     return update_currencies if step == "currencies"
     return update_processing if step == "processing"
+    return update_payments if step == "payments"
 
     OnboardingApplications::Advance.call(application: @application, step: step)
     redirect_to portal_application_path(step: @application.current_step)
@@ -80,6 +81,15 @@ class Portal::ApplicationsController < Portal::BaseController
     end
   end
 
+  def update_payments
+    if OnboardingApplications::SavePaymentDetails.call(application: @application, attributes: payment_params)
+      redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
+    else
+      @step = "payments"
+      render :show, status: :unprocessable_content
+    end
+  end
+
   def company_params
     params.require(:onboarding_application).permit(
       :eu_entity_details,
@@ -120,5 +130,15 @@ class Portal::ApplicationsController < Portal::BaseController
 
   def processing_params
     params.require(:onboarding_application).permit(:currently_accepts_card_payments, :current_acquirer)
+  end
+
+  def payment_params
+    params.require(:onboarding_application).permit(
+      :uses_shopping_cart,
+      :shopping_cart_provider,
+      :takes_recurring_payments,
+      :sends_recurring_payment_receipts,
+      :sends_recurring_payment_advance_notifications
+    )
   end
 end

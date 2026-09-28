@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -344,12 +344,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_110000) do
     t.text "operating_licence"
     t.string "referrer"
     t.string "remaining_balance_due"
+    t.boolean "sends_recurring_payment_advance_notifications"
+    t.boolean "sends_recurring_payment_receipts"
     t.text "service_requirements"
+    t.string "shopping_cart_provider"
     t.integer "status", default: 0, null: false
     t.datetime "submitted_at"
     t.boolean "takes_deposits"
+    t.boolean "takes_recurring_payments"
     t.text "test_login_details"
     t.datetime "updated_at", null: false
+    t.boolean "uses_shopping_cart"
     t.index ["applicant_id"], name: "index_onboarding_applications_on_applicant_id", unique: true
   end
 

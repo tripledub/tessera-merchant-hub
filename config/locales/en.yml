@@ -1201,6 +1201,13 @@ en:
         service_requirements: Service requirements
         takes_deposits: Does your business take deposits?
       'no': 'No'
+      payments:
+        sends_advance_notifications: Do you notify customers before an upcoming recurring
+          payment?
+        sends_receipts: Do you send a transaction receipt for recurring payments?
+        shopping_cart_provider: Shopping cart or provider
+        takes_recurring_payments: Do you take recurring payments?
+        uses_shopping_cart: Do you use a shopping cart?
       processing:
         accepts_cards: Do you currently accept card payments?
         current_acquirer: Current acquiring bank or processor
@@ -1219,6 +1226,7 @@ en:
         countries: Target countries
         currencies: Currencies and settlement
         fulfilment: Fulfilment and services
+        payments: Payment methods
         pricing: Pricing
         principals: Directors and beneficial owners
         processing: Processing history

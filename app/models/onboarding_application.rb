@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class OnboardingApplication < ApplicationRecord
-  STEPS = %w[company fulfilment currencies processing pricing volumes countries principals review].freeze
+  STEPS = %w[company fulfilment currencies processing payments pricing volumes countries principals review].freeze
 
   belongs_to :applicant
 
@@ -36,9 +36,16 @@ class OnboardingApplication < ApplicationRecord
   validate :currency_collections_are_present, on: :currencies
   validates :currently_accepts_card_payments, inclusion: { in: [ true, false ] }, on: :processing
   validates :current_acquirer, presence: true, if: :currently_accepts_card_payments?, on: :processing
+  validates :uses_shopping_cart, :takes_recurring_payments,
+            inclusion: { in: [ true, false ] }, on: :payments
+  validates :shopping_cart_provider, presence: true, if: :uses_shopping_cart?, on: :payments
+  validates :sends_recurring_payment_receipts, :sends_recurring_payment_advance_notifications,
+            inclusion: { in: [ true, false ] }, if: :takes_recurring_payments?, on: :payments
 
   before_validation :clear_deposit_details, if: -> { takes_deposits == false }
   before_validation :clear_current_acquirer, if: -> { currently_accepts_card_payments == false }
+  before_validation :clear_shopping_cart_provider, if: -> { uses_shopping_cart == false }
+  before_validation :clear_recurring_payment_details, if: -> { takes_recurring_payments == false }
 
   private
 
@@ -85,5 +92,14 @@ class OnboardingApplication < ApplicationRecord
 
   def clear_current_acquirer
     self.current_acquirer = nil
+  end
+
+  def clear_shopping_cart_provider
+    self.shopping_cart_provider = nil
+  end
+
+  def clear_recurring_payment_details
+    self.sends_recurring_payment_receipts = nil
+    self.sends_recurring_payment_advance_notifications = nil
   end
 end

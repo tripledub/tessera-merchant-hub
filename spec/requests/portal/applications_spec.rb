@@ -200,6 +200,55 @@ RSpec.describe "Portal application shell", type: :request do
     expect(item).to have_css(".form-error", text: "Code is invalid")
   end
 
+  it "renders saved shopping-cart and recurring-payment answers" do
+    applicant_user = create(:applicant_user)
+    payment_application_for(
+      applicant_user,
+      uses_shopping_cart: true,
+      shopping_cart_provider: "Specimen Cart",
+      takes_recurring_payments: true,
+      sends_recurring_payment_receipts: true,
+      sends_recurring_payment_advance_notifications: false
+    )
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "payments")
+
+    page = Capybara.string(response.body)
+    expect(page).to have_checked_field("onboarding_application[uses_shopping_cart]", with: "true")
+    expect(page).to have_field("onboarding_application[shopping_cart_provider]", with: "Specimen Cart", disabled: false)
+    expect(page).to have_checked_field("onboarding_application[takes_recurring_payments]", with: "true")
+    expect(page).to have_checked_field("onboarding_application[sends_recurring_payment_receipts]", with: "true")
+    expect(page).to have_checked_field(
+      "onboarding_application[sends_recurring_payment_advance_notifications]", with: "false"
+    )
+  end
+
+  it "saves payment details and advances to pricing" do
+    applicant_user = create(:applicant_user)
+    application = payment_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "payments",
+      onboarding_application: {
+        uses_shopping_cart: "false",
+        takes_recurring_payments: "true",
+        sends_recurring_payment_receipts: "true",
+        sends_recurring_payment_advance_notifications: "false"
+      }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "pricing"))
+    expect(application.reload).to have_attributes(
+      uses_shopping_cart: false,
+      shopping_cart_provider: nil,
+      takes_recurring_payments: true,
+      sends_recurring_payment_receipts: true,
+      sends_recurring_payment_advance_notifications: false
+    )
+  end
+
   it "lets an applicant revisit a completed step without changing saved progress" do
     applicant_user = create(:applicant_user)
     application = create(
@@ -279,6 +328,16 @@ RSpec.describe "Portal application shell", type: :request do
       applicant: applicant_user.applicant,
       current_step: "currencies",
       completed_steps: %w[company fulfilment]
+    )
+  end
+
+  def payment_application_for(applicant_user, **attributes)
+    create(
+      :onboarding_application,
+      applicant: applicant_user.applicant,
+      current_step: "payments",
+      completed_steps: %w[company fulfilment currencies processing],
+      **attributes
     )
   end
 end
