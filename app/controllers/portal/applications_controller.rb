@@ -11,6 +11,7 @@ class Portal::ApplicationsController < Portal::BaseController
     @step = params[:step].presence || @application.current_step
     head :not_found unless OnboardingApplication::STEPS.include?(@step)
     prepare_company_details if @step == "company"
+    prepare_currencies if @step == "currencies"
   end
 
   def update
@@ -19,6 +20,7 @@ class Portal::ApplicationsController < Portal::BaseController
     step = params.require(:step)
     return update_company if step == "company"
     return update_fulfilment if step == "fulfilment"
+    return update_currencies if step == "currencies"
 
     OnboardingApplications::Advance.call(application: @application, step: step)
     redirect_to portal_application_path(step: @application.current_step)
@@ -53,6 +55,21 @@ class Portal::ApplicationsController < Portal::BaseController
     end
   end
 
+  def update_currencies
+    if OnboardingApplications::SaveCurrencies.call(application: @application, attributes: currencies_params)
+      redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
+    else
+      @step = "currencies"
+      prepare_currencies
+      render :show, status: :unprocessable_content
+    end
+  end
+
+  def prepare_currencies
+    @application.processing_currencies.build if @application.processing_currencies.empty?
+    @application.settlement_currencies.build if @application.settlement_currencies.empty?
+  end
+
   def company_params
     params.require(:onboarding_application).permit(
       :eu_entity_details,
@@ -81,6 +98,13 @@ class Portal::ApplicationsController < Portal::BaseController
       :remaining_balance_due,
       :service_requirements,
       :integration_type
+    )
+  end
+
+  def currencies_params
+    params.require(:onboarding_application).permit(
+      processing_currencies_attributes: %i[id code _destroy],
+      settlement_currencies_attributes: %i[id code _destroy]
     )
   end
 end

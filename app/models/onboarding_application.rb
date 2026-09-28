@@ -5,7 +5,15 @@ class OnboardingApplication < ApplicationRecord
 
   belongs_to :applicant
 
+  has_many :onboarding_currencies, dependent: :destroy, inverse_of: :onboarding_application
+  has_many :processing_currencies, -> { where(kind: :processing) },
+           class_name: "OnboardingCurrency", inverse_of: :onboarding_application
+  has_many :settlement_currencies, -> { where(kind: :settlement) },
+           class_name: "OnboardingCurrency", inverse_of: :onboarding_application
+
   accepts_nested_attributes_for :applicant, update_only: true
+  accepts_nested_attributes_for :processing_currencies, allow_destroy: true, reject_if: :all_blank
+  accepts_nested_attributes_for :settlement_currencies, allow_destroy: true, reject_if: :all_blank
 
   enum :status, { draft: 0, submitted: 1 }, default: :draft
 
@@ -25,6 +33,7 @@ class OnboardingApplication < ApplicationRecord
             if: :takes_deposits?,
             on: :fulfilment
   validates :remaining_balance_due, presence: true, if: :takes_deposits?, on: :fulfilment
+  validate :currency_collections_are_present, on: :currencies
 
   before_validation :clear_deposit_details, if: -> { takes_deposits == false }
 
@@ -60,5 +69,14 @@ class OnboardingApplication < ApplicationRecord
   def clear_deposit_details
     self.deposit_percentage = nil
     self.remaining_balance_due = nil
+  end
+
+  def currency_collections_are_present
+    errors.add(:processing_currencies, :blank) unless active_currencies(processing_currencies).any?
+    errors.add(:settlement_currencies, :blank) unless active_currencies(settlement_currencies).any?
+  end
+
+  def active_currencies(collection)
+    collection.reject(&:marked_for_destruction?)
   end
 end
