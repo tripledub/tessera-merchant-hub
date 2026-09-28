@@ -34,8 +34,11 @@ class OnboardingApplication < ApplicationRecord
             on: :fulfilment
   validates :remaining_balance_due, presence: true, if: :takes_deposits?, on: :fulfilment
   validate :currency_collections_are_present, on: :currencies
+  validates :currently_accepts_card_payments, inclusion: { in: [ true, false ] }, on: :processing
+  validates :current_acquirer, presence: true, if: :currently_accepts_card_payments?, on: :processing
 
   before_validation :clear_deposit_details, if: -> { takes_deposits == false }
+  before_validation :clear_current_acquirer, if: -> { currently_accepts_card_payments == false }
 
   private
 
@@ -78,5 +81,9 @@ class OnboardingApplication < ApplicationRecord
 
   def active_currencies(collection)
     collection.reject(&:marked_for_destruction?)
+  end
+
+  def clear_current_acquirer
+    self.current_acquirer = nil
   end
 end
