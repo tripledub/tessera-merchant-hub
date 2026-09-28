@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class OnboardingApplication < ApplicationRecord
-  STEPS = %w[company fulfilment currencies processing payments pricing volumes countries principals review].freeze
+  STEPS = %w[company fulfilment currencies processing payments descriptor pricing volumes countries principals review].freeze
 
   belongs_to :applicant
 
@@ -41,6 +41,7 @@ class OnboardingApplication < ApplicationRecord
   validates :shopping_cart_provider, presence: true, if: :uses_shopping_cart?, on: :payments
   validates :sends_recurring_payment_receipts, :sends_recurring_payment_advance_notifications,
             inclusion: { in: [ true, false ] }, if: :takes_recurring_payments?, on: :payments
+  validates :descriptor, :descriptor_company_number, :descriptor_company_city, presence: true, on: :descriptor
 
   before_validation :clear_deposit_details, if: -> { takes_deposits == false }
   before_validation :clear_current_acquirer, if: -> { currently_accepts_card_payments == false }

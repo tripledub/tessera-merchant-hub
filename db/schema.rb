@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_130000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -338,6 +338,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_130000) do
     t.boolean "currently_accepts_card_payments"
     t.boolean "delivery_over_seven_days"
     t.decimal "deposit_percentage", precision: 5, scale: 2
+    t.string "descriptor"
+    t.string "descriptor_company_city"
+    t.string "descriptor_company_number"
     t.text "eu_entity_details"
     t.boolean "full_payment_before_delivery"
     t.string "integration_type"
