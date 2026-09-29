@@ -20,9 +20,19 @@
       <%= render "portal/applications/address_fields", form: address_form, title: t("portal.applications.company.registered_address") %>
     <% end %>
 
-    <%= applicant_form.fields_for :trading_address do |address_form| %>
-      <%= render "portal/applications/address_fields", form: address_form, title: t("portal.applications.company.trading_address") %>
-    <% end %>
+    <div data-controller="address-same-as">
+      <label class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+        <%= check_box_tag "onboarding_application[trading_address_same_as_registered]", "1", @trading_address_same_as_registered,
+              data: { "address-same-as-target": "checkbox", action: "change->address-same-as#toggle" } %>
+        <%= t("portal.applications.company.trading_address_same_as_registered") %>
+      </label>
+
+      <div data-address-same-as-target="fields" class="mt-4">
+        <%= applicant_form.fields_for :trading_address do |address_form| %>
+          <%= render "portal/applications/address_fields", form: address_form, title: t("portal.applications.company.trading_address") %>
+        <% end %>
+      </div>
+    </div>
 
     <fieldset>
       <legend class="form-label"><%= t("portal.applications.company.domains") %></legend>

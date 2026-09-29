@@ -1203,6 +1203,8 @@ en:
         test_login_warning: Provide sandbox or demonstration credentials only. Never
           enter live production credentials.
         trading_address: Trading address
+        trading_address_same_as_registered: Trading address is the same as the registered
+          address
       continue: Save and continue
       currencies:
         add: Add currency
