@@ -115,6 +115,19 @@ RSpec.describe "Onboarding authentication", type: :request do
 
       expect(response).to have_http_status(:not_found)
     end
+
+    it "rejects oversized registration payloads" do
+      invitation
+
+      post applicant_user_registration_path(invitation_token: token),
+        params: "x",
+        headers: {
+          "CONTENT_TYPE" => "application/x-www-form-urlencoded",
+          "CONTENT_LENGTH" => (Portal::AbuseProtection::REGISTRATION_PAYLOAD_LIMIT + 1).to_s
+        }
+
+      expect(response).to have_http_status(:content_too_large)
+    end
   end
 
   describe "POST /portal/sign_in" do
@@ -132,6 +145,17 @@ RSpec.describe "Onboarding authentication", type: :request do
         applicant_user: { email: "user@example.com", password: "wrong" }
       }
       expect(response).to have_http_status(:unprocessable_content)
+    end
+
+    it "rate limits repeated sign-in attempts without bypassing Devise" do
+      store = Portal::SessionsController.portal_rate_limit_store
+      store.write("rate-limit:portal/sessions:127.0.0.1", 10, expires_in: 1.minute)
+
+      post new_applicant_user_session_path, params: {
+        applicant_user: { email: "user@example.com", password: "wrong" }
+      }
+
+      expect(response).to have_http_status(:too_many_requests)
     end
   end
 

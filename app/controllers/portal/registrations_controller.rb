@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
 class Portal::RegistrationsController < Devise::RegistrationsController
+  include Portal::AbuseProtection
+
   layout "portal"
   before_action :load_invitation, only: %i[new create]
+  before_action -> { reject_oversized_portal_payload(REGISTRATION_PAYLOAD_LIMIT) }, only: :create
+  rate_limit to: 5, within: 10.minutes, with: :portal_rate_limited,
+             store: portal_rate_limit_store, only: :create
 
   def create
     build_resource(sign_up_params)
@@ -40,7 +45,10 @@ class Portal::RegistrationsController < Devise::RegistrationsController
 
   def load_invitation
     self.invitation = ApplicantInvitation.find_usable_by_token(params[:invitation_token])
-    head :not_found unless invitation
+    unless invitation
+      log_invalid_portal_access
+      head :not_found
+    end
   end
 
   attr_accessor :invitation

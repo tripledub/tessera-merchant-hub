@@ -80,5 +80,14 @@ RSpec.describe "Applicant invitations", type: :request do
 
       expect(response.status).to eq(unusable_status).and eq(404)
     end
+
+    it "rate limits repeated invitation-token probes" do
+      store = Portal::InvitationsController.portal_rate_limit_store
+      store.write("rate-limit:portal/invitations:127.0.0.1", 20, expires_in: 1.minute)
+
+      get portal_invitation_path("unknown-token")
+
+      expect(response).to have_http_status(:too_many_requests)
+    end
   end
 end
