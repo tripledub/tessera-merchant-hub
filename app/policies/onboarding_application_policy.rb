@@ -2,7 +2,7 @@
 
 class OnboardingApplicationPolicy < ApplicationPolicy
   def show?
-    confirmed_member?
+    staff_reviewer? || confirmed_member?
   end
 
   def update?
@@ -12,6 +12,10 @@ class OnboardingApplicationPolicy < ApplicationPolicy
   private
 
   def confirmed_member?
-    user.confirmed? && user.applicant_id == record.applicant_id
+    user.is_a?(ApplicantUser) && user.confirmed? && user.applicant_id == record.applicant_id
+  end
+
+  def staff_reviewer?
+    user.is_a?(User) && user.psp_role?
   end
 end

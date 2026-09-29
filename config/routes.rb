@@ -42,6 +42,7 @@ Rails.application.routes.draw do
   resources :transcripts, only: %i[index show]
 
   resources :applicants, only: %i[new create index show edit update destroy] do
+    resource :onboarding_application, only: :show
     resources :applicant_invitations, only: %i[new create]
     get "tab/:tab", action: :tab, as: :tab, on: :member
     post "registry_preview", action: :registry_preview, on: :collection

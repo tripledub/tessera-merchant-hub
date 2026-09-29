@@ -30,6 +30,25 @@
   </div>
 </div>
 
+<% if applicant.onboarding_application %>
+  <div class="mb-6 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <p class="text-sm font-semibold text-gray-900 dark:text-white"><%= t("applicants.show.self_service.title") %></p>
+        <p class="mt-1 text-sm text-gray-500">
+          <%= t("applicants.show.self_service.status", status: applicant.onboarding_application.status.humanize) %>
+          <% if applicant.onboarding_application.submitted_at %>
+            · <%= t("applicants.show.self_service.submitted_at", time: l(applicant.onboarding_application.submitted_at, format: :long)) %>
+          <% end %>
+        </p>
+      </div>
+      <% if policy(applicant.onboarding_application).show? %>
+        <%= link_to t("applicants.show.self_service.review"), applicant_onboarding_application_path(applicant), class: "btn-secondary" %>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
 <div data-controller="tabs" data-tabs-default-value="overview">
   <%# Tab navigation — underline with icon style (tailadmin tab-03) %>
   <div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]">
