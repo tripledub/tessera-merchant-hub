@@ -125,7 +125,7 @@ gem "pdf-inspector", "~> 1.3", group: :test
 
 # Document packs for a synthetic scenario (MH-311) — already present transitively
 # via roo; declared explicitly since we now depend on it directly.
-gem "rubyzip", "~> 3.0", require: "zip"
+gem "rubyzip", "~> 3.7", require: "zip"
 
 gem "honeybadger", "~> 6.9"
 
