@@ -150,6 +150,20 @@ en:
         title: Invite a PSP user
   app:
     title: Tessera Merchant Hub
+  applicant_invitations:
+    create:
+      copy: Copy invitation link
+      done: Done
+      subtitle: Send this one-time registration link to %{email}. It will not be shown
+        again.
+      title: Invitation created
+    new:
+      back: "← Back to applicant"
+      cancel: Cancel
+      email: Applicant email
+      submit: Create invitation
+      subtitle: Create a secure registration link for %{applicant}.
+      title: Invite applicant
   applicant_users:
     passwords:
       edit:
@@ -288,6 +302,7 @@ en:
           review: Review
           verification: Verification
       edit: Edit
+      invite_applicant: Invite applicant
       principals:
         delete: Delete
         delete_confirm: Delete %{name}? This cannot be undone.

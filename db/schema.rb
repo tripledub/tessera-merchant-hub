@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_26_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -78,6 +78,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
     t.integer "verification_status", default: 0, null: false
     t.index "applicant_id, lower((name)::text)", name: "index_applicant_domains_on_applicant_id_and_lower_name", unique: true
     t.index ["applicant_id"], name: "index_applicant_domains_on_applicant_id"
+  end
+
+  create_table "applicant_invitations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.datetime "claimed_at"
+    t.uuid "claimed_by_id"
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.bigint "invited_by_id", null: false
+    t.datetime "revoked_at"
+    t.datetime "submitted_at"
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id"], name: "index_applicant_invitations_on_applicant_id"
+    t.index ["claimed_by_id"], name: "index_applicant_invitations_on_claimed_by_id"
+    t.index ["invited_by_id"], name: "index_applicant_invitations_on_invited_by_id"
+    t.index ["token_digest"], name: "index_applicant_invitations_on_token_digest", unique: true
   end
 
   create_table "applicant_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -470,6 +487,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
   add_foreign_key "applicant_domain_documents", "applicant_domains", on_delete: :cascade
   add_foreign_key "applicant_domain_documents", "kyc_documents", on_delete: :cascade
   add_foreign_key "applicant_domains", "merchants", column: "applicant_id"
+  add_foreign_key "applicant_invitations", "applicant_users", column: "claimed_by_id"
+  add_foreign_key "applicant_invitations", "merchants", column: "applicant_id"
+  add_foreign_key "applicant_invitations", "users", column: "invited_by_id"
   add_foreign_key "applicant_users", "merchants", column: "applicant_id"
   add_foreign_key "comments", "users", column: "author_id"
   add_foreign_key "domain_blocklist_entries", "users", column: "created_by_id", on_delete: :nullify
