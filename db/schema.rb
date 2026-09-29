@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -80,8 +80,28 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
     t.index ["applicant_id"], name: "index_applicant_domains_on_applicant_id"
   end
 
+  create_table "applicant_invitations", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.datetime "claimed_at"
+    t.uuid "claimed_by_id"
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.bigint "invited_by_id", null: false
+    t.datetime "revoked_at"
+    t.datetime "submitted_at"
+    t.string "token_digest", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id"], name: "index_applicant_invitations_on_applicant_id"
+    t.index ["claimed_by_id"], name: "index_applicant_invitations_on_claimed_by_id"
+    t.index ["invited_by_id"], name: "index_applicant_invitations_on_invited_by_id"
+    t.index ["token_digest"], name: "index_applicant_invitations_on_token_digest", unique: true
+  end
+
   create_table "applicant_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "applicant_id", null: false
+    t.datetime "confirmation_sent_at"
+    t.string "confirmation_token"
+    t.datetime "confirmed_at"
     t.datetime "created_at", null: false
     t.string "email", null: false
     t.string "encrypted_password", default: "", null: false
@@ -90,8 +110,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
     t.datetime "remember_created_at"
     t.datetime "reset_password_sent_at"
     t.string "reset_password_token"
+    t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_applicant_users_on_applicant_id"
+    t.index ["confirmation_token"], name: "index_applicant_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_applicant_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_applicant_users_on_reset_password_token", unique: true
   end
@@ -255,6 +277,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
     t.string "email"
     t.uuid "merged_into_id"
     t.string "name", null: false
+    t.decimal "ownership_percentage", precision: 5, scale: 2
     t.string "postcode"
     t.integer "role", default: 0, null: false
     t.integer "source", default: 0, null: false
@@ -304,6 +327,49 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
     t.index ["merchant_id"], name: "index_merchants_on_merchant_id", unique: true, where: "(merchant_id IS NOT NULL)"
     t.index ["no_corporate_owners_attested_by_id"], name: "index_merchants_on_no_corporate_owners_attested_by_id"
     t.index ["type"], name: "index_merchants_on_type"
+  end
+
+  create_table "onboarding_applications", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.text "business_model_description"
+    t.string "completed_steps", default: [], null: false, array: true
+    t.datetime "created_at", null: false
+    t.string "current_acquirer"
+    t.string "current_step", default: "company", null: false
+    t.boolean "currently_accepts_card_payments"
+    t.boolean "delivery_over_seven_days"
+    t.decimal "deposit_percentage", precision: 5, scale: 2
+    t.string "descriptor"
+    t.string "descriptor_company_city"
+    t.string "descriptor_company_number"
+    t.text "eu_entity_details"
+    t.boolean "full_payment_before_delivery"
+    t.string "integration_type"
+    t.text "operating_licence"
+    t.string "referrer"
+    t.string "remaining_balance_due"
+    t.boolean "sends_recurring_payment_advance_notifications"
+    t.boolean "sends_recurring_payment_receipts"
+    t.text "service_requirements"
+    t.string "shopping_cart_provider"
+    t.integer "status", default: 0, null: false
+    t.datetime "submitted_at"
+    t.boolean "takes_deposits"
+    t.boolean "takes_recurring_payments"
+    t.text "test_login_details"
+    t.datetime "updated_at", null: false
+    t.boolean "uses_shopping_cart"
+    t.index ["applicant_id"], name: "index_onboarding_applications_on_applicant_id", unique: true
+  end
+
+  create_table "onboarding_currencies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.integer "kind", null: false
+    t.uuid "onboarding_application_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["onboarding_application_id", "kind", "code"], name: "index_onboarding_currencies_on_application_kind_code", unique: true
+    t.index ["onboarding_application_id"], name: "index_onboarding_currencies_on_onboarding_application_id"
   end
 
   create_table "onboarding_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -470,6 +536,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
   add_foreign_key "applicant_domain_documents", "applicant_domains", on_delete: :cascade
   add_foreign_key "applicant_domain_documents", "kyc_documents", on_delete: :cascade
   add_foreign_key "applicant_domains", "merchants", column: "applicant_id"
+  add_foreign_key "applicant_invitations", "applicant_users", column: "claimed_by_id"
+  add_foreign_key "applicant_invitations", "merchants", column: "applicant_id"
+  add_foreign_key "applicant_invitations", "users", column: "invited_by_id"
   add_foreign_key "applicant_users", "merchants", column: "applicant_id"
   add_foreign_key "comments", "users", column: "author_id"
   add_foreign_key "domain_blocklist_entries", "users", column: "created_by_id", on_delete: :nullify
@@ -499,6 +568,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_140100) do
   add_foreign_key "kyc_validation_warnings", "kyc_documents"
   add_foreign_key "kyc_validation_warnings", "merchants", column: "applicant_id"
   add_foreign_key "merchants", "users", column: "no_corporate_owners_attested_by_id", on_delete: :nullify
+  add_foreign_key "onboarding_applications", "merchants", column: "applicant_id"
+  add_foreign_key "onboarding_currencies", "onboarding_applications"
   add_foreign_key "onboarding_messages", "onboarding_sessions"
   add_foreign_key "onboarding_sessions", "merchants", column: "applicant_id"
   add_foreign_key "processing_statements", "merchants", column: "applicant_id"

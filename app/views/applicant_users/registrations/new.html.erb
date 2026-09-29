@@ -1,6 +1,7 @@
 <%= render "layouts/auth_card", title: t("applicant_users.registrations.new.title") do %>
   <%= form_for(resource, as: resource_name, url: registration_path(resource_name),
         html: { data: { controller: "form-validation", action: "submit->form-validation#submitForm" } }) do |f| %>
+    <%= hidden_field_tag :invitation_token, params[:invitation_token] %>
     <div class="space-y-5">
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div data-field>
@@ -18,7 +19,7 @@
       </div>
       <div data-field>
         <%= f.label :email, t("applicant_users.registrations.new.email"), class: "form-label" %>
-        <%= f.email_field :email, autocomplete: "email", required: true,
+        <%= f.email_field :email, autocomplete: "email", required: true, readonly: true,
               class: field_class(resource, :email), placeholder: "you@example.com" %>
         <%= field_error(resource, :email) %>
       </div>

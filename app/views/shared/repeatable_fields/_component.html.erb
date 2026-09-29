@@ -1,0 +1,38 @@
+<% min = local_assigns.fetch(:min, 0) %>
+<% max = local_assigns.fetch(:max, 0) %>
+<% fields_renderer = local_assigns[:fields_renderer] %>
+
+<div data-controller="repeatable-fields"
+     data-repeatable-fields-added-message-value="<%= t("shared.repeatable_fields.added") %>"
+     data-repeatable-fields-min-value="<%= min %>"
+     data-repeatable-fields-max-value="<%= max %>"
+     data-repeatable-fields-removed-message-value="<%= t("shared.repeatable_fields.removed") %>">
+  <div class="space-y-4">
+    <%= form.fields_for association do |item_form| %>
+      <%= render "shared/repeatable_fields/item",
+            item_form: item_form,
+            fields_partial: fields_partial,
+            fields_renderer: fields_renderer,
+            remove_label: remove_label %>
+    <% end %>
+
+    <template data-repeatable-fields-target="template">
+      <%= form.fields_for association, new_child, child_index: "NEW_RECORD" do |item_form| %>
+        <%= render "shared/repeatable_fields/item",
+              item_form: item_form,
+              fields_partial: fields_partial,
+              fields_renderer: fields_renderer,
+              remove_label: remove_label %>
+      <% end %>
+    </template>
+  </div>
+
+  <button type="button"
+          class="btn-secondary mt-4"
+          data-repeatable-fields-target="add"
+          data-action="repeatable-fields#add">
+    <%= add_label %>
+  </button>
+
+  <p class="sr-only" aria-live="polite" data-repeatable-fields-target="status"></p>
+</div>

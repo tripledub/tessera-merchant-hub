@@ -11,6 +11,10 @@ en:
             sector:
               locked_after_document_collection: cannot be changed after document collection
                 has begun
+        onboarding_application:
+          attributes:
+            applicant:
+              principals_blank: must include at least one director or beneficial owner
   admin:
     domain_blocklist_entries:
       errors:
@@ -150,6 +154,20 @@ en:
         title: Invite a PSP user
   app:
     title: Tessera Merchant Hub
+  applicant_invitations:
+    create:
+      copy: Copy invitation link
+      done: Done
+      subtitle: Send this one-time registration link to %{email}. It will not be shown
+        again.
+      title: Invitation created
+    new:
+      back: "← Back to applicant"
+      cancel: Cancel
+      email: Applicant email
+      submit: Create invitation
+      subtitle: Create a secure registration link for %{applicant}.
+      title: Invite applicant
   applicant_users:
     passwords:
       edit:
@@ -176,7 +194,7 @@ en:
     sessions:
       new:
         forgot_password: Forgot your password?
-        sign_up_link: Create an account
+        resend_confirmation: Didn't receive confirmation instructions?
         submit: Sign in
         title: Sign in to Onboarding
   applicants:
@@ -288,6 +306,7 @@ en:
           review: Review
           verification: Verification
       edit: Edit
+      invite_applicant: Invite applicant
       principals:
         delete: Delete
         delete_confirm: Delete %{name}? This cannot be undone.
@@ -309,6 +328,11 @@ en:
         documents: KYC Documents
         domains: Domains
         principals: Principals
+      self_service:
+        review: Review applicant-supplied information
+        status: 'Self-service application: %{status}'
+        submitted_at: Submitted %{time}
+        title: Self-service application
       tabs:
         compliance: Compliance
         documents: Documents
@@ -1062,6 +1086,18 @@ en:
         replacement_required: Your %{document_type} will need replacing soon — please
           upload an updated one when you can.
         under_review: We're reviewing your %{document_type}.
+  onboarding_applications:
+    show:
+      applicant_supplied: This information was supplied by the applicant through self-service
+        onboarding.
+      back: Back to applicant
+      requirements:
+        complete: No missing application information or documents were identified.
+        description: Evaluated using the shared onboarding and KYC requirements.
+        missing_documents: Missing documents
+        missing_information: Missing information
+        title: Onboarding requirements
+      title: "%{applicant} self-service application"
   payment_timelines:
     show:
       back: "← Back to payment"
@@ -1142,8 +1178,106 @@ en:
         timeline: Timeline
       title: Payment
   portal:
+    applications:
+      company:
+        add_domain: Add website
+        address:
+          city: City
+          country: Country
+          line1: Address line 1
+          line2: Address line 2
+          postcode: Postcode
+        business_model_description: Description of business model
+        company_name: Company name
+        company_number: Company number
+        domain: Website domain
+        domain_placeholder: example.com
+        domains: Websites operated by the business
+        eu_entity_details: EU entity details (if different from the company above)
+        operating_licence: Licence required to operate
+        referrer: Name of referrer, if applicable
+        registered_address: Registered address
+        remove_domain: Remove website
+        sector: Sector
+        test_login_details: Test logins
+        test_login_warning: Provide sandbox or demonstration credentials only. Never
+          enter live production credentials.
+        trading_address: Trading address
+      continue: Save and continue
+      currencies:
+        add: Add currency
+        code: ISO currency code
+        placeholder: GBP
+        processing: Processing currencies
+        remove: Remove currency
+        settlement: Settlement currencies
+      descriptor:
+        company_city: Company city
+        company_number: Company number
+        descriptor: Descriptor
+      fulfilment:
+        delivery_over_seven_days: Is the time between purchase and delivery over seven
+          days?
+        deposit_percentage: Deposit percentage
+        full_payment_before_delivery: Is full payment taken before delivery of the
+          product or service?
+        integration_type: Integration type
+        remaining_balance_due: When is the remaining balance due?
+        service_requirements: Service requirements
+        takes_deposits: Does your business take deposits?
+      'no': 'No'
+      payments:
+        sends_advance_notifications: Do you notify customers before an upcoming recurring
+          payment?
+        sends_receipts: Do you send a transaction receipt for recurring payments?
+        shopping_cart_provider: Shopping cart or provider
+        takes_recurring_payments: Do you take recurring payments?
+        uses_shopping_cart: Do you use a shopping cart?
+      principals:
+        add: Add director or beneficial owner
+        date_of_birth: Date of birth
+        email: Email address
+        name: Full name
+        ownership_hint: Required for beneficial owners and shareholders.
+        ownership_percentage: Ownership or share percentage
+        remove: Remove person
+        role: Role
+      processing:
+        accepts_cards: Do you currently accept card payments?
+        current_acquirer: Current acquiring bank or processor
+      progress: Application progress
+      progress_conflict: Your application progressed in another session. We have shown
+        your latest saved step.
+      review:
+        edit: Edit
+        missing: Missing
+        submit: Submit application
+        submitted_at: Submitted %{time}
+      revisiting: You are reviewing a previously completed section. Its fields will
+        be added in the corresponding application-section ticket.
+      saved: Company details saved.
+      saved_progress: Your progress is saved securely whenever you continue to the
+        next section.
+      section_placeholder: This section is ready for its application fields. Those
+        fields are delivered in the next stacked slices.
+      steps:
+        company: Company details
+        countries: Target countries
+        currencies: Currencies and settlement
+        descriptor: Descriptor details
+        fulfilment: Fulfilment and services
+        payments: Payment methods
+        pricing: Pricing
+        principals: Directors and beneficial owners
+        processing: Processing history
+        review: Review and submit
+        volumes: Volumes and transaction profile
+      submitted: Your application has been submitted.
+      title: Your onboarding application
+      'yes': 'Yes'
     dashboard:
       show:
+        continue_application: Continue application
         welcome: Welcome, %{name}!
     sign_out: Sign out
     title: Kynetic Portal
@@ -1214,6 +1348,9 @@ en:
       header:
         one: '1 error prevented this from being saved:'
         other: "%{count} errors prevented this from being saved:"
+    repeatable_fields:
+      added: Item added
+      removed: Item removed
   shop_credentials:
     show_once:
       back: "← Back to %{name}"
