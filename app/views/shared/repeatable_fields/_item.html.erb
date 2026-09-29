@@ -1,0 +1,23 @@
+<div class="rounded-lg border border-gray-200 p-4"
+     data-repeatable-fields-target="item">
+  <%= item_form.hidden_field :id if item_form.object.persisted? %>
+  <%= item_form.hidden_field :_destroy,
+        value: "0",
+        data: {
+          repeatable_fields_target: "destroy",
+          persisted: item_form.object.persisted?
+        } %>
+
+  <% if fields_renderer %>
+    <%= fields_renderer.call(item_form) %>
+  <% else %>
+    <%= render fields_partial, form: item_form %>
+  <% end %>
+
+  <button type="button"
+          class="btn-secondary mt-3"
+          data-repeatable-fields-target="remove"
+          data-action="repeatable-fields#remove">
+    <%= remove_label %>
+  </button>
+</div>

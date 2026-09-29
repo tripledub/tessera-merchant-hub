@@ -1,0 +1,24 @@
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6" do |form| %>
+  <%= hidden_field_tag :step, "currencies" %>
+  <%= render "shared/error_messages", object: application %>
+
+  <% [
+       [ :processing_currencies, t("portal.applications.currencies.processing") ],
+       [ :settlement_currencies, t("portal.applications.currencies.settlement") ]
+     ].each do |association, label| %>
+    <fieldset>
+      <legend class="form-label"><%= label %></legend>
+      <%= render "shared/repeatable_fields/component",
+            form: form,
+            association: association,
+            new_child: OnboardingCurrency.new(kind: association.to_s.remove("_currencies")),
+            fields_partial: "portal/applications/currency_item_fields",
+            add_label: t("portal.applications.currencies.add"),
+            remove_label: t("portal.applications.currencies.remove"),
+            min: 1,
+            max: 10 %>
+    </fieldset>
+  <% end %>
+
+  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+<% end %>

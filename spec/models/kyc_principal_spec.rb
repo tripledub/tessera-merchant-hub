@@ -41,6 +41,20 @@ RSpec.describe KycPrincipal, type: :model do
     expect(principal).to be_valid
   end
 
+  it "keeps incremental chatbot declarations valid outside the self-service form" do
+    principal.assign_attributes(source: :applicant_declared, date_of_birth: nil, email: nil)
+
+    expect(principal).to be_valid
+  end
+
+  it "requires complete identity and ownership details in the self-service context" do
+    principal.assign_attributes(source: :applicant_declared, role: :psc, date_of_birth: nil, email: nil,
+      ownership_percentage: nil)
+
+    expect(principal).not_to be_valid(:self_service)
+    expect(principal.errors.attribute_names).to include(:date_of_birth, :email, :ownership_percentage)
+  end
+
   it {
     expect(principal).to define_enum_for(:source)
       .with_values(document_extracted: 0, applicant_declared: 1, registry_fetched: 2)

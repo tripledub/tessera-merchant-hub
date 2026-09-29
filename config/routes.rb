@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get "/repeatable-fields-preview", to: "repeatable_fields_preview#show" if Rails.env.test?
+
   devise_for :users
 
   devise_for :applicant_users,
@@ -10,9 +12,11 @@ Rails.application.routes.draw do
 
   namespace :portal do
     root to: "dashboard#show"
+    resource :application, only: %i[show update]
   end
 
   scope :portal, as: :portal do
+    get "invitations/:token", to: "portal/invitations#show", as: :invitation
     resource :onboarding, only: :show, controller: "onboarding/conversations"
     post "onboarding/messages", to: "onboarding/conversations#create", as: :onboarding_messages
     post "onboarding/documents", to: "onboarding/documents#create", as: :onboarding_documents
@@ -38,6 +42,8 @@ Rails.application.routes.draw do
   resources :transcripts, only: %i[index show]
 
   resources :applicants, only: %i[new create index show edit update destroy] do
+    resource :onboarding_application, only: :show
+    resources :applicant_invitations, only: %i[new create]
     get "tab/:tab", action: :tab, as: :tab, on: :member
     post "registry_preview", action: :registry_preview, on: :collection
     post "registry_lookup", action: :registry_lookup, on: :member

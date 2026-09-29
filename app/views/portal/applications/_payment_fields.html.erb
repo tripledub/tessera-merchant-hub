@@ -1,0 +1,57 @@
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6" do |form| %>
+  <%= hidden_field_tag :step, "payments" %>
+  <%= render "shared/error_messages", object: application %>
+
+  <fieldset data-controller="conditional-fields" data-conditional-fields-show-when-value="true">
+    <legend class="form-label"><%= t("portal.applications.payments.uses_shopping_cart") %></legend>
+    <div class="flex gap-6">
+      <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, label| %>
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+          <%= form.radio_button :uses_shopping_cart, value, required: true,
+                data: { conditional_fields_target: "source", action: "conditional-fields#toggle" } %>
+          <%= label %>
+        </label>
+      <% end %>
+    </div>
+    <div class="mt-4" data-conditional-fields-target="dependent"
+         <%= "hidden" unless application.uses_shopping_cart? %>>
+      <%= form.label :shopping_cart_provider, t("portal.applications.payments.shopping_cart_provider"), class: "form-label" %>
+      <%= form.text_field :shopping_cart_provider, required: true,
+            disabled: !application.uses_shopping_cart?, class: "form-input" %>
+    </div>
+  </fieldset>
+
+  <fieldset data-controller="conditional-fields" data-conditional-fields-show-when-value="true">
+    <legend class="form-label"><%= t("portal.applications.payments.takes_recurring_payments") %></legend>
+    <div class="flex gap-6">
+      <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, label| %>
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+          <%= form.radio_button :takes_recurring_payments, value, required: true,
+                data: { conditional_fields_target: "source", action: "conditional-fields#toggle" } %>
+          <%= label %>
+        </label>
+      <% end %>
+    </div>
+    <div class="mt-4 space-y-4" data-conditional-fields-target="dependent"
+         <%= "hidden" unless application.takes_recurring_payments? %>>
+      <% [
+           [ :sends_recurring_payment_receipts, t("portal.applications.payments.sends_receipts") ],
+           [ :sends_recurring_payment_advance_notifications, t("portal.applications.payments.sends_advance_notifications") ]
+         ].each do |attribute, question| %>
+        <fieldset>
+          <legend class="form-label"><%= question %></legend>
+          <div class="flex gap-6">
+            <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, label| %>
+              <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+                <%= form.radio_button attribute, value, required: true, disabled: !application.takes_recurring_payments? %>
+                <%= label %>
+              </label>
+            <% end %>
+          </div>
+        </fieldset>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+<% end %>
