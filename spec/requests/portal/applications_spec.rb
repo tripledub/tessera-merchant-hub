@@ -76,6 +76,71 @@ RSpec.describe "Portal application shell", type: :request do
     )
   end
 
+  it "labels the address groups and defaults the same-as-registered option to checked for a new applicant" do
+    applicant_user = create(:applicant_user)
+    create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "company")
+
+    expect(response).to have_http_status(:ok)
+    page = Capybara.string(response.body)
+    expect(page).to have_css("legend", text: "Registered address")
+    expect(page).to have_css("legend", text: "Trading address")
+    checkbox = page.find_field("onboarding_application[trading_address_same_as_registered]")
+    expect(checkbox).to be_checked
+  end
+
+  it "mirrors the registered address onto the trading address and does not create a duplicate record when marked same" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+    params = company_details_params(application)
+    params[:onboarding_application][:trading_address_same_as_registered] = "1"
+    params[:onboarding_application][:applicant_attributes][:trading_address_attributes] =
+      { line1: "", city: "", postcode: "", country: "" }
+
+    expect { patch portal_application_path, params: params }.to change(Address, :count).by(2)
+
+    applicant = applicant_user.applicant.reload
+    expect(applicant.trading_address).to have_attributes(
+      line1: "1 Test Street", city: "Testford", postcode: "TE1 1ST", country: "United Kingdom"
+    )
+
+    resubmit_params = company_details_params(application)
+    resubmit_params[:onboarding_application][:trading_address_same_as_registered] = "1"
+    expect { patch portal_application_path, params: resubmit_params }.not_to change(Address, :count)
+  end
+
+  it "preserves a genuinely different trading address when same-as-registered is not selected" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+    params = company_details_params(application)
+
+    patch portal_application_path, params: params
+
+    expect(response).to redirect_to(portal_application_path(step: "fulfilment"))
+    applicant = applicant_user.applicant.reload
+    expect(applicant.trading_address).to have_attributes(line1: "2 Example Road", city: "Testford")
+    expect(applicant.primary_business_address).to have_attributes(line1: "1 Test Street")
+  end
+
+  it "applies dark-mode contrast tokens to the registered and trading address fieldsets" do
+    applicant_user = create(:applicant_user)
+    create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "company")
+
+    expect(response).to have_http_status(:ok)
+    page = Capybara.string(response.body)
+    fieldsets = page.all("fieldset.card")
+    expect(fieldsets.size).to eq(2)
+    fieldsets.each { |fieldset| expect(fieldset["class"]).to include("card") } # theme-aware surface: dark:bg-gray-900 dark:border-gray-800
+    page.all("fieldset.card legend").each { |legend| expect(legend["class"]).to include("dark:text-white/90") }
+  end
+
   it "returns validation errors against the company step without persisting partial answers" do
     applicant_user = create(:applicant_user)
     application = create(:onboarding_application, applicant: applicant_user.applicant)
@@ -502,6 +567,30 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response).to redirect_to(portal_application_path(step: "review"))
     expect(application.reload).to be_submitted
     expect(application.submitted_at).to be_present
+  end
+
+  it "applies dark-mode contrast tokens to the review page sections and values" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+
+    expect(response).to have_http_status(:ok)
+    page = Capybara.string(response.body)
+    sections = page.all("section.card")
+    expect(sections.size).to be >= 2
+    sections.each { |section| expect(section["class"]).to include("card") } # theme-aware surface: dark:bg-gray-900 dark:border-gray-800
+    page.all("section.card h3").each { |heading| expect(heading["class"]).to include("dark:text-white/90") }
+    page.all("section.card dt").each { |label| expect(label["class"]).to include("dark:text-gray-400") }
+    page.all("section.card dd").each { |value| expect(value["class"]).to include("dark:text-white/90") }
+
+    patch portal_application_path, params: { step: "review" }
+    expect(response).to redirect_to(portal_application_path(step: "review"))
+
+    get portal_application_path(step: "review")
+    submitted_notice = Capybara.string(response.body).find("p.text-green-700")
+    expect(submitted_notice["class"]).to include("dark:text-green-400")
   end
 
   it "highlights missing required information and prevents submission" do

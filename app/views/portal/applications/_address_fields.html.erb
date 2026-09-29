@@ -1,5 +1,5 @@
-<fieldset class="rounded-lg border border-gray-200 p-4">
-  <legend class="px-1 text-sm font-semibold text-gray-900"><%= title %></legend>
+<fieldset class="card">
+  <legend class="px-1 text-sm font-semibold text-gray-900 dark:text-white/90"><%= title %></legend>
   <%= form.hidden_field :id if form.object.persisted? %>
   <div class="grid gap-4 sm:grid-cols-2">
     <% %i[line1 line2 city postcode country].each do |field| %>

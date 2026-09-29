@@ -204,6 +204,19 @@ RSpec.describe "Onboarding authentication", type: :request do
       expect(response).to redirect_to(portal_root_path)
     end
 
+    it "provides a keyboard-accessible theme toggle in the authenticated portal header" do
+      applicant_user = create(:applicant_user)
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_root_path
+
+      expect(response).to have_http_status(:ok)
+      toggle = Capybara.string(response.body).find("header button[data-controller='dark-mode']")
+      expect(toggle["data-action"]).to eq("click->dark-mode#toggle")
+      expect(toggle["aria-label"]).to eq("Toggle dark mode")
+      expect(toggle.tag_name).to eq("button")
+    end
+
     it "links authenticated applicant users to the onboarding chat" do
       applicant_user = create(:applicant_user)
       sign_in applicant_user, scope: :applicant_user

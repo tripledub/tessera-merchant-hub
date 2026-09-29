@@ -1203,6 +1203,8 @@ en:
         test_login_warning: Provide sandbox or demonstration credentials only. Never
           enter live production credentials.
         trading_address: Trading address
+        trading_address_same_as_registered: Trading address is the same as the registered
+          address
       continue: Save and continue
       currencies:
         add: Add currency
@@ -1281,6 +1283,7 @@ en:
         welcome: Welcome, %{name}!
     sign_out: Sign out
     title: Kynetic Portal
+    toggle_dark_mode: Toggle dark mode
   processing_statements:
     actions:
       map: Map
