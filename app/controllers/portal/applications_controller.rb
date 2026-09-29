@@ -49,7 +49,11 @@ class Portal::ApplicationsController < Portal::BaseController
   end
 
   def update_company
-    if OnboardingApplications::SaveCompanyDetails.call(application: @application, attributes: company_params)
+    attributes = company_params
+    same_as_registered = ActiveModel::Type::Boolean.new.cast(attributes.delete(:trading_address_same_as_registered))
+    mirror_trading_address!(attributes) if same_as_registered
+
+    if OnboardingApplications::SaveCompanyDetails.call(application: @application, attributes: attributes)
       redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
     else
       @step = "company"
@@ -64,6 +68,32 @@ class Portal::ApplicationsController < Portal::BaseController
     end
     @application.applicant.build_trading_address(primary: true) unless @application.applicant.trading_address
     @application.applicant.applicant_domains.build if @application.applicant.applicant_domains.empty?
+    @trading_address_same_as_registered = trading_address_matches_registered?(@application.applicant)
+  end
+
+  def trading_address_matches_registered?(applicant)
+    trading = applicant.trading_address
+    return true if trading.nil? || trading.line1.blank?
+
+    registered = applicant.primary_business_address
+    return false if registered.nil?
+
+    %i[line1 line2 city postcode country].all? { |field| trading.public_send(field) == registered.public_send(field) }
+  end
+
+  # Mirrors the registered address onto the trading address attributes so a
+  # checked "same as registered" box never creates a second, distinct address
+  # record — it keeps the existing trading address row (if any) but overwrites
+  # its fields, rather than leaving it blank or duplicating data entry.
+  def mirror_trading_address!(attributes)
+    applicant_attrs = attributes[:applicant_attributes]
+    registered = applicant_attrs&.[](:primary_business_address_attributes)
+    return if registered.blank?
+
+    mirrored = registered.to_h.except("id")
+    trading_id = applicant_attrs.dig(:trading_address_attributes, :id)
+    mirrored["id"] = trading_id if trading_id.present?
+    applicant_attrs[:trading_address_attributes] = mirrored
   end
 
   def update_fulfilment
@@ -148,6 +178,7 @@ class Portal::ApplicationsController < Portal::BaseController
       :business_model_description,
       :test_login_details,
       :operating_licence,
+      :trading_address_same_as_registered,
       applicant_attributes: [
         :id,
         :company_name,

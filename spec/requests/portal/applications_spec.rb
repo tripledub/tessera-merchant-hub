@@ -76,6 +76,56 @@ RSpec.describe "Portal application shell", type: :request do
     )
   end
 
+  it "labels the address groups and defaults the same-as-registered option to checked for a new applicant" do
+    applicant_user = create(:applicant_user)
+    create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "company")
+
+    expect(response).to have_http_status(:ok)
+    page = Capybara.string(response.body)
+    expect(page).to have_css("legend", text: "Registered address")
+    expect(page).to have_css("legend", text: "Trading address")
+    checkbox = page.find_field("onboarding_application[trading_address_same_as_registered]")
+    expect(checkbox).to be_checked
+  end
+
+  it "mirrors the registered address onto the trading address and does not create a duplicate record when marked same" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+    params = company_details_params(application)
+    params[:onboarding_application][:trading_address_same_as_registered] = "1"
+    params[:onboarding_application][:applicant_attributes][:trading_address_attributes] =
+      { line1: "", city: "", postcode: "", country: "" }
+
+    expect { patch portal_application_path, params: params }.to change(Address, :count).by(2)
+
+    applicant = applicant_user.applicant.reload
+    expect(applicant.trading_address).to have_attributes(
+      line1: "1 Test Street", city: "Testford", postcode: "TE1 1ST", country: "United Kingdom"
+    )
+
+    resubmit_params = company_details_params(application)
+    resubmit_params[:onboarding_application][:trading_address_same_as_registered] = "1"
+    expect { patch portal_application_path, params: resubmit_params }.not_to change(Address, :count)
+  end
+
+  it "preserves a genuinely different trading address when same-as-registered is not selected" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+    params = company_details_params(application)
+
+    patch portal_application_path, params: params
+
+    expect(response).to redirect_to(portal_application_path(step: "fulfilment"))
+    applicant = applicant_user.applicant.reload
+    expect(applicant.trading_address).to have_attributes(line1: "2 Example Road", city: "Testford")
+    expect(applicant.primary_business_address).to have_attributes(line1: "1 Test Street")
+  end
+
   it "applies dark-mode contrast tokens to the registered and trading address fieldsets" do
     applicant_user = create(:applicant_user)
     create(:onboarding_application, applicant: applicant_user.applicant)
