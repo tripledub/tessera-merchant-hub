@@ -16,10 +16,17 @@
         <ol class="space-y-2">
           <% application_presenter.steps.each do |step| %>
             <li>
-              <%= link_to portal_application_path(step: step[:key]),
-                    class: "block rounded-lg px-3 py-2 text-sm #{step[:key] == @step ? 'bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/10' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'}" do %>
-                <span aria-hidden="true"><%= step[:completed] ? "✓" : "○" %></span>
-                <%= step[:label] %>
+              <% if step[:accessible] %>
+                <%= link_to portal_application_path(step: step[:key]),
+                      class: "block rounded-lg px-3 py-2 text-sm #{step[:key] == @step ? 'bg-brand-50 font-semibold text-brand-700 dark:bg-brand-500/10' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-white/5'}" do %>
+                  <span aria-hidden="true"><%= step[:completed] ? "✓" : "○" %></span>
+                  <%= step[:label] %>
+                <% end %>
+              <% else %>
+                <span class="block px-3 py-2 text-sm text-gray-400" aria-disabled="true">
+                  <span aria-hidden="true">○</span>
+                  <%= step[:label] %>
+                </span>
               <% end %>
             </li>
           <% end %>

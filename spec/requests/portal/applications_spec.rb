@@ -18,6 +18,9 @@ RSpec.describe "Portal application shell", type: :request do
     application = OnboardingApplication.last
     expect(application).to have_attributes(applicant: applicant_user.applicant, status: "draft")
     expect(response.body).to include("Company details", "Review and submit")
+    page = Capybara.string(response.body)
+    expect(page).to have_link("Company details")
+    expect(page).to have_no_link("Review and submit")
   end
 
   it "saves progress and resumes it after logout and login" do
@@ -200,6 +203,30 @@ RSpec.describe "Portal application shell", type: :request do
     expect(item).to have_css(".form-error", text: "Code is invalid")
   end
 
+  it "rejects fulfilment answers before the applicant reaches that step" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant, current_step: "company")
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "fulfilment",
+      onboarding_application: {
+        delivery_over_seven_days: "false",
+        full_payment_before_delivery: "true",
+        takes_deposits: "false",
+        service_requirements: "Should not persist",
+        integration_type: "API"
+      }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "company"))
+    expect(application.reload).to have_attributes(
+      current_step: "company",
+      service_requirements: nil,
+      integration_type: nil
+    )
+  end
+
   it "lets an applicant revisit a completed step without changing saved progress" do
     applicant_user = create(:applicant_user)
     application = create(
@@ -215,6 +242,16 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Company details")
     expect(application.reload.current_step).to eq("processing")
+  end
+
+  it "redirects attempts to visit a future step back to the current step" do
+    applicant_user = create(:applicant_user)
+    create(:onboarding_application, applicant: applicant_user.applicant, current_step: "company")
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+
+    expect(response).to redirect_to(portal_application_path(step: "company"))
   end
 
   it "does not expose another applicant's application through an identifier" do
@@ -251,7 +288,7 @@ RSpec.describe "Portal application shell", type: :request do
           company_name: applicant.company_name,
           company_number: "12345678",
           sector: applicant.sector,
-          registered_address_attributes: {
+          primary_business_address_attributes: {
             line1: "1 Test Street", city: "Testford", postcode: "TE1 1ST", country: "United Kingdom"
           },
           trading_address_attributes: {
