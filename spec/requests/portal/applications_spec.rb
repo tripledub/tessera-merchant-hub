@@ -160,6 +160,30 @@ RSpec.describe "Portal application shell", type: :request do
     expect(application.reload.current_step).to eq("fulfilment")
   end
 
+  it "rejects fulfilment answers before the applicant reaches that step" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant, current_step: "company")
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "fulfilment",
+      onboarding_application: {
+        delivery_over_seven_days: "false",
+        full_payment_before_delivery: "true",
+        takes_deposits: "false",
+        service_requirements: "Should not persist",
+        integration_type: "API"
+      }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "company"))
+    expect(application.reload).to have_attributes(
+      current_step: "company",
+      service_requirements: nil,
+      integration_type: nil
+    )
+  end
+
   it "lets an applicant revisit a completed step without changing saved progress" do
     applicant_user = create(:applicant_user)
     application = create(

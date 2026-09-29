@@ -69,4 +69,15 @@ RSpec.describe OnboardingApplications::SaveFulfilmentDetails do
     expect(save_details).to be true
     expect(application.reload.current_step).to eq("processing")
   end
+
+  it "rejects a save before the fulfilment step is reached" do
+    application.update!(current_step: "company", completed_steps: [])
+
+    expect { save_details }.to raise_error(OnboardingApplications::Advance::StepConflict)
+    expect(application.reload).to have_attributes(
+      current_step: "company",
+      service_requirements: nil,
+      integration_type: nil
+    )
+  end
 end
