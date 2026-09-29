@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_27_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_28_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -351,6 +351,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120000) do
     t.index ["applicant_id"], name: "index_onboarding_applications_on_applicant_id", unique: true
   end
 
+  create_table "onboarding_currencies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.integer "kind", null: false
+    t.uuid "onboarding_application_id", null: false
+    t.datetime "updated_at", null: false
+    t.index ["onboarding_application_id", "kind", "code"], name: "index_onboarding_currencies_on_application_kind_code", unique: true
+    t.index ["onboarding_application_id"], name: "index_onboarding_currencies_on_onboarding_application_id"
+  end
+
   create_table "onboarding_messages", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.text "content", null: false
     t.datetime "created_at", null: false
@@ -548,6 +558,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_120000) do
   add_foreign_key "kyc_validation_warnings", "merchants", column: "applicant_id"
   add_foreign_key "merchants", "users", column: "no_corporate_owners_attested_by_id", on_delete: :nullify
   add_foreign_key "onboarding_applications", "merchants", column: "applicant_id"
+  add_foreign_key "onboarding_currencies", "onboarding_applications"
   add_foreign_key "onboarding_messages", "onboarding_sessions"
   add_foreign_key "onboarding_sessions", "merchants", column: "applicant_id"
   add_foreign_key "processing_statements", "merchants", column: "applicant_id"

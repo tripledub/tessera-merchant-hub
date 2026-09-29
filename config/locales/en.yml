@@ -1183,6 +1183,13 @@ en:
           enter live production credentials.
         trading_address: Trading address
       continue: Save and continue
+      currencies:
+        add: Add currency
+        code: ISO currency code
+        placeholder: GBP
+        processing: Processing currencies
+        remove: Remove currency
+        settlement: Settlement currencies
       fulfilment:
         delivery_over_seven_days: Is the time between purchase and delivery over seven
           days?

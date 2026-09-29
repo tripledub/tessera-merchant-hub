@@ -160,6 +160,49 @@ RSpec.describe "Portal application shell", type: :request do
     expect(application.reload.current_step).to eq("fulfilment")
   end
 
+  it "saves repeatable processing and settlement currencies" do
+    applicant_user = create(:applicant_user)
+    application = currency_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "currencies",
+      onboarding_application: {
+        processing_currencies_attributes: { "0" => { code: "gbp" }, "1" => { code: "eur" } },
+        settlement_currencies_attributes: { "0" => { code: "usd" } }
+      }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "processing"))
+    expect(application.processing_currencies.pluck(:code)).to contain_exactly("GBP", "EUR")
+    expect(application.settlement_currencies.pluck(:code)).to contain_exactly("USD")
+  end
+
+  it "restores currencies and renders nested format errors" do
+    applicant_user = create(:applicant_user)
+    application = currency_application_for(applicant_user)
+    application.processing_currencies.create!(code: "GBP")
+    application.settlement_currencies.create!(code: "EUR")
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "currencies")
+    expect(response.body).to include("GBP", "EUR")
+
+    patch portal_application_path, params: {
+      step: "currencies",
+      onboarding_application: {
+        processing_currencies_attributes: { "0" => { code: "invalid" } },
+        settlement_currencies_attributes: { "0" => { id: application.settlement_currencies.first.id, code: "EUR" } }
+      }
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    items = Capybara.string(response.body).all("[data-repeatable-fields-target='item']")
+    item = items.find { |candidate| candidate.has_field?(with: "INVALID") }
+    expect(item).to have_field(with: "INVALID")
+    expect(item).to have_css(".form-error", text: "Code is invalid")
+  end
+
   it "rejects fulfilment answers before the applicant reaches that step" do
     applicant_user = create(:applicant_user)
     application = create(:onboarding_application, applicant: applicant_user.applicant, current_step: "company")
@@ -264,6 +307,15 @@ RSpec.describe "Portal application shell", type: :request do
       current_step: "fulfilment",
       completed_steps: [ "company" ],
       **attributes
+    )
+  end
+
+  def currency_application_for(applicant_user)
+    create(
+      :onboarding_application,
+      applicant: applicant_user.applicant,
+      current_step: "currencies",
+      completed_steps: %w[company fulfilment]
     )
   end
 end
