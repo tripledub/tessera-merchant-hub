@@ -28,6 +28,7 @@ class Portal::ApplicationsController < Portal::BaseController
     return update_payments if step == "payments"
     return update_descriptor if step == "descriptor"
     return update_principals if step == "principals"
+    return update_review if step == "review"
 
     OnboardingApplications::Advance.call(application: @application, step: step)
     redirect_to portal_application_path(step: @application.current_step)
@@ -123,6 +124,15 @@ class Portal::ApplicationsController < Portal::BaseController
   def prepare_principals
     principals = @application.applicant.kyc_principals.to_a.reject(&:merged?).reject(&:marked_for_destruction?)
     @application.applicant.kyc_principals.build(source: :applicant_declared) if principals.empty?
+  end
+
+  def update_review
+    if OnboardingApplications::Submit.call(application: @application)
+      redirect_to portal_application_path(step: "review"), notice: t("portal.applications.submitted")
+    else
+      @step = "review"
+      render :show, status: :unprocessable_content
+    end
   end
 
   def company_params

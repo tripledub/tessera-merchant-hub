@@ -1231,6 +1231,11 @@ en:
       progress: Application progress
       progress_conflict: Your application progressed in another session. We have shown
         your latest saved step.
+      review:
+        edit: Edit
+        missing: Missing
+        submit: Submit application
+        submitted_at: Submitted %{time}
       revisiting: You are reviewing a previously completed section. Its fields will
         be added in the corresponding application-section ticket.
       saved: Company details saved.
@@ -1250,6 +1255,7 @@ en:
         processing: Processing history
         review: Review and submit
         volumes: Volumes and transaction profile
+      submitted: Your application has been submitted.
       title: Your onboarding application
       'yes': 'Yes'
     dashboard:
