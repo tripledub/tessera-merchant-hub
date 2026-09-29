@@ -49,4 +49,24 @@ RSpec.describe ApplicantInvitation, type: :model do
       expect(described_class.find_usable_by_token(revoked_token)).to be_nil
     end
   end
+
+  describe "#claim!" do
+    it "records the invited applicant user and claim time" do
+      invitation, = described_class.issue!(
+        applicant: create(:applicant), email: "applicant@example.com", invited_by: create(:user, :psp_admin)
+      )
+      applicant_user = build(:applicant_user, applicant: invitation.applicant, email: invitation.email)
+
+      invitation.claim!(applicant_user)
+
+      expect(invitation).to have_attributes(claimed_by: applicant_user)
+      expect(invitation.claimed_at).to be_present
+    end
+
+    it "rejects a user for another applicant" do
+      invitation = create(:applicant_invitation)
+
+      expect { invitation.claim!(build(:applicant_user)) }.to raise_error(ApplicantInvitation::NotClaimable)
+    end
+  end
 end
