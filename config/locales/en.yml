@@ -1091,6 +1091,12 @@ en:
       applicant_supplied: This information was supplied by the applicant through self-service
         onboarding.
       back: Back to applicant
+      requirements:
+        complete: No missing application information or documents were identified.
+        description: Evaluated using the shared onboarding and KYC requirements.
+        missing_documents: Missing documents
+        missing_information: Missing information
+        title: Onboarding requirements
       title: "%{applicant} self-service application"
   payment_timelines:
     show:
