@@ -28,7 +28,7 @@ RSpec.describe "Portal application shell", type: :request do
     application = create(:onboarding_application, applicant: applicant_user.applicant)
     sign_in applicant_user, scope: :applicant_user
 
-    patch portal_application_path, params: { step: "company" }
+    patch portal_application_path, params: company_details_params(application)
     expect(response).to redirect_to(portal_application_path(step: "fulfilment"))
 
     delete destroy_applicant_user_session_path
@@ -37,6 +37,60 @@ RSpec.describe "Portal application shell", type: :request do
 
     expect(response).to redirect_to(portal_application_path(step: "fulfilment"))
     expect(application.reload.completed_steps).to eq([ "company" ])
+  end
+
+  it "renders the company fields with previously saved shared-domain values" do
+    applicant_user = create(:applicant_user)
+    application = create(
+      :onboarding_application,
+      applicant: applicant_user.applicant,
+      business_model_description: "Existing business description",
+      operating_licence: "None required"
+    )
+    create(:applicant_domain, applicant: applicant_user.applicant, name: "existing.example")
+    create(:address, :business, :primary, addressable: applicant_user.applicant, line1: "1 Existing Street")
+    create(:address, :primary, addressable: applicant_user.applicant, type: "Address::Trading", line1: "2 Trading Road")
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "company")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include(
+      application.applicant.company_name,
+      "Existing business description",
+      "existing.example",
+      "1 Existing Street",
+      "2 Trading Road"
+    )
+  end
+
+  it "returns validation errors against the company step without persisting partial answers" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+    params = company_details_params(application)
+    params[:onboarding_application][:business_model_description] = ""
+
+    patch portal_application_path, params: params
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Business model description can&#39;t be blank")
+    expect(application.reload.current_step).to eq("company")
+  end
+
+  it "shows a website validation error against the affected repeated item" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+    params = company_details_params(application)
+    params[:onboarding_application][:applicant_attributes][:applicant_domains_attributes]["0"][:name] = "not a domain"
+
+    patch portal_application_path, params: params
+
+    expect(response).to have_http_status(:unprocessable_content)
+    website_item = Capybara.string(response.body).find("[data-repeatable-fields-target='item']")
+    expect(website_item).to have_field(with: "not a domain")
+    expect(website_item).to have_css(".form-error", text: "Name is invalid")
   end
 
   it "lets an applicant revisit a completed step without changing saved progress" do
@@ -86,5 +140,29 @@ RSpec.describe "Portal application shell", type: :request do
     get portal_application_path(step: "unknown")
 
     expect(response).to have_http_status(:not_found)
+  end
+
+  def company_details_params(application)
+    applicant = application.applicant
+    {
+      step: "company",
+      onboarding_application: {
+        business_model_description: "A specimen business model",
+        operating_licence: "None required",
+        applicant_attributes: {
+          id: applicant.id,
+          company_name: applicant.company_name,
+          company_number: "12345678",
+          sector: applicant.sector,
+          primary_business_address_attributes: {
+            line1: "1 Test Street", city: "Testford", postcode: "TE1 1ST", country: "United Kingdom"
+          },
+          trading_address_attributes: {
+            line1: "2 Example Road", city: "Testford", postcode: "TE1 2ST", country: "United Kingdom"
+          },
+          applicant_domains_attributes: { "0" => { name: "specimen.example" } }
+        }
+      }
+    }
   end
 end

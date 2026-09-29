@@ -19,6 +19,12 @@ class Applicant < Merchant
   belongs_to :no_corporate_owners_attested_by, class_name: "User", optional: true
   has_one :primary_business_address, -> { where(type: "Address::Business", primary: true) },
           class_name: "Address", as: :addressable
+  has_one :trading_address, -> { where(primary: true) },
+          class_name: "Address::Trading", as: :addressable
+
+  accepts_nested_attributes_for :primary_business_address, update_only: true
+  accepts_nested_attributes_for :trading_address, update_only: true
+  accepts_nested_attributes_for :applicant_domains, allow_destroy: true, reject_if: :all_blank
 
   before_validation :strip_company_number
 

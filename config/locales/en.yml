@@ -1158,12 +1158,37 @@ en:
       title: Payment
   portal:
     applications:
+      company:
+        add_domain: Add website
+        address:
+          city: City
+          country: Country
+          line1: Address line 1
+          line2: Address line 2
+          postcode: Postcode
+        business_model_description: Description of business model
+        company_name: Company name
+        company_number: Company number
+        domain: Website domain
+        domain_placeholder: example.com
+        domains: Websites operated by the business
+        eu_entity_details: EU entity details (if different from the company above)
+        operating_licence: Licence required to operate
+        referrer: Name of referrer, if applicable
+        registered_address: Registered address
+        remove_domain: Remove website
+        sector: Sector
+        test_login_details: Test logins
+        test_login_warning: Provide sandbox or demonstration credentials only. Never
+          enter live production credentials.
+        trading_address: Trading address
       continue: Save and continue
       progress: Application progress
       progress_conflict: Your application progressed in another session. We have shown
         your latest saved step.
       revisiting: You are reviewing a previously completed section. Its fields will
         be added in the corresponding application-section ticket.
+      saved: Company details saved.
       saved_progress: Your progress is saved securely whenever you continue to the
         next section.
       section_placeholder: This section is ready for its application fields. Those
