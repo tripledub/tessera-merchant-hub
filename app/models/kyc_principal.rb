@@ -28,19 +28,16 @@ class KycPrincipal < ApplicationRecord
   enum :source, { document_extracted: 0, applicant_declared: 1, registry_fetched: 2 }, default: :document_extracted
 
   validates :name, presence: true
-  validates :date_of_birth, :email, presence: true, if: :applicant_declared?
-  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true
+  validates :date_of_birth, :email, presence: true, on: :self_service
+  validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }, allow_blank: true, on: :self_service
   validates :ownership_percentage,
             numericality: { greater_than: 0, less_than_or_equal_to: 100 },
             presence: true,
-            if: :applicant_declared_owner?
+            if: :ownership_role?,
+            on: :self_service
 
   def ownership_role?
     psc? || director_and_psc? || shareholder?
-  end
-
-  def applicant_declared_owner?
-    applicant_declared? && ownership_role?
   end
 
   def merged?
