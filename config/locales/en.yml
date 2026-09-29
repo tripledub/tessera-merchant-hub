@@ -1201,6 +1201,9 @@ en:
         service_requirements: Service requirements
         takes_deposits: Does your business take deposits?
       'no': 'No'
+      processing:
+        accepts_cards: Do you currently accept card payments?
+        current_acquirer: Current acquiring bank or processor
       progress: Application progress
       progress_conflict: Your application progressed in another session. We have shown
         your latest saved step.

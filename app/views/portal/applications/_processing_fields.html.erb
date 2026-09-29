@@ -1,0 +1,24 @@
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6" do |form| %>
+  <%= hidden_field_tag :step, "processing" %>
+  <%= render "shared/error_messages", object: application %>
+
+  <fieldset data-controller="conditional-fields" data-conditional-fields-show-when-value="true">
+    <legend class="form-label"><%= t("portal.applications.processing.accepts_cards") %></legend>
+    <div class="flex gap-6">
+      <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, label| %>
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
+          <%= form.radio_button :currently_accepts_card_payments, value, required: true,
+                data: { conditional_fields_target: "source", action: "conditional-fields#toggle" } %>
+          <%= label %>
+        </label>
+      <% end %>
+    </div>
+    <div class="mt-4" data-conditional-fields-target="dependent"
+         <%= "hidden" unless application.currently_accepts_card_payments? %>>
+      <%= form.label :current_acquirer, t("portal.applications.processing.current_acquirer"), class: "form-label" %>
+      <%= form.text_field :current_acquirer, required: true,
+            disabled: !application.currently_accepts_card_payments?, class: "form-input" %>
+    </div>
+  </fieldset>
+  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+<% end %>

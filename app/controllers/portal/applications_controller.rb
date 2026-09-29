@@ -23,6 +23,7 @@ class Portal::ApplicationsController < Portal::BaseController
     return update_company if step == "company"
     return update_fulfilment if step == "fulfilment"
     return update_currencies if step == "currencies"
+    return update_processing if step == "processing"
 
     OnboardingApplications::Advance.call(application: @application, step: step)
     redirect_to portal_application_path(step: @application.current_step)
@@ -78,6 +79,15 @@ class Portal::ApplicationsController < Portal::BaseController
     @application.settlement_currencies.build if @application.settlement_currencies.empty?
   end
 
+  def update_processing
+    if OnboardingApplications::SaveProcessingHistory.call(application: @application, attributes: processing_params)
+      redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
+    else
+      @step = "processing"
+      render :show, status: :unprocessable_content
+    end
+  end
+
   def company_params
     params.require(:onboarding_application).permit(
       :eu_entity_details,
@@ -114,5 +124,9 @@ class Portal::ApplicationsController < Portal::BaseController
       processing_currencies_attributes: %i[id code _destroy],
       settlement_currencies_attributes: %i[id code _destroy]
     )
+  end
+
+  def processing_params
+    params.require(:onboarding_application).permit(:currently_accepts_card_payments, :current_acquirer)
   end
 end
