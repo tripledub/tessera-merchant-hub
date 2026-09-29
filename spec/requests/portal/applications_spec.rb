@@ -3,6 +3,18 @@
 require "rails_helper"
 
 RSpec.describe "Portal application shell", type: :request do
+  it "rate limits repeated application saves for the authenticated applicant" do
+    applicant_user = create(:applicant_user)
+    create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+    store = Portal::ApplicationsController.portal_rate_limit_store
+    store.write("rate-limit:portal/applications:#{applicant_user.applicant_id}", 60, expires_in: 1.minute)
+
+    patch portal_application_path, params: { step: "company", onboarding_application: {} }
+
+    expect(response).to have_http_status(:too_many_requests)
+  end
+
   it "requires applicant authentication" do
     get portal_application_path
 

@@ -1,6 +1,12 @@
 # frozen_string_literal: true
 
 class Portal::ApplicationsController < Portal::BaseController
+  include Portal::AbuseProtection
+
+  before_action -> { reject_oversized_portal_payload(APPLICATION_PAYLOAD_LIMIT) }, only: :update
+  rate_limit to: 60, within: 1.minute, by: -> { current_applicant.id }, with: :portal_rate_limited,
+             store: portal_rate_limit_store, only: :update
+
   def show
     created = current_applicant.onboarding_application.nil?
     @application = OnboardingApplications::FindOrCreate.call(applicant: current_applicant)
