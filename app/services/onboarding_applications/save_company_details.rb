@@ -5,13 +5,16 @@ module OnboardingApplications
     def self.call(application:, attributes:)
       saved = application.transaction do
         application.assign_attributes(attributes)
-        next false unless application.save(context: :company)
-
-        Advance.call(application: application, step: "company") if application.current_step == "company"
-        true
+        application.save(context: :company)
       end
 
-      saved
+      return false unless saved
+
+      Advance.call(application: application, step: "company") if application.current_step == "company"
+      true
+    rescue Advance::StepConflict
+      application.reload
+      true
     end
   end
 end

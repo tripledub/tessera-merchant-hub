@@ -44,7 +44,9 @@ class Portal::ApplicationsController < Portal::BaseController
   end
 
   def prepare_company_details
-    @application.applicant.build_registered_address(primary: true) unless @application.applicant.registered_address
+    unless @application.applicant.primary_business_address
+      @application.applicant.build_primary_business_address(primary: true)
+    end
     @application.applicant.build_trading_address(primary: true) unless @application.applicant.trading_address
     @application.applicant.applicant_domains.build if @application.applicant.applicant_domains.empty?
   end
@@ -61,7 +63,7 @@ class Portal::ApplicationsController < Portal::BaseController
         :company_name,
         :company_number,
         :sector,
-        { registered_address_attributes: %i[id line1 line2 city postcode country],
+        { primary_business_address_attributes: %i[id line1 line2 city postcode country],
           trading_address_attributes: %i[id line1 line2 city postcode country],
           applicant_domains_attributes: %i[id name _destroy] }
       ]

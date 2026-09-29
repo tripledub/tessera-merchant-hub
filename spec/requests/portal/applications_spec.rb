@@ -154,7 +154,7 @@ RSpec.describe "Portal application shell", type: :request do
           company_name: applicant.company_name,
           company_number: "12345678",
           sector: applicant.sector,
-          registered_address_attributes: {
+          primary_business_address_attributes: {
             line1: "1 Test Street", city: "Testford", postcode: "TE1 1ST", country: "United Kingdom"
           },
           trading_address_attributes: {
