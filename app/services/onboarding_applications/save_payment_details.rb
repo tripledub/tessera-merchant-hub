@@ -3,13 +3,7 @@
 module OnboardingApplications
   class SavePaymentDetails
     def self.call(application:, attributes:)
-      application.transaction do
-        application.assign_attributes(attributes)
-        next false unless application.save(context: :payments)
-
-        Advance.call(application: application, step: "payments") if application.current_step == "payments"
-        true
-      end
+      SaveStepDetails.call(application: application, step: "payments", attributes: attributes)
     end
   end
 end

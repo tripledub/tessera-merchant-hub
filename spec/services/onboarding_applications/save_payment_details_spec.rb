@@ -55,4 +55,16 @@ RSpec.describe OnboardingApplications::SavePaymentDetails do
       sends_recurring_payment_advance_notifications: nil
     )
   end
+
+  it "rejects a save before the payments step is reached" do
+    application.update!(current_step: "processing", completed_steps: %w[company fulfilment currencies])
+
+    expect {
+      described_class.call(application: application, attributes: {
+        uses_shopping_cart: false,
+        takes_recurring_payments: false
+      })
+    }.to raise_error(OnboardingApplications::Advance::StepConflict)
+    expect(application.reload).to have_attributes(uses_shopping_cart: nil, takes_recurring_payments: nil)
+  end
 end

@@ -37,4 +37,12 @@ RSpec.describe OnboardingApplications::SaveCurrencies do
     expect(save_currencies).to be false
     expect(application.processing_currencies.first.errors.of_kind?(:code, :invalid)).to be true
   end
+
+  it "rejects a save before the currencies step is reached" do
+    application.update!(current_step: "fulfilment", completed_steps: [ "company" ])
+
+    expect { save_currencies }.to raise_error(OnboardingApplications::Advance::StepConflict)
+    expect(application.reload.processing_currencies).to be_empty
+    expect(application.settlement_currencies).to be_empty
+  end
 end

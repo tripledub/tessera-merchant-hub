@@ -18,6 +18,9 @@ RSpec.describe "Portal application shell", type: :request do
     application = OnboardingApplication.last
     expect(application).to have_attributes(applicant: applicant_user.applicant, status: "draft")
     expect(response.body).to include("Company details", "Review and submit")
+    page = Capybara.string(response.body)
+    expect(page).to have_link("Company details")
+    expect(page).to have_no_link("Review and submit")
   end
 
   it "saves progress and resumes it after logout and login" do
@@ -200,6 +203,84 @@ RSpec.describe "Portal application shell", type: :request do
     expect(item).to have_css(".form-error", text: "Code is invalid")
   end
 
+  it "renders saved processing history and its conditional acquirer field" do
+    applicant_user = create(:applicant_user)
+    processing_application_for(
+      applicant_user,
+      currently_accepts_card_payments: true,
+      current_acquirer: "Specimen Bank"
+    )
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "processing")
+
+    expect(response).to have_http_status(:ok)
+    page = Capybara.string(response.body)
+    expect(page).to have_checked_field("onboarding_application[currently_accepts_card_payments]", with: "true")
+    expect(page).to have_field("onboarding_application[current_acquirer]", with: "Specimen Bank", disabled: false)
+    expect(response.body).to include("conditional-fields#toggle")
+  end
+
+  it "saves processing history through the controller and advances" do
+    applicant_user = create(:applicant_user)
+    application = processing_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "processing",
+      onboarding_application: {
+        currently_accepts_card_payments: "true",
+        current_acquirer: "Specimen Bank"
+      }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "payments"))
+    expect(application.reload).to have_attributes(
+      currently_accepts_card_payments: true,
+      current_acquirer: "Specimen Bank",
+      current_step: "payments"
+    )
+  end
+
+  it "renders processing validation errors without advancing" do
+    applicant_user = create(:applicant_user)
+    application = processing_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "processing",
+      onboarding_application: {
+        currently_accepts_card_payments: "true",
+        current_acquirer: ""
+      }
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Current acquirer can&#39;t be blank")
+    expect(application.reload.current_step).to eq("processing")
+  end
+
+  it "rejects processing history before the applicant reaches that step" do
+    applicant_user = create(:applicant_user)
+    application = currency_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "processing",
+      onboarding_application: {
+        currently_accepts_card_payments: "true",
+        current_acquirer: "Should not persist"
+      }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "currencies"))
+    expect(application.reload).to have_attributes(
+      current_step: "currencies",
+      currently_accepts_card_payments: nil,
+      current_acquirer: nil
+    )
+  end
+
   it "renders saved shopping-cart and recurring-payment answers" do
     applicant_user = create(:applicant_user)
     payment_application_for(
@@ -249,6 +330,30 @@ RSpec.describe "Portal application shell", type: :request do
     )
   end
 
+  it "rejects fulfilment answers before the applicant reaches that step" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant, current_step: "company")
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "fulfilment",
+      onboarding_application: {
+        delivery_over_seven_days: "false",
+        full_payment_before_delivery: "true",
+        takes_deposits: "false",
+        service_requirements: "Should not persist",
+        integration_type: "API"
+      }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "company"))
+    expect(application.reload).to have_attributes(
+      current_step: "company",
+      service_requirements: nil,
+      integration_type: nil
+    )
+  end
+
   it "lets an applicant revisit a completed step without changing saved progress" do
     applicant_user = create(:applicant_user)
     application = create(
@@ -264,6 +369,16 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response).to have_http_status(:ok)
     expect(response.body).to include("Company details")
     expect(application.reload.current_step).to eq("processing")
+  end
+
+  it "redirects attempts to visit a future step back to the current step" do
+    applicant_user = create(:applicant_user)
+    create(:onboarding_application, applicant: applicant_user.applicant, current_step: "company")
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+
+    expect(response).to redirect_to(portal_application_path(step: "company"))
   end
 
   it "does not expose another applicant's application through an identifier" do
@@ -300,7 +415,7 @@ RSpec.describe "Portal application shell", type: :request do
           company_name: applicant.company_name,
           company_number: "12345678",
           sector: applicant.sector,
-          registered_address_attributes: {
+          primary_business_address_attributes: {
             line1: "1 Test Street", city: "Testford", postcode: "TE1 1ST", country: "United Kingdom"
           },
           trading_address_attributes: {
@@ -328,6 +443,16 @@ RSpec.describe "Portal application shell", type: :request do
       applicant: applicant_user.applicant,
       current_step: "currencies",
       completed_steps: %w[company fulfilment]
+    )
+  end
+
+  def processing_application_for(applicant_user, **attributes)
+    create(
+      :onboarding_application,
+      applicant: applicant_user.applicant,
+      current_step: "processing",
+      completed_steps: %w[company fulfilment currencies],
+      **attributes
     )
   end
 
