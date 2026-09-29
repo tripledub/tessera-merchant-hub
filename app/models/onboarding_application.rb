@@ -20,28 +20,29 @@ class OnboardingApplication < ApplicationRecord
   validates :applicant_id, uniqueness: true
   validates :current_step, inclusion: { in: STEPS }
   validate :completed_steps_are_known
-  validates :business_model_description, :operating_licence, presence: true, on: :company
-  validate :company_identity_is_complete, on: :company
-  validate :company_addresses_are_complete, on: :company
-  validate :company_has_a_domain, on: :company
+  validates :business_model_description, :operating_licence, presence: true, on: %i[company submission]
+  validate :company_identity_is_complete, on: %i[company submission]
+  validate :company_addresses_are_complete, on: %i[company submission]
+  validate :company_has_a_domain, on: %i[company submission]
   validates :delivery_over_seven_days, :full_payment_before_delivery, :takes_deposits,
-            inclusion: { in: [ true, false ] }, on: :fulfilment
-  validates :service_requirements, :integration_type, presence: true, on: :fulfilment
+            inclusion: { in: [ true, false ] }, on: %i[fulfilment submission]
+  validates :service_requirements, :integration_type, presence: true, on: %i[fulfilment submission]
   validates :deposit_percentage,
             presence: true,
             numericality: { greater_than: 0, less_than_or_equal_to: 100 },
             if: :takes_deposits?,
-            on: :fulfilment
-  validates :remaining_balance_due, presence: true, if: :takes_deposits?, on: :fulfilment
-  validate :currency_collections_are_present, on: :currencies
-  validates :currently_accepts_card_payments, inclusion: { in: [ true, false ] }, on: :processing
-  validates :current_acquirer, presence: true, if: :currently_accepts_card_payments?, on: :processing
+            on: %i[fulfilment submission]
+  validates :remaining_balance_due, presence: true, if: :takes_deposits?, on: %i[fulfilment submission]
+  validate :currency_collections_are_present, on: %i[currencies submission]
+  validates :currently_accepts_card_payments, inclusion: { in: [ true, false ] }, on: %i[processing submission]
+  validates :current_acquirer, presence: true, if: :currently_accepts_card_payments?, on: %i[processing submission]
   validates :uses_shopping_cart, :takes_recurring_payments,
-            inclusion: { in: [ true, false ] }, on: :payments
-  validates :shopping_cart_provider, presence: true, if: :uses_shopping_cart?, on: :payments
+            inclusion: { in: [ true, false ] }, on: %i[payments submission]
+  validates :shopping_cart_provider, presence: true, if: :uses_shopping_cart?, on: %i[payments submission]
   validates :sends_recurring_payment_receipts, :sends_recurring_payment_advance_notifications,
-            inclusion: { in: [ true, false ] }, if: :takes_recurring_payments?, on: :payments
-  validates :descriptor, :descriptor_company_number, :descriptor_company_city, presence: true, on: :descriptor
+            inclusion: { in: [ true, false ] }, if: :takes_recurring_payments?, on: %i[payments submission]
+  validates :descriptor, :descriptor_company_number, :descriptor_company_city,
+            presence: true, on: %i[descriptor submission]
   validate :applicant_has_principals, on: %i[principals submission]
   validate :applicant_principals_are_complete, on: %i[principals submission]
 

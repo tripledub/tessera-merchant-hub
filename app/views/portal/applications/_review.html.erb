@@ -1,0 +1,49 @@
+<div class="mt-6 space-y-6">
+  <%= render "shared/error_messages", object: application %>
+
+  <% [
+       ["company", [[t("portal.applications.company.company_name"), application.applicant.company_name],
+                    [t("portal.applications.company.company_number"), application.applicant.company_number],
+                    [t("portal.applications.company.business_model_description"), application.business_model_description]]],
+       ["fulfilment", [[t("portal.applications.fulfilment.service_requirements"), application.service_requirements],
+                       [t("portal.applications.fulfilment.integration_type"), application.integration_type]]],
+       ["currencies", [[t("portal.applications.currencies.processing"), application.processing_currencies.map(&:code).join(", ")],
+                       [t("portal.applications.currencies.settlement"), application.settlement_currencies.map(&:code).join(", ")]]],
+       ["processing", [[t("portal.applications.processing.current_acquirer"), application.current_acquirer]]],
+       ["payments", [[t("portal.applications.payments.shopping_cart_provider"), application.shopping_cart_provider]]],
+       ["descriptor", [[t("portal.applications.descriptor.descriptor"), application.descriptor]]]
+     ].each do |step, rows| %>
+    <section class="rounded-lg border border-gray-200 p-4">
+      <div class="flex items-center justify-between gap-4">
+        <h3 class="font-semibold"><%= t("portal.applications.steps.#{step}") %></h3>
+        <%= link_to t("portal.applications.review.edit"), portal_application_path(step: step), class: "text-sm text-brand-600" %>
+      </div>
+      <dl class="mt-3 space-y-2">
+        <% rows.each do |label, value| %>
+          <div><dt class="text-xs font-medium text-gray-500"><%= label %></dt><dd><%= value.presence || t("portal.applications.review.missing") %></dd></div>
+        <% end %>
+      </dl>
+    </section>
+  <% end %>
+
+  <section class="rounded-lg border border-gray-200 p-4">
+    <div class="flex items-center justify-between gap-4">
+      <h3 class="font-semibold"><%= t("portal.applications.steps.principals") %></h3>
+      <%= link_to t("portal.applications.review.edit"), portal_application_path(step: "principals"), class: "text-sm text-brand-600" %>
+    </div>
+    <ul class="mt-3 space-y-2">
+      <% application.applicant.kyc_principals.active.each do |principal| %>
+        <li><%= principal.name %> — <%= t("applicants.show.principals.roles.#{principal.role}") %></li>
+      <% end %>
+    </ul>
+  </section>
+
+  <% if application.submitted? %>
+    <p class="text-sm font-medium text-green-700"><%= t("portal.applications.review.submitted_at", time: l(application.submitted_at, format: :long)) %></p>
+  <% else %>
+    <%= form_with url: portal_application_path, method: :patch do %>
+      <%= hidden_field_tag :step, "review" %>
+      <%= submit_tag t("portal.applications.review.submit"), class: "btn-primary" %>
+    <% end %>
+  <% end %>
+</div>

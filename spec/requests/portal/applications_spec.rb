@@ -476,6 +476,35 @@ RSpec.describe "Portal application shell", type: :request do
     expect(application.reload.current_step).to eq("principals")
   end
 
+  it "reviews supplied information by section and submits a complete application" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Company details", "Fulfilment and service", "Morgan Owner", "Edit")
+
+    patch portal_application_path, params: { step: "review" }
+
+    expect(response).to redirect_to(portal_application_path(step: "review"))
+    expect(application.reload).to be_submitted
+    expect(application.submitted_at).to be_present
+  end
+
+  it "highlights missing required information and prevents submission" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    application.update_column(:descriptor, nil)
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: { step: "review" }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Descriptor can&#39;t be blank", "Missing")
+    expect(application.reload).to be_draft
+  end
+
   def company_details_params(application)
     applicant = application.applicant
     {
@@ -572,6 +601,31 @@ RSpec.describe "Portal application shell", type: :request do
           }
         }
       }
+    }
+  end
+
+  def review_application_for(applicant_user)
+    applicant = applicant_user.applicant
+    applicant.update!(company_number: "12345678")
+    create(:address, :business, :primary, addressable: applicant)
+    create(:address, :primary, type: "Address::Trading", addressable: applicant)
+    create(:applicant_domain, applicant: applicant)
+    create(:kyc_principal, applicant: applicant, source: :applicant_declared,
+      name: "Morgan Owner", date_of_birth: Date.new(1980, 1, 2), email: "owner@example.com")
+    application = create(:onboarding_application, applicant: applicant, current_step: "review",
+      completed_steps: OnboardingApplication::STEPS - [ "review" ], **review_required_answers)
+    application.processing_currencies.create!(code: "GBP")
+    application.settlement_currencies.create!(code: "GBP")
+    application
+  end
+
+  def review_required_answers
+    {
+      business_model_description: "Online retail", operating_licence: "None required",
+      delivery_over_seven_days: false, full_payment_before_delivery: true, takes_deposits: false,
+      service_requirements: "Card payments", integration_type: "API",
+      currently_accepts_card_payments: false, uses_shopping_cart: false, takes_recurring_payments: false,
+      descriptor: "SPECIMEN", descriptor_company_number: "12345678", descriptor_company_city: "London"
     }
   end
 end
