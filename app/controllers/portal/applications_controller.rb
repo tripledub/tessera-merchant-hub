@@ -3,18 +3,20 @@
 class Portal::ApplicationsController < Portal::BaseController
   def show
     created = current_applicant.onboarding_application.nil?
-    @application = current_applicant.onboarding_application || current_applicant.create_onboarding_application!
+    @application = OnboardingApplications::FindOrCreate.call(applicant: current_applicant)
     authorize @application
 
     return redirect_to portal_application_path(step: @application.current_step) if params[:step].blank? && !created
 
     @step = params[:step].presence || @application.current_step
-    head :not_found unless OnboardingApplication::STEPS.include?(@step)
+    return head :not_found unless OnboardingApplication::STEPS.include?(@step)
+    return redirect_to portal_application_path(step: @application.current_step) unless accessible_step?(@step)
+
     prepare_company_details if @step == "company"
   end
 
   def update
-    @application = current_applicant.onboarding_application || current_applicant.create_onboarding_application!
+    @application = OnboardingApplications::FindOrCreate.call(applicant: current_applicant)
     authorize @application
     step = params.require(:step)
     return update_company if step == "company"
@@ -26,6 +28,10 @@ class Portal::ApplicationsController < Portal::BaseController
   end
 
   private
+
+  def accessible_step?(step)
+    step == @application.current_step || @application.completed_steps.include?(step)
+  end
 
   def update_company
     if OnboardingApplications::SaveCompanyDetails.call(application: @application, attributes: company_params)
