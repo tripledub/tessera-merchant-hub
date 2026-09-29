@@ -100,6 +100,21 @@ RSpec.describe "Onboarding authentication", type: :request do
 
       expect(response).to have_http_status(:not_found)
     end
+
+    it "handles a concurrent registration for the invited email without an error response" do
+      invitation
+      allow(ApplicantUser).to receive(:new).and_wrap_original do |original, *arguments|
+        original.call(*arguments).tap do |applicant_user|
+          allow(applicant_user).to receive(:save).and_raise(ActiveRecord::RecordNotUnique)
+        end
+      end
+
+      expect {
+        post applicant_user_registration_path, params: sign_up_params
+      }.not_to raise_error
+
+      expect(response).to have_http_status(:not_found)
+    end
   end
 
   describe "POST /portal/sign_in" do
