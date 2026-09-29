@@ -1,0 +1,49 @@
+<% content_for :title, t('.page_title') %>
+
+<div class="mb-6">
+  <h1 class="text-xl font-semibold text-gray-900 dark:text-white/90"><%= t('.title') %></h1>
+  <p class="mt-1 max-w-3xl text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.subtitle') %></p>
+</div>
+
+<div class="mb-6 rounded-xl border border-warning-200 bg-warning-50 p-4 dark:border-warning-500/30 dark:bg-warning-500/10">
+  <h2 class="text-theme-sm font-semibold text-gray-900 dark:text-white"><%= t('.boundary.title') %></h2>
+  <p class="mt-1 text-theme-sm text-gray-700 dark:text-gray-300"><%= t('.boundary.receipt') %></p>
+  <p class="mt-1 text-theme-sm text-gray-700 dark:text-gray-300"><%= t('.boundary.review') %></p>
+</div>
+
+<nav class="mb-6 flex flex-wrap gap-2" aria-label="<%= t('.sector_navigation') %>">
+  <% @policy_catalogue.sectors.each do |sector| %>
+    <%= link_to sector.label, "##{sector.key}", class: "btn-secondary" %>
+  <% end %>
+</nav>
+
+<div class="space-y-8">
+  <% @policy_catalogue.sectors.each do |sector| %>
+    <section id="<%= sector.key %>" class="scroll-mt-6" aria-labelledby="<%= sector.key %>-heading">
+      <div class="mb-3">
+        <h2 id="<%= sector.key %>-heading" class="text-lg font-semibold text-gray-900 dark:text-white/90"><%= sector.label %></h2>
+        <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400"><%= t('.effective_policy') %></p>
+      </div>
+
+      <div class="space-y-4">
+        <div class="card">
+          <div class="mb-4 flex items-center gap-2">
+            <h3 class="text-base font-semibold text-gray-900 dark:text-white/90"><%= t('.groups.shared') %></h3>
+            <span class="badge badge-info"><%= t('.groups.inherited') %></span>
+          </div>
+          <%= render "requirements", requirements: sector.shared_requirements, origin: t('.groups.shared_badge') %>
+        </div>
+
+        <% if sector.sector_requirements.any? %>
+          <div class="card">
+            <div class="mb-4 flex items-center gap-2">
+              <h3 class="text-base font-semibold text-gray-900 dark:text-white/90"><%= t('.groups.sector_specific') %></h3>
+              <span class="badge badge-gray"><%= sector.label %></span>
+            </div>
+            <%= render "requirements", requirements: sector.sector_requirements, origin: t('.groups.sector_badge') %>
+          </div>
+        <% end %>
+      </div>
+    </section>
+  <% end %>
+</div>

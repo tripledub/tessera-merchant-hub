@@ -1,0 +1,39 @@
+<div class="divide-y divide-gray-100 dark:divide-gray-800">
+  <% requirements.each do |requirement| %>
+    <article class="py-4 first:pt-0 last:pb-0">
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h4 class="font-medium text-gray-900 dark:text-white/90"><%= requirement.title %></h4>
+          <p class="mt-1 text-theme-sm text-gray-500 dark:text-gray-400"><%= requirement.guidance %></p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <span class="badge badge-gray"><%= origin %></span>
+          <span class="badge <%= requirement.outcome_badge_class %>"><%= requirement.outcome %></span>
+        </div>
+      </div>
+
+      <dl class="mt-3 grid gap-3 text-theme-sm sm:grid-cols-2 lg:grid-cols-3">
+        <div>
+          <dt class="text-xs font-medium uppercase tracking-wide text-gray-400"><%= t('kyc.policies.index.fields.document') %></dt>
+          <dd class="mt-1 text-gray-700 dark:text-gray-300"><%= requirement.document_type %></dd>
+        </div>
+        <div>
+          <dt class="text-xs font-medium uppercase tracking-wide text-gray-400"><%= t('kyc.policies.index.fields.source') %></dt>
+          <dd class="mt-1 text-gray-700 dark:text-gray-300"><%= requirement.source %></dd>
+        </div>
+        <div class="sm:col-span-2 lg:col-span-1">
+          <dt class="text-xs font-medium uppercase tracking-wide text-gray-400"><%= t('kyc.policies.index.fields.evaluation') %></dt>
+          <dd class="mt-1 text-gray-700 dark:text-gray-300"><%= requirement.summary %></dd>
+        </div>
+      </dl>
+
+      <% if requirement.details.any? %>
+        <ul class="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
+          <% requirement.details.each do |detail| %>
+            <li><%= detail %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    </article>
+  <% end %>
+</div>
