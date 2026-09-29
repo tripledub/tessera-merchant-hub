@@ -23,7 +23,7 @@ class Portal::RegistrationsController < Devise::RegistrationsController
       set_minimum_password_length
       respond_with resource
     end
-  rescue ApplicantInvitation::NotClaimable
+  rescue ActiveRecord::RecordNotUnique, ApplicantInvitation::NotClaimable
     head :not_found
   end
 
