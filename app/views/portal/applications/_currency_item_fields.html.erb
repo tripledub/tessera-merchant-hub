@@ -1,0 +1,8 @@
+<div>
+  <%= form.label :code, t("portal.applications.currencies.code"), class: "form-label" %>
+  <%= form.text_field :code, required: true, maxlength: 3,
+        placeholder: t("portal.applications.currencies.placeholder"), class: "form-input uppercase" %>
+  <% form.object.errors.full_messages_for(:code).each do |message| %>
+    <p class="form-error"><%= message %></p>
+  <% end %>
+</div>

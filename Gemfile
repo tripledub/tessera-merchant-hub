@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
-gem "rails", "~> 8.1.3"
+gem "rails", "~> 8.1.4"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
@@ -65,7 +65,7 @@ gem "jaro_winkler"
 
 # Unified LLM client — Anthropic/Claude, structured output, streaming.
 # Pinned to the 2.0 RC: fixes CVE-2026-67991 (ReDoS), no stable 2.x release yet.
-gem "ruby_llm", "2.0.0.rc4"
+gem "ruby_llm", "2.0.0"
 
 # Real-time WebSocket support via AnyCable + Redis pub/sub.
 gem "anycable-rails"
@@ -125,7 +125,7 @@ gem "pdf-inspector", "~> 1.3", group: :test
 
 # Document packs for a synthetic scenario (MH-311) — already present transitively
 # via roo; declared explicitly since we now depend on it directly.
-gem "rubyzip", "~> 3.0", require: "zip"
+gem "rubyzip", "~> 3.7", require: "zip"
 
 gem "honeybadger", "~> 6.9"
 
