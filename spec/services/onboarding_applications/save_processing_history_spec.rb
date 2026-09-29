@@ -9,7 +9,7 @@ RSpec.describe OnboardingApplications::SaveProcessingHistory do
     expect(described_class.call(application: application, attributes: {
       currently_accepts_card_payments: true, current_acquirer: "Specimen Bank"
     })).to be true
-    expect(application.reload).to have_attributes(current_step: "pricing", current_acquirer: "Specimen Bank")
+    expect(application.reload).to have_attributes(current_step: "payments", current_acquirer: "Specimen Bank")
   end
 
   it "rejects a missing acquirer when cards are accepted" do

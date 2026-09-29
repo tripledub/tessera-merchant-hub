@@ -14,7 +14,24 @@ RSpec.describe OnboardingApplication, type: :model do
 
   it "defines the ordered self-service sections" do
     expect(described_class::STEPS).to eq(%w[
-      company fulfilment currencies processing pricing volumes countries principals review
+      company fulfilment currencies processing payments pricing volumes countries principals review
     ])
+  end
+
+  describe "payment details validation" do
+    it "requires a provider when a shopping cart is used" do
+      application.assign_attributes(uses_shopping_cart: true, shopping_cart_provider: "")
+
+      expect(application).not_to be_valid(:payments)
+      expect(application.errors.of_kind?(:shopping_cart_provider, :blank)).to be true
+    end
+
+    it "requires receipt and notification answers for recurring payments" do
+      application.assign_attributes(takes_recurring_payments: true)
+
+      expect(application).not_to be_valid(:payments)
+      expect(application.errors.of_kind?(:sends_recurring_payment_receipts, :inclusion)).to be true
+      expect(application.errors.of_kind?(:sends_recurring_payment_advance_notifications, :inclusion)).to be true
+    end
   end
 end
