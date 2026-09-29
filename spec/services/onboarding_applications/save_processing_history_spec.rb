@@ -24,4 +24,15 @@ RSpec.describe OnboardingApplications::SaveProcessingHistory do
     described_class.call(application: application, attributes: { currently_accepts_card_payments: false })
     expect(application.reload.current_acquirer).to be_nil
   end
+
+  it "rejects a save before the processing step is reached" do
+    application.update!(current_step: "currencies", completed_steps: %w[company fulfilment])
+
+    expect {
+      described_class.call(application: application, attributes: {
+        currently_accepts_card_payments: true, current_acquirer: "Should not persist"
+      })
+    }.to raise_error(OnboardingApplications::Advance::StepConflict)
+    expect(application.reload.current_acquirer).to be_nil
+  end
 end
