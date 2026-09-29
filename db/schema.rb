@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_27_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_27_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -334,11 +334,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_27_110000) do
     t.string "completed_steps", default: [], null: false, array: true
     t.datetime "created_at", null: false
     t.string "current_step", default: "company", null: false
+    t.boolean "delivery_over_seven_days"
+    t.decimal "deposit_percentage", precision: 5, scale: 2
     t.text "eu_entity_details"
+    t.boolean "full_payment_before_delivery"
+    t.string "integration_type"
     t.text "operating_licence"
     t.string "referrer"
+    t.string "remaining_balance_due"
+    t.text "service_requirements"
     t.integer "status", default: 0, null: false
     t.datetime "submitted_at"
+    t.boolean "takes_deposits"
     t.text "test_login_details"
     t.datetime "updated_at", null: false
     t.index ["applicant_id"], name: "index_onboarding_applications_on_applicant_id", unique: true

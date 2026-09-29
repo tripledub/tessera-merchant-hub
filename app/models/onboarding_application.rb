@@ -16,6 +16,17 @@ class OnboardingApplication < ApplicationRecord
   validate :company_identity_is_complete, on: :company
   validate :company_addresses_are_complete, on: :company
   validate :company_has_a_domain, on: :company
+  validates :delivery_over_seven_days, :full_payment_before_delivery, :takes_deposits,
+            inclusion: { in: [ true, false ] }, on: :fulfilment
+  validates :service_requirements, :integration_type, presence: true, on: :fulfilment
+  validates :deposit_percentage,
+            presence: true,
+            numericality: { greater_than: 0, less_than_or_equal_to: 100 },
+            if: :takes_deposits?,
+            on: :fulfilment
+  validates :remaining_balance_due, presence: true, if: :takes_deposits?, on: :fulfilment
+
+  before_validation :clear_deposit_details, if: -> { takes_deposits == false }
 
   private
 
@@ -44,5 +55,10 @@ class OnboardingApplication < ApplicationRecord
   def validate_company_address(name, error_attribute: name)
     address = applicant.public_send(name)
     errors.add(error_attribute, address ? :invalid : :blank) unless address&.valid?
+  end
+
+  def clear_deposit_details
+    self.deposit_percentage = nil
+    self.remaining_balance_due = nil
   end
 end

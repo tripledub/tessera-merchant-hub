@@ -1183,6 +1183,17 @@ en:
           enter live production credentials.
         trading_address: Trading address
       continue: Save and continue
+      fulfilment:
+        delivery_over_seven_days: Is the time between purchase and delivery over seven
+          days?
+        deposit_percentage: Deposit percentage
+        full_payment_before_delivery: Is full payment taken before delivery of the
+          product or service?
+        integration_type: Integration type
+        remaining_balance_due: When is the remaining balance due?
+        service_requirements: Service requirements
+        takes_deposits: Does your business take deposits?
+      'no': 'No'
       progress: Application progress
       progress_conflict: Your application progressed in another session. We have shown
         your latest saved step.
@@ -1204,6 +1215,7 @@ en:
         review: Review and submit
         volumes: Volumes and transaction profile
       title: Your onboarding application
+      'yes': 'Yes'
     dashboard:
       show:
         continue_application: Continue application
