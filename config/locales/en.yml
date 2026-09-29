@@ -1281,6 +1281,7 @@ en:
         welcome: Welcome, %{name}!
     sign_out: Sign out
     title: Kynetic Portal
+    toggle_dark_mode: Toggle dark mode
   processing_statements:
     actions:
       map: Map
