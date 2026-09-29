@@ -3,6 +3,15 @@
 require "rails_helper"
 
 RSpec.describe OnboardingApplicationPolicy do
+  it "allows PSP staff to review but not update an application" do
+    user = create(:user, :psp_support)
+    application = create(:onboarding_application)
+    policy = described_class.new(user, application)
+
+    expect(policy).to be_show
+    expect(policy).not_to be_update
+  end
+
   %i[show? update?].each do |query|
     it "allows a confirmed member of the applicant" do
       applicant_user = create(:applicant_user)

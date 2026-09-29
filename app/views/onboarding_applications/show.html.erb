@@ -1,0 +1,32 @@
+<% content_for :title, t("onboarding_applications.show.title", applicant: applicant.name) %>
+
+<div class="mb-4">
+  <%= link_to t("onboarding_applications.show.back"), applicant_path(applicant), class: "text-sm font-medium text-brand-600" %>
+</div>
+
+<div class="mb-6">
+  <h1 class="text-xl font-semibold text-gray-900 dark:text-white"><%= t("onboarding_applications.show.title", applicant: applicant.name) %></h1>
+  <p class="mt-1 text-sm text-gray-500"><%= t("onboarding_applications.show.applicant_supplied") %></p>
+  <p class="mt-2 text-sm font-medium"><%= onboarding_application.status.humanize %>
+    <% if onboarding_application.submitted_at %>· <%= l(onboarding_application.submitted_at, format: :long) %><% end %>
+  </p>
+</div>
+
+<div class="space-y-6">
+  <% {
+       t("portal.applications.steps.company") => [applicant.company_name, applicant.company_number, onboarding_application.business_model_description],
+       t("portal.applications.steps.fulfilment") => [onboarding_application.service_requirements, onboarding_application.integration_type],
+       t("portal.applications.steps.currencies") => [onboarding_application.processing_currencies.map(&:code).join(", "), onboarding_application.settlement_currencies.map(&:code).join(", ")],
+       t("portal.applications.steps.processing") => [onboarding_application.current_acquirer],
+       t("portal.applications.steps.payments") => [onboarding_application.shopping_cart_provider],
+       t("portal.applications.steps.descriptor") => [onboarding_application.descriptor, onboarding_application.descriptor_company_number, onboarding_application.descriptor_company_city],
+       t("portal.applications.steps.principals") => applicant.kyc_principals.active.map { |principal| "#{principal.name} — #{principal.role.humanize}" }
+     }.each do |heading, values| %>
+    <section class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03]">
+      <h2 class="font-semibold"><%= heading %></h2>
+      <ul class="mt-3 space-y-1 text-sm text-gray-700 dark:text-gray-300">
+        <% values.compact_blank.each do |value| %><li><%= value %></li><% end %>
+      </ul>
+    </section>
+  <% end %>
+</div>

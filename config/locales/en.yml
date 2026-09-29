@@ -328,6 +328,11 @@ en:
         documents: KYC Documents
         domains: Domains
         principals: Principals
+      self_service:
+        review: Review applicant-supplied information
+        status: 'Self-service application: %{status}'
+        submitted_at: Submitted %{time}
+        title: Self-service application
       tabs:
         compliance: Compliance
         documents: Documents
@@ -1081,6 +1086,12 @@ en:
         replacement_required: Your %{document_type} will need replacing soon — please
           upload an updated one when you can.
         under_review: We're reviewing your %{document_type}.
+  onboarding_applications:
+    show:
+      applicant_supplied: This information was supplied by the applicant through self-service
+        onboarding.
+      back: Back to applicant
+      title: "%{applicant} self-service application"
   payment_timelines:
     show:
       back: "← Back to payment"
