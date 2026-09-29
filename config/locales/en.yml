@@ -11,6 +11,10 @@ en:
             sector:
               locked_after_document_collection: cannot be changed after document collection
                 has begun
+        onboarding_application:
+          attributes:
+            applicant:
+              principals_blank: must include at least one director or beneficial owner
   admin:
     domain_blocklist_entries:
       errors:
@@ -1212,6 +1216,15 @@ en:
         shopping_cart_provider: Shopping cart or provider
         takes_recurring_payments: Do you take recurring payments?
         uses_shopping_cart: Do you use a shopping cart?
+      principals:
+        add: Add director or beneficial owner
+        date_of_birth: Date of birth
+        email: Email address
+        name: Full name
+        ownership_hint: Required for beneficial owners and shareholders.
+        ownership_percentage: Ownership or share percentage
+        remove: Remove person
+        role: Role
       processing:
         accepts_cards: Do you currently accept card payments?
         current_acquirer: Current acquiring bank or processor

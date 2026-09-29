@@ -42,6 +42,8 @@ class OnboardingApplication < ApplicationRecord
   validates :sends_recurring_payment_receipts, :sends_recurring_payment_advance_notifications,
             inclusion: { in: [ true, false ] }, if: :takes_recurring_payments?, on: :payments
   validates :descriptor, :descriptor_company_number, :descriptor_company_city, presence: true, on: :descriptor
+  validate :applicant_has_principals, on: %i[principals submission]
+  validate :applicant_principals_are_complete, on: %i[principals submission]
 
   before_validation :clear_deposit_details, if: -> { takes_deposits == false }
   before_validation :clear_current_acquirer, if: -> { currently_accepts_card_payments == false }
@@ -102,5 +104,18 @@ class OnboardingApplication < ApplicationRecord
   def clear_recurring_payment_details
     self.sends_recurring_payment_receipts = nil
     self.sends_recurring_payment_advance_notifications = nil
+  end
+
+  def applicant_has_principals
+    principals = applicant.kyc_principals.to_a.reject(&:merged?).reject(&:marked_for_destruction?)
+    return if principals.any?
+
+    # i18n-tasks-use t("activerecord.errors.models.onboarding_application.attributes.applicant.principals_blank")
+    errors.add(:applicant, :principals_blank)
+  end
+
+  def applicant_principals_are_complete
+    principals = applicant.kyc_principals.to_a.reject(&:merged?).reject(&:marked_for_destruction?)
+    errors.add(:applicant, :invalid) unless principals.all? { |principal| principal.valid?(:self_service) }
   end
 end

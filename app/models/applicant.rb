@@ -25,6 +25,7 @@ class Applicant < Merchant
   accepts_nested_attributes_for :primary_business_address, update_only: true
   accepts_nested_attributes_for :trading_address, update_only: true
   accepts_nested_attributes_for :applicant_domains, allow_destroy: true, reject_if: :all_blank
+  accepts_nested_attributes_for :kyc_principals, allow_destroy: true, reject_if: :all_blank
 
   before_validation :strip_company_number
 
