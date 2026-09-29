@@ -18,7 +18,7 @@ RSpec.describe OnboardingApplications::SavePaymentDetails do
 
     expect(result).to be true
     expect(application.reload).to have_attributes(
-      current_step: "pricing",
+      current_step: "descriptor",
       completed_steps: %w[company fulfilment currencies processing payments],
       shopping_cart_provider: "Specimen Cart",
       sends_recurring_payment_receipts: true,

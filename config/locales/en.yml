@@ -1190,6 +1190,10 @@ en:
         processing: Processing currencies
         remove: Remove currency
         settlement: Settlement currencies
+      descriptor:
+        company_city: Company city
+        company_number: Company number
+        descriptor: Descriptor
       fulfilment:
         delivery_over_seven_days: Is the time between purchase and delivery over seven
           days?
@@ -1225,6 +1229,7 @@ en:
         company: Company details
         countries: Target countries
         currencies: Currencies and settlement
+        descriptor: Descriptor details
         fulfilment: Fulfilment and services
         payments: Payment methods
         pricing: Pricing

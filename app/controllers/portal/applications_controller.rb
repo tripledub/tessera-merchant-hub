@@ -25,6 +25,7 @@ class Portal::ApplicationsController < Portal::BaseController
     return update_currencies if step == "currencies"
     return update_processing if step == "processing"
     return update_payments if step == "payments"
+    return update_descriptor if step == "descriptor"
 
     OnboardingApplications::Advance.call(application: @application, step: step)
     redirect_to portal_application_path(step: @application.current_step)
@@ -98,6 +99,15 @@ class Portal::ApplicationsController < Portal::BaseController
     end
   end
 
+  def update_descriptor
+    if OnboardingApplications::SaveDescriptorDetails.call(application: @application, attributes: descriptor_params)
+      redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
+    else
+      @step = "descriptor"
+      render :show, status: :unprocessable_content
+    end
+  end
+
   def company_params
     params.require(:onboarding_application).permit(
       :eu_entity_details,
@@ -147,6 +157,14 @@ class Portal::ApplicationsController < Portal::BaseController
       :takes_recurring_payments,
       :sends_recurring_payment_receipts,
       :sends_recurring_payment_advance_notifications
+    )
+  end
+
+  def descriptor_params
+    params.require(:onboarding_application).permit(
+      :descriptor,
+      :descriptor_company_number,
+      :descriptor_company_city
     )
   end
 end

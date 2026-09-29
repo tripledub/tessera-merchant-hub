@@ -305,7 +305,7 @@ RSpec.describe "Portal application shell", type: :request do
     )
   end
 
-  it "saves payment details and advances to pricing" do
+  it "saves payment details and advances to descriptor details" do
     applicant_user = create(:applicant_user)
     application = payment_application_for(applicant_user)
     sign_in applicant_user, scope: :applicant_user
@@ -320,7 +320,7 @@ RSpec.describe "Portal application shell", type: :request do
       }
     }
 
-    expect(response).to redirect_to(portal_application_path(step: "pricing"))
+    expect(response).to redirect_to(portal_application_path(step: "descriptor"))
     expect(application.reload).to have_attributes(
       uses_shopping_cart: false,
       shopping_cart_provider: nil,
@@ -328,6 +328,46 @@ RSpec.describe "Portal application shell", type: :request do
       sends_recurring_payment_receipts: true,
       sends_recurring_payment_advance_notifications: false
     )
+  end
+
+  it "renders, validates and saves descriptor details" do
+    applicant_user = create(:applicant_user)
+    application = descriptor_application_for(applicant_user, descriptor: "SAVED SHOP")
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "descriptor")
+    expect(response.body).to include("SAVED SHOP")
+
+    patch portal_application_path, params: {
+      step: "descriptor",
+      onboarding_application: {
+        descriptor: "SPECIMEN SHOP",
+        descriptor_company_number: "12345678",
+        descriptor_company_city: "Testford"
+      }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "pricing"))
+    expect(application.reload).to have_attributes(
+      descriptor: "SPECIMEN SHOP",
+      descriptor_company_number: "12345678",
+      descriptor_company_city: "Testford"
+    )
+  end
+
+  it "renders descriptor validation errors without persisting partial answers" do
+    applicant_user = create(:applicant_user)
+    application = descriptor_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path, params: {
+      step: "descriptor",
+      onboarding_application: { descriptor: "PARTIAL", descriptor_company_number: "", descriptor_company_city: "" }
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Descriptor company number can&#39;t be blank")
+    expect(application.reload).to have_attributes(current_step: "descriptor", descriptor: nil)
   end
 
   it "rejects fulfilment answers before the applicant reaches that step" do
@@ -462,6 +502,16 @@ RSpec.describe "Portal application shell", type: :request do
       applicant: applicant_user.applicant,
       current_step: "payments",
       completed_steps: %w[company fulfilment currencies processing],
+      **attributes
+    )
+  end
+
+  def descriptor_application_for(applicant_user, **attributes)
+    create(
+      :onboarding_application,
+      applicant: applicant_user.applicant,
+      current_step: "descriptor",
+      completed_steps: %w[company fulfilment currencies processing payments],
       **attributes
     )
   end

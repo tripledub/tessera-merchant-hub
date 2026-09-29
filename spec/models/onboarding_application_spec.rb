@@ -14,7 +14,7 @@ RSpec.describe OnboardingApplication, type: :model do
 
   it "defines the ordered self-service sections" do
     expect(described_class::STEPS).to eq(%w[
-      company fulfilment currencies processing payments pricing volumes countries principals review
+      company fulfilment currencies processing payments descriptor pricing volumes countries principals review
     ])
   end
 
@@ -33,5 +33,14 @@ RSpec.describe OnboardingApplication, type: :model do
       expect(application.errors.of_kind?(:sends_recurring_payment_receipts, :inclusion)).to be true
       expect(application.errors.of_kind?(:sends_recurring_payment_advance_notifications, :inclusion)).to be true
     end
+  end
+
+  it "requires all descriptor details" do
+    application.assign_attributes(descriptor: "", descriptor_company_number: "", descriptor_company_city: "")
+
+    expect(application).not_to be_valid(:descriptor)
+    expect(application.errors.attribute_names).to include(
+      :descriptor, :descriptor_company_number, :descriptor_company_city
+    )
   end
 end
