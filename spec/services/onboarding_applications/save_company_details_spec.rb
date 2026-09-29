@@ -19,7 +19,7 @@ RSpec.describe OnboardingApplications::SaveCompanyDetails do
         company_name: "Specimen Widgets Ltd",
         company_number: "12345678",
         sector: "general",
-        registered_address_attributes: address_attributes("1 Test Street"),
+        primary_business_address_attributes: address_attributes("1 Test Street"),
         trading_address_attributes: address_attributes("2 Example Road"),
         applicant_domains_attributes: {
           "0" => { name: "specimen-widgets.example" },
@@ -46,7 +46,9 @@ RSpec.describe OnboardingApplications::SaveCompanyDetails do
       completed_steps: [ "company" ]
     )
     expect(applicant.reload).to have_attributes(company_name: "Specimen Widgets Ltd", company_number: "12345678")
-    expect(applicant.registered_address).to have_attributes(type: "Address::Business", line1: "1 Test Street", primary: true)
+    expect(applicant.primary_business_address).to have_attributes(
+      type: "Address::Business", line1: "1 Test Street", primary: true
+    )
     expect(applicant.trading_address).to have_attributes(type: "Address::Trading", line1: "2 Example Road", primary: true)
     expect(applicant.applicant_domains.pluck(:name)).to contain_exactly(
       "specimen-widgets.example", "shop.specimen-widgets.example"
@@ -55,7 +57,7 @@ RSpec.describe OnboardingApplications::SaveCompanyDetails do
 
   it "does not advance or persist partial data when required company details are invalid" do
     attributes[:business_model_description] = ""
-    attributes[:applicant_attributes][:registered_address_attributes][:city] = ""
+    attributes[:applicant_attributes][:primary_business_address_attributes][:city] = ""
 
     expect(save_details).to be false
     expect(application.reload).to have_attributes(current_step: "company", business_model_description: nil)
@@ -67,5 +69,19 @@ RSpec.describe OnboardingApplications::SaveCompanyDetails do
 
     expect(save_details).to be true
     expect(application.reload.current_step).to eq("processing")
+  end
+
+  it "keeps valid company details when another request advances the step first" do
+    allow(OnboardingApplications::Advance).to receive(:call) do
+      OnboardingApplication.where(id: application.id).update_all(
+        current_step: "fulfilment", completed_steps: [ "company" ]
+      )
+      raise OnboardingApplications::Advance::StepConflict
+    end
+
+    expect(save_details).to be true
+    expect(application).to have_attributes(current_step: "fulfilment", completed_steps: [ "company" ])
+    expect(application.reload.business_model_description).to eq("Online retail of specimen widgets.")
+    expect(applicant.reload.company_name).to eq("Specimen Widgets Ltd")
   end
 end

@@ -42,7 +42,7 @@ class OnboardingApplication < ApplicationRecord
   end
 
   def company_addresses_are_complete
-    validate_company_address(:registered_address)
+    validate_company_address(:primary_business_address, error_attribute: :registered_address)
     validate_company_address(:trading_address)
   end
 
@@ -52,9 +52,9 @@ class OnboardingApplication < ApplicationRecord
     errors.add(:domains, :blank)
   end
 
-  def validate_company_address(name)
+  def validate_company_address(name, error_attribute: name)
     address = applicant.public_send(name)
-    errors.add(name, address ? :invalid : :blank) unless address&.valid?
+    errors.add(error_attribute, address ? :invalid : :blank) unless address&.valid?
   end
 
   def clear_deposit_details

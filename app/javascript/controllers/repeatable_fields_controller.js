@@ -10,13 +10,14 @@ export default class extends Controller {
   }
 
   connect() {
+    this._nextKey = 0
     this.updateControls()
   }
 
   add() {
     if (this.maximumReached) return
 
-    const key = `${Date.now()}_${this.nextKey++}`
+    const key = `${Date.now()}_${this._nextKey++}`
     const fragment = this.templateTarget.content.cloneNode(true)
 
     fragment.querySelectorAll("*").forEach((element) => {
@@ -64,15 +65,6 @@ export default class extends Controller {
 
   get maximumReached() {
     return this.maxValue > 0 && this.visibleItems.length >= this.maxValue
-  }
-
-  get nextKey() {
-    this._nextKey ||= 0
-    return this._nextKey
-  }
-
-  set nextKey(value) {
-    this._nextKey = value
   }
 
   updateControls() {
