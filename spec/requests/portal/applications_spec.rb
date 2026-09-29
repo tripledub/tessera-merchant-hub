@@ -76,6 +76,21 @@ RSpec.describe "Portal application shell", type: :request do
     )
   end
 
+  it "applies dark-mode contrast tokens to the registered and trading address fieldsets" do
+    applicant_user = create(:applicant_user)
+    create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "company")
+
+    expect(response).to have_http_status(:ok)
+    page = Capybara.string(response.body)
+    fieldsets = page.all("fieldset.card")
+    expect(fieldsets.size).to eq(2)
+    fieldsets.each { |fieldset| expect(fieldset["class"]).to include("card") } # theme-aware surface: dark:bg-gray-900 dark:border-gray-800
+    page.all("fieldset.card legend").each { |legend| expect(legend["class"]).to include("dark:text-white/90") }
+  end
+
   it "returns validation errors against the company step without persisting partial answers" do
     applicant_user = create(:applicant_user)
     application = create(:onboarding_application, applicant: applicant_user.applicant)
@@ -502,6 +517,30 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response).to redirect_to(portal_application_path(step: "review"))
     expect(application.reload).to be_submitted
     expect(application.submitted_at).to be_present
+  end
+
+  it "applies dark-mode contrast tokens to the review page sections and values" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+
+    expect(response).to have_http_status(:ok)
+    page = Capybara.string(response.body)
+    sections = page.all("section.card")
+    expect(sections.size).to be >= 2
+    sections.each { |section| expect(section["class"]).to include("card") } # theme-aware surface: dark:bg-gray-900 dark:border-gray-800
+    page.all("section.card h3").each { |heading| expect(heading["class"]).to include("dark:text-white/90") }
+    page.all("section.card dt").each { |label| expect(label["class"]).to include("dark:text-gray-400") }
+    page.all("section.card dd").each { |value| expect(value["class"]).to include("dark:text-white/90") }
+
+    patch portal_application_path, params: { step: "review" }
+    expect(response).to redirect_to(portal_application_path(step: "review"))
+
+    get portal_application_path(step: "review")
+    submitted_notice = Capybara.string(response.body).find("p.text-green-700")
+    expect(submitted_notice["class"]).to include("dark:text-green-400")
   end
 
   it "highlights missing required information and prevents submission" do
