@@ -1,0 +1,18 @@
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6" do |form| %>
+  <%= hidden_field_tag :step, "principals" %>
+  <%= render "shared/error_messages", object: application %>
+
+  <%= form.fields_for :applicant do |applicant_form| %>
+    <%= applicant_form.hidden_field :id %>
+    <%= render "shared/repeatable_fields/component",
+          form: applicant_form,
+          association: :kyc_principals,
+          new_child: KycPrincipal.new(source: :applicant_declared),
+          fields_partial: "portal/applications/principal_item_fields",
+          add_label: t("portal.applications.principals.add"),
+          remove_label: t("portal.applications.principals.remove"),
+          min: 1 %>
+  <% end %>
+
+  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+<% end %>

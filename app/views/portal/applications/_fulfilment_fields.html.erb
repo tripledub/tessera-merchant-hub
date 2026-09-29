@@ -1,0 +1,65 @@
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6" do |form| %>
+  <%= hidden_field_tag :step, "fulfilment" %>
+  <%= render "shared/error_messages", object: application %>
+
+  <% [
+       [ :delivery_over_seven_days, t("portal.applications.fulfilment.delivery_over_seven_days") ],
+       [ :full_payment_before_delivery, t("portal.applications.fulfilment.full_payment_before_delivery") ]
+     ].each do |field, label| %>
+    <fieldset>
+      <legend class="form-label"><%= label %></legend>
+      <div class="flex gap-6">
+        <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, option| %>
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+            <%= form.radio_button field, value, required: true %>
+            <%= option %>
+          </label>
+        <% end %>
+      </div>
+    </fieldset>
+  <% end %>
+
+  <fieldset data-controller="conditional-fields"
+            data-conditional-fields-show-when-value="true">
+    <legend class="form-label"><%= t("portal.applications.fulfilment.takes_deposits") %></legend>
+    <div class="flex gap-6">
+      <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, option| %>
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <%= form.radio_button :takes_deposits, value,
+                required: true,
+                data: {
+                  conditional_fields_target: "source",
+                  action: "conditional-fields#toggle"
+                } %>
+          <%= option %>
+        </label>
+      <% end %>
+    </div>
+
+    <div class="mt-4 grid gap-4 sm:grid-cols-2"
+         data-conditional-fields-target="dependent"
+         <%= "hidden" unless application.takes_deposits? %>>
+      <div>
+        <%= form.label :deposit_percentage, t("portal.applications.fulfilment.deposit_percentage"), class: "form-label" %>
+        <%= form.number_field :deposit_percentage, min: 0.01, max: 100, step: 0.01,
+              required: true, disabled: !application.takes_deposits?, class: "form-input" %>
+      </div>
+      <div>
+        <%= form.label :remaining_balance_due, t("portal.applications.fulfilment.remaining_balance_due"), class: "form-label" %>
+        <%= form.text_field :remaining_balance_due,
+              required: true, disabled: !application.takes_deposits?, class: "form-input" %>
+      </div>
+    </div>
+  </fieldset>
+
+  <div>
+    <%= form.label :service_requirements, t("portal.applications.fulfilment.service_requirements"), class: "form-label" %>
+    <%= form.text_area :service_requirements, rows: 4, required: true, class: "form-input" %>
+  </div>
+  <div>
+    <%= form.label :integration_type, t("portal.applications.fulfilment.integration_type"), class: "form-label" %>
+    <%= form.text_field :integration_type, required: true, class: "form-input" %>
+  </div>
+
+  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+<% end %>

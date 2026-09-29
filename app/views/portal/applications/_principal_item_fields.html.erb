@@ -1,0 +1,32 @@
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+  <div class="sm:col-span-2">
+    <%= form.label :name, t("portal.applications.principals.name"), class: "form-label" %>
+    <%= form.text_field :name, class: "form-input", required: true %>
+    <% form.object.errors.full_messages_for(:name).each do |message| %><p class="form-error"><%= message %></p><% end %>
+  </div>
+  <div>
+    <%= form.label :date_of_birth, t("portal.applications.principals.date_of_birth"), class: "form-label" %>
+    <%= form.date_field :date_of_birth, class: "form-input", required: true %>
+    <% form.object.errors.full_messages_for(:date_of_birth).each do |message| %><p class="form-error"><%= message %></p><% end %>
+  </div>
+  <div>
+    <%= form.label :email, t("portal.applications.principals.email"), class: "form-label" %>
+    <%= form.email_field :email, class: "form-input", required: true %>
+    <% form.object.errors.full_messages_for(:email).each do |message| %><p class="form-error"><%= message %></p><% end %>
+  </div>
+  <div data-controller="conditional-fields" data-conditional-fields-show-when-value="psc,director_and_psc,shareholder">
+    <%= form.label :role, t("portal.applications.principals.role"), class: "form-label" %>
+    <%= form.select :role,
+          %w[director psc director_and_psc shareholder].map { |role| [t("applicants.show.principals.roles.#{role}"), role] },
+          {}, class: "form-input",
+          data: { conditional_fields_target: "source", action: "conditional-fields#toggle" } %>
+    <% form.object.errors.full_messages_for(:role).each do |message| %><p class="form-error"><%= message %></p><% end %>
+    <div class="mt-4" data-conditional-fields-target="dependent" <%= "hidden" unless form.object.ownership_role? %>>
+      <%= form.label :ownership_percentage, t("portal.applications.principals.ownership_percentage"), class: "form-label" %>
+      <%= form.number_field :ownership_percentage, class: "form-input", min: 0.01, max: 100, step: 0.01,
+            required: form.object.ownership_role?, disabled: !form.object.ownership_role? %>
+      <% form.object.errors.full_messages_for(:ownership_percentage).each do |message| %><p class="form-error"><%= message %></p><% end %>
+      <p class="mt-1 text-xs text-gray-500"><%= t("portal.applications.principals.ownership_hint") %></p>
+    </div>
+  </div>
+</div>

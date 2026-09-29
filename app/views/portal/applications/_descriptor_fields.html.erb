@@ -1,0 +1,23 @@
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6" do |form| %>
+  <%= hidden_field_tag :step, "descriptor" %>
+  <%= render "shared/error_messages", object: application %>
+
+  <div>
+    <%= form.label :descriptor, t("portal.applications.descriptor.descriptor"), class: "form-label" %>
+    <%= form.text_field :descriptor, required: true, class: "form-input" %>
+  </div>
+
+  <div>
+    <%= form.label :descriptor_company_number,
+          t("portal.applications.descriptor.company_number"), class: "form-label" %>
+    <%= form.text_field :descriptor_company_number, required: true, class: "form-input" %>
+  </div>
+
+  <div>
+    <%= form.label :descriptor_company_city,
+          t("portal.applications.descriptor.company_city"), class: "form-label" %>
+    <%= form.text_field :descriptor_company_city, required: true, class: "form-input" %>
+  </div>
+
+  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+<% end %>

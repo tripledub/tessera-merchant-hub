@@ -11,4 +11,8 @@ class Portal::BaseController < ApplicationController
     current_applicant_user&.applicant
   end
   helper_method :current_applicant
+
+  def pundit_user
+    current_applicant_user
+  end
 end

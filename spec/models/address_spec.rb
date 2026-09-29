@@ -19,6 +19,12 @@ RSpec.describe Address, type: :model do
     end
   end
 
+  describe Address::Trading do
+    it "is an Address" do
+      expect(described_class.superclass).to eq(Address)
+    end
+  end
+
   describe "primary uniqueness" do
     let(:applicant) { create(:applicant) }
 
