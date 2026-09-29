@@ -8,5 +8,6 @@ class OnboardingApplicationsController < ApplicationController
     head(:not_found) and return unless onboarding_application
 
     authorize onboarding_application
+    @requirements_assessment = OnboardingApplications::RequirementsAssessment.for(onboarding_application)
   end
 end
