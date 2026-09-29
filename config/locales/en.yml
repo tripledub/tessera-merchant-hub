@@ -1157,8 +1157,31 @@ en:
         timeline: Timeline
       title: Payment
   portal:
+    applications:
+      continue: Save and continue
+      progress: Application progress
+      progress_conflict: Your application progressed in another session. We have shown
+        your latest saved step.
+      revisiting: You are reviewing a previously completed section. Its fields will
+        be added in the corresponding application-section ticket.
+      saved_progress: Your progress is saved securely whenever you continue to the
+        next section.
+      section_placeholder: This section is ready for its application fields. Those
+        fields are delivered in the next stacked slices.
+      steps:
+        company: Company details
+        countries: Target countries
+        currencies: Currencies and settlement
+        fulfilment: Fulfilment and services
+        pricing: Pricing
+        principals: Directors and beneficial owners
+        processing: Processing history
+        review: Review and submit
+        volumes: Volumes and transaction profile
+      title: Your onboarding application
     dashboard:
       show:
+        continue_application: Continue application
         welcome: Welcome, %{name}!
     sign_out: Sign out
     title: Kynetic Portal
