@@ -14,6 +14,7 @@ class Portal::ApplicationsController < Portal::BaseController
 
     prepare_company_details if @step == "company"
     prepare_currencies if @step == "currencies"
+    prepare_principals if @step == "principals"
   end
 
   def update
@@ -26,6 +27,7 @@ class Portal::ApplicationsController < Portal::BaseController
     return update_processing if step == "processing"
     return update_payments if step == "payments"
     return update_descriptor if step == "descriptor"
+    return update_principals if step == "principals"
 
     OnboardingApplications::Advance.call(application: @application, step: step)
     redirect_to portal_application_path(step: @application.current_step)
@@ -108,6 +110,21 @@ class Portal::ApplicationsController < Portal::BaseController
     end
   end
 
+  def update_principals
+    if OnboardingApplications::SavePrincipals.call(application: @application, attributes: principals_params)
+      redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
+    else
+      @step = "principals"
+      prepare_principals
+      render :show, status: :unprocessable_content
+    end
+  end
+
+  def prepare_principals
+    principals = @application.applicant.kyc_principals.to_a.reject(&:merged?).reject(&:marked_for_destruction?)
+    @application.applicant.kyc_principals.build(source: :applicant_declared) if principals.empty?
+  end
+
   def company_params
     params.require(:onboarding_application).permit(
       :eu_entity_details,
@@ -165,6 +182,15 @@ class Portal::ApplicationsController < Portal::BaseController
       :descriptor,
       :descriptor_company_number,
       :descriptor_company_city
+    )
+  end
+
+  def principals_params
+    params.require(:onboarding_application).permit(
+      applicant_attributes: [
+        :id,
+        { kyc_principals_attributes: %i[id name date_of_birth email role ownership_percentage _destroy] }
+      ]
     )
   end
 end

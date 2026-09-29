@@ -443,6 +443,39 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response).to have_http_status(:not_found)
   end
 
+  it "renders and saves repeatable directors and beneficial owners" do
+    applicant_user = create(:applicant_user)
+    application = principals_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "principals")
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("Add director or beneficial owner")
+
+    patch portal_application_path,
+      params: principal_params(application, role: "director_and_psc", ownership_percentage: "51.25")
+
+    expect(response).to redirect_to(portal_application_path(step: "review"))
+    expect(application.applicant.kyc_principals.find_by(name: "Morgan Owner")).to have_attributes(
+      role: "director_and_psc", ownership_percentage: 51.25, source: "applicant_declared"
+    )
+  end
+
+  it "identifies the affected repeated person when validation fails" do
+    applicant_user = create(:applicant_user)
+    application = principals_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    patch portal_application_path,
+      params: principal_params(application, role: "psc", ownership_percentage: "")
+
+    expect(response).to have_http_status(:unprocessable_content)
+    person = Capybara.string(response.body).find("[data-repeatable-fields-target='item']")
+    expect(person).to have_field(with: "Morgan Owner")
+    expect(person).to have_css(".form-error", text: "Ownership percentage can't be blank")
+    expect(application.reload.current_step).to eq("principals")
+  end
+
   def company_details_params(application)
     applicant = application.applicant
     {
@@ -514,5 +547,31 @@ RSpec.describe "Portal application shell", type: :request do
       completed_steps: %w[company fulfilment currencies processing payments],
       **attributes
     )
+  end
+
+  def principals_application_for(applicant_user)
+    create(
+      :onboarding_application,
+      applicant: applicant_user.applicant,
+      current_step: "principals",
+      completed_steps: %w[company fulfilment currencies processing payments descriptor pricing volumes countries]
+    )
+  end
+
+  def principal_params(application, role:, ownership_percentage:)
+    {
+      step: "principals",
+      onboarding_application: {
+        applicant_attributes: {
+          id: application.applicant_id,
+          kyc_principals_attributes: {
+            "0" => {
+              name: "Morgan Owner", date_of_birth: "1980-01-02", email: "morgan@example.com",
+              role: role, ownership_percentage: ownership_percentage
+            }
+          }
+        }
+      }
+    }
   end
 end

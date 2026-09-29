@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_29_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -277,6 +277,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_28_140000) do
     t.string "email"
     t.uuid "merged_into_id"
     t.string "name", null: false
+    t.decimal "ownership_percentage", precision: 5, scale: 2
     t.string "postcode"
     t.integer "role", default: 0, null: false
     t.integer "source", default: 0, null: false

@@ -9,8 +9,9 @@ export default class extends Controller {
   }
 
   toggle() {
-    const selected = this.sourceTargets.find((field) => field.checked)?.value
-    const visible = selected === this.showWhenValue
+    const selected = this.sourceTargets.find((field) => field.checked)?.value ||
+      this.sourceTargets.find((field) => field.matches("select, input:not([type='radio']):not([type='checkbox'])"))?.value
+    const visible = this.showWhenValue.split(",").includes(selected)
 
     this.dependentTargets.forEach((container) => {
       container.hidden = !visible
