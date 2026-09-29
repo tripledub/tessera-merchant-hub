@@ -16,7 +16,7 @@
       </div>
     </div>
 
-    <%= applicant_form.fields_for :registered_address do |address_form| %>
+    <%= applicant_form.fields_for :primary_business_address do |address_form| %>
       <%= render "portal/applications/address_fields", form: address_form, title: t("portal.applications.company.registered_address") %>
     <% end %>
 

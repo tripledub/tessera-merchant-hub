@@ -5,11 +5,14 @@ class OnboardingApplicationPresenter < BasePresenter
 
   def steps
     OnboardingApplication::STEPS.map do |step|
+      completed = onboarding_application.completed_steps.include?(step)
+      current = onboarding_application.current_step == step
       {
         key: step,
         label: t("portal.applications.steps.#{step}"),
-        completed: onboarding_application.completed_steps.include?(step),
-        current: onboarding_application.current_step == step
+        completed: completed,
+        current: current,
+        accessible: completed || current
       }
     end
   end
