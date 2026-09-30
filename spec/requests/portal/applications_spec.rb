@@ -553,6 +553,35 @@ RSpec.describe "Portal application shell", type: :request do
     expect(application.reload.current_step).to eq("principals")
   end
 
+  it "shows the registered address and a same-as-registered notice when the trading address matches" do
+    applicant_user = create(:applicant_user)
+    review_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("1 Test Street, London, EC1A 1BB, United Kingdom")
+    page = Capybara.string(response.body)
+    expect(page).to have_css("dt", text: "Registered address")
+    expect(page).to have_css("dt", text: "Trading address")
+    expect(page).to have_css("dd", text: "Same as registered address")
+  end
+
+  it "shows a genuinely different trading address distinctly on the review page" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    application.applicant.trading_address.update!(line1: "2 Different Road", city: "Manchester")
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+
+    expect(response).to have_http_status(:ok)
+    expect(response.body).to include("1 Test Street, London, EC1A 1BB, United Kingdom")
+    expect(response.body).to include("2 Different Road, Manchester, EC1A 1BB, United Kingdom")
+    expect(response.body).not_to include("Same as registered address")
+  end
+
   it "reviews supplied information by section and submits a complete application" do
     applicant_user = create(:applicant_user)
     application = review_application_for(applicant_user)
@@ -565,8 +594,13 @@ RSpec.describe "Portal application shell", type: :request do
     patch portal_application_path, params: { step: "review" }
 
     expect(response).to redirect_to(portal_application_path(step: "review"))
-    expect(application.reload).to be_submitted
+    application.reload
+    expect(application).to be_submitted
     expect(application.submitted_at).to be_present
+    expect(application.completed_steps).to include("review")
+
+    get portal_application_path(step: "review")
+    expect(response.body).to include('aria-valuenow="100"')
   end
 
   it "applies dark-mode contrast tokens to the review page sections and values" do
