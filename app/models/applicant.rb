@@ -98,6 +98,15 @@ class Applicant < Merchant
     onboarding_session&.document_collection_started? || kyc_documents.exists?
   end
 
+  def trading_address_same_as_registered?
+    return true if trading_address.nil? || trading_address.line1.blank?
+    return false if primary_business_address.nil?
+
+    %i[line1 line2 city postcode country].all? do |field|
+      trading_address.public_send(field) == primary_business_address.public_send(field)
+    end
+  end
+
   private
 
   def strip_company_number

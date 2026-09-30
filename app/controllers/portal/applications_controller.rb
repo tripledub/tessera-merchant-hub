@@ -68,17 +68,7 @@ class Portal::ApplicationsController < Portal::BaseController
     end
     @application.applicant.build_trading_address(primary: true) unless @application.applicant.trading_address
     @application.applicant.applicant_domains.build if @application.applicant.applicant_domains.empty?
-    @trading_address_same_as_registered = trading_address_matches_registered?(@application.applicant)
-  end
-
-  def trading_address_matches_registered?(applicant)
-    trading = applicant.trading_address
-    return true if trading.nil? || trading.line1.blank?
-
-    registered = applicant.primary_business_address
-    return false if registered.nil?
-
-    %i[line1 line2 city postcode country].all? { |field| trading.public_send(field) == registered.public_send(field) }
+    @trading_address_same_as_registered = @application.applicant.trading_address_same_as_registered?
   end
 
   # Mirrors the registered address onto the trading address attributes so a

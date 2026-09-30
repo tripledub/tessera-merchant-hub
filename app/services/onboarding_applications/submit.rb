@@ -10,6 +10,7 @@ module OnboardingApplications
 
         application.status = :submitted
         application.submitted_at = Time.current
+        application.completed_steps = (application.completed_steps + [ "review" ]).uniq
         application.save!(context: :submission)
       end
 
