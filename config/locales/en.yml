@@ -1253,8 +1253,11 @@ en:
       review:
         edit: Edit
         missing: Missing
+        registered_address: Registered address
         submit: Submit application
         submitted_at: Submitted %{time}
+        trading_address: Trading address
+        trading_address_same_as_registered: Same as registered address
       revisiting: You are reviewing a previously completed section. Its fields will
         be added in the corresponding application-section ticket.
       saved: Company details saved.

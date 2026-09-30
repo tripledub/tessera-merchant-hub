@@ -40,6 +40,12 @@ RSpec.describe "Applicant invitations", type: :request do
       expect(response.body).to include("new.applicant@example.com")
       expect(response.body).to include("/portal/invitations/")
       expect(response.body).not_to include(invitation.token_digest)
+
+      page = Capybara.string(response.body)
+      url_field = page.find("[data-clipboard-target='source']")
+      expect(url_field["class"]).to include("dark:text-white/90")
+      expect(page).to have_css("[data-action='clipboard#copy']", text: "Copy")
+      expect(page).to have_no_css("button.btn-primary")
     end
 
     it "does not create an invitation with an invalid email" do
