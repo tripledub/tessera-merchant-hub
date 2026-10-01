@@ -1,11 +1,19 @@
-<% if object.errors.any? %>
+<%
+  # Nested-attribute errors (e.g. accepts_nested_attributes_for bubbling a
+  # child record's own validation failure up through dotted attribute keys
+  # like "applicant.applicant_domains.name") already have a dedicated inline
+  # rendering next to their field. Showing them here too would duplicate that
+  # message with confusing, doubly-humanized wording.
+  banner_errors = object.errors.reject { |error| error.attribute.to_s.include?(".") }
+%>
+<% if banner_errors.any? %>
   <div class="rounded-md bg-red-50 p-4 mb-4 dark:bg-error-500/15">
     <h3 class="text-sm font-medium text-red-800 dark:text-error-400">
-      <%= t('.header', count: object.errors.count) %>
+      <%= t('.header', count: banner_errors.count) %>
     </h3>
     <ul class="mt-2 list-disc list-inside text-sm text-red-700 dark:text-error-400">
-      <% object.errors.full_messages.each do |message| %>
-        <li><%= message %></li>
+      <% banner_errors.each do |error| %>
+        <li><%= error.full_message %></li>
       <% end %>
     </ul>
   </div>

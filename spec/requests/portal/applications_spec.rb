@@ -141,6 +141,31 @@ RSpec.describe "Portal application shell", type: :request do
     page.all("fieldset.card legend").each { |legend| expect(legend["class"]).to include("dark:text-white/90") }
   end
 
+  it "does not mark the company number input as required" do
+    applicant_user = create(:applicant_user)
+    create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "company")
+
+    input = Capybara.string(response.body).find_field("onboarding_application[applicant_attributes][company_number]")
+    expect(input[:required]).to be_nil
+  end
+
+  it "saves the company step with a blank company number" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+    params = company_details_params(application)
+    params[:onboarding_application][:applicant_attributes][:company_number] = ""
+
+    patch portal_application_path, params: params
+
+    expect(response).to have_http_status(:found)
+    expect(application.reload.completed_steps).to include("company")
+    expect(applicant_user.applicant.reload.company_number).to be_nil
+  end
+
   it "returns validation errors against the company step without persisting partial answers" do
     applicant_user = create(:applicant_user)
     application = create(:onboarding_application, applicant: applicant_user.applicant)
@@ -168,6 +193,20 @@ RSpec.describe "Portal application shell", type: :request do
     website_item = Capybara.string(response.body).find("[data-repeatable-fields-target='item']")
     expect(website_item).to have_field(with: "not a domain")
     expect(website_item).to have_css(".form-error", text: "Name is invalid")
+    expect(response.body).not_to include("Applicant applicant domains name is invalid")
+  end
+
+  it "accepts the company step with no website domain, for applicants without one (e.g. MOTO)" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+    params = company_details_params(application)
+    params[:onboarding_application][:applicant_attributes][:applicant_domains_attributes]["0"][:name] = ""
+
+    patch portal_application_path, params: params
+
+    expect(response).to redirect_to(portal_application_path(step: "fulfilment"))
+    expect(application.applicant.reload.applicant_domains).to be_empty
   end
 
   it "renders saved fulfilment answers and conditionally exposes deposit fields" do
@@ -568,6 +607,22 @@ RSpec.describe "Portal application shell", type: :request do
     expect(page).to have_css("dd", text: "Same as registered address")
   end
 
+  it "shows the company number as not applicable on the review page and submits when none was given" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    application.applicant.update!(company_number: nil)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+
+    expect(response.body).to include("Not applicable")
+    expect(response.body).not_to include("Company number can&#39;t be blank")
+
+    patch portal_application_path, params: { step: "review" }
+
+    expect(application.reload).not_to be_draft
+  end
+
   it "shows a genuinely different trading address distinctly on the review page" do
     applicant_user = create(:applicant_user)
     application = review_application_for(applicant_user)
@@ -638,6 +693,31 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response).to have_http_status(:unprocessable_content)
     expect(response.body).to include("Descriptor can&#39;t be blank", "Missing")
     expect(application.reload).to be_draft
+  end
+
+  it "wires client-side validation onto every non-repeatable onboarding step form" do
+    steps_setup = {
+      "company" => ->(applicant_user) { create(:onboarding_application, applicant: applicant_user.applicant) },
+      "descriptor" => method(:descriptor_application_for),
+      "fulfilment" => method(:fulfilment_application_for),
+      "processing" => method(:processing_application_for),
+      "payments" => method(:payment_application_for)
+    }
+
+    steps_setup.each do |step, build_application|
+      applicant_user = create(:applicant_user)
+      build_application.call(applicant_user)
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_application_path(step: step)
+
+      page = Capybara.string(response.body)
+      form = page.find("form[action='#{portal_application_path}']")
+      expect(form["data-controller"]).to include("form-validation")
+      expect(form["data-action"]).to include("form-validation#submitForm")
+
+      delete destroy_applicant_user_session_path
+    end
   end
 
   def company_details_params(application)

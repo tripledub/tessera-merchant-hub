@@ -14,6 +14,22 @@ class ApplicantPresenter < BasePresenter
     badge(applicant.status.humanize, colour)
   end
 
+  RegistryLookupBanner = Data.define(:message, :action_label)
+
+  # Banner for the overview tab, or nil when there is nothing to flag (no company
+  # number, or the applicant's own registry lookup succeeded).
+  def registry_lookup_banner
+    return if applicant.company_number.blank?
+
+    case applicant.registry_lookup_state
+    when :never_attempted
+      RegistryLookupBanner.new(t("applicants.tabs.overview.registry_lookup.never_attempted"),
+                               t("applicants.tabs.overview.registry_lookup.fetch"))
+    when :failed
+      failed_registry_lookup_banner
+    end
+  end
+
   def principal_count
     applicant.kyc_principals.active.count
   end
@@ -44,5 +60,19 @@ class ApplicantPresenter < BasePresenter
     rows << { label: "Email", value: applicant.contact_email } if applicant.contact_email.present?
     rows << { label: "Country", value: applicant.country } if applicant.country.present?
     rows
+  end
+
+  private
+
+  def failed_registry_lookup_banner
+    retry_label = t("applicants.tabs.overview.registry_lookup.retry") if applicant.registry_lookup_retryable?
+
+    message = case applicant.registry_lookup_error
+    when "rate_limited", "unavailable" then t("applicants.tabs.overview.registry_lookup.transient")
+    when "not_found", "invalid_number" then t("applicants.tabs.overview.registry_lookup.wrong_number")
+    else t("applicants.tabs.overview.registry_lookup.unsupported")
+    end
+
+    RegistryLookupBanner.new(message, retry_label)
   end
 end

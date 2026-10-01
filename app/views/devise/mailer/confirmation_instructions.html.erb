@@ -2,4 +2,6 @@
 
 <p>You can confirm your account email through the link below:</p>
 
-<p><%= link_to 'Confirm my account', confirmation_url(@resource, confirmation_token: @token) %></p>
+<% confirm_url = confirmation_url(@resource, confirmation_token: @token) %>
+<p><%= link_to "Confirm my account", confirm_url, class: "email-button" %></p>
+<p class="email-link-fallback"><%= confirm_url %></p>

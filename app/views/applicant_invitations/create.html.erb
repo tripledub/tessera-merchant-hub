@@ -2,23 +2,29 @@
 
 <div class="card max-w-2xl" data-controller="clipboard">
   <h1 class="mb-2 text-xl font-semibold text-gray-900 dark:text-white/90"><%= t("applicant_invitations.create.title") %></h1>
-  <p class="mb-6 text-sm text-gray-500 dark:text-gray-400"><%= t("applicant_invitations.create.subtitle", email: invitation.email) %></p>
+  <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
+    <% if @email_sent %>
+      <%= t("applicant_invitations.create.subtitle_sent", applicant: invitation.applicant.name, email: invitation.email) %>
+    <% else %>
+      <%= t("applicant_invitations.create.subtitle_not_sent", email: invitation.email) %>
+    <% end %>
+  </p>
 
-  <div class="flex items-center justify-between gap-3 rounded-lg border border-gray-300 bg-white px-4 py-3
+  <div class="flex items-center justify-between gap-3 overflow-hidden rounded-lg border border-gray-300 bg-white px-4 py-3
               dark:border-gray-700 dark:bg-gray-900">
-    <span class="min-w-0 flex-1 break-all font-mono text-sm text-gray-900 dark:text-white/90" data-clipboard-target="source">
-      <%= @invitation_url %>
-    </span>
+    <input type="text" readonly value="<%= @invitation_url %>"
+           class="min-w-0 flex-1 truncate border-0 bg-transparent p-0 font-mono text-sm text-gray-900
+                  focus:ring-0 focus:outline-none dark:text-white/90"
+           data-clipboard-target="source" data-action="focus->clipboard#selectAll">
     <button type="button"
-            class="flex shrink-0 items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700
-                   dark:text-gray-400 dark:hover:text-white"
-            data-action="clipboard#copy">
+            class="flex shrink-0 items-center text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white"
+            data-action="clipboard#copy" aria-label="<%= t("applicant_invitations.create.copy") %>"
+            title="<%= t("applicant_invitations.create.copy") %>">
       <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
         <rect x="6.5" y="6.5" width="10" height="10" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
         <path d="M13.5 6.5V5A1.5 1.5 0 0 0 12 3.5H5A1.5 1.5 0 0 0 3.5 5v7A1.5 1.5 0 0 0 5 13.5h1.5"
               stroke="currentColor" stroke-width="1.5"/>
       </svg>
-      <%= t("applicant_invitations.create.copy") %>
     </button>
   </div>
   <div class="mt-2 h-5">

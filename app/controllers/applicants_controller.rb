@@ -69,6 +69,10 @@ class ApplicantsController < ApplicationController
 
   def registry_lookup
     authorize applicant, :update?
+    if applicant.company_number.blank?
+      return redirect_to applicant_path(applicant), alert: t("flash.applicants.registry_lookup_no_company_number")
+    end
+
     redirect_after_registry_lookup(Applicants::RegistryLookup.call(applicant))
   end
 
@@ -132,7 +136,8 @@ class ApplicantsController < ApplicationController
   CREATABLE_JURISDICTIONS = %w[gb xu].freeze
 
   def new_applicant_params
-    params.require(:applicant).permit(:name, :company_number, :sector).merge(registry_jurisdiction: requested_jurisdiction)
+    params.require(:applicant).permit(:name, :company_number, :sector, :contact_email)
+      .merge(registry_jurisdiction: requested_jurisdiction)
   end
 
   def requested_jurisdiction

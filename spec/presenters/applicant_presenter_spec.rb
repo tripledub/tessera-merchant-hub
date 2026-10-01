@@ -79,4 +79,47 @@ RSpec.describe ApplicantPresenter, type: :presenter do
       expect(presenter.warning_count_class).to include("text-gray-800")
     end
   end
+
+  describe "#registry_lookup_banner" do
+    let(:applicant) { create(:applicant, company_number: "12345678") }
+    let(:scope) { "applicants.tabs.overview.registry_lookup" }
+
+    it "is nil without a company number" do
+      applicant.update!(company_number: nil)
+
+      expect(presenter.registry_lookup_banner).to be_nil
+    end
+
+    it "offers a fetch when never attempted" do
+      banner = presenter.registry_lookup_banner
+
+      expect(banner.message).to eq(I18n.t("#{scope}.never_attempted"))
+      expect(banner.action_label).to eq(I18n.t("#{scope}.fetch"))
+    end
+
+    it "is nil after a successful lookup" do
+      applicant.update!(registry_lookup_attempted_at: Time.current)
+
+      expect(presenter.registry_lookup_banner).to be_nil
+    end
+
+    {
+      "rate_limited" => [ "transient", true ],
+      "unavailable" => [ "transient", true ],
+      "not_found" => [ "wrong_number", false ],
+      "invalid_number" => [ "wrong_number", false ],
+      "unauthorized" => [ "unsupported", false ],
+      "not_supported" => [ "unsupported", false ],
+      "some_new_error" => [ "unsupported", false ]
+    }.each do |error, (message_key, retryable)|
+      it "maps #{error} to the #{message_key} message#{retryable ? ' with a retry' : ' without an action'}" do
+        applicant.update!(registry_lookup_attempted_at: Time.current, registry_lookup_error: error)
+
+        banner = presenter.registry_lookup_banner
+
+        expect(banner.message).to eq(I18n.t("#{scope}.#{message_key}"))
+        expect(banner.action_label).to eq(retryable ? I18n.t("#{scope}.retry") : nil)
+      end
+    end
+  end
 end

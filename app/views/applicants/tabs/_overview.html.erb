@@ -1,9 +1,11 @@
 <%# Overview tab — applicant details and compliance summary via ApplicantPresenter %>
 <% present(applicant) do |p| %>
-  <% if applicant.company_number.present? && applicant.registry_profiles.empty? %>
+  <% if (banner = p.registry_lookup_banner) %>
     <div class="mb-6 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 p-4 dark:border-amber-900 dark:bg-amber-500/10">
-      <p class="text-theme-sm text-amber-700 dark:text-amber-400"><%= t('.registry_lookup_missing') %></p>
-      <%= button_to t('.registry_lookup_retry'), registry_lookup_applicant_path(applicant), class: "btn-secondary" %>
+      <p class="text-theme-sm text-amber-700 dark:text-amber-400"><%= banner.message %></p>
+      <% if banner.action_label %>
+        <%= button_to banner.action_label, registry_lookup_applicant_path(applicant), class: "btn-secondary" %>
+      <% end %>
     </div>
   <% end %>
 

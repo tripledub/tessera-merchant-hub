@@ -4,4 +4,6 @@
 
 <p>Click the link below to unlock your account:</p>
 
-<p><%= link_to 'Unlock my account', unlock_url(@resource, unlock_token: @token) %></p>
+<% unlock_link = unlock_url(@resource, unlock_token: @token) %>
+<p><%= link_to "Unlock my account", unlock_link, class: "email-button" %></p>
+<p class="email-link-fallback"><%= unlock_link %></p>

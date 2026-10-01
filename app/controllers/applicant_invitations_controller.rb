@@ -18,6 +18,7 @@ class ApplicantInvitationsController < ApplicationController
       invited_by: current_user
     )
     @invitation_url = portal_invitation_url(token: token)
+    @email_sent = deliver_invitation_email(invitation, @invitation_url)
     render :create, locals: { invitation: invitation }, status: :created
   rescue ActiveRecord::RecordInvalid => error
     applicant_invitation.assign_attributes(email: applicant_invitation_params[:email])
@@ -29,5 +30,16 @@ class ApplicantInvitationsController < ApplicationController
 
   def applicant_invitation_params
     params.require(:applicant_invitation).permit(:email)
+  end
+
+  # Delivered synchronously so a failure can be surfaced on this same
+  # response (a flash/notice pointing at the manual-copy fallback) rather
+  # than failing silently in a background job the PSP admin never sees.
+  def deliver_invitation_email(invitation, url)
+    ApplicantInvitationMailer.invite(invitation, url).deliver_now
+    true
+  rescue StandardError => error
+    Rails.error.report(error, handled: true, context: { invitation_id: invitation.id })
+    false
   end
 end
