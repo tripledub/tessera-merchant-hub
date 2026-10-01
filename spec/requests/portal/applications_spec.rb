@@ -141,6 +141,31 @@ RSpec.describe "Portal application shell", type: :request do
     page.all("fieldset.card legend").each { |legend| expect(legend["class"]).to include("dark:text-white/90") }
   end
 
+  it "does not mark the company number input as required" do
+    applicant_user = create(:applicant_user)
+    create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "company")
+
+    input = Capybara.string(response.body).find_field("onboarding_application[applicant_attributes][company_number]")
+    expect(input[:required]).to be_nil
+  end
+
+  it "saves the company step with a blank company number" do
+    applicant_user = create(:applicant_user)
+    application = create(:onboarding_application, applicant: applicant_user.applicant)
+    sign_in applicant_user, scope: :applicant_user
+    params = company_details_params(application)
+    params[:onboarding_application][:applicant_attributes][:company_number] = ""
+
+    patch portal_application_path, params: params
+
+    expect(response).to have_http_status(:found)
+    expect(application.reload.completed_steps).to include("company")
+    expect(applicant_user.applicant.reload.company_number).to be_nil
+  end
+
   it "returns validation errors against the company step without persisting partial answers" do
     applicant_user = create(:applicant_user)
     application = create(:onboarding_application, applicant: applicant_user.applicant)
@@ -580,6 +605,22 @@ RSpec.describe "Portal application shell", type: :request do
     expect(page).to have_css("dt", text: "Registered address")
     expect(page).to have_css("dt", text: "Trading address")
     expect(page).to have_css("dd", text: "Same as registered address")
+  end
+
+  it "shows the company number as not applicable on the review page and submits when none was given" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    application.applicant.update!(company_number: nil)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+
+    expect(response.body).to include("Not applicable")
+    expect(response.body).not_to include("Company number can&#39;t be blank")
+
+    patch portal_application_path, params: { step: "review" }
+
+    expect(application.reload).not_to be_draft
   end
 
   it "shows a genuinely different trading address distinctly on the review page" do
