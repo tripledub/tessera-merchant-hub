@@ -170,7 +170,7 @@ RSpec.describe "Portal application shell", type: :request do
     expect(website_item).to have_css(".form-error", text: "Name is invalid")
   end
 
-  it "renders a validation error, rather than crashing, when every website domain is removed" do
+  it "accepts the company step with no website domain, for applicants without one (e.g. MOTO)" do
     applicant_user = create(:applicant_user)
     application = create(:onboarding_application, applicant: applicant_user.applicant)
     sign_in applicant_user, scope: :applicant_user
@@ -179,8 +179,8 @@ RSpec.describe "Portal application shell", type: :request do
 
     patch portal_application_path, params: params
 
-    expect(response).to have_http_status(:unprocessable_content)
-    expect(response.body).to include("Domains can&#39;t be blank")
+    expect(response).to redirect_to(portal_application_path(step: "fulfilment"))
+    expect(application.applicant.reload.applicant_domains).to be_empty
   end
 
   it "renders saved fulfilment answers and conditionally exposes deposit fields" do
