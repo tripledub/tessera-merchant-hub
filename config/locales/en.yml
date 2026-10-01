@@ -154,12 +154,19 @@ en:
         title: Invite a PSP user
   app:
     title: Tessera Merchant Hub
+  applicant_invitation_mailer:
+    invite:
+      body: You've been invited to complete the onboarding application for %{applicant}.
+        Use the link below to set up your account.
+      greeting: Hello,
+      subject: You're invited to complete your application for %{applicant}
   applicant_invitations:
     create:
       copy: Copy invitation link
       done: Done
-      subtitle: Send this one-time registration link to %{email}. It will not be shown
-        again.
+      subtitle_not_sent: Couldn't send the invitation email automatically. Send this
+        one-time registration link to %{email} yourself — it will not be shown again.
+      subtitle_sent: An Invite has been sent to %{applicant} (%{email}).
       title: Invitation created
     new:
       back: "← Back to applicant"
