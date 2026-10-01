@@ -17,5 +17,14 @@ RSpec.describe ApplicantInvitationMailer, type: :mailer do
       expect(mail.html_part.body.to_s).to include("https://uat.kynetic.id/portal/invitations/abc123")
       expect(mail.text_part.body.to_s).to include("https://uat.kynetic.id/portal/invitations/abc123")
     end
+
+    it "inlines the mailer stylesheet into the delivered HTML via premailer-rails" do
+      mail.deliver_now
+
+      html = ActionMailer::Base.deliveries.last.html_part.body.to_s
+
+      expect(html).to include('style="').and include("background-color: #465fff")
+      expect(html).not_to include("<link")
+    end
   end
 end
