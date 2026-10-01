@@ -301,6 +301,10 @@ aside[data-collapsed] .menu-item {
   @apply mt-1.5 text-theme-xs text-error-500;
 }
 
+@utility fieldset-error {
+  @apply rounded-lg border border-error-300 p-3 dark:border-error-700;
+}
+
 @utility form-label {
   @apply mb-1.5 block text-theme-sm font-medium text-gray-700 dark:text-gray-300;
 }
