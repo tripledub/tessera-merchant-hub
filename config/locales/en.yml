@@ -375,9 +375,15 @@ en:
         entities_count: Entities
         former_staff_member: a former staff member
         principals_count: Principals
-        registry_lookup_missing: Company was found, but the full registry data fetch
-          didn't complete.
-        registry_lookup_retry: Retry registry lookup
+        registry_lookup:
+          fetch: Fetch registry data
+          never_attempted: Registry data hasn't been fetched yet.
+          retry: Retry registry lookup
+          transient: The registry couldn't be reached just now. Try again shortly.
+          unsupported: Registry lookup isn't available for this applicant. Contact
+            support.
+          wrong_number: No company was found for this number. Ask the applicant to
+            check it.
         remove_attestation: Remove confirmation
         status: Status
         summary: Summary

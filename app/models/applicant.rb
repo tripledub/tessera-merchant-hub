@@ -27,7 +27,11 @@ class Applicant < Merchant
   accepts_nested_attributes_for :applicant_domains, allow_destroy: true, reject_if: :all_blank
   accepts_nested_attributes_for :kyc_principals, allow_destroy: true, reject_if: :all_blank
 
+  # Lookup errors worth retrying; anything else (wrong number, config, unsupported) cannot succeed on retry.
+  RETRYABLE_REGISTRY_LOOKUP_ERRORS = %w[rate_limited unavailable].freeze
+
   before_validation :strip_company_number
+  before_save :reset_registry_lookup_status, if: :will_save_change_to_company_number?
 
   validates :merchant_id, absence: true
   validates :name, presence: true
@@ -48,6 +52,19 @@ class Applicant < Merchant
     forex_brokerage: "forex_brokerage",
     proprietary_trading: "proprietary_trading"
   }, default: "general", validate: true
+
+  # Outcome of this applicant's own registry lookup (not PSC-chain lookups): never attempted,
+  # succeeded, or failed with registry_lookup_error as the reason.
+  def registry_lookup_state
+    return :never_attempted if registry_lookup_attempted_at.nil?
+
+    registry_lookup_error.present? ? :failed : :succeeded
+  end
+
+  def registry_lookup_retryable?
+    state = registry_lookup_state
+    state == :never_attempted || (state == :failed && RETRYABLE_REGISTRY_LOOKUP_ERRORS.include?(registry_lookup_error))
+  end
 
   def to_param
     id
@@ -108,6 +125,11 @@ class Applicant < Merchant
   end
 
   private
+
+  def reset_registry_lookup_status
+    self.registry_lookup_attempted_at = nil
+    self.registry_lookup_error = nil
+  end
 
   def strip_company_number
     self.company_number = company_number&.strip.presence

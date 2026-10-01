@@ -831,6 +831,44 @@ RSpec.describe "Applicants", type: :request do
     end
   end
 
+  describe "GET /applicants/:id/tab/overview registry lookup banner (MH-382)" do
+    let(:scope) { "applicants.tabs.overview.registry_lookup" }
+    let(:applicant) { create(:applicant, company_number: "12345678") }
+
+    before { sign_in psp_admin }
+
+    def overview_body
+      get tab_applicant_path(applicant, tab: "overview")
+      CGI.unescapeHTML(response.body)
+    end
+
+    it "offers a fetch when the lookup has never been attempted" do
+      expect(overview_body).to include(I18n.t("#{scope}.never_attempted"), I18n.t("#{scope}.fetch"))
+    end
+
+    it "offers a retry for a transient failure" do
+      applicant.update!(registry_lookup_attempted_at: Time.current, registry_lookup_error: "unavailable")
+
+      expect(overview_body).to include(I18n.t("#{scope}.transient"), I18n.t("#{scope}.retry"))
+    end
+
+    it "shows the reason without any action for a wrong number" do
+      applicant.update!(registry_lookup_attempted_at: Time.current, registry_lookup_error: "not_found")
+
+      body = overview_body
+      expect(body).to include(I18n.t("#{scope}.wrong_number"))
+      expect(body).not_to include(registry_lookup_applicant_path(applicant))
+    end
+
+    it "shows no banner after a successful lookup, or without a company number" do
+      applicant.update!(registry_lookup_attempted_at: Time.current)
+      expect(overview_body).not_to include(registry_lookup_applicant_path(applicant))
+
+      applicant.update!(company_number: nil)
+      expect(overview_body).not_to include(registry_lookup_applicant_path(applicant))
+    end
+  end
+
   describe "GET /applicants/:id/tab/overview domain review completeness (MH-297)" do
     before { sign_in psp_admin }
 

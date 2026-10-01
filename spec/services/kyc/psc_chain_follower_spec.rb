@@ -86,6 +86,12 @@ RSpec.describe Kyc::PscChainFollower do
         expect(result.error_type).to eq(:not_found)
         expect(Kyc::ValidationWarning.last.warning_type).to eq("unresolved_chain")
       end
+
+      it "does not touch the applicant's own registry lookup status (MH-382)" do
+        applicant.update!(registry_lookup_attempted_at: 1.day.ago.change(usec: 0), registry_lookup_error: nil)
+
+        expect { call(psc) }.not_to change { applicant.reload.slice(:registry_lookup_attempted_at, :registry_lookup_error) }
+      end
     end
 
     # MH-313: was hardcoded to "gb" — must resolve through the applicant's
