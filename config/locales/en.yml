@@ -158,6 +158,7 @@ en:
     invite:
       body: You've been invited to complete the onboarding application for %{applicant}.
         Use the link below to set up your account.
+      cta: Complete your application
       greeting: Hello,
       subject: You're invited to complete your application for %{applicant}
   applicant_invitations:

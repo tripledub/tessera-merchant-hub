@@ -2,12 +2,23 @@
 <html>
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <style>
-      /* Email styles need to be inline */
-    </style>
+    <%= stylesheet_link_tag "mailer", media: nil %>
   </head>
 
   <body>
-    <%= yield %>
+    <div class="email-wrapper">
+      <div class="email-container">
+        <div class="email-header">
+          <%= image_tag attachments["kynetic-icon.png"].url, alt: "Kynetic" %>
+          <span class="email-header-text">Kynetic</span>
+        </div>
+        <div class="email-body">
+          <%= yield %>
+        </div>
+        <div class="email-footer">
+          <p style="margin: 0;">Kynetic</p>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
