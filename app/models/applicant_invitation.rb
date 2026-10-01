@@ -23,6 +23,7 @@ class ApplicantInvitation < ApplicationRecord
       invited_by: invited_by,
       token_digest: digest(token)
     )
+    applicant.update_column(:contact_email, invitation.email) if applicant.contact_email.blank?
 
     [ invitation, token ]
   end

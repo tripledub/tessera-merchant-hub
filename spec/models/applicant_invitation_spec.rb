@@ -32,6 +32,22 @@ RSpec.describe ApplicantInvitation, type: :model do
       expect(record.token_digest).not_to eq(token)
       expect(described_class.find_usable_by_token(token)).to eq(record)
     end
+
+    it "backfills a blank applicant contact_email with the invited address" do
+      applicant = create(:applicant, contact_email: nil)
+
+      described_class.issue!(applicant: applicant, email: "  APPLICANT@EXAMPLE.COM ", invited_by: create(:user, :psp_admin))
+
+      expect(applicant.reload.contact_email).to eq("applicant@example.com")
+    end
+
+    it "does not overwrite an existing applicant contact_email" do
+      applicant = create(:applicant, contact_email: "existing@example.com")
+
+      described_class.issue!(applicant: applicant, email: "new@example.com", invited_by: create(:user, :psp_admin))
+
+      expect(applicant.reload.contact_email).to eq("existing@example.com")
+    end
   end
 
   describe ".find_usable_by_token" do
