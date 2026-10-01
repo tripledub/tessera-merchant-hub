@@ -47,16 +47,17 @@ export default class extends Controller {
     })
   }
 
-  // Deliberately scoped to non-repeatable fields for now — fields inside a
-  // repeatable-fields group (dynamically added/removed rows) still rely on
-  // native browser validation until that's covered in a follow-up.
+  // Re-queries the DOM fresh on every submit/blur/change, so rows added or
+  // removed by repeatable-fields are picked up automatically — removed rows
+  // simply leave the DOM (and any error state with them), and newly added
+  // rows start out untouched like any other field.
   candidateFields() {
     return Array.from(this.element.querySelectorAll("input[required], textarea[required], select[required]"))
       .filter((field) => this.isCandidate(field))
   }
 
   isCandidate(field) {
-    return !field.disabled && !field.closest("[data-controller~='repeatable-fields']")
+    return !field.disabled
   }
 
   isValid(field) {
