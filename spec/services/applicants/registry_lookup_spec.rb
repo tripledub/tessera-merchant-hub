@@ -47,6 +47,14 @@ RSpec.describe Applicants::RegistryLookup do
           .to change { applicant.registry_profiles.count }.by(1)
       end
 
+      it "records a successful attempt with no error" do
+        freeze_time do
+          described_class.call(applicant)
+
+          expect(applicant.reload).to have_attributes(registry_lookup_attempted_at: Time.current, registry_lookup_error: nil)
+        end
+      end
+
       it "updates the applicant's company_name from the registry profile" do
         described_class.call(applicant)
 
@@ -93,6 +101,32 @@ RSpec.describe Applicants::RegistryLookup do
       it "persists nothing" do
         expect { described_class.call(applicant) }
           .not_to change { applicant.registry_profiles.count }
+      end
+
+      it "carries the error type on the result" do
+        expect(described_class.call(applicant).error_type).to eq(:unavailable)
+      end
+
+      it "records the attempt with the error type" do
+        freeze_time do
+          described_class.call(applicant)
+
+          expect(applicant.reload).to have_attributes(
+            registry_lookup_attempted_at: Time.current, registry_lookup_error: "unavailable"
+          )
+        end
+      end
+
+      it "clears a previous error once a later attempt succeeds" do
+        applicant.update!(registry_lookup_attempted_at: 1.day.ago, registry_lookup_error: "unavailable")
+        allow(fake_client).to receive(:fetch).with(company_number: "00000000").and_return(
+          Registry::FetchResult.success(company_name: "Acme Ltd", status: "active", incorporated_on: Date.new(2020, 1, 1),
+                                        directors: [], addresses: [])
+        )
+
+        described_class.call(applicant)
+
+        expect(applicant.reload.registry_lookup_error).to be_nil
       end
     end
   end
