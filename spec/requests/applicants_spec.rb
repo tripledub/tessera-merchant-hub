@@ -395,6 +395,23 @@ RSpec.describe "Applicants", type: :request do
   describe "POST /applicants/:id/registry_lookup" do
     let(:applicant) { create(:applicant, company_number: "12345678", registry_jurisdiction: "gb") }
 
+    context "when the applicant has no company number" do
+      let(:applicant) { create(:applicant, company_number: nil) }
+
+      before do
+        sign_in psp_admin
+        allow(Applicants::RegistryLookup).to receive(:call)
+      end
+
+      it "redirects with an alert and does not call the lookup service" do
+        post registry_lookup_applicant_path(applicant)
+
+        expect(response).to redirect_to(applicant_path(applicant))
+        expect(flash[:alert]).to eq(I18n.t("flash.applicants.registry_lookup_no_company_number"))
+        expect(Applicants::RegistryLookup).not_to have_received(:call)
+      end
+    end
+
     context "when signed in as psp_admin, and the lookup succeeds" do
       let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
       let(:fetch_result) do
