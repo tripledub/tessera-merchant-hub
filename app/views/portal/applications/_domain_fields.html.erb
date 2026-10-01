@@ -1,6 +1,6 @@
 <div>
   <%= form.label :name, t("portal.applications.company.domain"), class: "form-label" %>
-  <%= form.text_field :name, required: true, placeholder: t("portal.applications.company.domain_placeholder"), class: "form-input" %>
+  <%= form.text_field :name, placeholder: t("portal.applications.company.domain_placeholder"), class: "form-input" %>
   <% form.object.errors.full_messages_for(:name).each do |message| %>
     <p class="form-error"><%= message %></p>
   <% end %>

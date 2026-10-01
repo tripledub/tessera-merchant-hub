@@ -23,7 +23,6 @@ class OnboardingApplication < ApplicationRecord
   validates :business_model_description, :operating_licence, presence: true, on: %i[company submission]
   validate :company_identity_is_complete, on: %i[company submission]
   validate :company_addresses_are_complete, on: %i[company submission]
-  validate :company_has_a_domain, on: %i[company submission]
   validates :delivery_over_seven_days, :full_payment_before_delivery, :takes_deposits,
             inclusion: { in: [ true, false ] }, on: %i[fulfilment submission]
   validates :service_requirements, :integration_type, presence: true, on: %i[fulfilment submission]
@@ -67,19 +66,6 @@ class OnboardingApplication < ApplicationRecord
   def company_addresses_are_complete
     validate_company_address(:primary_business_address, error_attribute: :registered_address)
     validate_company_address(:trading_address)
-  end
-
-  def company_has_a_domain
-    return if applicant.applicant_domains.reject(&:marked_for_destruction?).any?
-
-    errors.add(:domains, :blank)
-  end
-
-  # ActiveModel::Errors interpolates %{value} via read_attribute_for_validation,
-  # which defaults to `send(attribute)` — needed here since :domains above isn't
-  # a real column or association on this model, just an error-display grouping.
-  def domains
-    applicant.applicant_domains
   end
 
   def validate_company_address(name, error_attribute: name)
