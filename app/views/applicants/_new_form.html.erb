@@ -20,6 +20,11 @@
   </div>
 
   <div>
+    <%= f.label :contact_email, t("applicants.form.fields.contact_email"), class: "form-label" %>
+    <%= f.email_field :contact_email, class: "form-input" %>
+  </div>
+
+  <div>
     <%= f.label :sector, t("applicants.form.fields.sector"), class: "form-label" %>
     <%= f.select :sector, Applicant.sectors.keys.map { |sector| [t("applicants.sectors.#{sector}"), sector] }, {}, class: "form-input" %>
   </div>

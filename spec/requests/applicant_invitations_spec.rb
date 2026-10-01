@@ -25,8 +25,34 @@ RSpec.describe "Applicant invitations", type: :request do
   end
 
   describe "POST /applicants/:applicant_id/applicant_invitations" do
-    it "creates an invitation and displays its one-time URL" do
+    it "creates an invitation, emails it, and displays its one-time URL as a backup" do
       sign_in create(:user, :psp_admin)
+
+      expect {
+        post applicant_applicant_invitations_path(applicant), params: {
+          applicant_invitation: { email: "new.applicant@example.com" }
+        }
+      }.to change(ApplicantInvitation, :count).by(1).and change(ActionMailer::Base.deliveries, :count).by(1)
+
+      invitation = ApplicantInvitation.last
+      expect(invitation.invited_by).to eq(controller.current_user)
+      expect(response).to have_http_status(:created)
+      expect(response.body).to include("An Invite has been sent to #{applicant.name} (new.applicant@example.com)")
+      expect(response.body).to include("/portal/invitations/")
+      expect(response.body).not_to include(invitation.token_digest)
+      expect(ActionMailer::Base.deliveries.last.to).to eq([ "new.applicant@example.com" ])
+
+      page = Capybara.string(response.body)
+      url_field = page.find("[data-clipboard-target='source']")
+      expect(url_field["class"]).to include("dark:text-white/90")
+      expect(url_field["value"]).to include("/portal/invitations/")
+      expect(page).to have_css("[data-action='clipboard#copy'][aria-label='Copy invitation link']")
+      expect(page).to have_no_css("button.btn-primary")
+    end
+
+    it "still creates the invitation and shows the manual link when email delivery fails" do
+      sign_in create(:user, :psp_admin)
+      allow(ApplicantInvitationMailer).to receive(:invite).and_raise(Net::SMTPFatalError.new("mailbox unavailable"))
 
       expect {
         post applicant_applicant_invitations_path(applicant), params: {
@@ -34,18 +60,9 @@ RSpec.describe "Applicant invitations", type: :request do
         }
       }.to change(ApplicantInvitation, :count).by(1)
 
-      invitation = ApplicantInvitation.last
-      expect(invitation.invited_by).to eq(controller.current_user)
       expect(response).to have_http_status(:created)
-      expect(response.body).to include("new.applicant@example.com")
+      expect(Capybara.string(response.body).text).to include("Couldn't send the invitation email automatically")
       expect(response.body).to include("/portal/invitations/")
-      expect(response.body).not_to include(invitation.token_digest)
-
-      page = Capybara.string(response.body)
-      url_field = page.find("[data-clipboard-target='source']")
-      expect(url_field["class"]).to include("dark:text-white/90")
-      expect(page).to have_css("[data-action='clipboard#copy']", text: "Copy")
-      expect(page).to have_no_css("button.btn-primary")
     end
 
     it "does not create an invitation with an invalid email" do
@@ -85,6 +102,17 @@ RSpec.describe "Applicant invitations", type: :request do
       get portal_invitation_path("unknown-token")
 
       expect(response.status).to eq(unusable_status).and eq(404)
+    end
+
+    it "returns the same not-found response for an expired token" do
+      _invitation, token = ApplicantInvitation.issue!(
+        applicant: applicant, email: applicant.contact_email, invited_by: create(:user, :psp_admin)
+      )
+      travel_to(ApplicantInvitation::EXPIRY.from_now + 1.minute) do
+        get portal_invitation_path(token)
+      end
+
+      expect(response).to have_http_status(:not_found)
     end
 
     it "rate limits repeated invitation-token probes" do

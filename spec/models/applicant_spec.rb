@@ -158,6 +158,45 @@ RSpec.describe Applicant, type: :model do
     expect(saved.to_param).to eq(saved.id)
   end
 
+  describe "registry lookup status (MH-382)" do
+    let(:saved) { create(:applicant, company_number: "12345678") }
+
+    it "is never attempted by default" do
+      expect(saved.registry_lookup_state).to eq(:never_attempted)
+      expect(saved.registry_lookup_retryable?).to be(true)
+    end
+
+    it "is succeeded once attempted without an error" do
+      saved.update!(registry_lookup_attempted_at: Time.current)
+
+      expect(saved.registry_lookup_state).to eq(:succeeded)
+    end
+
+    it "is failed when an error is recorded, retryable only for transient errors" do
+      saved.update!(registry_lookup_attempted_at: Time.current, registry_lookup_error: "rate_limited")
+      expect([ saved.registry_lookup_state, saved.registry_lookup_retryable? ]).to eq([ :failed, true ])
+
+      saved.update!(registry_lookup_error: "not_found")
+      expect([ saved.registry_lookup_state, saved.registry_lookup_retryable? ]).to eq([ :failed, false ])
+    end
+
+    it "resets the recorded status when the company number changes" do
+      saved.update!(registry_lookup_attempted_at: Time.current, registry_lookup_error: "not_found")
+
+      saved.update!(company_number: "87654321")
+
+      expect(saved.reload).to have_attributes(registry_lookup_attempted_at: nil, registry_lookup_error: nil)
+    end
+
+    it "keeps the recorded status when the company number is unchanged" do
+      saved.update!(registry_lookup_attempted_at: Time.current, registry_lookup_error: "not_found")
+
+      saved.update!(name: "Renamed Test Co")
+
+      expect(saved.reload.registry_lookup_error).to eq("not_found")
+    end
+  end
+
   describe "registry fields" do
     it "allows company_number and registry_jurisdiction to be blank" do
       applicant.company_number = nil

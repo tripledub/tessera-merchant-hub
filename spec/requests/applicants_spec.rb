@@ -207,6 +207,7 @@ RSpec.describe "Applicants", type: :request do
         created = Applicant.find_by!(name: "New Corp")
         expect(response).to redirect_to(applicant_path(created))
         expect(created.sector).to eq("crypto_exchange")
+        expect(created.contact_email).to eq("info@new.com")
       end
 
       it "creates the applicant with a blank company_number, and redirects to show without attempting a registry lookup" do
@@ -393,6 +394,23 @@ RSpec.describe "Applicants", type: :request do
 
   describe "POST /applicants/:id/registry_lookup" do
     let(:applicant) { create(:applicant, company_number: "12345678", registry_jurisdiction: "gb") }
+
+    context "when the applicant has no company number" do
+      let(:applicant) { create(:applicant, company_number: nil) }
+
+      before do
+        sign_in psp_admin
+        allow(Applicants::RegistryLookup).to receive(:call)
+      end
+
+      it "redirects with an alert and does not call the lookup service" do
+        post registry_lookup_applicant_path(applicant)
+
+        expect(response).to redirect_to(applicant_path(applicant))
+        expect(flash[:alert]).to eq(I18n.t("flash.applicants.registry_lookup_no_company_number"))
+        expect(Applicants::RegistryLookup).not_to have_received(:call)
+      end
+    end
 
     context "when signed in as psp_admin, and the lookup succeeds" do
       let(:fake_client) { instance_double(Registry::CompaniesHouseUkClient) }
@@ -810,6 +828,44 @@ RSpec.describe "Applicants", type: :request do
         expect(response.body).to include("jane@example.com")
         expect(response.body).not_to include(applicant_user_path(applicant_user))
       end
+    end
+  end
+
+  describe "GET /applicants/:id/tab/overview registry lookup banner (MH-382)" do
+    let(:scope) { "applicants.tabs.overview.registry_lookup" }
+    let(:applicant) { create(:applicant, company_number: "12345678") }
+
+    before { sign_in psp_admin }
+
+    def overview_body
+      get tab_applicant_path(applicant, tab: "overview")
+      CGI.unescapeHTML(response.body)
+    end
+
+    it "offers a fetch when the lookup has never been attempted" do
+      expect(overview_body).to include(I18n.t("#{scope}.never_attempted"), I18n.t("#{scope}.fetch"))
+    end
+
+    it "offers a retry for a transient failure" do
+      applicant.update!(registry_lookup_attempted_at: Time.current, registry_lookup_error: "unavailable")
+
+      expect(overview_body).to include(I18n.t("#{scope}.transient"), I18n.t("#{scope}.retry"))
+    end
+
+    it "shows the reason without any action for a wrong number" do
+      applicant.update!(registry_lookup_attempted_at: Time.current, registry_lookup_error: "not_found")
+
+      body = overview_body
+      expect(body).to include(I18n.t("#{scope}.wrong_number"))
+      expect(body).not_to include(registry_lookup_applicant_path(applicant))
+    end
+
+    it "shows no banner after a successful lookup, or without a company number" do
+      applicant.update!(registry_lookup_attempted_at: Time.current)
+      expect(overview_body).not_to include(registry_lookup_applicant_path(applicant))
+
+      applicant.update!(company_number: nil)
+      expect(overview_body).not_to include(registry_lookup_applicant_path(applicant))
     end
   end
 

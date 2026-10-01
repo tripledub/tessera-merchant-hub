@@ -47,6 +47,9 @@ gem "ruby-vips", "~> 2.0"
 # Authentication
 gem "devise"
 
+# Inlines CSS into HTML emails at delivery time [https://github.com/fphilipe/premailer-rails]
+gem "premailer-rails"
+
 # Authorization
 gem "pundit"
 gem "decent_exposure"

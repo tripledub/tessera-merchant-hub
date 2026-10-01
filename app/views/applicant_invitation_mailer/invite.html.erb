@@ -1,0 +1,4 @@
+<p><%= t(".greeting") %></p>
+<p><%= t(".body", applicant: @invitation.applicant.name) %></p>
+<p><%= link_to t(".cta"), @url, class: "email-button" %></p>
+<p class="email-link-fallback"><%= @url %></p>

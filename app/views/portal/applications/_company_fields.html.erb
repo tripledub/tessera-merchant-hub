@@ -1,4 +1,5 @@
-<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6" do |form| %>
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6",
+      data: { controller: "form-validation", action: "submit->form-validation#submitForm" } do |form| %>
   <%= hidden_field_tag :step, "company" %>
   <%= render "shared/error_messages", object: application %>
 
@@ -12,7 +13,7 @@
       </div>
       <div>
         <%= applicant_form.label :company_number, t("portal.applications.company.company_number"), class: "form-label" %>
-        <%= applicant_form.text_field :company_number, required: true, class: "form-input" %>
+        <%= applicant_form.text_field :company_number, class: "form-input" %>
       </div>
     </div>
 
@@ -43,7 +44,7 @@
             fields_partial: "portal/applications/domain_fields",
             add_label: t("portal.applications.company.add_domain"),
             remove_label: t("portal.applications.company.remove_domain"),
-            min: 1 %>
+            min: 0 %>
     </fieldset>
 
     <div>

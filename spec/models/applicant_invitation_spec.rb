@@ -32,6 +32,30 @@ RSpec.describe ApplicantInvitation, type: :model do
       expect(record.token_digest).not_to eq(token)
       expect(described_class.find_usable_by_token(token)).to eq(record)
     end
+
+    it "backfills a blank applicant contact_email with the invited address" do
+      applicant = create(:applicant, contact_email: nil)
+
+      described_class.issue!(applicant: applicant, email: "  APPLICANT@EXAMPLE.COM ", invited_by: create(:user, :psp_admin))
+
+      expect(applicant.reload.contact_email).to eq("applicant@example.com")
+    end
+
+    it "does not overwrite an existing applicant contact_email" do
+      applicant = create(:applicant, contact_email: "existing@example.com")
+
+      described_class.issue!(applicant: applicant, email: "new@example.com", invited_by: create(:user, :psp_admin))
+
+      expect(applicant.reload.contact_email).to eq("existing@example.com")
+    end
+
+    it "sets an expiry in the future" do
+      record, = described_class.issue!(
+        applicant: create(:applicant), email: "applicant@example.com", invited_by: create(:user, :psp_admin)
+      )
+
+      expect(record.expires_at).to be_within(1.second).of(described_class::EXPIRY.from_now)
+    end
   end
 
   describe ".find_usable_by_token" do
@@ -47,6 +71,24 @@ RSpec.describe ApplicantInvitation, type: :model do
 
       expect(described_class.find_usable_by_token(claimed_token)).to be_nil
       expect(described_class.find_usable_by_token(revoked_token)).to be_nil
+    end
+
+    it "does not return an expired invitation" do
+      invitation, token = described_class.issue!(
+        applicant: create(:applicant), email: "applicant@example.com", invited_by: create(:user, :psp_admin)
+      )
+      invitation.update!(expires_at: 1.minute.ago)
+
+      expect(described_class.find_usable_by_token(token)).to be_nil
+    end
+
+    it "returns an invitation with no expiry set (e.g. issued before expiry was introduced)" do
+      invitation, token = described_class.issue!(
+        applicant: create(:applicant), email: "applicant@example.com", invited_by: create(:user, :psp_admin)
+      )
+      invitation.update!(expires_at: nil)
+
+      expect(described_class.find_usable_by_token(token)).to eq(invitation)
     end
   end
 

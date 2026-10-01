@@ -154,12 +154,20 @@ en:
         title: Invite a PSP user
   app:
     title: Tessera Merchant Hub
+  applicant_invitation_mailer:
+    invite:
+      body: You've been invited to complete the onboarding application for %{applicant}.
+        Use the link below to set up your account.
+      cta: Complete your application
+      greeting: Hello,
+      subject: You're invited to complete your application for %{applicant}
   applicant_invitations:
     create:
       copy: Copy invitation link
       done: Done
-      subtitle: Send this one-time registration link to %{email}. It will not be shown
-        again.
+      subtitle_not_sent: Couldn't send the invitation email automatically. Send this
+        one-time registration link to %{email} yourself — it will not be shown again.
+      subtitle_sent: An Invite has been sent to %{applicant} (%{email}).
       title: Invitation created
     new:
       back: "← Back to applicant"
@@ -216,7 +224,7 @@ en:
         company_name: Company name
         contact_email: Contact email
         country: Country
-        country_code: Country code (ISO 3166-1 alpha-2, e.g. GB)
+        country_code: Country code
         name: Name
         sector: Business sector
       sector_locked_hint: The business sector cannot be changed after document collection
@@ -367,9 +375,15 @@ en:
         entities_count: Entities
         former_staff_member: a former staff member
         principals_count: Principals
-        registry_lookup_missing: Company was found, but the full registry data fetch
-          didn't complete.
-        registry_lookup_retry: Retry registry lookup
+        registry_lookup:
+          fetch: Fetch registry data
+          never_attempted: Registry data hasn't been fetched yet.
+          retry: Retry registry lookup
+          transient: The registry couldn't be reached just now. Try again shortly.
+          unsupported: Registry lookup isn't available for this applicant. Contact
+            support.
+          wrong_number: No company was found for this number. Ask the applicant to
+            check it.
         remove_attestation: Remove confirmation
         status: Status
         summary: Summary
@@ -475,6 +489,8 @@ en:
       destroy_success: Applicant deleted.
       registry_lookup_failed: Registry data fetch failed. You can retry from this
         page.
+      registry_lookup_no_company_number: Add a company number before fetching registry
+        data.
       registry_lookup_success: Registry data fetched.
       trace_psc_chain_failed: Could not trace this ownership chain further.
       trace_psc_chain_success: Ownership chain traced.
@@ -1000,7 +1016,7 @@ en:
         address_line1: Address
         city: City
         contact_email: Contact email
-        country_code: Country code (ISO 3166-1 alpha-2, e.g. GB)
+        country_code: Country code
         support_url: Support URL
       page_title: Edit merchant profile
       sections:
@@ -1253,6 +1269,7 @@ en:
       review:
         edit: Edit
         missing: Missing
+        not_applicable: Not applicable
         registered_address: Registered address
         submit: Submit application
         submitted_at: Submitted %{time}

@@ -29,6 +29,26 @@ All demo users use `DEMO_USER_PASSWORD`, which defaults to `password123!`.
 Merchant demo users are linked to `DEMO_MERCHANT_ID`, which defaults to
 `merch_demo`.
 
+## Email Previews
+
+In development, outgoing mail is captured locally by
+[`letter_opener_web`](https://github.com/fgrehm/letter_opener_web) instead of
+being sent — visit `http://localhost:3000/letter_opener` after triggering a
+delivery to inspect the rendered HTML and plain-text message, with any links
+(invitation, confirmation, password reset) pointing at your local server and
+clickable from the preview. The route is mounted only when
+`Rails.env.development?`, so it's unavailable in UAT/production, and test-env
+mail assertions are unaffected (`config.action_mailer.delivery_method = :test`
+there).
+
+To exercise a journey end to end locally:
+
+- **Applicant invitation** — create and invite an applicant from the staff UI,
+  then open the preview to get the registration link.
+- **Devise confirmation / password reset** — trigger `ApplicantUser`
+  confirmation or "forgot password" from the portal sign-in screen; both are
+  enabled (`:confirmable`, `:recoverable`) and captured the same way.
+
 ## tessera-core E2E
 
 MerchantHub does not seed shops, payments, credentials, audit events, or webhook
