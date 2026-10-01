@@ -103,6 +103,17 @@ RSpec.describe "Applicant invitations", type: :request do
       expect(response.status).to eq(unusable_status).and eq(404)
     end
 
+    it "returns the same not-found response for an expired token" do
+      _invitation, token = ApplicantInvitation.issue!(
+        applicant: applicant, email: applicant.contact_email, invited_by: create(:user, :psp_admin)
+      )
+      travel_to(ApplicantInvitation::EXPIRY.from_now + 1.minute) do
+        get portal_invitation_path(token)
+      end
+
+      expect(response).to have_http_status(:not_found)
+    end
+
     it "rate limits repeated invitation-token probes" do
       store = Portal::InvitationsController.portal_rate_limit_store
       store.write("rate-limit:portal/invitations:127.0.0.1", 20, expires_in: 1.minute)

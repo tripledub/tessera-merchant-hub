@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_29_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_30_090000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -91,6 +91,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_29_100000) do
     t.datetime "submitted_at"
     t.string "token_digest", null: false
     t.datetime "updated_at", null: false
+    t.datetime "expires_at"
     t.index ["applicant_id"], name: "index_applicant_invitations_on_applicant_id"
     t.index ["claimed_by_id"], name: "index_applicant_invitations_on_claimed_by_id"
     t.index ["invited_by_id"], name: "index_applicant_invitations_on_invited_by_id"

@@ -2,6 +2,7 @@
 
 class ApplicantInvitation < ApplicationRecord
   TOKEN_BYTES = 32
+  EXPIRY = 48.hours
   class NotClaimable < StandardError; end
 
   belongs_to :applicant
@@ -13,7 +14,7 @@ class ApplicantInvitation < ApplicationRecord
   validates :email, presence: true, format: { with: URI::MailTo::EMAIL_REGEXP }
   validates :token_digest, presence: true, uniqueness: true
 
-  scope :usable, -> { where(claimed_at: nil, revoked_at: nil) }
+  scope :usable, -> { where(claimed_at: nil, revoked_at: nil).where("expires_at IS NULL OR expires_at > ?", Time.current) }
 
   def self.issue!(applicant:, email:, invited_by:)
     token = SecureRandom.urlsafe_base64(TOKEN_BYTES)
@@ -21,7 +22,8 @@ class ApplicantInvitation < ApplicationRecord
       applicant: applicant,
       email: email,
       invited_by: invited_by,
-      token_digest: digest(token)
+      token_digest: digest(token),
+      expires_at: EXPIRY.from_now
     )
     applicant.update_column(:contact_email, invitation.email) if applicant.contact_email.blank?
 
