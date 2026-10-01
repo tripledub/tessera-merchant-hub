@@ -60,7 +60,6 @@ class OnboardingApplication < ApplicationRecord
 
   def company_identity_is_complete
     errors.add(:company_name, :blank) if applicant.company_name.blank?
-    errors.add(:company_number, :blank) if applicant.company_number.blank?
   end
 
   def company_addresses_are_complete

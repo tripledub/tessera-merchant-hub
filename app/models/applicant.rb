@@ -110,7 +110,7 @@ class Applicant < Merchant
   private
 
   def strip_company_number
-    self.company_number = company_number.strip if company_number.present?
+    self.company_number = company_number&.strip.presence
   end
 
   def persisted_sector_change?

@@ -33,6 +33,13 @@ RSpec.describe OnboardingApplications::SaveCompanyDetails do
     { line1: line1, city: "Testford", postcode: "TE1 1ST", country: "United Kingdom" }
   end
 
+  it "accepts a blank company number and stores it as nil (sole traders and MOTO operators have none)" do
+    attributes[:applicant_attributes][:company_number] = "  "
+
+    expect(save_details).to be true
+    expect(applicant.reload.company_number).to be_nil
+  end
+
   it "stores company answers in the shared application and applicant domain" do
     expect(save_details).to be true
 

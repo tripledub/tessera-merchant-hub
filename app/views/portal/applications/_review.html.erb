@@ -9,7 +9,7 @@
      end %>
   <% [
        ["company", [[t("portal.applications.company.company_name"), application.applicant.company_name],
-                    [t("portal.applications.company.company_number"), application.applicant.company_number],
+                    [t("portal.applications.company.company_number"), application.applicant.company_number.presence || t("portal.applications.review.not_applicable")],
                     [t("portal.applications.review.registered_address"), format_review_address(applicant.primary_business_address)],
                     trading_address_row,
                     [t("portal.applications.company.business_model_description"), application.business_model_description]]],

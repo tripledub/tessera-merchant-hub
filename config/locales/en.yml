@@ -1263,6 +1263,7 @@ en:
       review:
         edit: Edit
         missing: Missing
+        not_applicable: Not applicable
         registered_address: Registered address
         submit: Submit application
         submitted_at: Submitted %{time}
