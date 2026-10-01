@@ -75,6 +75,13 @@ class OnboardingApplication < ApplicationRecord
     errors.add(:domains, :blank)
   end
 
+  # ActiveModel::Errors interpolates %{value} via read_attribute_for_validation,
+  # which defaults to `send(attribute)` — needed here since :domains above isn't
+  # a real column or association on this model, just an error-display grouping.
+  def domains
+    applicant.applicant_domains
+  end
+
   def validate_company_address(name, error_attribute: name)
     address = applicant.public_send(name)
     errors.add(error_attribute, address ? :invalid : :blank) unless address&.valid?

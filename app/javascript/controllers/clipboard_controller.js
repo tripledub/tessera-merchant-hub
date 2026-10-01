@@ -4,8 +4,12 @@ export default class extends Controller {
   static targets = ["source", "feedback"]
   static values = { success: { type: String, default: "Copied!" } }
 
+  selectAll() {
+    this.sourceTarget.select()
+  }
+
   async copy() {
-    const text = this.sourceTarget.textContent.trim()
+    const text = "value" in this.sourceTarget ? this.sourceTarget.value : this.sourceTarget.textContent.trim()
     try {
       await navigator.clipboard.writeText(text)
       if (this.hasFeedbackTarget) {

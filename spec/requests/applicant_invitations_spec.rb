@@ -45,7 +45,8 @@ RSpec.describe "Applicant invitations", type: :request do
       page = Capybara.string(response.body)
       url_field = page.find("[data-clipboard-target='source']")
       expect(url_field["class"]).to include("dark:text-white/90")
-      expect(page).to have_css("[data-action='clipboard#copy']", text: "Copy")
+      expect(url_field["value"]).to include("/portal/invitations/")
+      expect(page).to have_css("[data-action='clipboard#copy'][aria-label='Copy invitation link']")
       expect(page).to have_no_css("button.btn-primary")
     end
 
