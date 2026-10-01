@@ -69,6 +69,10 @@ class ApplicantsController < ApplicationController
 
   def registry_lookup
     authorize applicant, :update?
+    if applicant.company_number.blank?
+      return redirect_to applicant_path(applicant), alert: t("flash.applicants.registry_lookup_no_company_number")
+    end
+
     redirect_after_registry_lookup(Applicants::RegistryLookup.call(applicant))
   end
 

@@ -483,6 +483,8 @@ en:
       destroy_success: Applicant deleted.
       registry_lookup_failed: Registry data fetch failed. You can retry from this
         page.
+      registry_lookup_no_company_number: Add a company number before fetching registry
+        data.
       registry_lookup_success: Registry data fetched.
       trace_psc_chain_failed: Could not trace this ownership chain further.
       trace_psc_chain_success: Ownership chain traced.
