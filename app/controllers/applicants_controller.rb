@@ -132,7 +132,8 @@ class ApplicantsController < ApplicationController
   CREATABLE_JURISDICTIONS = %w[gb xu].freeze
 
   def new_applicant_params
-    params.require(:applicant).permit(:name, :company_number, :sector).merge(registry_jurisdiction: requested_jurisdiction)
+    params.require(:applicant).permit(:name, :company_number, :sector, :contact_email)
+      .merge(registry_jurisdiction: requested_jurisdiction)
   end
 
   def requested_jurisdiction

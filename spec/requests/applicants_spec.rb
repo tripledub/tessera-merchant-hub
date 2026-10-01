@@ -207,6 +207,7 @@ RSpec.describe "Applicants", type: :request do
         created = Applicant.find_by!(name: "New Corp")
         expect(response).to redirect_to(applicant_path(created))
         expect(created.sector).to eq("crypto_exchange")
+        expect(created.contact_email).to eq("info@new.com")
       end
 
       it "creates the applicant with a blank company_number, and redirects to show without attempting a registry lookup" do
