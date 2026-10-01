@@ -168,6 +168,7 @@ RSpec.describe "Portal application shell", type: :request do
     website_item = Capybara.string(response.body).find("[data-repeatable-fields-target='item']")
     expect(website_item).to have_field(with: "not a domain")
     expect(website_item).to have_css(".form-error", text: "Name is invalid")
+    expect(response.body).not_to include("Applicant applicant domains name is invalid")
   end
 
   it "accepts the company step with no website domain, for applicants without one (e.g. MOTO)" do
