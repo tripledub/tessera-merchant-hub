@@ -24,7 +24,8 @@
     <div class="mt-4" data-conditional-fields-target="dependent" <%= "hidden" unless form.object.ownership_role? %>>
       <%= form.label :ownership_percentage, t("portal.applications.principals.ownership_percentage"), class: "form-label" %>
       <%= form.number_field :ownership_percentage, class: "form-input", min: 0.01, max: 100, step: 0.01,
-            required: form.object.ownership_role?, disabled: !form.object.ownership_role? %>
+            required: form.object.ownership_role?, disabled: !form.object.ownership_role?,
+            data: { conditional_required: true } %>
       <% form.object.errors.full_messages_for(:ownership_percentage).each do |message| %><p class="form-error"><%= message %></p><% end %>
       <p class="mt-1 text-xs text-gray-500"><%= t("portal.applications.principals.ownership_hint") %></p>
     </div>
