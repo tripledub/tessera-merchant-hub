@@ -294,6 +294,42 @@ RSpec.describe "Portal application shell", type: :request do
     expect(application.settlement_currencies.pluck(:code)).to contain_exactly("USD")
   end
 
+  it "saves the selected target countries and advances" do
+    applicant_user = create(:applicant_user)
+    application = countries_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "countries")
+    expect(response.body).to include("United Kingdom", "Singapore")
+
+    patch portal_application_path, params: {
+      step: "countries",
+      onboarding_application: { target_country_codes: [ "", "GB", "IE" ] }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "principals"))
+    expect(application.reload.onboarding_countries.pluck(:code)).to contain_exactly("GB", "IE")
+  end
+
+  it "re-checks saved countries and blocks an empty selection" do
+    applicant_user = create(:applicant_user)
+    application = countries_application_for(applicant_user)
+    application.onboarding_countries.create!(code: "FR")
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "countries")
+    expect(Capybara.string(response.body)).to have_checked_field("France")
+
+    patch portal_application_path, params: {
+      step: "countries",
+      onboarding_application: { target_country_codes: [ "" ] }
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Target countries can&#39;t be blank")
+    expect(application.reload.current_step).to eq("countries")
+  end
+
   it "restores currencies and renders nested format errors" do
     applicant_user = create(:applicant_user)
     application = currency_application_for(applicant_user)
@@ -682,6 +718,16 @@ RSpec.describe "Portal application shell", type: :request do
     expect(submitted_notice["class"]).to include("dark:text-green-400")
   end
 
+  it "shows the selected target countries on the review page" do
+    applicant_user = create(:applicant_user)
+    review_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+
+    expect(response.body).to include("Target countries", "United Kingdom")
+  end
+
   it "highlights missing required information and prevents submission" do
     applicant_user = create(:applicant_user)
     application = review_application_for(applicant_user)
@@ -763,6 +809,15 @@ RSpec.describe "Portal application shell", type: :request do
     )
   end
 
+  def countries_application_for(applicant_user)
+    create(
+      :onboarding_application,
+      applicant: applicant_user.applicant,
+      current_step: "countries",
+      completed_steps: %w[company fulfilment currencies processing payments descriptor volumes]
+    )
+  end
+
   def processing_application_for(applicant_user, **attributes)
     create(
       :onboarding_application,
@@ -831,6 +886,7 @@ RSpec.describe "Portal application shell", type: :request do
       completed_steps: OnboardingApplication::STEPS - [ "review" ], **review_required_answers)
     application.processing_currencies.create!(code: "GBP")
     application.settlement_currencies.create!(code: "GBP")
+    application.onboarding_countries.create!(code: "GB")
     application
   end
 

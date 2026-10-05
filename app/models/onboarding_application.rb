@@ -6,6 +6,7 @@ class OnboardingApplication < ApplicationRecord
   belongs_to :applicant
 
   has_many :onboarding_currencies, dependent: :destroy, inverse_of: :onboarding_application
+  has_many :onboarding_countries, dependent: :destroy, autosave: true, inverse_of: :onboarding_application
   has_many :processing_currencies, -> { where(kind: :processing) },
            class_name: "OnboardingCurrency", inverse_of: :onboarding_application
   has_many :settlement_currencies, -> { where(kind: :settlement) },
@@ -33,6 +34,7 @@ class OnboardingApplication < ApplicationRecord
             on: %i[fulfilment submission]
   validates :remaining_balance_due, presence: true, if: :takes_deposits?, on: %i[fulfilment submission]
   validate :currency_collections_are_present, on: %i[currencies submission]
+  validate :target_countries_are_present, on: %i[countries submission]
   validates :currently_accepts_card_payments, inclusion: { in: [ true, false ] }, on: %i[processing submission]
   validates :current_acquirer, presence: true, if: :currently_accepts_card_payments?, on: %i[processing submission]
   validates :uses_shopping_cart, :takes_recurring_payments,
@@ -49,6 +51,16 @@ class OnboardingApplication < ApplicationRecord
   before_validation :clear_current_acquirer, if: -> { currently_accepts_card_payments == false }
   before_validation :clear_shopping_cart_provider, if: -> { uses_shopping_cart == false }
   before_validation :clear_recurring_payment_details, if: -> { takes_recurring_payments == false }
+
+  def target_country_codes
+    active_target_countries.map(&:code)
+  end
+
+  def target_country_codes=(codes)
+    wanted = Array(codes).compact_blank.map { |code| code.to_s.strip.upcase }.uniq
+    onboarding_countries.each { |country| country.mark_for_destruction unless wanted.include?(country.code) }
+    (wanted - onboarding_countries.map(&:code)).each { |code| onboarding_countries.build(code: code) }
+  end
 
   private
 
@@ -80,6 +92,14 @@ class OnboardingApplication < ApplicationRecord
   def currency_collections_are_present
     errors.add(:processing_currencies, :blank) unless active_currencies(processing_currencies).any?
     errors.add(:settlement_currencies, :blank) unless active_currencies(settlement_currencies).any?
+  end
+
+  def target_countries_are_present
+    errors.add(:onboarding_countries, :blank) if active_target_countries.empty?
+  end
+
+  def active_target_countries
+    onboarding_countries.reject(&:marked_for_destruction?)
   end
 
   def active_currencies(collection)

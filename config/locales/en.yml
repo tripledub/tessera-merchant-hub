@@ -4,6 +4,8 @@ en:
     attributes:
       applicant_domain:
         justification: Reason
+      onboarding_application:
+        onboarding_countries: Target countries
     errors:
       models:
         applicant:
@@ -453,6 +455,18 @@ en:
         warning_total: Total
         warning_unacknowledged: Open
         warnings: Warnings
+  countries:
+    names:
+      AU: Australia
+      CA: Canada
+      DE: Germany
+      ES: Spain
+      FR: France
+      GB: United Kingdom
+      IE: Ireland
+      NL: Netherlands
+      SG: Singapore
+      US: United States
   devise:
     failure:
       deactivated: Your account has been deactivated. Please contact your administrator.
@@ -1222,6 +1236,9 @@ en:
         trading_address_same_as_registered: Trading address is the same as the registered
           address
       continue: Save and continue
+      countries:
+        hint: Select every country you plan to sell to.
+        legend: Which countries will you sell to?
       currencies:
         add: Add currency
         code: ISO currency code
