@@ -23,6 +23,7 @@ RSpec.describe "Staff self-service application review", type: :request do
     applicant = create(:applicant, company_number: "12345678")
     application = create(:onboarding_application, applicant: applicant,
       business_model_description: "Applicant supplied model", descriptor: "SPECIMEN")
+    application.onboarding_countries.create!(code: "DE")
     create(:kyc_principal, applicant: applicant, name: "Applicant Owner", source: :applicant_declared,
       date_of_birth: Date.new(1980, 1, 2), email: "owner@example.com")
     sign_in user
@@ -31,7 +32,7 @@ RSpec.describe "Staff self-service application review", type: :request do
 
     expect(response).to have_http_status(:ok)
     expect(response.body).to include(
-      "Applicant supplied model", "SPECIMEN", "Applicant Owner", "supplied by the applicant"
+      "Applicant supplied model", "SPECIMEN", "Germany", "Applicant Owner", "supplied by the applicant"
     )
     expect(application.reload).to be_draft
   end
