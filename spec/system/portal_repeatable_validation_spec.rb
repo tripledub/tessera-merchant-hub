@@ -10,7 +10,7 @@ RSpec.describe "Portal validation on repeatable and conditional fields", type: :
       :onboarding_application,
       applicant: applicant_user.applicant,
       current_step: "principals",
-      completed_steps: %w[company fulfilment currencies processing payments descriptor pricing volumes countries]
+      completed_steps: %w[company fulfilment currencies processing payments descriptor volumes countries]
     )
     sign_in_to_portal(applicant_user)
     visit portal_application_path(step: "principals")
