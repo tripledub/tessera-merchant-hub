@@ -44,6 +44,12 @@ RSpec.describe "Portal target countries picker", type: :system do
     expect(application.reload.onboarding_countries.pluck(:code)).to eq([ "GB" ])
   end
 
+  it "finds accented country names without typing the accent" do
+    find_field("Search countries").fill_in with: "reunion"
+
+    expect(page).to have_css("[role='option']", text: "Réunion")
+  end
+
   it "supports the keyboard and shows an empty state" do
     search = find_field("Search countries")
     search.fill_in with: "zzzz"

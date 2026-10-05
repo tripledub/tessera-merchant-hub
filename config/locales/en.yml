@@ -1225,8 +1225,8 @@ en:
           address
       continue: Save and continue
       countries:
-        hint: Search and select every country you plan to sell to.
-        legend: Which countries will you sell to?
+        hint: Search and select every country you plan to operate in.
+        legend: Which countries will you operate in?
         no_results: No countries found
         remove: Remove
         search: Search countries

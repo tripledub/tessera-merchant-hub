@@ -11,7 +11,7 @@ export default class extends Controller {
     this.options = Array.from(this.selectTarget.options).map((option) => ({
       value: option.value,
       label: option.text,
-      key: option.text.toLowerCase()
+      key: this.fold(option.text)
     }))
     this.activeIndex = -1
     this.selectTarget.hidden = true
@@ -104,8 +104,13 @@ export default class extends Controller {
   // -- internals --
 
   visibleOptions() {
-    const query = this.inputTarget.value.trim().toLowerCase()
+    const query = this.fold(this.inputTarget.value.trim())
     return query === "" ? this.options : this.options.filter((option) => option.key.includes(query))
+  }
+
+  // Lower-case and strip accents so "reunion" finds "Réunion".
+  fold(text) {
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
   }
 
   selectedValues() {
