@@ -47,6 +47,8 @@
           <%= render "portal/applications/payment_fields", application: @application %>
         <% elsif @step == "descriptor" %>
           <%= render "portal/applications/descriptor_fields", application: @application %>
+        <% elsif @step == "countries" %>
+          <%= render "portal/applications/country_fields", application: @application %>
         <% elsif @step == "principals" %>
           <%= render "portal/applications/principal_fields", application: @application %>
         <% elsif @step == "review" %>
