@@ -19,7 +19,8 @@
                        [t("portal.applications.currencies.settlement"), application.settlement_currencies.map(&:code).join(", ")]]],
        ["processing", [[t("portal.applications.processing.current_acquirer"), application.current_acquirer]]],
        ["payments", [[t("portal.applications.payments.shopping_cart_provider"), application.shopping_cart_provider]]],
-       ["descriptor", [[t("portal.applications.descriptor.descriptor"), application.descriptor]]]
+       ["descriptor", [[t("portal.applications.descriptor.descriptor"), application.descriptor]]],
+       ["countries", [[t("portal.applications.steps.countries"), application.onboarding_countries.sort_by { |country| OnboardingCountry::SAMPLE_CODES.index(country.code).to_i }.map(&:name).join(", ")]]]
      ].each do |step, rows| %>
     <section class="card">
       <div class="flex items-center justify-between gap-4">
