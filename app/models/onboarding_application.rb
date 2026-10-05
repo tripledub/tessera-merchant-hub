@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class OnboardingApplication < ApplicationRecord
-  STEPS = %w[company fulfilment currencies processing payments descriptor pricing volumes countries principals review].freeze
+  STEPS = %w[company fulfilment currencies processing payments descriptor volumes countries principals review].freeze
 
   belongs_to :applicant
 
