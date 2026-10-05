@@ -1,0 +1,22 @@
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6" do |form| %>
+  <%= hidden_field_tag :step, "countries" %>
+  <%= render "shared/error_messages", object: application %>
+
+  <fieldset>
+    <legend class="form-label"><%= t("portal.applications.countries.legend") %></legend>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400"><%= t("portal.applications.countries.hint") %></p>
+    <%= hidden_field_tag "onboarding_application[target_country_codes][]", "", id: nil %>
+    <div class="mt-3 grid gap-3 sm:grid-cols-2">
+      <% selected = application.target_country_codes %>
+      <% OnboardingCountry::SAMPLE_CODES.each do |code| %>
+        <% field_id = "onboarding_application_target_country_codes_#{code.downcase}" %>
+        <label for="<%= field_id %>" class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <%= check_box_tag "onboarding_application[target_country_codes][]", code, selected.include?(code), id: field_id %>
+          <%= t("countries.names.#{code}") %>
+        </label>
+      <% end %>
+    </div>
+  </fieldset>
+
+  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+<% end %>

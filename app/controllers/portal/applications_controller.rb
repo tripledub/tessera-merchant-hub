@@ -30,6 +30,7 @@ class Portal::ApplicationsController < Portal::BaseController
     return update_company if step == "company"
     return update_fulfilment if step == "fulfilment"
     return update_currencies if step == "currencies"
+    return update_countries if step == "countries"
     return update_processing if step == "processing"
     return update_payments if step == "payments"
     return update_descriptor if step == "descriptor"
@@ -108,6 +109,15 @@ class Portal::ApplicationsController < Portal::BaseController
   def prepare_currencies
     @application.processing_currencies.build if @application.processing_currencies.empty?
     @application.settlement_currencies.build if @application.settlement_currencies.empty?
+  end
+
+  def update_countries
+    if OnboardingApplications::SaveCountries.call(application: @application, attributes: countries_params)
+      redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
+    else
+      @step = "countries"
+      render :show, status: :unprocessable_content
+    end
   end
 
   def update_processing
@@ -198,6 +208,10 @@ class Portal::ApplicationsController < Portal::BaseController
       processing_currencies_attributes: %i[id code _destroy],
       settlement_currencies_attributes: %i[id code _destroy]
     )
+  end
+
+  def countries_params
+    params.require(:onboarding_application).permit(target_country_codes: [])
   end
 
   def processing_params
