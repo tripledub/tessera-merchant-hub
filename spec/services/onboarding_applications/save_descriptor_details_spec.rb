@@ -20,7 +20,7 @@ RSpec.describe OnboardingApplications::SaveDescriptorDetails do
 
     expect(result).to be true
     expect(application.reload).to have_attributes(
-      current_step: "pricing",
+      current_step: "volumes",
       completed_steps: %w[company fulfilment currencies processing payments descriptor],
       descriptor: "SPECIMEN SHOP",
       descriptor_company_number: "12345678",
@@ -40,7 +40,7 @@ RSpec.describe OnboardingApplications::SaveDescriptorDetails do
   end
 
   it "saves changes without moving backwards when revisiting the completed step" do
-    application.update!(current_step: "pricing", completed_steps: %w[company fulfilment currencies processing payments descriptor])
+    application.update!(current_step: "volumes", completed_steps: %w[company fulfilment currencies processing payments descriptor])
 
     result = described_class.call(application: application, attributes: {
       descriptor: "UPDATED SHOP",
@@ -49,7 +49,7 @@ RSpec.describe OnboardingApplications::SaveDescriptorDetails do
     })
 
     expect(result).to be true
-    expect(application.reload).to have_attributes(current_step: "pricing", descriptor: "UPDATED SHOP")
+    expect(application.reload).to have_attributes(current_step: "volumes", descriptor: "UPDATED SHOP")
   end
 
   it "rejects a save before the descriptor step is reached" do
