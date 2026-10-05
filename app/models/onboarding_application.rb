@@ -62,6 +62,10 @@ class OnboardingApplication < ApplicationRecord
     (wanted - onboarding_countries.map(&:code)).each { |code| onboarding_countries.build(code: code) }
   end
 
+  def target_country_names
+    active_target_countries.map(&:name).sort
+  end
+
   private
 
   def completed_steps_are_known

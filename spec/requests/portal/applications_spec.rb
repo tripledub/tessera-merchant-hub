@@ -300,7 +300,7 @@ RSpec.describe "Portal application shell", type: :request do
     sign_in applicant_user, scope: :applicant_user
 
     get portal_application_path(step: "countries")
-    expect(response.body).to include("United Kingdom", "Singapore")
+    expect(response.body).to include("United Kingdom", "Singapore", "New Zealand")
 
     patch portal_application_path, params: {
       step: "countries",
@@ -318,7 +318,7 @@ RSpec.describe "Portal application shell", type: :request do
     sign_in applicant_user, scope: :applicant_user
 
     get portal_application_path(step: "countries")
-    expect(Capybara.string(response.body)).to have_checked_field("France")
+    expect(Capybara.string(response.body)).to have_select("country-picker-select", selected: "France")
 
     patch portal_application_path, params: {
       step: "countries",

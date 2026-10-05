@@ -136,3 +136,7 @@ gem "honeybadger", "~> 6.9"
 gem "roo", "~> 3.0"
 gem "roo-xls", "~> 2.0" # legacy .xls (binary) support — roo alone only handles xlsx/csv/ods
 gem "csv"
+
+# ISO 3166 country data for the applicant target-countries picker (MH-384)
+# Use ISO3166::Country directly; do not require countries/global (defines a top-level Country constant)
+gem "countries", "~> 8.1"
