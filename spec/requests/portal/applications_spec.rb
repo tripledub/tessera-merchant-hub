@@ -741,9 +741,11 @@ RSpec.describe "Portal application shell", type: :request do
     expect(application.reload).to be_draft
   end
 
-  it "wires client-side validation onto every non-repeatable onboarding step form" do
+  it "wires client-side validation onto every onboarding step form, including the repeatable ones" do
     steps_setup = {
       "company" => ->(applicant_user) { create(:onboarding_application, applicant: applicant_user.applicant) },
+      "currencies" => method(:currency_application_for),
+      "principals" => method(:principals_application_for),
       "descriptor" => method(:descriptor_application_for),
       "fulfilment" => method(:fulfilment_application_for),
       "processing" => method(:processing_application_for),
