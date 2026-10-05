@@ -455,18 +455,6 @@ en:
         warning_total: Total
         warning_unacknowledged: Open
         warnings: Warnings
-  countries:
-    names:
-      AU: Australia
-      CA: Canada
-      DE: Germany
-      ES: Spain
-      FR: France
-      GB: United Kingdom
-      IE: Ireland
-      NL: Netherlands
-      SG: Singapore
-      US: United States
   devise:
     failure:
       deactivated: Your account has been deactivated. Please contact your administrator.
@@ -1237,8 +1225,11 @@ en:
           address
       continue: Save and continue
       countries:
-        hint: Select every country you plan to sell to.
+        hint: Search and select every country you plan to sell to.
         legend: Which countries will you sell to?
+        no_results: No countries found
+        remove: Remove
+        search: Search countries
       currencies:
         add: Add currency
         code: ISO currency code
