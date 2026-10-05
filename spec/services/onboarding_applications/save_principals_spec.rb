@@ -7,7 +7,7 @@ RSpec.describe OnboardingApplications::SavePrincipals do
     create(
       :onboarding_application,
       current_step: "principals",
-      completed_steps: %w[company fulfilment currencies processing payments descriptor pricing volumes countries]
+      completed_steps: %w[company fulfilment currencies processing payments descriptor volumes countries]
     )
   end
 

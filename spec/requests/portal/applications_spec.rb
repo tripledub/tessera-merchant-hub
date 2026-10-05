@@ -463,7 +463,7 @@ RSpec.describe "Portal application shell", type: :request do
       }
     }
 
-    expect(response).to redirect_to(portal_application_path(step: "pricing"))
+    expect(response).to redirect_to(portal_application_path(step: "volumes"))
     expect(application.reload).to have_attributes(
       descriptor: "SPECIMEN SHOP",
       descriptor_company_number: "12345678",
@@ -798,7 +798,7 @@ RSpec.describe "Portal application shell", type: :request do
       :onboarding_application,
       applicant: applicant_user.applicant,
       current_step: "principals",
-      completed_steps: %w[company fulfilment currencies processing payments descriptor pricing volumes countries]
+      completed_steps: %w[company fulfilment currencies processing payments descriptor volumes countries]
     )
   end
 

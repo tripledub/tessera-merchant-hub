@@ -14,7 +14,7 @@ RSpec.describe OnboardingApplication, type: :model do
 
   it "defines the ordered self-service sections" do
     expect(described_class::STEPS).to eq(%w[
-      company fulfilment currencies processing payments descriptor pricing volumes countries principals review
+      company fulfilment currencies processing payments descriptor volumes countries principals review
     ])
   end
 
