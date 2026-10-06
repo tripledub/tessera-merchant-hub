@@ -10,12 +10,13 @@ module OnboardingApplications
   #   :chat       only present in the chat's session data
   #   :registry   fetched from a company registry
   #   :document   extracted from an uploaded document
-  # Persisted provenance, unverified items and conflicts arrive with MH-389,
-  # which fills #unverified and #conflicts.
+  #   :staff      verified by staff
+  # Origins for the company fields come from persisted provenance (MH-389).
   class Snapshot
     Fact = Data.define(:key, :label, :value, :origin)
     Principal = Data.define(:name, :role, :origin, :missing)
     NextAction = Data.define(:step, :message)
+    Conflict = Data.define(:field, :held_value, :held_source, :proposed_value, :proposed_source)
 
     # The only facts that may be sent to an LLM. Widen deliberately, here, if
     # that ever becomes appropriate (e.g. private inference). Addresses and
@@ -29,6 +30,8 @@ module OnboardingApplications
     DOCUMENTS_STEP = "documents"
     # Steps with no validation context of their own.
     UNVALIDATED_STEPS = %w[volumes review].freeze
+    SOURCE_ORIGINS = { applicant_declared: :applicant, registry: :registry, document_extracted: :document,
+                       staff_verified: :staff }.freeze
     PRINCIPAL_ORIGINS = { "registry_fetched" => :registry, "document_extracted" => :document,
                           "applicant_declared" => :applicant }.freeze
 
@@ -125,10 +128,20 @@ module OnboardingApplications
       NextAction.new(step: DOCUMENTS_STEP, message: "Upload #{missing_documents.first.humanize.downcase}")
     end
 
-    # MH-389 fills these; present now so consumers can depend on the shape.
-    def unverified = []
+    # Registry-checkable company fields that still only rest on the applicant's word.
+    def unverified
+      return [] unless registry_could_verify?
 
-    def conflicts = []
+      facts.select { |fact| Provenance::CompanyFields::FIELDS.include?(fact.key.to_s) && fact.origin == :applicant }
+           .map(&:key)
+    end
+
+    def conflicts
+      @conflicts ||= applicant.data_conflicts.status_open.order(:detected_at).map do |conflict|
+        Conflict.new(field: conflict.field, held_value: conflict.held_value, held_source: conflict.held_source,
+                     proposed_value: conflict.proposed_value, proposed_source: conflict.proposed_source)
+      end
+    end
 
     def for_llm
       {
@@ -151,10 +164,20 @@ module OnboardingApplications
 
     def build_fact(definition)
       database_value = definition[:db]&.call(application).presence
-      return Fact.new(key: definition[:key], label: definition[:label], value: database_value, origin: :applicant) if database_value
+      return Fact.new(key: definition[:key], label: definition[:label], value: database_value, origin: database_origin(definition[:key])) if database_value
 
       chat_value = definition[:chat]&.call(chat_data).presence
       Fact.new(key: definition[:key], label: definition[:label], value: chat_value, origin: :chat) if chat_value
+    end
+
+    def database_origin(key)
+      return :applicant unless Provenance::CompanyFields::FIELDS.include?(key.to_s)
+
+      SOURCE_ORIGINS.fetch(Provenance::CompanyFields.source_for(applicant, key.to_s), :applicant)
+    end
+
+    def registry_could_verify?
+      applicant.company_number.present? && Registry::Lookup.client_class_for(applicant.registry_jurisdiction).present?
     end
 
     def form_gaps

@@ -38,6 +38,20 @@ RSpec.describe Onboarding::DataCaptureService do
     end
 
     describe "company identity write-through (MH-387)" do
+      it "records applicant provenance and a conflict when the chat changes a registry-sourced name (MH-389)" do
+        applicant = create(:applicant, company_name: nil, company_number: nil)
+        Provenance::CompanyFields.apply!(applicant: applicant, field: "company_name", value: "ACME WIDGETS LIMITED",
+                                         source: :registry, provider: "companies_house")
+        session = create(:onboarding_session, applicant: applicant, current_stage: :company_info)
+
+        described_class.call(session: session, extracted_data: { "company_name" => "Acme Widgets Ltd" })
+
+        expect(applicant.reload.company_name).to eq("Acme Widgets Ltd")
+        expect(Provenance::CompanyFields.source_for(applicant, "company_name")).to eq(:applicant_declared)
+        expect(applicant.data_conflicts.status_open.first)
+          .to have_attributes(held_value: "ACME WIDGETS LIMITED", proposed_value: "Acme Widgets Ltd")
+      end
+
       it "writes the company name and number captured in chat to the application" do
         applicant = create(:applicant, company_name: nil, company_number: nil)
         session = create(:onboarding_session, applicant: applicant, current_stage: :company_info)

@@ -16,6 +16,8 @@ class Applicant < Merchant
   has_many :applicant_invitations, dependent: :destroy, inverse_of: :applicant
   has_many :registry_profiles, class_name: "Registry::Profile", dependent: :destroy, inverse_of: :applicant
   has_many :addresses, as: :addressable, dependent: :destroy
+  has_many :data_provenances, dependent: :destroy, inverse_of: :applicant
+  has_many :data_conflicts, dependent: :destroy, inverse_of: :applicant
   belongs_to :no_corporate_owners_attested_by, class_name: "User", optional: true
   has_one :primary_business_address, -> { where(type: "Address::Business", primary: true) },
           class_name: "Address", as: :addressable

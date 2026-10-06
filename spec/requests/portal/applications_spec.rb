@@ -673,6 +673,26 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response.body).not_to include("Same as registered address")
   end
 
+  it "enqueues a registry re-check once the application is submitted (MH-389)" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    expect { patch portal_application_path, params: { step: "review" } }
+      .to have_enqueued_job(RegistryRecheckJob).with(application.applicant_id)
+  end
+
+  it "does not enqueue a registry re-check when submission fails (MH-389)" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    application.update_column(:descriptor, nil)
+    sign_in applicant_user, scope: :applicant_user
+
+    expect { patch portal_application_path, params: { step: "review" } }
+      .not_to have_enqueued_job(RegistryRecheckJob)
+    expect(application.reload).to be_draft
+  end
+
   it "reviews supplied information by section and submits a complete application" do
     applicant_user = create(:applicant_user)
     application = review_application_for(applicant_user)

@@ -61,6 +61,26 @@ RSpec.describe Applicants::RegistryLookup do
         expect(applicant.reload.company_name).to eq("Acme Ltd")
       end
 
+      it "records registry provenance for the company name and number" do
+        freeze_time do
+          described_class.call(applicant)
+
+          %w[company_name company_number].each do |field|
+            expect(DataProvenance.find_by(record_type: "Applicant", record_id: applicant.id, field: field))
+              .to have_attributes(source: "registry", provider: "companies_house", retrieved_at: Time.current)
+          end
+        end
+      end
+
+      it "keeps the name it replaces for audit instead of overwriting it silently" do
+        applicant.update!(company_name: "Acme Ltd (as typed)")
+
+        described_class.call(applicant)
+
+        expect(DataProvenance.find_by(record_id: applicant.id, field: "company_name"))
+          .to have_attributes(previous_value: "Acme Ltd (as typed)")
+      end
+
       it "promotes active directors, but not PSCs, to kyc_principals" do
         expect { described_class.call(applicant) }
           .to change { applicant.kyc_principals.count }.by(1)

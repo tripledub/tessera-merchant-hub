@@ -372,6 +372,12 @@ en:
         confirm_no_corporate_owners: Confirm no corporate owners
         confirm_no_corporate_owners_prompt: Confirm that this applicant has no corporate
           owners? This is recorded against your account.
+        conflicts:
+          description: These sources disagree. Nothing is blocked; check them against
+            what the applicant submitted.
+          held: Held
+          proposed: Proposed
+          title: Data conflicts
         details: Details
         documents_count: Documents
         entities_count: Entities
@@ -455,6 +461,13 @@ en:
         warning_total: Total
         warning_unacknowledged: Open
         warnings: Warnings
+  data_provenance:
+    sources:
+      applicant_declared: Applicant
+      document_extracted: Document
+      registry: Registry
+      staff_verified: Staff verified
+    with_provider: "%{source} (%{provider})"
   devise:
     failure:
       deactivated: Your account has been deactivated. Please contact your administrator.

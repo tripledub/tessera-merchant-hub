@@ -164,6 +164,8 @@ class Portal::ApplicationsController < Portal::BaseController
 
   def update_review
     if OnboardingApplications::Submit.call(application: @application)
+      # MH-389: after the submission has committed; never affects it.
+      RegistryRecheckJob.perform_later(@application.applicant_id)
       redirect_to portal_application_path(step: "review"), notice: t("portal.applications.submitted")
     else
       @step = "review"

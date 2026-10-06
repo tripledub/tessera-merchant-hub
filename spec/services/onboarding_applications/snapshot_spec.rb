@@ -153,12 +153,52 @@ RSpec.describe OnboardingApplications::Snapshot, type: :service do
     end
   end
 
-  describe "extension point for provenance" do
-    it "exposes empty unverified and conflict lists until MH-389 fills them" do
-      snapshot = described_class.for(application)
+  describe "provenance (MH-389)" do
+    it "reports a registry-sourced company name with the registry as its origin" do
+      Provenance::CompanyFields.apply!(applicant: applicant, field: "company_name", value: "ACME WIDGETS LIMITED",
+                                       source: :registry, provider: "companies_house")
 
-      expect(snapshot.unverified).to eq([])
-      expect(snapshot.conflicts).to eq([])
+      expect(fact(described_class.for(application), :company_name))
+        .to have_attributes(value: "ACME WIDGETS LIMITED", origin: :registry)
+    end
+
+    it "lists the company name and number as unverified while they only rest on the applicant's word" do
+      applicant.update!(registry_jurisdiction: "gb")
+
+      expect(described_class.for(application).unverified).to contain_exactly(:company_name, :company_number)
+    end
+
+    it "treats registry-confirmed fields as verified" do
+      applicant.update!(registry_jurisdiction: "gb")
+      %w[company_name company_number].each do |field|
+        Provenance::CompanyFields.apply!(applicant: applicant, field: field, value: applicant.public_send(field),
+                                         source: :registry, provider: "companies_house")
+      end
+
+      expect(described_class.for(application).unverified).to be_empty
+    end
+
+    it "has nothing unverified when no registry could verify the company" do
+      applicant.update!(registry_jurisdiction: nil)
+
+      expect(described_class.for(application).unverified).to be_empty
+    end
+
+    it "exposes open conflicts" do
+      applicant.data_conflicts.create!(record_type: "Applicant", record_id: applicant.id, field: "company_name",
+                                       held_value: "ACME WIDGETS LIMITED", held_source: :registry,
+                                       proposed_value: "Acme Widgets Ltd", proposed_source: :applicant_declared,
+                                       detected_at: Time.current)
+
+      expect(described_class.for(application).conflicts)
+        .to contain_exactly(have_attributes(field: "company_name", held_value: "ACME WIDGETS LIMITED",
+                                            proposed_value: "Acme Widgets Ltd"))
+    end
+
+    it "keeps conflicts and unverified items out of the LLM context" do
+      applicant.update!(registry_jurisdiction: "gb")
+
+      expect(described_class.for(application).for_llm.keys).not_to include(:conflicts, :unverified)
     end
   end
 
