@@ -11,7 +11,7 @@ RSpec.describe "Onboarding conversations", type: :request do
     end
 
     it "renders the applicant chat page with a welcome message" do
-      applicant_user = create(:applicant_user)
+      applicant_user = create(:applicant_user, applicant: create(:applicant, company_name: nil))
       sign_in applicant_user, scope: :applicant_user
 
       get portal_onboarding_path

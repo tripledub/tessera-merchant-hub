@@ -32,6 +32,24 @@
                 created_at: Time.current
               ) %>
       <% end %>
+    <% elsif @company_confirmation %>
+      <%= render "onboarding/conversations/message",
+            message: @onboarding_session.onboarding_messages.build(
+              role: :bot,
+              content: @company_confirmation,
+              stage: @onboarding_session.current_stage,
+              created_at: Time.current
+            ) %>
+      <div class="flex justify-start gap-3 pl-11" data-testid="company-confirmation">
+        <%= button_to "Yes, that's right", portal_onboarding_company_confirmation_path,
+              params: { answer: "yes" }, method: :post,
+              class: "rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600",
+              data: { testid: "company-confirmation-yes" } %>
+        <%= button_to "No, start again", portal_onboarding_company_confirmation_path,
+              params: { answer: "no" }, method: :post,
+              class: "rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800",
+              data: { testid: "company-confirmation-no" } %>
+      </div>
     <% else %>
       <%= render "onboarding/conversations/message",
             message: @onboarding_session.onboarding_messages.build(

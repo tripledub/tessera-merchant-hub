@@ -39,10 +39,24 @@ module Onboarding
         capture_looping_stage(session, valid_data)
       else
         capture_non_looping_stage(session, valid_data)
+        write_company_identity(session, valid_data) if Onboarding::StateMachine.current_stage(session) == :company_info
       end
 
       valid_data
     end
+
+    # The form reads company name and number from the applicant, so what the
+    # applicant tells the chat has to land there too. Their answer wins.
+    def write_company_identity(session, valid_data)
+      attributes = {
+        company_name: valid_data["company_name"],
+        company_number: valid_data["registration_number"]
+      }.compact
+      return if attributes.empty?
+
+      session.applicant.update!(attributes)
+    end
+    private_class_method :write_company_identity
 
     def valid_extracted_data(extracted_data)
       extracted_data.each_with_object({}) do |(field, value), result|
