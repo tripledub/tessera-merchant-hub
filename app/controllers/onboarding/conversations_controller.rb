@@ -15,6 +15,8 @@ module Onboarding
       @collection_service = Onboarding::DocumentCollectionService.new(@onboarding_session)
       @outstanding_items = @collection_service.outstanding_items
       @resume_notice = resume_notice
+      @company_confirmation = Onboarding::CompanyIdentityConfirmation.prompt(@onboarding_session) if
+        Onboarding::CompanyIdentityConfirmation.pending?(@onboarding_session)
     end
 
     def create
