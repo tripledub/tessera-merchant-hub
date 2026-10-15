@@ -5,7 +5,7 @@ gem "rails", "~> 8.1.4"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
-gem "pg", "~> 1.1"
+gem "pg", "~> 1.7"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
@@ -68,7 +68,7 @@ gem "jaro_winkler"
 
 # Unified LLM client — Anthropic/Claude, structured output, streaming.
 # Pinned to the 2.0 RC: fixes CVE-2026-67991 (ReDoS), no stable 2.x release yet.
-gem "ruby_llm", "2.0.0"
+gem "ruby_llm", "2.1.0"
 
 # Real-time WebSocket support via AnyCable + Redis pub/sub.
 gem "anycable-rails"
