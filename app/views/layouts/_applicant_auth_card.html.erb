@@ -7,9 +7,10 @@
     <div class="mb-8 flex justify-center">
       <%= render "layouts/applicant_logo", signed_in: false %>
     </div>
-    <div class="rounded-kyn-lg border border-kyn-border bg-kyn-surface p-6 sm:p-8">
-      <h1 class="mb-6 text-2xl font-bold tracking-tight text-kyn-navy"><%= local_assigns[:title] %></h1>
+    <div class="kyn-card">
+      <h1 class="mb-6 text-2xl font-bold tracking-tight text-kyn-navy sm:text-[28px]"><%= local_assigns[:title] %></h1>
       <%= yield %>
     </div>
+    <p class="mt-6 text-center text-xs text-kyn-slate"><%= t("layouts.applicant_auth_card.security") %></p>
   </div>
 </div>

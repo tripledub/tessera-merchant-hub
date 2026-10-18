@@ -41,6 +41,13 @@ RSpec.describe FormHelper, type: :helper do
     end
   end
 
+  describe "#kyn_field_error_id" do
+    it "matches the id form_validation_controller.js gives the message it creates" do
+      expect(helper.kyn_field_error_id(:applicant_user, :password_confirmation))
+        .to eq("applicant_user_password_confirmation_-error")
+    end
+  end
+
   describe "#kyn_field_aria" do
     it "marks an invalid field and points it at its message" do
       aria = helper.kyn_field_aria(invalid_user, :email, "applicant_user_email-error")

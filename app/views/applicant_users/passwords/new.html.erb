@@ -1,16 +1,18 @@
 <%= render "layouts/applicant_auth_card", title: t("applicant_users.passwords.new.title") do %>
   <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :post }) do |f| %>
     <div class="space-y-5">
-      <div>
-        <%= f.label :email, class: "form-label" %>
+      <div class="kyn-field" data-field>
+        <%= f.label :email, class: "kyn-label" %>
         <%= f.email_field :email, autofocus: true, autocomplete: "email",
-              class: "form-input", placeholder: "you@example.com" %>
+              class: kyn_field_class(resource, :email), placeholder: "you@example.com",
+              **kyn_field_aria(resource, :email, kyn_field_error_id(resource_name, :email)) %>
+        <%= kyn_field_error(resource, :email, id: kyn_field_error_id(resource_name, :email)) %>
       </div>
-      <%= f.submit t("applicant_users.passwords.new.submit"), class: "btn-primary w-full" %>
+      <%= f.submit t("applicant_users.passwords.new.submit"), class: "kyn-btn-primary" %>
     </div>
   <% end %>
-  <div class="mt-5 text-center">
+  <div class="mt-4 flex justify-center">
     <%= link_to t("applicant_users.passwords.new.back_to_sign_in"), new_session_path(resource_name),
-          class: "text-sm text-brand-600 hover:text-brand-700 hover:underline" %>
+          class: "kyn-link inline-flex min-h-[44px] items-center text-sm" %>
   </div>
 <% end %>
