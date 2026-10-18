@@ -104,8 +104,12 @@ export default class extends Controller {
       return
     }
 
-    field.classList.remove("form-input")
-    field.classList.add("form-input-error")
+    // kyn-* fields (MH-395) style their error state from aria-invalid, so they
+    // keep their class; everything else swaps the legacy classes as before.
+    if (!this.usesAriaStyling(field)) {
+      field.classList.remove("form-input")
+      field.classList.add("form-input-error")
+    }
     field.setAttribute("aria-invalid", "true")
 
     const errorEl = this.errorElementFor(field)
@@ -119,12 +123,18 @@ export default class extends Controller {
       return
     }
 
-    field.classList.remove("form-input-error")
-    field.classList.add("form-input")
+    if (!this.usesAriaStyling(field)) {
+      field.classList.remove("form-input-error")
+      field.classList.add("form-input")
+    }
     field.removeAttribute("aria-invalid")
     field.removeAttribute("aria-describedby")
 
     this.errorElementFor(field, { create: false })?.remove()
+  }
+
+  usesAriaStyling(field) {
+    return Array.from(field.classList).some((name) => name.startsWith("kyn-"))
   }
 
   showRadioGroupError(field) {
