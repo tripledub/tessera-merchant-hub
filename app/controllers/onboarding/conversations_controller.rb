@@ -2,8 +2,6 @@
 
 module Onboarding
   class ConversationsController < Portal::BaseController
-    layout "onboarding"
-
     before_action :set_onboarding_session
 
     def show

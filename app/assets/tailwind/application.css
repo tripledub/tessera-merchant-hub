@@ -1,12 +1,32 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap") layer(base);
-
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
+/* Applicant font (MH-394): Plus Jakarta Sans, self-hosted (SIL OFL) so applicant
+   pages never call Google. Variable font, Latin and Latin Extended (Maltese).
+   Outfit (admin) is loaded by the admin layout, not from this shared sheet. */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("PlusJakartaSans-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("PlusJakartaSans-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 @theme {
   --font-*: initial;
   --font-outfit: Outfit, sans-serif;
+  --font-kynetic: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -149,6 +169,31 @@
   --z-index-999: 999;
   --z-index-9999: 9999;
   --z-index-99999: 99999;
+
+  /* Kynetic applicant theme (MH-394). Names and values mirror the Figma
+     variable collections "Kynetic Applicant" and "Kynetic Shape". Applicant
+     pages only; the admin UI keeps brand-*. Cyan is never used as text. */
+  --color-kyn-primary: #4f5bf5;
+  --color-kyn-primary-hover: #4650e0;
+  --color-kyn-primary-disabled: #a7adfa;
+  --color-kyn-primary-tint: #eef0fe;
+  --color-kyn-primary-text: #3f4bd8;
+  --color-kyn-navy: #0e1b2b;
+  --color-kyn-slate: #5b6878;
+  --color-kyn-bg: #f7f9fc;
+  --color-kyn-surface: #ffffff;
+  --color-kyn-assistant-bubble: #f0f3f7;
+  --color-kyn-border: #e2e8f0;
+  --color-kyn-error: #c9342b;
+  --color-kyn-error-tint: #fdf3f2;
+  --color-kyn-success: #0b7a4b;
+  --color-kyn-success-tint: #e7f4ee;
+  --color-kyn-warning: #8a5a00;
+  --color-kyn-warning-tint: #fdf3e1;
+
+  --radius-kyn-md: 12px;
+  --radius-kyn-lg: 16px;
+  --radius-kyn-full: 9999px;
 }
 
 /* ─── Base ────────────────────────────────���────────────────────────────��─── */

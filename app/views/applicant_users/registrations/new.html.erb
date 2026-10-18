@@ -1,4 +1,4 @@
-<%= render "layouts/auth_card", title: t("applicant_users.registrations.new.title") do %>
+<%= render "layouts/applicant_auth_card", title: t("applicant_users.registrations.new.title") do %>
   <%= form_for(resource, as: resource_name, url: registration_path(resource_name),
         html: { data: { controller: "form-validation", action: "submit->form-validation#submitForm" } }) do |f| %>
     <%= hidden_field_tag :invitation_token, params[:invitation_token] %>

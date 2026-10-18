@@ -1,0 +1,15 @@
+<%# Centred card wrapper for the signed-out applicant pages (sign in, register,
+    password reset). Applicant counterpart of layouts/_auth_card, which the admin
+    Devise views still use.
+    Usage: render "layouts/applicant_auth_card", title: "Sign in" do ... end %>
+<div class="flex min-h-screen flex-col items-center px-4 py-12 sm:py-16">
+  <div class="w-full max-w-[440px]">
+    <div class="mb-8 flex justify-center">
+      <%= render "layouts/applicant_logo", signed_in: false %>
+    </div>
+    <div class="rounded-kyn-lg border border-kyn-border bg-kyn-surface p-6 sm:p-8">
+      <h1 class="mb-6 text-2xl font-bold tracking-tight text-kyn-navy"><%= local_assigns[:title] %></h1>
+      <%= yield %>
+    </div>
+  </div>
+</div>

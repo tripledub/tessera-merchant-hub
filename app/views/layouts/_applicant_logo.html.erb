@@ -1,0 +1,8 @@
+<%# Kynetic logo lockup: the real icon plus the wordmark. Used by the applicant
+    header and the applicant auth card so both always match. The icon is
+    decorative because the wordmark carries the name. %>
+<% home = local_assigns[:signed_in] ? portal_root_path : new_applicant_user_session_path %>
+<%= link_to home, class: "inline-flex items-center gap-2.5" do %>
+  <%= image_tag "kynetic-icon.png", class: "h-9 w-9 rounded-kyn-md", alt: "" %>
+  <span class="text-xl font-bold tracking-tight text-kyn-navy"><%= t("layouts.navigation.app_name") %></span>
+<% end %>

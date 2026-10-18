@@ -18,8 +18,8 @@ RSpec.describe "Onboarding authentication", type: :request do
       get new_applicant_user_registration_path(invitation_token: token)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include('data-controller="dark-mode"')
-      expect(response.body).to include('aria-label="Toggle dark mode"')
+      expect(response.body).not_to include('data-controller="dark-mode"')
+      expect(response.body).not_to include('aria-label="Toggle dark mode"')
       email = Nokogiri::HTML(response.body).at_css("input[name='applicant_user[email]']")
       expect(email["value"]).to eq(invitation.email)
       expect(email.attribute("readonly")).to be_present
@@ -204,17 +204,15 @@ RSpec.describe "Onboarding authentication", type: :request do
       expect(response).to redirect_to(portal_root_path)
     end
 
-    it "provides a keyboard-accessible theme toggle in the authenticated portal header" do
+    it "is light only: the authenticated portal header has no theme toggle (MH-394)" do
       applicant_user = create(:applicant_user)
       sign_in applicant_user, scope: :applicant_user
 
       get portal_root_path
 
       expect(response).to have_http_status(:ok)
-      toggle = Capybara.string(response.body).find("header button[data-controller='dark-mode']")
-      expect(toggle["data-action"]).to eq("click->dark-mode#toggle")
-      expect(toggle["aria-label"]).to eq("Toggle dark mode")
-      expect(toggle.tag_name).to eq("button")
+      expect(Capybara.string(response.body)).not_to have_css("header button[data-controller='dark-mode']")
+      expect(response.body).not_to include("Toggle dark mode")
     end
 
     it "links authenticated applicant users to the onboarding chat" do
