@@ -18,6 +18,12 @@ module FormHelper
     "kyn-input"
   end
 
+  # The id form_validation_controller.js gives the message it creates for a
+  # field named scope[attribute], so server and inline errors share one slot.
+  def kyn_field_error_id(scope, attribute)
+    "#{scope}[#{attribute}]".gsub(/[^\w-]/, "_") + "-error"
+  end
+
   def kyn_field_aria(resource, attribute, error_id)
     return {} if resource.errors[attribute].blank?
 

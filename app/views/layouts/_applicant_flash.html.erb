@@ -1,0 +1,34 @@
+<%# Applicant flash banners (MH-396). Errors are announced (role=alert) and stay
+    until the next page load so they cannot vanish before they are read; notices
+    and info are polite (role=status) and auto-dismiss after 5 seconds. The admin
+    layouts keep layouts/_flash. %>
+<% flash.each do |type, message| %>
+  <% next if message.blank? %>
+  <%
+    error = type.to_s == "alert"
+    tone = case type.to_s
+           when "notice" then "border-kyn-success bg-kyn-success-tint text-kyn-success"
+           when "alert"  then "border-kyn-error bg-kyn-error-tint text-kyn-error"
+           else               "border-kyn-primary bg-kyn-primary-tint text-kyn-primary-text"
+           end
+  %>
+  <div class="rounded-kyn-md border <%= tone %> p-4"
+       role="<%= error ? "alert" : "status" %>"
+       data-testid="flash-<%= type %>"
+       data-controller="toast"
+       data-toast-dismiss-after-value="<%= error ? 0 : 5000 %>">
+    <div class="flex items-start gap-3">
+      <svg class="mt-0.5 h-5 w-5 shrink-0 fill-current" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <% case type.to_s %>
+        <% when "notice" %>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M3.7 12a8.3 8.3 0 1 1 16.6 0 8.3 8.3 0 0 1-16.6 0ZM12 1.9a10.1 10.1 0 1 0 0 20.2 10.1 10.1 0 0 0 0-20.2Zm3.62 8.84a.9.9 0 0 0-1.27-1.27l-3.16 3.16-1.54-1.54a.9.9 0 0 0-1.27 1.27l2.17 2.17a.9.9 0 0 0 1.27 0l3.8-3.8Z"/>
+        <% when "alert" %>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M20.35 12a8.35 8.35 0 1 1-16.7 0 8.35 8.35 0 0 1 16.7 0ZM12 22.15a10.15 10.15 0 1 0 0-20.3 10.15 10.15 0 0 0 0 20.3Zm1-5.68a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM12 6.63a.75.75 0 0 1 .75.75v5.68a.75.75 0 0 1-1.5 0V7.38a.75.75 0 0 1 .75-.75Z"/>
+        <% else %>
+          <path fill-rule="evenodd" clip-rule="evenodd" d="M3.5 12a8.5 8.5 0 1 1 17 0 8.5 8.5 0 0 1-17 0ZM12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-1 5.53a1 1 0 1 1 2 0 1 1 0 0 1-2 0Zm1 2.66a.75.75 0 0 1 .75.75v5.68a.75.75 0 0 1-1.5 0v-5.68a.75.75 0 0 1 .75-.75Z"/>
+        <% end %>
+      </svg>
+      <p class="text-sm font-medium text-kyn-navy"><%= message %></p>
+    </div>
+  </div>
+<% end %>

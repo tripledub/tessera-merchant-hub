@@ -212,6 +212,11 @@ en:
         resend_confirmation: Didn't receive confirmation instructions?
         submit: Sign in
         title: Sign in to Onboarding
+    shared:
+      password_field:
+        hide: Hide password
+        minimum: "%{count} characters minimum"
+        show: Show password
   applicants:
     delete:
       button: Delete applicant
@@ -1011,6 +1016,8 @@ en:
       document_extracted: Extracted
       registry_fetched: Companies House
   layouts:
+    applicant_auth_card:
+      security: Your information is encrypted and only used for compliance checks.
     navigation:
       admin: Admin
       app_name: Kynetic
