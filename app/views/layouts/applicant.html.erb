@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title><%= content_for(:title) || t("portal.title") %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="<%= t("portal.title") %>">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= action_cable_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+    <%# Light only (MH-394): this layout never adds the dark class and never reads
+        the stored darkMode setting, so existing dark: classes stay inert. %>
+  </head>
+
+  <body class="bg-kyn-bg font-kynetic text-kyn-navy antialiased">
+    <% if applicant_user_signed_in? %>
+      <div class="flex min-h-screen flex-col">
+        <%= render "layouts/applicant_header" %>
+
+        <main class="flex-1 px-4 py-4 sm:px-6 lg:px-8">
+          <div class="mx-auto w-full <%= applicant_content_width_class %>">
+            <% if flash.any? %>
+              <div class="mb-6 space-y-3">
+                <%= render "layouts/flash" %>
+              </div>
+            <% end %>
+            <%= yield %>
+          </div>
+        </main>
+      </div>
+    <% else %>
+      <main class="min-h-screen">
+        <% if flash.any? %>
+          <div class="mx-auto max-w-md space-y-3 px-4 pt-6">
+            <%= render "layouts/flash" %>
+          </div>
+        <% end %>
+        <%= yield %>
+      </main>
+    <% end %>
+  </body>
+</html>

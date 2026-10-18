@@ -3,7 +3,7 @@
 class Portal::SessionsController < Devise::SessionsController
   include Portal::AbuseProtection
 
-  layout "portal"
+  layout "applicant"
   before_action -> { reject_oversized_portal_payload(REGISTRATION_PAYLOAD_LIMIT) }, only: :create
   rate_limit to: 10, within: 1.minute, with: :portal_rate_limited,
              store: portal_rate_limit_store, only: :create
