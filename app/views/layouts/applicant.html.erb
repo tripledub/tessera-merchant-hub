@@ -31,7 +31,7 @@
           <div class="mx-auto w-full <%= applicant_content_width_class %>">
             <% if flash.any? %>
               <div class="mb-6 space-y-3">
-                <%= render "layouts/flash" %>
+                <%= render "layouts/applicant_flash" %>
               </div>
             <% end %>
             <%= yield %>
@@ -42,7 +42,7 @@
       <main class="min-h-screen">
         <% if flash.any? %>
           <div class="mx-auto max-w-md space-y-3 px-4 pt-6">
-            <%= render "layouts/flash" %>
+            <%= render "layouts/applicant_flash" %>
           </div>
         <% end %>
         <%= yield %>

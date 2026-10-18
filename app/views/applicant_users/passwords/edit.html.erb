@@ -1,26 +1,28 @@
 <%= render "layouts/applicant_auth_card", title: t("applicant_users.passwords.edit.title") do %>
   <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put }) do |f| %>
-    <%= render "devise/shared/error_messages", resource: resource %>
+    <%# The reset token has no field of its own, so its error is an announced callout. %>
+    <% if resource.errors[:reset_password_token].any? %>
+      <div role="alert" class="mb-5 rounded-kyn-md border border-kyn-error bg-kyn-error-tint p-3 text-sm font-medium text-kyn-error">
+        <%= resource.errors.full_messages_for(:reset_password_token).first %>
+      </div>
+    <% end %>
     <%= f.hidden_field :reset_password_token %>
     <div class="space-y-5">
-      <div>
-        <%= f.label :password, t("applicant_users.passwords.edit.new_password"), class: "form-label" %>
-        <% if @minimum_password_length %>
-          <p class="mb-1 text-xs text-gray-400"><%= @minimum_password_length %> characters minimum</p>
-        <% end %>
-        <%= f.password_field :password, autofocus: true, autocomplete: "new-password",
-              class: "form-input", placeholder: "••••••••" %>
-      </div>
-      <div>
-        <%= f.label :password_confirmation, t("applicant_users.passwords.edit.confirm_password"), class: "form-label" %>
-        <%= f.password_field :password_confirmation, autocomplete: "new-password",
-              class: "form-input", placeholder: "••••••••" %>
-      </div>
-      <%= f.submit t("applicant_users.passwords.edit.submit"), class: "btn-primary w-full" %>
+      <%= render "applicant_users/shared/password_field",
+            form: f, resource: resource, attribute: :password,
+            label: t("applicant_users.passwords.edit.new_password"),
+            autocomplete: "new-password", required: true, autofocus: true,
+            minlength: @minimum_password_length,
+            hint: (t("applicant_users.shared.password_field.minimum", count: @minimum_password_length) if @minimum_password_length) %>
+      <%= render "applicant_users/shared/password_field",
+            form: f, resource: resource, attribute: :password_confirmation,
+            label: t("applicant_users.passwords.edit.confirm_password"),
+            autocomplete: "new-password", required: true, toggle: false %>
+      <%= f.submit t("applicant_users.passwords.edit.submit"), class: "kyn-btn-primary" %>
     </div>
   <% end %>
-  <div class="mt-5 text-center">
+  <div class="mt-4 flex justify-center">
     <%= link_to t("applicant_users.passwords.edit.back_to_sign_in"), new_session_path(resource_name),
-          class: "text-sm text-brand-600 hover:text-brand-700 hover:underline" %>
+          class: "kyn-link inline-flex min-h-[44px] items-center text-sm" %>
   </div>
 <% end %>
