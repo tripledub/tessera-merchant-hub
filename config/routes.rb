@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   get "/repeatable-fields-preview", to: "repeatable_fields_preview#show" if Rails.env.test?
+  get "/kyn-components-preview", to: "kyn_components_preview#show" if Rails.env.test?
 
   devise_for :users
 

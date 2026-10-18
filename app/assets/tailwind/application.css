@@ -393,6 +393,100 @@ aside[data-collapsed] .menu-item {
   appearance: none;
 }
 
+/* ─── Applicant primitives (MH-395) ──────────────────────────────────────────
+   Kynetic applicant look: kyn-* tokens only, light only (no dark: variants).
+   The shared utilities above are used by admin views too, so these are
+   separate. Error state comes from aria-invalid (set by form_validation_controller
+   and by FormHelper#kyn_field_aria), not from swapping classes.
+   Controls are at least 44px tall; keyboard focus shows a 3px primary ring.
+   The select chevron and checkbox tick are inline SVGs, so their colours are
+   literal (a data URI cannot read CSS variables): slate #5B6878, white. */
+
+@utility kyn-btn-primary {
+  @apply inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-kyn-md bg-kyn-primary px-6
+         text-[15px] font-semibold text-kyn-surface no-underline transition-colors;
+
+  &:hover:not(:disabled):not([aria-disabled="true"]) { @apply bg-kyn-primary-hover; }
+  &:focus-visible { @apply ring-[3px] ring-kyn-primary/30 outline-none; }
+  &:disabled,
+  &[aria-disabled="true"] { @apply cursor-not-allowed bg-kyn-primary-disabled; }
+}
+
+@utility kyn-btn-secondary {
+  @apply inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-kyn-md border-[1.5px]
+         border-kyn-border bg-kyn-surface px-6 text-[15px] font-semibold text-kyn-navy no-underline transition-colors;
+
+  &:hover:not(:disabled):not([aria-disabled="true"]) { @apply bg-kyn-bg; }
+  &:focus-visible { @apply ring-[3px] ring-kyn-primary/30 outline-none; }
+  &:disabled,
+  &[aria-disabled="true"] { @apply cursor-not-allowed text-kyn-slate; }
+}
+
+/* Text input, select and textarea share one look. */
+@utility kyn-input {
+  @apply block min-h-[50px] w-full rounded-kyn-md border-[1.5px] border-kyn-border bg-kyn-surface px-4 py-3
+         text-[15px] leading-6 text-kyn-navy placeholder:text-kyn-slate outline-none transition-colors;
+
+  &:focus-visible { @apply border-kyn-primary ring-[3px] ring-kyn-primary/30; }
+  &[aria-invalid="true"] { @apply border-kyn-error; }
+  &[aria-invalid="true"]:focus-visible { @apply border-kyn-error ring-kyn-error/20; }
+  &:disabled { @apply cursor-not-allowed bg-kyn-bg text-kyn-slate; }
+
+  &:is(select) {
+    @apply appearance-none pr-11;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235B6878' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 8l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+  }
+
+  &:is(textarea) { @apply min-h-[104px]; }
+}
+
+@utility kyn-label {
+  @apply mb-1.5 block text-[13px] font-semibold text-kyn-navy;
+}
+
+/* Wrapper for a label, a field and its inline message. Restyles the message the
+   validation controller creates (.form-error / data-form-validation-error). */
+@utility kyn-field {
+  & .form-error,
+  & [data-form-validation-error] { @apply mt-1.5 text-[13px] font-medium text-kyn-error; }
+}
+
+@utility kyn-card {
+  @apply rounded-kyn-lg border border-kyn-border bg-kyn-surface p-5 sm:p-8;
+}
+
+@utility kyn-checkbox {
+  @apply size-[22px] shrink-0 cursor-pointer appearance-none rounded-md border-[1.5px] border-kyn-border
+         bg-kyn-surface transition-colors;
+
+  &:checked {
+    @apply border-kyn-primary bg-kyn-primary;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 10.5l3.5 3.5 7.5-8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 14px;
+  }
+  &:focus-visible { @apply ring-[3px] ring-kyn-primary/30 outline-none; }
+  &[aria-invalid="true"] { @apply border-kyn-error; }
+  &:disabled { @apply cursor-not-allowed bg-kyn-bg; }
+}
+
+/* The label that wraps a kyn-checkbox: gives the control a 44px touch target. */
+@utility kyn-check-label {
+  @apply flex min-h-[44px] cursor-pointer items-center gap-3 text-[14px] text-kyn-navy;
+}
+
+@utility kyn-link {
+  @apply font-semibold text-kyn-primary-text no-underline;
+
+  &:hover { @apply underline; }
+  &:focus-visible { @apply rounded-sm ring-[3px] ring-kyn-primary/30 outline-none; }
+}
+
+
 /* Icon-only row actions — matches TailAdmin table-07 pattern */
 @utility table-action {
   @apply inline-flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90;
