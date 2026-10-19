@@ -1138,6 +1138,14 @@ en:
         completed: "%{percent}% completed"
         label: Onboarding progress
       typing_label: Assistant is typing
+    quick_replies:
+      country:
+        cyprus: Cyprus
+        group_label: Suggested answers
+        hint: Or type your country below.
+        malta: Malta
+        other: Other
+        united_kingdom: United Kingdom
   onboarding_applications:
     show:
       applicant_supplied: This information was supplied by the applicant through self-service
