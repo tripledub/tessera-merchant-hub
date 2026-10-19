@@ -27,4 +27,11 @@ RSpec.describe ApplicantInvitationMailer, type: :mailer do
       expect(html).not_to include("<link")
     end
   end
+
+  describe "background delivery" do
+    it "keeps the delivery job's arguments, which can include one-time links and tokens, out of the log" do
+      expect(described_class.delivery_job).to eq(ActionMailer::MailDeliveryJob)
+      expect(ActionMailer::MailDeliveryJob.log_arguments).to be(false)
+    end
+  end
 end

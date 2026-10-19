@@ -4,6 +4,7 @@ RSpec.configure do |config|
   config.before do
     [
       Portal::InvitationsController,
+      Portal::InvitationRenewalsController,
       Portal::RegistrationsController,
       Portal::SessionsController,
       Portal::ApplicationsController

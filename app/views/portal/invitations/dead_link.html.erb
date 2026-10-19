@@ -1,0 +1,15 @@
+<%# Shown for every unusable invitation link (unknown, expired, used, revoked), by
+    the landing page and by the registration form. It must say nothing that
+    depends on which of those it is. %>
+<% content_for :title, t("portal.invitations.dead_link.page_title") %>
+
+<%= render "layouts/applicant_auth_card",
+      badge: render("layouts/applicant_badge", kind: :clock),
+      title: t("portal.invitations.dead_link.title") do %>
+  <p class="-mt-3 mb-6 text-[15px] leading-6 text-kyn-slate"><%= t("portal.invitations.dead_link.body") %></p>
+
+  <%= button_to t("portal.invitations.dead_link.request"), portal_invitation_renewal_path(token), method: :post,
+        class: "kyn-btn-primary", form: { class: "mb-5", data: { turbo: false } } %>
+
+  <%= render "portal/invitations/help_links" %>
+<% end %>

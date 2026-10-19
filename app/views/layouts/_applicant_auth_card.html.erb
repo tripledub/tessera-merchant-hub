@@ -1,13 +1,18 @@
 <%# Centred card wrapper for the signed-out applicant pages (sign in, register,
     password reset). Applicant counterpart of layouts/_auth_card, which the admin
     Devise views still use.
-    Usage: render "layouts/applicant_auth_card", title: "Sign in" do ... end %>
+    Usage: render "layouts/applicant_auth_card", title: "Sign in" do ... end
+    Optional: eyebrow: "text" (small pill above the title), badge: html (icon badge above the title). %>
 <div class="flex min-h-screen flex-col items-center px-4 py-12 sm:py-16">
   <div class="w-full max-w-[440px]">
     <div class="mb-8 flex justify-center">
       <%= render "layouts/applicant_logo", signed_in: false %>
     </div>
     <div class="kyn-card">
+      <% if local_assigns[:badge] %><div class="mb-5"><%= local_assigns[:badge] %></div><% end %>
+      <% if local_assigns[:eyebrow] %>
+        <p class="mb-3 inline-flex rounded-full bg-kyn-primary-tint px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-kyn-primary-text"><%= local_assigns[:eyebrow] %></p>
+      <% end %>
       <h1 class="mb-6 text-2xl font-bold tracking-tight text-kyn-navy sm:text-[28px]"><%= local_assigns[:title] %></h1>
       <%= yield %>
     </div>

@@ -2,6 +2,7 @@
 
 class Portal::RegistrationsController < Devise::RegistrationsController
   include Portal::AbuseProtection
+  include Portal::InvitationPage
 
   layout "applicant"
   before_action :load_invitation, only: %i[new create]
@@ -29,7 +30,7 @@ class Portal::RegistrationsController < Devise::RegistrationsController
       respond_with resource
     end
   rescue ActiveRecord::RecordNotUnique, ApplicantInvitation::NotClaimable
-    head :not_found
+    render_dead_link(params[:invitation_token])
   end
 
   private
@@ -45,10 +46,7 @@ class Portal::RegistrationsController < Devise::RegistrationsController
 
   def load_invitation
     self.invitation = ApplicantInvitation.find_usable_by_token(params[:invitation_token])
-    unless invitation
-      log_invalid_portal_access
-      head :not_found
-    end
+    render_dead_link(params[:invitation_token]) unless invitation
   end
 
   attr_accessor :invitation
