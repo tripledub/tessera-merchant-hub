@@ -14,7 +14,7 @@ class Portal::RegistrationsController < Devise::RegistrationsController
     build_resource(sign_up_params)
 
     saved = ApplicantUser.transaction do
-      next false unless resource.save
+      next false unless resource.save(context: :password_registration)
 
       invitation.claim!(resource)
       true

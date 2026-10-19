@@ -1,6 +1,6 @@
 <div class="rounded-2xl border border-gray-200 bg-white p-8">
   <h1 class="mb-2 text-xl font-semibold text-gray-900">
-    <%= t(".welcome", name: current_applicant_user.first_name.presence || current_applicant_user.email) %>
+    <%= current_applicant_user.first_name.present? ? t(".welcome", name: current_applicant_user.first_name) : t(".welcome_back") %>
   </h1>
   <p class="max-w-2xl text-gray-600">
     Continue your KYC onboarding conversation when you are ready.
