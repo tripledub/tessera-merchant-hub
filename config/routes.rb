@@ -11,6 +11,12 @@ Rails.application.routes.draw do
                sessions: "portal/sessions"
              }
 
+  # MH-406: /portal/sign_in is the "Welcome back" code request page; the password
+  # form moves here and still posts to Devise's create.
+  devise_scope :applicant_user do
+    get "portal/sign_in/password", to: "portal/sessions#password", as: :applicant_user_password_sign_in
+  end
+
   namespace :portal do
     root to: "dashboard#show"
     resource :application, only: %i[show update]
@@ -20,6 +26,7 @@ Rails.application.routes.draw do
     get "invitations/:token", to: "portal/invitations#show", as: :invitation
     post "invitations/:token/renewal", to: "portal/invitation_renewals#create", as: :invitation_renewal
     post "invitations/:token/code", to: "portal/sign_in_codes#start", as: :invitation_code
+    post "sign_in/start", to: "portal/sign_in_codes#request_code", as: :sign_in_start
     get "sign_in/code", to: "portal/sign_in_codes#show", as: :sign_in_code
     post "sign_in/code", to: "portal/sign_in_codes#create"
     post "sign_in/code/resend", to: "portal/sign_in_codes#resend", as: :sign_in_code_resend

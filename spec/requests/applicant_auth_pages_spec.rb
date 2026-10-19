@@ -42,7 +42,7 @@ RSpec.describe "Applicant auth pages", type: :request do
   end
 
   describe "sign in" do
-    subject(:subject_page) { get new_applicant_user_session_path }
+    subject(:subject_page) { get applicant_user_password_sign_in_path }
 
     it_behaves_like "a Kynetic auth page"
 
