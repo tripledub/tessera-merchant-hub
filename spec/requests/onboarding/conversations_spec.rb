@@ -106,6 +106,87 @@ RSpec.describe "Onboarding conversations", type: :request do
       expect(composer.text).to include("Your information is encrypted and only used for compliance checks.")
     end
 
+    # MH-399: country quick-reply chips, driven by the session state.
+    context "with the country quick replies" do
+      let(:applicant_user) { create(:applicant_user, applicant: create(:applicant, company_name: nil)) }
+      let(:all_but_country) do
+        { "company_info" => { "company_name" => "Acme Widgets Ltd", "registration_number" => "12345678",
+                              "company_type" => "limited_company", "registered_address" => "1 High Street, London" } }
+      end
+
+      def strip
+        Nokogiri::HTML(response.body).at_css("#onboarding_quick_replies")
+      end
+
+      before { sign_in applicant_user, scope: :applicant_user }
+
+      it "renders the chips, the hint and a labelled group when the country is the question" do
+        session = create(:onboarding_session, applicant: applicant_user.applicant, stage_data: all_but_country)
+        create(:onboarding_message, onboarding_session: session, role: :bot, content: "Which country?")
+
+        get portal_onboarding_path
+
+        group = strip.at_css("[role='group']")
+        expect(group["aria-label"]).to eq("Suggested answers")
+        expect(strip.css("button").map { |button| button.text.strip }).to eq([ "United Kingdom", "Malta", "Cyprus", "Other" ])
+        expect(strip.css("button").map { |button| button["type"] }.uniq).to eq([ "button" ])
+        expect(strip.text).to include("Or type your country below.")
+        expect(group["aria-describedby"]).to be_present
+        expect(strip.at_css("##{group['aria-describedby']}").text).to include("Or type your country below.")
+      end
+
+      it "wires country chips to send their label and Other to focus the composer" do
+        session = create(:onboarding_session, applicant: applicant_user.applicant, stage_data: all_but_country)
+        create(:onboarding_message, onboarding_session: session, role: :bot, content: "Which country?")
+
+        get portal_onboarding_path
+
+        malta = strip.at_css("button[data-reply='Malta']")
+        expect(malta["data-action"]).to eq("onboarding-chat#sendQuickReply")
+        expect(malta["data-onboarding-chat-target"]).to eq("quickReply")
+        other = strip.css("button").find { |button| button.text.strip == "Other" }
+        expect(other["data-action"]).to eq("onboarding-chat#focusComposer")
+        expect(other["data-reply"]).to be_nil
+      end
+
+      it "keeps an empty strip in the page (so a refetch can swap it) when there is nothing to offer" do
+        get portal_onboarding_path
+
+        expect(strip).to be_present
+        expect(strip.css("button")).to be_empty
+        expect(strip.text.strip).to be_empty
+      end
+
+      it "offers no chips while other company details are missing" do
+        session = create(:onboarding_session, applicant: applicant_user.applicant)
+        create(:onboarding_message, onboarding_session: session, role: :bot, content: "Tell me about your company")
+
+        get portal_onboarding_path
+
+        expect(strip.css("button")).to be_empty
+      end
+
+      it "offers no chips once the country is answered, or when resuming past company info" do
+        session = create(:onboarding_session, applicant: applicant_user.applicant,
+          current_stage: :directors_ubos, completed_stages: %w[company_info],
+          stage_data: all_but_country.deep_merge("company_info" => { "country_of_incorporation" => "Malta" }))
+        create(:onboarding_message, onboarding_session: session, role: :bot, content: "Who are the directors?")
+
+        get portal_onboarding_path
+
+        expect(strip.css("button")).to be_empty
+      end
+
+      it "offers no chips while the company confirmation buttons are showing" do
+        applicant_user.applicant.update!(company_name: "Acme Widgets Ltd", company_number: "12345678")
+
+        get portal_onboarding_path
+
+        expect(response.body).to include("data-testid=\"company-confirmation\"")
+        expect(strip.css("button")).to be_empty
+      end
+    end
+
     it "uses no dark: classes anywhere in the chat" do
       applicant_user = create(:applicant_user)
       create(:kyc_principal, applicant: applicant_user.applicant, name: "Jane Smith", source: :applicant_declared)

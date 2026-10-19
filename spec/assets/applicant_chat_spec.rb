@@ -10,7 +10,7 @@ require "rails_helper"
 RSpec.describe "Applicant chat utilities" do # rubocop:disable RSpec/DescribeClass
   let(:css) { Rails.root.join("app/assets/tailwind/application.css").read }
   let(:chat_utilities) do
-    %w[kyn-bubble kyn-bubble-assistant kyn-bubble-applicant kyn-typing-dot kyn-progress kyn-progress-fill]
+    %w[kyn-bubble kyn-bubble-assistant kyn-bubble-applicant kyn-typing-dot kyn-progress kyn-progress-fill kyn-chip]
   end
 
   def utility_block(name)
@@ -76,6 +76,16 @@ RSpec.describe "Applicant chat utilities" do # rubocop:disable RSpec/DescribeCla
 
     expect(block).to include("animation")
     expect(block).to match(/prefers-reduced-motion: reduce\)\s*\{[^}]*animation: none/)
+  end
+
+  it "makes chips at least 44px tall, fully rounded, with a hover tint and a focus ring (MH-399)" do
+    block = utility_block("kyn-chip")
+
+    expect(block).to include("min-h-[44px]")
+    expect(block).to include("rounded-full")
+    expect(block).to include("bg-kyn-primary-tint")
+    expect(block).to include("focus-visible")
+    expect(block).to include("ring-kyn-primary")
   end
 
   it "leaves the shared .chat-prose rules (used by the admin transcript view) untouched" do
