@@ -475,6 +475,17 @@ aside[data-collapsed] .menu-item {
   &:disabled { @apply cursor-not-allowed bg-kyn-bg; }
 }
 
+/* One digit of the one-time sign-in code (MH-405). Six sit in a row with 8px
+   between them; error comes from aria-invalid, as for the other fields. */
+@utility kyn-otp-box {
+  @apply block h-14 min-w-0 max-w-[52px] flex-1 rounded-kyn-md border-[1.5px] border-kyn-border bg-kyn-surface p-0
+         text-center text-[22px] font-bold text-kyn-navy caret-kyn-primary outline-none transition-colors;
+
+  &:focus-visible { @apply border-2 border-kyn-primary ring-[3px] ring-kyn-primary/30; }
+  &[aria-invalid="true"] { @apply border-kyn-error bg-kyn-error-tint; }
+  &[aria-invalid="true"]:focus-visible { @apply border-kyn-error ring-kyn-error/20; }
+}
+
 /* The label that wraps a kyn-checkbox: gives the control a 44px touch target. */
 @utility kyn-check-label {
   @apply flex min-h-[44px] cursor-pointer items-center gap-3 text-[14px] text-kyn-navy;

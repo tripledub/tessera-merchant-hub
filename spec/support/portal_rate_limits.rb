@@ -7,6 +7,7 @@ RSpec.configure do |config|
       Portal::InvitationRenewalsController,
       Portal::RegistrationsController,
       Portal::SessionsController,
+      Portal::SignInCodesController,
       Portal::ApplicationsController
     ].each { |controller| controller.portal_rate_limit_store.clear }
   end
