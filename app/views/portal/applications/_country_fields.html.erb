@@ -6,7 +6,7 @@
        data-country-picker-remove-label-value="<%= t("portal.applications.countries.remove") %>"
        data-country-picker-no-results-value="<%= t("portal.applications.countries.no_results") %>">
     <label for="country-picker-select" class="form-label"><%= t("portal.applications.countries.legend") %></label>
-    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400"><%= t("portal.applications.countries.hint") %></p>
+    <p class="mt-1 text-sm text-gray-500"><%= t("portal.applications.countries.hint") %></p>
 
     <%# Blank value lets an emptied selection reach the server (and fail the presence check). %>
     <%= hidden_field_tag "onboarding_application[target_country_codes][]", "", id: nil %>
@@ -26,11 +26,11 @@
                placeholder="<%= t("portal.applications.countries.search") %>"
                data-country-picker-target="input"
                data-action="input->country-picker#filter focus->country-picker#open keydown->country-picker#keydown"
-               class="min-w-32 flex-1 border-0 bg-transparent p-1 text-theme-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0 dark:text-white dark:placeholder-gray-500">
+               class="min-w-32 flex-1 border-0 bg-transparent p-1 text-theme-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0">
       </div>
       <ul id="country-picker-list" role="listbox" aria-multiselectable="true" hidden
           data-country-picker-target="list"
-          class="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-gray-300 bg-white py-1 shadow-theme-lg dark:border-gray-700 dark:bg-gray-900"></ul>
+          class="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-gray-300 bg-white py-1 shadow-theme-lg"></ul>
     </div>
   </div>
 

@@ -160,7 +160,7 @@ export default class extends Controller {
     this.pillsTarget.replaceChildren(
       ...this.options.filter((option) => selected.has(option.value)).map((option) => {
         const pill = document.createElement("span")
-        pill.className = "inline-flex items-center gap-1.5 rounded-full bg-gray-100 py-1 pl-3 pr-2 text-theme-sm text-gray-800 dark:bg-white/[0.07] dark:text-white/90"
+        pill.className = "inline-flex items-center gap-1.5 rounded-full bg-gray-100 py-1 pl-3 pr-2 text-theme-sm text-gray-800"
         pill.dataset.countryPill = option.value
         pill.append(option.label)
 
@@ -168,7 +168,7 @@ export default class extends Controller {
         button.type = "button"
         button.dataset.value = option.value
         button.dataset.action = "country-picker#remove"
-        button.className = "rounded-full text-gray-500 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-500/40 dark:text-gray-400 dark:hover:text-white"
+        button.className = "rounded-full text-gray-500 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-brand-500/40"
         button.setAttribute("aria-label", `${this.removeLabelValue} ${option.label}`)
         button.textContent = "×"
         pill.append(button)
@@ -183,7 +183,7 @@ export default class extends Controller {
 
     if (visible.length === 0) {
       const empty = document.createElement("li")
-      empty.className = "px-4 py-2 text-theme-sm text-gray-500 dark:text-gray-400"
+      empty.className = "px-4 py-2 text-theme-sm text-gray-500"
       empty.textContent = this.noResultsValue
       this.listTarget.replaceChildren(empty)
       return
@@ -199,8 +199,8 @@ export default class extends Controller {
         item.dataset.value = option.value
         item.dataset.action = "mousedown->country-picker#toggle"
         if (index === this.activeIndex) item.setAttribute("aria-current", "true")
-        item.className = "flex cursor-pointer items-center justify-between px-4 py-2 text-theme-sm text-gray-800 hover:bg-gray-50 dark:text-white/90 dark:hover:bg-white/[0.05] " +
-          (index === this.activeIndex ? "bg-gray-50 dark:bg-white/[0.05] " : "") +
+        item.className = "flex cursor-pointer items-center justify-between px-4 py-2 text-theme-sm text-gray-800 hover:bg-gray-50 " +
+          (index === this.activeIndex ? "bg-gray-50 " : "") +
           (isSelected ? "font-medium" : "")
         item.append(option.label)
         if (isSelected) {
