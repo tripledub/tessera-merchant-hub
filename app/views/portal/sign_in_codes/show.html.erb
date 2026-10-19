@@ -3,7 +3,11 @@
 
 <%= render "layouts/applicant_auth_card", title: t("portal.sign_in_codes.show.title"), back_path: back_path do %>
   <p class="-mt-3 text-[13px] leading-[21px] text-kyn-slate">
-    <%= t("portal.sign_in_codes.show.sent_to") %>
+    <% if pending_sign_in.returning %>
+      <%= t("portal.sign_in_codes.show.sent_to_returning") %>
+    <% else %>
+      <%= t("portal.sign_in_codes.show.sent_to") %>
+    <% end %>
     <span class="break-words font-semibold text-kyn-navy"><%= pending_sign_in.email %></span><%= t("portal.sign_in_codes.show.expires") %>
   </p>
 

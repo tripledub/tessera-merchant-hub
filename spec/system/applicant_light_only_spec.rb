@@ -20,9 +20,9 @@ RSpec.describe "Applicant portal is light only", type: :system do
   end
 
   it "shows the light applicant sign-in page even with dark mode saved" do
-    visit new_applicant_user_session_path
+    visit applicant_user_password_sign_in_path
     save_dark_preference
-    visit new_applicant_user_session_path
+    visit applicant_user_password_sign_in_path
 
     expect(page).to have_css("form")
     expect(html_classes).not_to include("dark")
@@ -30,7 +30,7 @@ RSpec.describe "Applicant portal is light only", type: :system do
   end
 
   it "keeps the signed-in portal light with dark mode saved" do
-    visit new_applicant_user_session_path
+    visit applicant_user_password_sign_in_path
     save_dark_preference
     fill_in "applicant_user_email", with: applicant_user.email
     fill_in "applicant_user_password", with: applicant_user.password

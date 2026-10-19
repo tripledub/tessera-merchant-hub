@@ -215,11 +215,21 @@ en:
         submit: Create account
         title: Create your account
     sessions:
-      new:
+      code:
+        email: Email address
+        intro: Enter your email and we'll send you a code to sign in.
+        invalid_email: Enter a valid email address.
+        invited: Invited for the first time? Use the link in your invitation email.
+        page_title: Welcome back
+        submit: Send me a code
+        title: Welcome back
+        use_password: Use a password instead
+      password:
         forgot_password: Forgot your password?
         resend_confirmation: Didn't receive confirmation instructions?
         submit: Sign in
         title: Sign in to Onboarding
+        use_code: Email me a code instead
     shared:
       password_field:
         hide: Hide password
@@ -1420,6 +1430,8 @@ en:
         resend_in: Resend code in
         resend_ready: You can now ask for a new code.
         sent_to: We've sent a 6-digit code to
+        sent_to_returning: If that address is registered, we've sent a 6-digit code
+          to
         title: Check your email
         verify: Verify and continue
         wrong:
@@ -1427,6 +1439,7 @@ en:
           other: That code isn't right. You have %{count} attempts left.
       support:
         wrong_email: Wrong email? Contact the person who invited you.
+        wrong_email_returning: Wrong email? Go back and try again.
       try_again_later:
         body: You've asked for several codes. For your security, please wait about
           20 minutes and then try again.

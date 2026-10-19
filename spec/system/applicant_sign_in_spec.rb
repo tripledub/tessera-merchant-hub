@@ -5,7 +5,7 @@ require "rails_helper"
 # MH-396: the shared password field and the remember-me row on the Kynetic
 # sign-in page, in a real browser.
 RSpec.describe "Applicant sign in", type: :system do
-  before { visit new_applicant_user_session_path }
+  before { visit applicant_user_password_sign_in_path }
 
   def height(selector)
     page.evaluate_script("document.querySelector(#{selector.to_json}).getBoundingClientRect().height")
@@ -48,7 +48,7 @@ RSpec.describe "Applicant sign in", type: :system do
   describe "the whole card" do
     it "fits a 375px screen with no sideways scrolling" do
       page.driver.resize(375, 812)
-      visit new_applicant_user_session_path
+      visit applicant_user_password_sign_in_path
 
       expect(page.evaluate_script("document.documentElement.scrollWidth <= window.innerWidth")).to be(true)
       expect(page).to have_css(".kyn-card")

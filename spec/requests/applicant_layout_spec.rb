@@ -44,7 +44,7 @@ RSpec.describe "Applicant layout", type: :request do
 
   context "when signed out" do
     describe "sign in" do
-      subject(:subject_page) { get new_applicant_user_session_path }
+      subject(:subject_page) { get applicant_user_password_sign_in_path }
 
       it_behaves_like "an applicant page"
     end
