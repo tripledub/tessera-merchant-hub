@@ -104,6 +104,33 @@ RSpec.describe ApplicantUser, type: :model do
     end
   end
 
+  # MH-407: the name is optional, so it only has to be tidy and a sensible length.
+  describe "names" do
+    it "strips surrounding spaces" do
+      user = build(:applicant_user, first_name: "  Alex ", last_name: "\tSample  ")
+
+      expect(user).to have_attributes(first_name: "Alex", last_name: "Sample")
+    end
+
+    it "stores a blank name as nil, never an empty string" do
+      user = create(:applicant_user, first_name: "   ", last_name: "")
+
+      expect(user.reload).to have_attributes(first_name: nil, last_name: nil)
+    end
+
+    it "allows up to 100 characters and no more" do
+      expect(build(:applicant_user, first_name: "a" * 100, last_name: "b" * 100)).to be_valid
+
+      user = build(:applicant_user, first_name: "a" * 101, last_name: "b" * 101)
+      expect(user).not_to be_valid
+      expect(user.errors.attribute_names).to include(:first_name, :last_name)
+    end
+
+    it "is never required outside the retired password registration" do
+      expect(build(:applicant_user, :nameless)).to be_valid
+    end
+  end
+
   it "leaves existing users with names and passwords exactly as they were" do
     existing = create(:applicant_user, first_name: "Alex", last_name: "Sample")
 
