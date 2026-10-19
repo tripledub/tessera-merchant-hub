@@ -6,5 +6,20 @@ class ApplicantUser < ApplicationRecord
 
   belongs_to :applicant
 
-  validates :first_name, :last_name, presence: true
+  # An applicant can exist with only an email (MH-413): one-time-code sign-in
+  # creates the user from a verified address, with no name and no password. The
+  # old password registration form (retired in MH-409) still requires all three,
+  # by saving with this context.
+  validates :first_name, :last_name, presence: true, on: :password_registration
+  validates :password, presence: true, on: :password_registration, if: -> { password.nil? }
+
+  protected
+
+  # Devise's :validatable asks for a password on every new record. Here it is
+  # only checked when one is actually being set, and then it follows the usual
+  # rules (length, confirmation). A user with no password cannot sign in with
+  # one: Devise rejects any attempt against an empty stored password.
+  def password_required?
+    !password.nil? || !password_confirmation.nil?
+  end
 end
