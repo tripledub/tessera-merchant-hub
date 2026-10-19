@@ -178,6 +178,14 @@ en:
       submit: Create invitation
       subtitle: Create a secure registration link for %{applicant}.
       title: Invite applicant
+  applicant_sign_in_code_mailer:
+    code:
+      expires: This code expires in %{minutes} minutes and can only be used once.
+      greeting: Hello,
+      ignore: If you didn't request this code, you can ignore this email. Nobody can
+        sign in without it.
+      intro: 'Use this code to sign in to Kynetic:'
+      subject: Your Kynetic sign-in code
   applicant_users:
     confirmations:
       new:
