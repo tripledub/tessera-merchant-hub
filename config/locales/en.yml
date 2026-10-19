@@ -1121,6 +1121,11 @@ en:
       skip_deferred: Noted — you can upload %{label} later. Let's continue.
       skip_not_available: Skipping isn't available at this stage yet — let's finish
         this step first.
+    composer:
+      placeholder: Type your reply...
+      send: Send message
+      upload: Upload document
+      uploading: Uploading %{names}…
     conversation:
       error_message: Something went wrong. Please try again.
     conversations:
@@ -1129,6 +1134,10 @@ en:
         replacement_required: Your %{document_type} will need replacing soon — please
           upload an updated one when you can.
         under_review: We're reviewing your %{document_type}.
+      progress:
+        completed: "%{percent}% completed"
+        label: Onboarding progress
+      typing_label: Assistant is typing
   onboarding_applications:
     show:
       applicant_supplied: This information was supplied by the applicant through self-service
