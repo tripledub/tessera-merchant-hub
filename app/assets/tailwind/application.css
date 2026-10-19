@@ -527,6 +527,17 @@ aside[data-collapsed] .menu-item {
   background-image: var(--kyn-gradient-brand);
 }
 
+/* Quick-reply chip (MH-399): a suggested answer under the chat. A real button,
+   at least 44px tall for touch. */
+@utility kyn-chip {
+  @apply inline-flex min-h-[44px] items-center justify-center rounded-full border-[1.5px] border-kyn-border
+         bg-kyn-surface px-5 text-[15px] font-semibold text-kyn-navy transition-colors;
+
+  &:hover:not(:disabled) { @apply border-kyn-primary bg-kyn-primary-tint text-kyn-primary-text; }
+  &:focus-visible { @apply ring-[3px] ring-kyn-primary/30 outline-none; }
+  &:disabled { @apply cursor-not-allowed text-kyn-slate; }
+}
+
 @keyframes kyn-typing {
   0%, 60%, 100% { opacity: 0.35; }
   30% { opacity: 1; }

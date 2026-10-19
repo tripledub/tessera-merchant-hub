@@ -83,14 +83,14 @@ RSpec.describe "Applicant onboarding chat", type: :system do
     expect(page).to have_css("#onboarding_progress [role='progressbar'][aria-valuenow='17']")
   end
 
-  it "leaves the progress bar alone when the stage did not change" do
+  it "refreshes the progress bar after every completed reply, not only on a stage change" do
     sign_in_and_open_chat
 
     onboarding_session.update!(completed_stages: %w[company_info])
     chat_controller_call(%(controller.handleCableData({ type: "complete", bot_message: "<p>Fine.</p>", stage_changed: false })))
 
     expect(page).to have_css(".kyn-bubble-assistant", text: "Fine.")
-    expect(page).to have_css("#onboarding_progress", text: "0% completed")
+    expect(page).to have_css("#onboarding_progress", text: "17% completed")
   end
 
   it "wraps long unbroken words inside the bubble without horizontal overflow at phone width" do
@@ -109,6 +109,113 @@ RSpec.describe "Applicant onboarding chat", type: :system do
       })()
     JS
     expect(overflow.values.max).to be <= 0
+  end
+
+  # MH-399: country quick-reply chips.
+  context "with the country question" do
+    let(:all_but_country) do
+      { "company_info" => { "company_name" => "Acme Widgets Ltd", "registration_number" => "12345678",
+                            "company_type" => "limited_company", "registered_address" => "1 High Street, London" } }
+    end
+
+    before do
+      onboarding_session.update!(stage_data: all_but_country)
+      create(:onboarding_message, onboarding_session: onboarding_session, role: :bot,
+        content: "Which country is the company registered in?")
+    end
+
+    def chip(label)
+      find("#onboarding_quick_replies button", text: label, exact_text: true)
+    end
+
+    def sent_messages
+      onboarding_session.reload.onboarding_messages.where(role: :applicant).pluck(:content)
+    end
+
+    it "shows the three countries, Other and the hint, each chip at least 44px tall" do
+      sign_in_and_open_chat
+
+      expect(page).to have_css("#onboarding_quick_replies button", count: 4)
+      expect(page).to have_text("Or type your country below.")
+      heights = page.evaluate_script(<<~JS)
+        Array.from(document.querySelectorAll("#onboarding_quick_replies button")).map(b => b.getBoundingClientRect().height)
+      JS
+      expect(heights.min).to be >= 44
+    end
+
+    it "sends exactly the country's name, as if it had been typed, and hides the strip" do
+      sign_in_and_open_chat
+
+      chip("Malta").click
+
+      expect(page).to have_css("#onboarding_pending_applicant_message .kyn-bubble-applicant", text: "Malta")
+      expect(page).to have_css("[data-onboarding-chat-target='typing'] .kyn-typing-dot", count: 3, visible: :visible)
+      expect(page).to have_no_css("#onboarding_quick_replies button", visible: :visible)
+      expect(page).to have_field("message", disabled: true, with: "")
+      # The same request a typed reply makes: the message endpoint, the plain text.
+      expect(ActiveJob::Base.queue_adapter.enqueued_jobs.map { |job| job["arguments"] }.flatten).to include("Malta")
+    end
+
+    it "posts the same job arguments for a chip as for typing the same text" do
+      sign_in_and_open_chat
+      chip("Cyprus").click
+      expect(page).to have_css("#onboarding_pending_applicant_message", text: "Cyprus")
+      chip_args = ActiveJob::Base.queue_adapter.enqueued_jobs.last["arguments"]
+
+      onboarding_session.onboarding_messages.where(role: :applicant).destroy_all
+      visit portal_onboarding_path
+      fill_in "message", with: "Cyprus"
+      find("button[aria-label='Send message']").click
+      expect(page).to have_css("#onboarding_pending_applicant_message", text: "Cyprus")
+
+      expect(ActiveJob::Base.queue_adapter.enqueued_jobs.last["arguments"]).to eq(chip_args)
+    end
+
+    it "focuses the composer for Other and sends nothing, leaving the chips in place" do
+      sign_in_and_open_chat
+
+      chip("Other").click
+
+      expect(page.evaluate_script("document.activeElement.name")).to eq("message")
+      expect(page).to have_no_css("#onboarding_pending_applicant_message")
+      expect(page).to have_css("#onboarding_quick_replies button", count: 4)
+      expect(ActiveJob::Base.queue_adapter.enqueued_jobs).to be_empty
+    end
+
+    it "works from the keyboard" do
+      sign_in_and_open_chat
+
+      page.execute_script("document.querySelector('#onboarding_quick_replies button').focus()")
+      page.driver.browser.keyboard.type(:enter)
+
+      expect(page).to have_css("#onboarding_pending_applicant_message", text: "United Kingdom")
+    end
+
+    it "brings the strip back after the reply when the country is still missing" do
+      sign_in_and_open_chat
+      chip("Malta").click
+      expect(page).to have_no_css("#onboarding_quick_replies button", visible: :visible)
+
+      chat_controller_call(%(controller.handleCableData({ type: "complete", bot_message: "<p>Sorry, which country again?</p>" })))
+      create(:onboarding_message, onboarding_session: onboarding_session, role: :bot, content: "Sorry, which country again?")
+      chat_controller_call("controller.refreshFragments()")
+
+      expect(page).to have_css("#onboarding_quick_replies button", count: 4)
+    end
+
+    it "removes the strip after the reply once the country has been captured" do
+      sign_in_and_open_chat
+      chip("Malta").click
+
+      onboarding_session.update!(stage_data: all_but_country.deep_merge("company_info" => { "country_of_incorporation" => "Malta" }))
+      create(:onboarding_message, onboarding_session: onboarding_session, role: :applicant, content: "Malta")
+      create(:onboarding_message, onboarding_session: onboarding_session, role: :bot, content: "Thanks, that's everything.")
+      chat_controller_call(%(controller.handleCableData({ type: "complete", bot_message: "<p>Thanks, that's everything.</p>" })))
+
+      expect(page).to have_css(".kyn-bubble-assistant", text: "Thanks, that's everything.")
+      expect(page).to have_css("#onboarding_quick_replies")
+      expect(page).to have_no_css("#onboarding_quick_replies button")
+    end
   end
 
   it "styles the bubbles and the send button from the Kynetic tokens" do

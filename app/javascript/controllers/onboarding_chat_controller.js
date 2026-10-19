@@ -2,7 +2,7 @@ import { Controller } from "@hotwired/stimulus"
 import { cable } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
-  static targets = ["composer", "input", "messages", "submit", "typing", "uploadButton", "uploadInput", "uploadStatus"]
+  static targets = ["composer", "input", "messages", "quickReplies", "quickReply", "submit", "typing", "uploadButton", "uploadInput", "uploadStatus"]
   static values  = { sessionId: String, token: String, uploadingTemplate: String }
 
   connect() {
@@ -55,6 +55,7 @@ export default class extends Controller {
     if (!event.detail.success) {
       this.setSubmitting(false)
       this.hideTyping()
+      this.showQuickReplies()
       this.inputTarget.focus()
     }
     // On success: stay disabled and keep typing indicator until WS complete event arrives
@@ -65,6 +66,31 @@ export default class extends Controller {
 
     this.inputTarget.style.height = "auto"
     this.inputTarget.style.height = `${Math.min(this.inputTarget.scrollHeight, 128)}px`
+  }
+
+  // A country chip sends exactly what typing it would: fill the textarea and
+  // submit the composer, so the pending bubble, typing dots and streaming are
+  // the ordinary ones.
+  sendQuickReply(event) {
+    if (this.inputTarget.disabled) return
+
+    this.inputTarget.value = event.currentTarget.dataset.reply
+    this.hideQuickReplies()
+    this.composerTarget.requestSubmit()
+  }
+
+  // "Other" sends nothing: the applicant types their own answer.
+  focusComposer() {
+    this.inputTarget.focus()
+    this.scrollComposerIntoView()
+  }
+
+  hideQuickReplies() {
+    if (this.hasQuickRepliesTarget) this.quickRepliesTarget.hidden = true
+  }
+
+  showQuickReplies() {
+    if (this.hasQuickRepliesTarget) this.quickRepliesTarget.hidden = false
   }
 
   triggerUpload() {
@@ -100,7 +126,7 @@ export default class extends Controller {
         this.appendStreamToken(data.content)
         break
       case "complete":
-        this.finalizeStreamingBubble(data.bot_message, data.stage_changed)
+        this.finalizeStreamingBubble(data.bot_message)
         break
       case "error":
         this.handleStreamError()
@@ -137,10 +163,10 @@ export default class extends Controller {
     }
   }
 
-  finalizeStreamingBubble(botMessage, stageChanged) {
+  finalizeStreamingBubble(botMessage) {
     if (this.drainingTokens) {
       // Wait for the rAF drain to finish before finalizing
-      requestAnimationFrame(() => this.finalizeStreamingBubble(botMessage, stageChanged))
+      requestAnimationFrame(() => this.finalizeStreamingBubble(botMessage))
       return
     }
 
@@ -167,7 +193,7 @@ export default class extends Controller {
     this.scrollComposerIntoView()
     this.inputTarget.focus({ preventScroll: true })
 
-    if (stageChanged) this.refreshProgress()
+    this.refreshFragments()
   }
 
   handleStreamError() {
@@ -179,6 +205,7 @@ export default class extends Controller {
     this.pendingApplicantMessageEl = null
     this.hideTyping()
     this.setSubmitting(false)
+    this.showQuickReplies()
     this.inputTarget.focus()
   }
 
@@ -198,12 +225,10 @@ export default class extends Controller {
     return wrapper
   }
 
-  // The progress bar is server-rendered from the session's completed stages, so
-  // after a stage change fetch the page again and swap in the fresh bar.
-  async refreshProgress() {
-    const current = document.getElementById("onboarding_progress")
-    if (!current) return
-
+  // The progress bar and the quick-reply chips are server-rendered from the
+  // session state, so after each completed reply fetch the page again and swap
+  // in the fresh fragments.
+  async refreshFragments() {
     try {
       const response = await fetch(window.location.href, {
         headers: { Accept: "text/html" },
@@ -212,10 +237,12 @@ export default class extends Controller {
       if (!response.ok) return
 
       const doc = new DOMParser().parseFromString(await response.text(), "text/html")
-      const fresh = doc.getElementById("onboarding_progress")
-      if (fresh) current.replaceWith(fresh)
+      for (const id of ["onboarding_progress", "onboarding_quick_replies"]) {
+        const fresh = doc.getElementById(id)
+        if (fresh) document.getElementById(id)?.replaceWith(fresh)
+      }
     } catch (_error) {
-      // Leave the existing bar; the next stage change or reload corrects it.
+      // Leave what is on screen; the next reply or a reload corrects it.
     }
   }
 
@@ -244,6 +271,7 @@ export default class extends Controller {
   setSubmitting(submitting) {
     this.inputTarget.disabled = submitting
     if (this.hasSubmitTarget) this.submitTarget.disabled = submitting
+    this.quickReplyTargets.forEach(chip => { chip.disabled = submitting })
   }
 
   showTyping() {
