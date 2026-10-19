@@ -18,8 +18,8 @@
 
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
-    <%# Light only (MH-394): this layout never adds the dark class and never reads
-        the stored darkMode setting, so existing dark: classes stay inert. %>
+    <%# Light only (MH-394): no theme script, no toggle and no theme class on the
+        document, whatever the browser has stored. %>
   </head>
 
   <body class="bg-kyn-bg font-kynetic text-kyn-navy antialiased">

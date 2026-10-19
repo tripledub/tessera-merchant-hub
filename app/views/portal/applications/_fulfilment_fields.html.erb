@@ -11,7 +11,7 @@
       <legend class="form-label"><%= label %></legend>
       <div class="flex gap-6">
         <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, option| %>
-          <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+          <label class="inline-flex items-center gap-2 text-sm text-gray-700">
             <%= form.radio_button field, value, required: true %>
             <%= option %>
           </label>
@@ -25,7 +25,7 @@
     <legend class="form-label"><%= t("portal.applications.fulfilment.takes_deposits") %></legend>
     <div class="flex gap-6">
       <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, option| %>
-        <label class="inline-flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
           <%= form.radio_button :takes_deposits, value,
                 required: true,
                 data: {

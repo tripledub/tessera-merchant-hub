@@ -126,7 +126,7 @@ RSpec.describe "Portal application shell", type: :request do
     expect(applicant.primary_business_address).to have_attributes(line1: "1 Test Street")
   end
 
-  it "applies dark-mode contrast tokens to the registered and trading address fieldsets" do
+  it "renders the registered and trading address fieldsets as cards, with no dark-mode classes" do
     applicant_user = create(:applicant_user)
     create(:onboarding_application, applicant: applicant_user.applicant)
     sign_in applicant_user, scope: :applicant_user
@@ -137,8 +137,8 @@ RSpec.describe "Portal application shell", type: :request do
     page = Capybara.string(response.body)
     fieldsets = page.all("fieldset.card")
     expect(fieldsets.size).to eq(2)
-    fieldsets.each { |fieldset| expect(fieldset["class"]).to include("card") } # theme-aware surface: dark:bg-gray-900 dark:border-gray-800
-    page.all("fieldset.card legend").each { |legend| expect(legend["class"]).to include("dark:text-white/90") }
+    fieldsets.each { |fieldset| expect(fieldset["class"]).to include("card") }
+    page.all("fieldset.card legend").each { |legend| expect(legend["class"]).not_to include("dark:") }
   end
 
   it "does not mark the company number input as required" do
@@ -714,7 +714,7 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response.body).to include('aria-valuenow="100"')
   end
 
-  it "applies dark-mode contrast tokens to the review page sections and values" do
+  it "renders the review page sections as cards, with no dark-mode classes" do
     applicant_user = create(:applicant_user)
     application = review_application_for(applicant_user)
     sign_in applicant_user, scope: :applicant_user
@@ -725,17 +725,15 @@ RSpec.describe "Portal application shell", type: :request do
     page = Capybara.string(response.body)
     sections = page.all("section.card")
     expect(sections.size).to be >= 2
-    sections.each { |section| expect(section["class"]).to include("card") } # theme-aware surface: dark:bg-gray-900 dark:border-gray-800
-    page.all("section.card h3").each { |heading| expect(heading["class"]).to include("dark:text-white/90") }
-    page.all("section.card dt").each { |label| expect(label["class"]).to include("dark:text-gray-400") }
-    page.all("section.card dd").each { |value| expect(value["class"]).to include("dark:text-white/90") }
+    sections.each { |section| expect(section["class"]).to include("card") }
+    expect(response.body).not_to include("dark:")
 
     patch portal_application_path, params: { step: "review" }
     expect(response).to redirect_to(portal_application_path(step: "review"))
 
     get portal_application_path(step: "review")
     submitted_notice = Capybara.string(response.body).find("p.text-green-700")
-    expect(submitted_notice["class"]).to include("dark:text-green-400")
+    expect(submitted_notice["class"]).not_to include("dark:")
   end
 
   it "shows the selected target countries on the review page" do
