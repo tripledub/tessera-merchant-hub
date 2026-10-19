@@ -79,18 +79,6 @@ RSpec.describe "Applicant invitations", type: :request do
   end
 
   describe "GET /portal/invitations/:token" do
-    it "accepts an unclaimed invitation without exposing applicant data" do
-      invitation, token = ApplicantInvitation.issue!(
-        applicant: applicant, email: applicant.contact_email, invited_by: create(:user, :psp_admin)
-      )
-
-      get portal_invitation_path(token)
-
-      expect(response).to redirect_to(new_applicant_user_registration_path(invitation_token: token))
-      expect(response.body).not_to include(applicant.name)
-      expect(response.body).not_to include(invitation.email)
-    end
-
     it "returns the same response for unknown and unusable tokens" do
       invitation, token = ApplicantInvitation.issue!(
         applicant: applicant, email: applicant.contact_email, invited_by: create(:user, :psp_admin)

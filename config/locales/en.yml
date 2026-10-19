@@ -1350,6 +1350,35 @@ en:
       show:
         continue_application: Continue application
         welcome: Welcome, %{name}!
+    invitation_renewals:
+      create:
+        body: If your invitation can be renewed, we've sent a new link to the address
+          you were invited with. It's valid for 48 hours.
+        page_title: Check your email
+        title: Check your email
+    invitations:
+      dead_link:
+        body: For your security, invitation links only last 48 hours. Request a new
+          one and we'll send it to the email address you were invited with.
+        page_title: This link has expired
+        request: Request a new link
+        title: This link has expired
+      help_links:
+        help: Need help? Contact the person who invited you.
+        registered: Already registered?
+        sign_in: Sign in
+      show:
+        address_note: You'll create your account with this address
+        continue: Continue
+        eyebrow: You've been invited
+        intro: It takes about 10 minutes. You can stop and pick up where you left
+          off at any time.
+        page_title: You've been invited
+        steps:
+          account: Set up your account
+          documents: Upload your documents
+          questions: Answer a few questions about your business
+        title: Complete your onboarding for %{company}
     sign_out: Sign out
     title: Kynetic Portal
   processing_statements:

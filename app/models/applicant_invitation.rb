@@ -36,6 +36,18 @@ class ApplicantInvitation < ApplicationRecord
     usable.find_by(token_digest: digest(token))
   end
 
+  # Finds an invitation whether or not it is still usable (expired, claimed or
+  # revoked included); only for deciding whether a fresh link may be sent.
+  def self.find_by_token(token)
+    return if token.blank?
+
+    find_by(token_digest: digest(token))
+  end
+
+  def expired?
+    expires_at.present? && expires_at <= Time.current
+  end
+
   def self.digest(token)
     Digest::SHA256.hexdigest(token)
   end
