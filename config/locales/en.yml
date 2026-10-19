@@ -1025,6 +1025,7 @@ en:
       registry_fetched: Companies House
   layouts:
     applicant_auth_card:
+      back: Back
       security: Your information is encrypted and only used for compliance checks.
     navigation:
       admin: Admin
@@ -1382,17 +1383,55 @@ en:
         registered: Already registered?
         sign_in: Sign in
       show:
-        address_note: You'll create your account with this address
+        address_note: We'll send a code to this address
         continue: Continue
         eyebrow: You've been invited
         intro: It takes about 10 minutes. You can stop and pick up where you left
           off at any time.
         page_title: You've been invited
         steps:
-          account: Set up your account
+          account: Confirm your email with a one-time code
           documents: Upload your documents
           questions: Answer a few questions about your business
         title: Complete your onboarding for %{company}
+    sign_in_codes:
+      expired:
+        body: For your security, codes only last 10 minutes. We can send a new one
+          to
+        page_title: This code has expired
+        send_new: Send a new code
+        title: This code has expired
+      locked:
+        body: For your security, this code no longer works. Send a new one to try
+          again.
+        page_title: Too many attempts
+        send_new: Send a new code
+        title: Too many attempts
+      no_pending: Your sign-in has timed out. Sign in, or open the link in your invitation
+        email again.
+      show:
+        didnt_get_it: Didn't get it?
+        digit: Digit %{number} of 6
+        expires: ". It expires in 10 minutes."
+        incomplete: Enter all 6 digits of the code.
+        legend: One-time verification code
+        page_title: Check your email
+        resend: Resend code
+        resend_in: Resend code in
+        resend_ready: You can now ask for a new code.
+        sent_to: We've sent a 6-digit code to
+        title: Check your email
+        verify: Verify and continue
+        wrong:
+          one: That code isn't right. You have %{count} attempt left.
+          other: That code isn't right. You have %{count} attempts left.
+      support:
+        wrong_email: Wrong email? Contact the person who invited you.
+      try_again_later:
+        body: You've asked for several codes. For your security, please wait about
+          20 minutes and then try again.
+        page_title: Try again later
+        title: Try again later
     sign_out: Sign out
     title: Kynetic Portal
   processing_statements:
