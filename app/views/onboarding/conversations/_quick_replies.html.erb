@@ -1,0 +1,35 @@
+<%# Always rendered, empty when there is nothing to offer, so the chat can swap it
+    by id after each reply. Which chips to show is decided by Onboarding::QuickReplies. %>
+<div id="onboarding_quick_replies" data-onboarding-chat-target="quickReplies">
+  <% if quick_replies.any? %>
+    <div class="px-4 pb-3 sm:px-6">
+      <div
+        class="flex flex-wrap gap-2"
+        role="group"
+        aria-label="<%= t("onboarding.quick_replies.country.group_label") %>"
+        aria-describedby="onboarding_quick_replies_hint">
+        <% quick_replies.each do |option| %>
+          <% if option.kind == :answer %>
+            <button
+              type="button"
+              class="kyn-chip"
+              data-reply="<%= option.label %>"
+              data-onboarding-chat-target="quickReply"
+              data-action="onboarding-chat#sendQuickReply">
+              <%= option.label %>
+            </button>
+          <% else %>
+            <button
+              type="button"
+              class="kyn-chip"
+              data-onboarding-chat-target="quickReply"
+              data-action="onboarding-chat#focusComposer">
+              <%= option.label %>
+            </button>
+          <% end %>
+        <% end %>
+      </div>
+      <p id="onboarding_quick_replies_hint" class="mt-2 text-[13px] text-kyn-slate"><%= t("onboarding.quick_replies.country.hint") %></p>
+    </div>
+  <% end %>
+</div>

@@ -3,23 +3,16 @@
 <%= turbo_stream_from @onboarding_session %>
 
 <section
-  class="flex h-[calc(100dvh-5.5rem-1px)] lg:h-[calc(100dvh-6rem-1px)] w-full flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-theme-xs dark:border-gray-800 dark:bg-gray-900"
+  class="flex h-[calc(100dvh-5.5rem-1px)] lg:h-[calc(100dvh-6rem-1px)] w-full flex-col overflow-hidden rounded-kyn-lg border border-kyn-border bg-kyn-surface"
   data-controller="onboarding-chat"
   data-onboarding-chat-session-id-value="<%= @onboarding_session.id %>"
-  data-onboarding-chat-token-value="<%= @cable_token %>">
-  <header class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-200 px-4 py-4 dark:border-gray-800 sm:px-6">
-    <div>
-      <p class="text-sm font-medium uppercase tracking-wide text-brand-600 dark:text-brand-400">KYC onboarding</p>
-      <h1 class="mt-1 text-xl font-semibold text-gray-900 dark:text-white">Welcome</h1>
-    </div>
-    <%= render "onboarding/conversations/stage_badge", session: @onboarding_session %>
-  </header>
-
+  data-onboarding-chat-token-value="<%= @cable_token %>"
+  data-onboarding-chat-uploading-template-value="<%= t("onboarding.composer.uploading", names: "%{names}") %>">
   <%= render "onboarding/conversations/progress", session: @onboarding_session %>
 
   <div
     id="onboarding_messages"
-    class="flex-1 space-y-5 overflow-y-auto px-4 py-6 dark:bg-gray-950/30 sm:px-6"
+    class="flex-1 space-y-4 overflow-y-auto bg-kyn-surface px-4 py-4 sm:px-6"
     data-onboarding-chat-target="messages">
     <% if @messages.any? %>
       <%= render partial: "onboarding/conversations/message", collection: @messages, as: :message %>
@@ -40,14 +33,14 @@
               stage: @onboarding_session.current_stage,
               created_at: Time.current
             ) %>
-      <div class="flex justify-start gap-3 pl-11" data-testid="company-confirmation">
+      <div class="flex flex-wrap justify-start gap-3" data-testid="company-confirmation">
         <%= button_to "Yes, that's right", portal_onboarding_company_confirmation_path,
               params: { answer: "yes" }, method: :post,
-              class: "rounded-lg bg-brand-500 px-4 py-2 text-sm font-medium text-white hover:bg-brand-600",
+              class: "kyn-btn-primary w-auto! min-h-11! px-4!",
               data: { testid: "company-confirmation-yes" } %>
         <%= button_to "No, start again", portal_onboarding_company_confirmation_path,
               params: { answer: "no" }, method: :post,
-              class: "rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-800",
+              class: "kyn-btn-secondary w-auto! min-h-11! px-4!",
               data: { testid: "company-confirmation-no" } %>
       </div>
     <% else %>
@@ -61,17 +54,18 @@
     <% end %>
   </div>
 
+  <%= render "onboarding/conversations/quick_replies", quick_replies: @quick_replies %>
+
   <div
     id="onboarding_typing"
-    class="hidden border-t border-gray-100 px-4 py-3 dark:border-gray-800 sm:px-6"
+    class="hidden px-4 pb-3 sm:px-6"
+    aria-live="polite"
     data-onboarding-chat-target="typing">
-    <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-      <span class="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-300">AI</span>
-      <span class="inline-flex items-center gap-1">
-        <span class="h-2 w-2 rounded-full bg-gray-400"></span>
-        <span class="h-2 w-2 rounded-full bg-gray-400"></span>
-        <span class="h-2 w-2 rounded-full bg-gray-400"></span>
-      </span>
+    <div class="kyn-bubble kyn-bubble-assistant inline-flex items-center gap-1.5">
+      <span class="kyn-typing-dot"></span>
+      <span class="kyn-typing-dot"></span>
+      <span class="kyn-typing-dot"></span>
+      <span class="sr-only"><%= t("onboarding.conversations.typing_label") %></span>
     </div>
   </div>
 
