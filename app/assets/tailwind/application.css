@@ -190,6 +190,7 @@
   --color-kyn-success-tint: #e7f4ee;
   --color-kyn-warning: #8a5a00;
   --color-kyn-warning-tint: #fdf3e1;
+  --kyn-gradient-brand: linear-gradient(90deg, #00d5fd, #2e88fb, #7e32f9);
 
   --radius-kyn-md: 12px;
   --radius-kyn-lg: 16px;
@@ -486,6 +487,62 @@ aside[data-collapsed] .menu-item {
   &:focus-visible { @apply rounded-sm ring-[3px] ring-kyn-primary/30 outline-none; }
 }
 
+/* ─── Applicant chat (MH-398) ────────────────────────────────────────────────
+   Used by the ERB partial and by the JS-built (pending / streaming) bubbles, so
+   the two copies cannot drift. Markdown links and code inside the assistant
+   bubble are recoloured by the unlayered rules after .chat-prose below: the
+   admin transcript view shares .chat-prose, so it is left alone, and unlayered
+   rules beat @utility (layered) ones. */
+
+@utility kyn-bubble {
+  @apply rounded-kyn-lg px-4 py-3 text-[15px] leading-6 [overflow-wrap:anywhere];
+}
+
+@utility kyn-bubble-assistant {
+  @apply rounded-bl-md bg-kyn-assistant-bubble text-kyn-navy;
+}
+
+@utility kyn-bubble-applicant {
+  @apply rounded-br-md bg-kyn-primary text-kyn-surface;
+}
+
+@utility kyn-typing-dot {
+  @apply size-2 rounded-full bg-kyn-slate;
+  animation: kyn-typing 1.2s ease-in-out infinite;
+
+  &:nth-child(2) { animation-delay: 0.15s; }
+  &:nth-child(3) { animation-delay: 0.3s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility kyn-progress {
+  @apply h-1.5 w-full overflow-hidden rounded-full bg-kyn-border;
+}
+
+@utility kyn-progress-fill {
+  @apply h-full rounded-full transition-[width] duration-300;
+  background-image: var(--kyn-gradient-brand);
+}
+
+/* Quick-reply chip (MH-399): a suggested answer under the chat. A real button,
+   at least 44px tall for touch. */
+@utility kyn-chip {
+  @apply inline-flex min-h-[44px] items-center justify-center rounded-full border-[1.5px] border-kyn-border
+         bg-kyn-surface px-5 text-[15px] font-semibold text-kyn-navy transition-colors;
+
+  &:hover:not(:disabled) { @apply border-kyn-primary bg-kyn-primary-tint text-kyn-primary-text; }
+  &:focus-visible { @apply ring-[3px] ring-kyn-primary/30 outline-none; }
+  &:disabled { @apply cursor-not-allowed text-kyn-slate; }
+}
+
+@keyframes kyn-typing {
+  0%, 60%, 100% { opacity: 0.35; }
+  30% { opacity: 1; }
+}
+
 
 /* Icon-only row actions — matches TailAdmin table-07 pattern */
 @utility table-action {
@@ -565,6 +622,12 @@ aside[data-collapsed] .menu-item {
 .chat-prose h1,
 .chat-prose h2,
 .chat-prose h3 { @apply mb-1 font-semibold; }
+
+/* Applicant assistant bubble (MH-398): kyn colours for markdown output. */
+.chat-prose.kyn-bubble-assistant a { @apply font-semibold text-kyn-primary-text underline hover:text-kyn-primary-hover; }
+.chat-prose.kyn-bubble-assistant code { @apply bg-kyn-border; }
+.chat-prose.kyn-bubble-assistant pre { @apply bg-kyn-border; }
+.chat-prose.kyn-bubble-assistant blockquote { @apply border-kyn-border text-kyn-slate; }
 
 /* ─── Flatpickr date-picker theming ─────────────────────────────────────── */
 
