@@ -19,6 +19,10 @@ Rails.application.routes.draw do
   scope :portal, as: :portal do
     get "invitations/:token", to: "portal/invitations#show", as: :invitation
     post "invitations/:token/renewal", to: "portal/invitation_renewals#create", as: :invitation_renewal
+    post "invitations/:token/code", to: "portal/sign_in_codes#start", as: :invitation_code
+    get "sign_in/code", to: "portal/sign_in_codes#show", as: :sign_in_code
+    post "sign_in/code", to: "portal/sign_in_codes#create"
+    post "sign_in/code/resend", to: "portal/sign_in_codes#resend", as: :sign_in_code_resend
     resource :onboarding, only: :show, controller: "onboarding/conversations"
     post "onboarding/messages", to: "onboarding/conversations#create", as: :onboarding_messages
     post "onboarding/company_confirmation", to: "onboarding/company_confirmations#create", as: :onboarding_company_confirmation

@@ -45,23 +45,25 @@ RSpec.describe "Portal invitations", type: :request do
       text = Nokogiri::HTML(response.body).text
       expect(text).to include("It takes about 10 minutes")
       expect(text).to include("pick up where you left off")
-      expect(text).to include("Set up your account")
+      expect(text).to include("Confirm your email with a one-time code")
       expect(text).to include("Answer a few questions about your business")
       expect(text).to include("Upload your documents")
     end
 
     it "shows the invited address in full, and nothing about the sender" do
       expect(response.body).to include(invited_email)
-      expect(response.body).to include("You&#39;ll create your account with this address").or include("You'll create your account with this address")
+      expect(response.body).to include("We&#39;ll send a code to this address").or include("We'll send a code to this address")
       expect(response.body).not_to include(inviter.email)
     end
 
-    it "offers a single Continue link to the registration form, carrying the token, and no email input" do
+    it "offers a single Continue button that posts to send a code, carrying the token, and no email input" do
       document = Nokogiri::HTML(response.body)
 
-      continue = document.css("a").find { |link| link.text.strip == "Continue" }
-      expect(continue["href"]).to eq(new_applicant_user_registration_path(invitation_token: token))
-      expect(document.css("a").count { |link| link.text.strip == "Continue" }).to eq(1)
+      form = document.css("form").find { |candidate| candidate["action"] == portal_invitation_code_path(token) }
+      expect(form["method"]).to eq("post")
+      expect(form.at_css("button, input[type='submit']").text.strip).to eq("Continue")
+      expect(document.css("button, input[type='submit']").count { |button| button.text.strip == "Continue" }).to eq(1)
+      expect(document.css("a").none? { |link| link["href"].to_s.include?("registration") || link.text.strip == "Continue" }).to be(true)
       expect(document.css("input[type='email'], input[name*='email']")).to be_empty
     end
 
