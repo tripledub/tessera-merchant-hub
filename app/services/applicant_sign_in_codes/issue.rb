@@ -8,7 +8,7 @@ module ApplicantSignInCodes
   # mailer encrypted (the job queue is a database that keeps its arguments).
   module Issue
     MIN_GAP = 30.seconds
-    HOURLY_CAP = 5
+    HOURLY_CAP = 10
     DAILY_CAP = 20
 
     # status: :sent, :too_soon or :rate_limited. retry_after: seconds to wait

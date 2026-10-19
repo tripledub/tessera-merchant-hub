@@ -81,19 +81,19 @@ RSpec.describe ApplicantSignInCodes::Issue do
       travel_to(31.seconds.from_now) { expect(issue.status).to eq(:sent) }
     end
 
-    it "allows five codes an hour, then says how long to wait" do
-      5.times { |index| travel_to((index * 31).seconds.from_now) { issue } }
+    it "allows ten codes an hour, then says how long to wait" do
+      10.times { |index| travel_to((index * 31).seconds.from_now) { issue } }
 
       result = nil
-      travel_to((5 * 31).seconds.from_now) { result = issue }
+      travel_to((10 * 31).seconds.from_now) { result = issue }
 
       expect(result.status).to eq(:rate_limited)
-      expect(result.retry_after).to be_between(3_300, 3_600)
-      expect(ApplicantSignInCode.count).to eq(5)
+      expect(result.retry_after).to be_between(3_200, 3_600)
+      expect(ApplicantSignInCode.count).to eq(10)
     end
 
     it "lets the hour pass" do
-      5.times { |index| travel_to((index * 31).seconds.from_now) { issue } }
+      10.times { |index| travel_to((index * 31).seconds.from_now) { issue } }
 
       travel_to(61.minutes.from_now) { expect(issue.status).to eq(:sent) }
     end
@@ -110,9 +110,9 @@ RSpec.describe ApplicantSignInCodes::Issue do
     end
 
     it "keeps the limits separate for another address and another applicant" do
-      5.times { |index| travel_to((index * 31).seconds.from_now) { issue } }
+      10.times { |index| travel_to((index * 31).seconds.from_now) { issue } }
 
-      travel_to((5 * 31).seconds.from_now) do
+      travel_to((10 * 31).seconds.from_now) do
         expect(described_class.call(applicant: applicant, email: "someone.else@example.com").status).to eq(:sent)
         expect(described_class.call(applicant: create(:applicant), email: email).status).to eq(:sent)
       end
