@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_06_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -96,6 +96,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_120000) do
     t.index ["claimed_by_id"], name: "index_applicant_invitations_on_claimed_by_id"
     t.index ["invited_by_id"], name: "index_applicant_invitations_on_invited_by_id"
     t.index ["token_digest"], name: "index_applicant_invitations_on_token_digest", unique: true
+  end
+
+  create_table "applicant_sign_in_codes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.uuid "applicant_invitation_id"
+    t.uuid "applicant_user_id"
+    t.string "email", null: false
+    t.string "code_digest", null: false
+    t.datetime "expires_at", null: false
+    t.integer "attempts", default: 0, null: false
+    t.datetime "consumed_at"
+    t.datetime "invalidated_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id", "email", "created_at"], name: "index_applicant_sign_in_codes_on_applicant_email_and_time"
+    t.index ["applicant_id"], name: "index_applicant_sign_in_codes_on_applicant_id"
+    t.index ["applicant_invitation_id"], name: "index_applicant_sign_in_codes_on_applicant_invitation_id"
+    t.index ["applicant_user_id"], name: "index_applicant_sign_in_codes_on_applicant_user_id"
   end
 
   create_table "applicant_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -586,6 +604,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_06_120000) do
   add_foreign_key "applicant_invitations", "applicant_users", column: "claimed_by_id"
   add_foreign_key "applicant_invitations", "merchants", column: "applicant_id"
   add_foreign_key "applicant_invitations", "users", column: "invited_by_id"
+  add_foreign_key "applicant_sign_in_codes", "applicant_invitations", on_delete: :nullify
+  add_foreign_key "applicant_sign_in_codes", "applicant_users", on_delete: :nullify
+  add_foreign_key "applicant_sign_in_codes", "merchants", column: "applicant_id"
   add_foreign_key "applicant_users", "merchants", column: "applicant_id"
   add_foreign_key "comments", "users", column: "author_id"
   add_foreign_key "data_conflicts", "merchants", column: "applicant_id"

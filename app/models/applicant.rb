@@ -14,6 +14,7 @@ class Applicant < Merchant
            dependent: :destroy, inverse_of: :applicant
   has_many :applicant_users, foreign_key: :applicant_id, inverse_of: :applicant
   has_many :applicant_invitations, dependent: :destroy, inverse_of: :applicant
+  has_many :applicant_sign_in_codes, dependent: :delete_all, inverse_of: :applicant
   has_many :registry_profiles, class_name: "Registry::Profile", dependent: :destroy, inverse_of: :applicant
   has_many :addresses, as: :addressable, dependent: :destroy
   has_many :data_provenances, dependent: :destroy, inverse_of: :applicant
