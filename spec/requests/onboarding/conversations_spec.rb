@@ -40,16 +40,85 @@ RSpec.describe "Onboarding conversations", type: :request do
       expect(response.body).to include("Hi")
     end
 
-    it "renders the current stage in the progress indicator" do
+    # MH-398: one slim bar with "N% completed" (completed stages out of six)
+    # replaces the stage badge and the six-pill list.
+    it "renders a single progress bar with the completed percentage" do
       applicant_user = create(:applicant_user)
-      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :business_activity)
+      create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :ownership,
+        completed_stages: %w[company_info directors_ubos])
       sign_in applicant_user, scope: :applicant_user
 
       get portal_onboarding_path
 
-      expect(response.body).to include("data-testid=\"onboarding-progress\"")
-      expect(response.body).to include("aria-current=\"step\"")
-      expect(response.body).to include("Business activity")
+      html = Nokogiri::HTML(response.body)
+      bar = html.at_css("#onboarding_progress[data-testid='onboarding-progress']")
+      expect(bar).to be_present
+      expect(bar.at_css("[role='progressbar']")["aria-valuenow"]).to eq("33")
+      expect(bar.text).to include("33% completed")
+      expect(html.css("#onboarding_progress li")).to be_empty
+      expect(html.at_css("#onboarding_stage_badge")).to be_nil
+      expect(response.body).not_to include("aria-current=\"step\"")
+    end
+
+    it "shows 0% completed for a brand new session" do
+      sign_in create(:applicant_user), scope: :applicant_user
+
+      get portal_onboarding_path
+
+      expect(response.body).to include("0% completed")
+    end
+
+    it "renders bubbles with the shared kyn utilities and no avatars" do
+      applicant_user = create(:applicant_user)
+      session = create(:onboarding_session, applicant: applicant_user.applicant)
+      create(:onboarding_message, onboarding_session: session, role: :bot, content: "Hello")
+      create(:onboarding_message, onboarding_session: session, role: :applicant, content: "Hi")
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      html = Nokogiri::HTML(response.body)
+      expect(html.css(".kyn-bubble.kyn-bubble-assistant").text).to include("Hello")
+      expect(html.css(".kyn-bubble.kyn-bubble-applicant").text).to include("Hi")
+      expect(html.css("#onboarding_messages").text).not_to match(/\b(AI|You)\b/)
+    end
+
+    it "renders the typing indicator as animated dots with a screen-reader label and no visible text" do
+      sign_in create(:applicant_user), scope: :applicant_user
+
+      get portal_onboarding_path
+
+      typing = Nokogiri::HTML(response.body).at_css("[data-onboarding-chat-target='typing']")
+      expect(typing.css(".kyn-typing-dot").size).to eq(3)
+      expect(typing["aria-live"]).to eq("polite")
+      expect(typing.css(".sr-only").text).to eq("Assistant is typing")
+      expect(typing.xpath(".//text()[not(ancestor::*[contains(@class, 'sr-only')])]").map(&:text).join.strip).to be_empty
+    end
+
+    it "renders the composer with a kyn textarea, a round send button and the security line" do
+      sign_in create(:applicant_user), scope: :applicant_user
+
+      get portal_onboarding_path
+
+      composer = Nokogiri::HTML(response.body).at_css("#onboarding_composer")
+      expect(composer.at_css("textarea.kyn-input")["placeholder"]).to eq("Type your reply...")
+      expect(composer.at_css("button[aria-label='Send message']")["class"]).to include("rounded-full")
+      expect(composer.text).to include("Your information is encrypted and only used for compliance checks.")
+    end
+
+    it "uses no dark: classes anywhere in the chat" do
+      applicant_user = create(:applicant_user)
+      create(:kyc_principal, applicant: applicant_user.applicant, name: "Jane Smith", source: :applicant_declared)
+      session = create(:onboarding_session, applicant: applicant_user.applicant, current_stage: :document_collection)
+      Onboarding::DocumentCollectionService.generate_checklist(session)
+      create(:onboarding_message, onboarding_session: session, role: :bot, content: "Here's what we need")
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_onboarding_path
+
+      chat = Nokogiri::HTML(response.body).at_css("[data-controller='onboarding-chat']").to_html
+      expect(chat).not_to include('dark:')
+      expect(chat).not_to match(/(?<![a-z-])(gray|brand)-\d{2,3}/)
     end
 
     it "shows the document upload button from the document collection stage" do
