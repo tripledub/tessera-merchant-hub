@@ -3,6 +3,8 @@
   <%= hidden_field_tag :step, "company" %>
   <%= render "shared/error_messages", object: application %>
 
+  <%= render "portal/applications/your_details_fields" %>
+
   <%= form.fields_for :applicant do |applicant_form| %>
     <%= applicant_form.hidden_field :id %>
 

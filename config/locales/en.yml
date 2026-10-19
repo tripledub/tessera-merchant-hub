@@ -1354,6 +1354,11 @@ en:
       submitted: Your application has been submitted.
       title: Your onboarding application
       'yes': 'Yes'
+      your_details_fields:
+        first_name: First name
+        hint: Optional. We'll use it to greet you.
+        last_name: Last name
+        legend: Your name
     dashboard:
       show:
         continue_application: Continue application
