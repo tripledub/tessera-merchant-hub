@@ -203,6 +203,26 @@ RSpec.describe "Portal invitations", type: :request do
       expect(ApplicantInvitation.find_usable_by_token(new_token)).to eq(renewed)
     end
 
+    # MH-412: Solid Queue keeps a job's arguments in the queue database, so a
+    # one-time link must not be among them in plaintext.
+    it "keeps the link and the token out of the background job's arguments, and still delivers a working link" do
+      expire(invitation)
+
+      post portal_invitation_renewal_path(token)
+
+      job = ActiveJob::Base.queue_adapter.enqueued_jobs.find { |queued| queued["job_class"] == "ActionMailer::MailDeliveryJob" }
+      arguments = job["arguments"].to_json
+      expect(arguments).not_to include("/portal/invitations/")
+      expect(arguments).not_to include("http")
+
+      perform_enqueued_jobs
+      mail = ActionMailer::Base.deliveries.last
+      new_token = mail.text_part.body.to_s[%r{/portal/invitations/([\w-]+)}, 1]
+      expect(new_token).to be_present
+      expect(arguments).not_to include(new_token)
+      expect(ApplicantInvitation.find_usable_by_token(new_token)).to be_present
+    end
+
     it "delivers in the background" do
       expire(invitation)
 

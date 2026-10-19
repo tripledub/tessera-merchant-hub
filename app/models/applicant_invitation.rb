@@ -3,6 +3,10 @@
 class ApplicantInvitation < ApplicationRecord
   TOKEN_BYTES = 32
   EXPIRY = 48.hours
+  # A renewal email's link travels to the mail job encrypted for this long and for
+  # this purpose (MH-412): job arguments are stored in the queue database.
+  RENEWAL_MAIL_PURPOSE = :applicant_invitation_renewal
+  RENEWAL_MAIL_LIFETIME = 15.minutes
   class NotClaimable < StandardError; end
 
   belongs_to :applicant
