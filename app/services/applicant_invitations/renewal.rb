@@ -21,10 +21,19 @@ module ApplicantInvitations
         renewed, new_token = ApplicantInvitation.issue!(
           applicant: invitation.applicant, email: invitation.email, invited_by: invitation.invited_by
         )
-        ApplicantInvitationMailer.invite(renewed, link_for(new_token)).deliver_later
+        ApplicantInvitationMailer.renewal(renewed, encrypted_link_for(new_token)).deliver_later
         renewed
       end
     end
+
+    # The mail job's arguments are stored in the queue database, so the link
+    # goes in encrypted, never as plaintext (MH-412).
+    def encrypted_link_for(token)
+      ShortLivedSecret.encrypt(
+        link_for(token), purpose: ApplicantInvitation::RENEWAL_MAIL_PURPOSE, expires_in: ApplicantInvitation::RENEWAL_MAIL_LIFETIME
+      )
+    end
+    private_class_method :encrypted_link_for
 
     def recently_renewed?(invitation)
       ApplicantInvitation.where(applicant_id: invitation.applicant_id, email: invitation.email)
