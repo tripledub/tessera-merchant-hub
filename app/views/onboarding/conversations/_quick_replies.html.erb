@@ -13,6 +13,17 @@
             class: "kyn-btn-secondary w-auto! min-h-11! px-4!",
             data: { testid: "registry-check-no" } %>
     </div>
+  <% elsif Onboarding::RegistryPeople.awaiting_answer?(onboarding_session) %>
+    <div class="flex flex-wrap justify-start gap-3 px-4 pb-3 sm:px-6" data-testid="registry-person">
+      <%= button_to t("onboarding.registry_people.accept"), portal_onboarding_registry_person_path,
+            params: { answer: "yes" }, method: :post,
+            class: "kyn-btn-primary w-auto! min-h-11! px-4!",
+            data: { testid: "registry-person-yes" } %>
+      <%= button_to t("onboarding.registry_people.reject"), portal_onboarding_registry_person_path,
+            params: { answer: "no" }, method: :post,
+            class: "kyn-btn-secondary w-auto! min-h-11! px-4!",
+            data: { testid: "registry-person-no" } %>
+    </div>
   <% elsif quick_replies.any? %>
     <% field = quick_replies.first.field %>
     <div class="px-4 pb-3 sm:px-6">

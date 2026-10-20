@@ -1201,6 +1201,29 @@ en:
         other: the company registry
       reject: No, not mine
       still_needed: 'To finish your company details I still need: %{fields}.'
+    registry_people:
+      accept: Yes, that's them
+      declined: No problem, I've noted that.
+      details_dob: Thanks. What is %{name}'s date of birth?
+      details_dob_nationality: Thanks. What are %{name}'s date of birth and nationality?
+      disputed_value: Applicant says not involved
+      done: That's everyone the registry lists. Is anyone else a director or owner
+        of the business?
+      extras:
+        corporate_owners:
+          one: a corporate owner
+          other: "%{count} corporate owners"
+        line: The registry also lists %{things}; we'll cover owners next.
+        secretaries:
+          one: a secretary
+          other: "%{count} secretaries"
+      offer: The registry lists **%{name}** as %{role}. Is that you or someone involved
+        in the business?
+      reject: No, not involved
+      roles:
+        both: a director and person with significant control
+        director: a director
+        shareholder: a person with significant control
   onboarding_applications:
     show:
       applicant_supplied: This information was supplied by the applicant through self-service
