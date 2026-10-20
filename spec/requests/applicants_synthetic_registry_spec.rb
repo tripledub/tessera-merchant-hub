@@ -17,22 +17,24 @@ RSpec.describe "Applicants: synthetic Utopia registry", type: :request do
     context "when synthetic data is disabled" do
       include_context "with synthetic data disabled"
 
-      it "offers no jurisdiction choice" do
+      it "offers the United Kingdom or no jurisdiction, with none selected (MH-419)" do
         get new_applicant_path
 
-        expect(response).to have_http_status(:ok)
-        expect(jurisdiction_select(response.body)).to be_nil
+        select = jurisdiction_select(response.body)
+        expect(select.css("option").map { |o| o["value"] }).to eq([ "", "gb" ])
+        expect(select.at_css("option[selected]")).to be_nil
+        expect(select.at_css("option[value='']").text).to eq("Not set (the applicant chooses)")
       end
     end
 
     context "when synthetic data is enabled" do
       include_context "with synthetic data enabled"
 
-      it "offers the United Kingdom and Utopia" do
+      it "offers a blank option first, then the United Kingdom and Utopia" do
         get new_applicant_path
 
         select = jurisdiction_select(response.body)
-        expect(select.css("option").map { |o| o["value"] }).to eq(%w[gb xu])
+        expect(select.css("option").map { |o| o["value"] }).to eq([ "", "gb", "xu" ])
         expect(select.at_css("option[value='xu']").text).to include("Utopia")
       end
     end
@@ -136,20 +138,37 @@ RSpec.describe "Applicants: synthetic Utopia registry", type: :request do
     context "with a jurisdiction that cannot be selected" do
       include_context "with synthetic data enabled"
 
-      it "falls back to gb" do
+      it "saves no jurisdiction rather than guessing gb (MH-419)" do
         post applicants_path, params: { applicant: { name: "Some Co", registry_jurisdiction: "mt" } }
 
-        expect(Applicant.find_by!(name: "Some Co").registry_jurisdiction).to eq("gb")
+        expect(Applicant.find_by!(name: "Some Co").registry_jurisdiction).to be_nil
       end
     end
 
     context "without a jurisdiction param" do
       include_context "with synthetic data disabled"
 
-      it "defaults to gb, as before" do
+      it "saves no jurisdiction: it is never defaulted to gb (MH-419)" do
         post applicants_path, params: { applicant: { name: "Plain Co" } }
 
-        expect(Applicant.find_by!(name: "Plain Co").registry_jurisdiction).to eq("gb")
+        expect(Applicant.find_by!(name: "Plain Co").registry_jurisdiction).to be_nil
+      end
+
+      it "saves no jurisdiction for a blank choice, and does not look the number up" do
+        allow(Applicants::RegistryLookup).to receive(:call)
+
+        post applicants_path, params: { applicant: { name: "Blank Co", company_number: "12345678", registry_jurisdiction: "" } }
+
+        created = Applicant.find_by!(name: "Blank Co")
+        expect(created.registry_jurisdiction).to be_nil
+        expect(Applicants::RegistryLookup).not_to have_received(:call)
+        expect(response).to redirect_to(applicant_path(created))
+      end
+
+      it "saves the jurisdiction the admin picked" do
+        post applicants_path, params: { applicant: { name: "Picked Co", registry_jurisdiction: "gb" } }
+
+        expect(Applicant.find_by!(name: "Picked Co").registry_jurisdiction).to eq("gb")
       end
     end
   end

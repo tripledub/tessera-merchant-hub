@@ -255,7 +255,7 @@ RSpec.describe "Applicants", type: :request do
       end
 
       it "creates the applicant, persists the registry snapshot, and redirects to show with a success notice" do
-        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678" } }
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678", registry_jurisdiction: "gb" } }
 
         created = Applicant.find_by!(name: "New Corp")
         expect(response).to redirect_to(applicant_path(created))
@@ -266,14 +266,14 @@ RSpec.describe "Applicants", type: :request do
       end
 
       it "promotes active directors, but not PSCs, to kyc_principals" do
-        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678" } }
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678", registry_jurisdiction: "gb" } }
 
         created = Applicant.find_by!(name: "New Corp")
         expect(created.kyc_principals.pluck(:name)).to contain_exactly("DOE, Jane")
       end
 
       it "flags the PSC as a UBO without creating any corporate entities" do
-        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678" } }
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: "12345678", registry_jurisdiction: "gb" } }
 
         created = Applicant.find_by!(name: "New Corp")
         expect(created.corporate_entities).to be_empty
@@ -292,7 +292,7 @@ RSpec.describe "Applicants", type: :request do
       end
 
       it "still creates the applicant, and redirects to show with a retry alert" do
-        post applicants_path, params: { applicant: { name: "New Corp", company_number: "00000000" } }
+        post applicants_path, params: { applicant: { name: "New Corp", company_number: "00000000", registry_jurisdiction: "gb" } }
 
         created = Applicant.find_by!(name: "New Corp")
         expect(response).to redirect_to(applicant_path(created))
@@ -341,7 +341,7 @@ RSpec.describe "Applicants", type: :request do
 
       it "renders the company preview via turbo_stream without persisting anything" do
         expect {
-          post registry_preview_applicants_path, params: { applicant: { company_number: "12345678" } },
+          post registry_preview_applicants_path, params: { applicant: { company_number: "12345678", registry_jurisdiction: "gb" } },
             as: :turbo_stream
         }.not_to change(Applicant, :count)
 
@@ -350,7 +350,7 @@ RSpec.describe "Applicants", type: :request do
       end
 
       it "renders a 'Use these details' checkbox, checked by default (MH-272)" do
-        post registry_preview_applicants_path, params: { applicant: { company_number: "12345678" } },
+        post registry_preview_applicants_path, params: { applicant: { company_number: "12345678", registry_jurisdiction: "gb" } },
           as: :turbo_stream
 
         doc = Nokogiri::HTML(response.body)
@@ -373,7 +373,7 @@ RSpec.describe "Applicants", type: :request do
 
       it "renders an error message via turbo_stream without persisting anything" do
         expect {
-          post registry_preview_applicants_path, params: { applicant: { company_number: "00000000" } },
+          post registry_preview_applicants_path, params: { applicant: { company_number: "00000000", registry_jurisdiction: "gb" } },
             as: :turbo_stream
         }.not_to change(Applicant, :count)
 
@@ -381,11 +381,25 @@ RSpec.describe "Applicants", type: :request do
       end
     end
 
+    context "when the jurisdiction is blank (MH-419)" do
+      before { sign_in psp_admin }
+
+      it "does not look in any registry and says to choose a jurisdiction" do
+        allow(Registry::CompaniesHouseUkClient).to receive(:new)
+
+        post registry_preview_applicants_path, params: { applicant: { company_number: "12345678", registry_jurisdiction: "" } },
+                                               as: :turbo_stream
+
+        expect(Registry::CompaniesHouseUkClient).not_to have_received(:new)
+        expect(response.body).to include(I18n.t("applicants.registry_preview.errors.jurisdiction_required"))
+      end
+    end
+
     context "when signed in as psp_support" do
       before { sign_in psp_support }
 
       it "returns 403" do
-        post registry_preview_applicants_path, params: { applicant: { company_number: "12345678" } },
+        post registry_preview_applicants_path, params: { applicant: { company_number: "12345678", registry_jurisdiction: "gb" } },
           as: :turbo_stream
         expect(response).to have_http_status(:forbidden)
       end

@@ -57,7 +57,7 @@ class ApplicantsController < ApplicationController
     authorize Applicant, :create?
     @applicant = Applicant.new(new_applicant_params)
     if @applicant.save
-      if @applicant.company_number.present?
+      if @applicant.company_number.present? && @applicant.registry_jurisdiction.present?
         redirect_after_registry_lookup(Applicants::RegistryLookup.call(@applicant))
       else
         redirect_to applicant_path(@applicant), notice: t("flash.applicants.create_success")
@@ -132,7 +132,8 @@ class ApplicantsController < ApplicationController
   # Jurisdictions that can be requested when creating an applicant. "xu" is
   # passed through even when the synthetic gate is off, so the Applicant
   # validation rejects it, rather than silently switching it to gb (MH-310).
-  # Anything else falls back to gb.
+  # Anything else, including blank, saves no jurisdiction: it is never guessed
+  # (MH-419), so the applicant is asked for their country in the chat.
   CREATABLE_JURISDICTIONS = %w[gb xu].freeze
 
   def new_applicant_params
@@ -142,10 +143,12 @@ class ApplicantsController < ApplicationController
 
   def requested_jurisdiction
     requested = params.dig(:applicant, :registry_jurisdiction).to_s
-    CREATABLE_JURISDICTIONS.include?(requested) ? requested : "gb"
+    CREATABLE_JURISDICTIONS.include?(requested) ? requested : nil
   end
 
   def preview_registry(company_number)
+    return Registry::FetchResult.failure(error_type: :jurisdiction_required) if requested_jurisdiction.nil?
+
     client_class = Registry::Lookup.client_class_for(requested_jurisdiction)
     return Registry::FetchResult.failure(error_type: :not_supported) unless client_class
 
