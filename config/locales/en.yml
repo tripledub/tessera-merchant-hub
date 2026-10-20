@@ -294,6 +294,7 @@ en:
         company_number: Company number
         company_number_placeholder: e.g. 12345678
         jurisdiction: Registry jurisdiction
+        jurisdiction_blank: Not set (the applicant chooses)
       lookup_button: Look up company
       submit: Confirm & Create
     registry_preview:
@@ -307,6 +308,8 @@ en:
         use_these_details: Use these details
       errors:
         invalid_number: Enter a company number before looking it up.
+        jurisdiction_required: Choose a registry jurisdiction before looking up a
+          company number.
         not_found: No company found with that number.
         not_supported: This jurisdiction isn't supported yet.
         rate_limited: Companies House rate limit reached — try again shortly.
