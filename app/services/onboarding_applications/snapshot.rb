@@ -52,6 +52,7 @@ module OnboardingApplications
         db: ->(application) { application.applicant.company_number },
         chat: ->(data) { data.dig("company_info", "registration_number") } },
       { key: :company_type, label: "Company type", answers: [ %w[company_info company_type] ],
+        db: ->(application) { application.applicant.company_type && Onboarding::CompanyTypes.label(application.applicant.company_type) },
         chat: ->(data) { data.dig("company_info", "company_type") } },
       { key: :country_of_incorporation, label: "Country of incorporation",
         answers: [ %w[company_info country_of_incorporation] ],

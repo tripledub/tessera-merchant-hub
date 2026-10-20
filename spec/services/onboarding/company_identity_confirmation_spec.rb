@@ -116,8 +116,17 @@ RSpec.describe Onboarding::CompanyIdentityConfirmation do
       expect(applicant.reload.company_name).to eq("Stew & Co")
       expect(Provenance::CompanyFields.source_for(applicant, "company_name")).to eq(:applicant_declared)
       reply = session.onboarding_messages.bot.last
-      expect(reply.content).to include("Registration number", "Company type")
+      expect(reply.content).to include("Company type", "Country of incorporation", "Registered address")
       expect(reply.content).not_to include("Company name")
+    end
+
+    it "does not ask for the country when the PSP chose a registry jurisdiction (MH-391)" do
+      applicant.update!(registry_jurisdiction: "gb")
+
+      described_class.confirm!(session)
+
+      expect(session.reload.stage_data["company_info"]).to include("country_of_incorporation" => "United Kingdom")
+      expect(session.onboarding_messages.bot.last.content).not_to include("Country of incorporation")
     end
 
     it "never changes the PSP's name, whatever the answer" do

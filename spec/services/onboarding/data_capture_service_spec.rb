@@ -98,6 +98,62 @@ RSpec.describe Onboarding::DataCaptureService do
       end
     end
 
+    describe "company type and country (MH-391)" do
+      let(:applicant) { create(:applicant, company_name: nil, company_number: nil) }
+      let(:session) { create(:onboarding_session, applicant: applicant, current_stage: :company_info) }
+
+      it "stores the type by its key however the applicant worded it, and keeps it on the application" do
+        described_class.call(session: session, extracted_data: { "company_type" => "Private limited company" })
+
+        expect(session.reload.stage_data["company_info"]).to include("company_type" => "limited_company")
+        expect(applicant.reload.company_type).to eq("limited_company")
+      end
+
+      it "drops a type that is not one we know, so it is asked again" do
+        described_class.call(session: session, extracted_data: { "company_type" => "a charity" })
+
+        expect(session.reload.stage_data["company_info"]).to be_blank
+        expect(applicant.reload.company_type).to be_nil
+      end
+
+      it "sets the registry jurisdiction from the country the applicant gives" do
+        described_class.call(session: session, extracted_data: { "country_of_incorporation" => "United Kingdom" })
+
+        expect(applicant.reload.registry_jurisdiction).to eq("gb")
+      end
+
+      it "leaves the jurisdiction unset for a country we have no registry for" do
+        described_class.call(session: session, extracted_data: { "country_of_incorporation" => "France" })
+
+        expect(applicant.reload.registry_jurisdiction).to be_nil
+      end
+
+      it "never overwrites a jurisdiction the PSP chose" do
+        applicant.update!(registry_jurisdiction: "mt")
+
+        described_class.call(session: session, extracted_data: { "country_of_incorporation" => "United Kingdom" })
+
+        expect(applicant.reload.registry_jurisdiction).to eq("mt")
+      end
+
+      it "fills in the country from the PSP's jurisdiction, so the applicant is not asked for it" do
+        applicant.update!(registry_jurisdiction: "gb")
+
+        described_class.call(session: session, extracted_data: { "company_name" => "Acme Widgets Ltd" })
+
+        expect(session.reload.stage_data["company_info"]).to include("country_of_incorporation" => "United Kingdom")
+      end
+
+      it "does not replace a country the applicant has already given" do
+        applicant.update!(registry_jurisdiction: "gb")
+        session.update!(stage_data: { "company_info" => { "country_of_incorporation" => "Malta" } })
+
+        described_class.call(session: session, extracted_data: { "company_name" => "Acme Widgets Ltd" })
+
+        expect(session.reload.stage_data["company_info"]).to include("country_of_incorporation" => "Malta")
+      end
+    end
+
     it "merges looping stage values into current_item until the item is complete" do
       session = create(:onboarding_session, current_stage: :directors_ubos)
 

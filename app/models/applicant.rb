@@ -48,6 +48,12 @@ class Applicant < Merchant
   enum :status, { pending: "pending", approved: "approved", rejected: "rejected" }, default: "pending"
   # "xu" is the fictional Utopia registry (MH-310): UAT/dev only, see synthetic_jurisdiction_enabled.
   enum :registry_jurisdiction, { gb: "gb", mt: "mt", cy: "cy", xu: "xu" }, validate: { allow_nil: true }
+  # MH-391: asked in the chat's opening. Prefixed because values like "other" and "plc"
+  # would otherwise clash with scopes and predicates.
+  enum :company_type, {
+    limited_company: "limited_company", plc: "plc", llp: "llp",
+    sole_trader: "sole_trader", partnership: "partnership", other: "other"
+  }, prefix: true, validate: { allow_nil: true }
   enum :sector, {
     general: "general",
     crypto_exchange: "crypto_exchange",

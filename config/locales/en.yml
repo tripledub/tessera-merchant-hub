@@ -1148,6 +1148,13 @@ en:
     company_confirmation:
       'no': No, a different name
       'yes': Yes, %{name}
+    company_types:
+      limited_company: Limited company
+      llp: LLP
+      other: Other
+      partnership: Partnership
+      plc: Public limited company (PLC)
+      sole_trader: Sole trader
     composer:
       placeholder: Type your reply...
       send: Send message
@@ -1166,6 +1173,9 @@ en:
         label: Onboarding progress
       typing_label: Assistant is typing
     quick_replies:
+      company_type:
+        group_label: Company types
+        hint: Or type your company type below.
       country:
         cyprus: Cyprus
         group_label: Suggested answers
@@ -1173,6 +1183,21 @@ en:
         malta: Malta
         other: Other
         united_kingdom: United Kingdom
+    registry_check:
+      accept: Yes, that's it
+      confirmed: Thanks, I've saved those details.
+      declined: No problem, I'll keep what you told me.
+      failed: I couldn't find that company in the registry, so let's carry on with
+        a few questions.
+      no_address: an address that isn't on record
+      nothing_else: That's everything I need for your company details.
+      prompt: I found **%{name}**, %{status}, registered at %{address} (%{provider}).
+        Is this your company?
+      providers:
+        companies_house: Companies House
+        other: the company registry
+      reject: No, not mine
+      still_needed: 'To finish your company details I still need: %{fields}.'
   onboarding_applications:
     show:
       applicant_supplied: This information was supplied by the applicant through self-service

@@ -1,12 +1,25 @@
 <%# Always rendered, empty when there is nothing to offer, so the chat can swap it
-    by id after each reply. Which chips to show is decided by Onboarding::QuickReplies. %>
+    by id after each reply. Which chips to show is decided by Onboarding::QuickReplies;
+    while the registry's match waits for an answer, its Yes and No buttons are shown instead. %>
 <div id="onboarding_quick_replies" data-onboarding-chat-target="quickReplies">
-  <% if quick_replies.any? %>
+  <% if Onboarding::RegistryCompanyCheck.awaiting_answer?(onboarding_session) %>
+    <div class="flex flex-wrap justify-start gap-3 px-4 pb-3 sm:px-6" data-testid="registry-check">
+      <%= button_to t("onboarding.registry_check.accept"), portal_onboarding_registry_check_path,
+            params: { answer: "yes" }, method: :post,
+            class: "kyn-btn-primary w-auto! min-h-11! px-4!",
+            data: { testid: "registry-check-yes" } %>
+      <%= button_to t("onboarding.registry_check.reject"), portal_onboarding_registry_check_path,
+            params: { answer: "no" }, method: :post,
+            class: "kyn-btn-secondary w-auto! min-h-11! px-4!",
+            data: { testid: "registry-check-no" } %>
+    </div>
+  <% elsif quick_replies.any? %>
+    <% field = quick_replies.first.field %>
     <div class="px-4 pb-3 sm:px-6">
       <div
         class="flex flex-wrap gap-2"
         role="group"
-        aria-label="<%= t("onboarding.quick_replies.country.group_label") %>"
+        aria-label="<%= field == :company_type ? t("onboarding.quick_replies.company_type.group_label") : t("onboarding.quick_replies.country.group_label") %>"
         aria-describedby="onboarding_quick_replies_hint">
         <% quick_replies.each do |option| %>
           <% if option.kind == :answer %>
@@ -29,7 +42,7 @@
           <% end %>
         <% end %>
       </div>
-      <p id="onboarding_quick_replies_hint" class="mt-2 text-[13px] text-kyn-slate"><%= t("onboarding.quick_replies.country.hint") %></p>
+      <p id="onboarding_quick_replies_hint" class="mt-2 text-[13px] text-kyn-slate"><%= field == :company_type ? t("onboarding.quick_replies.company_type.hint") : t("onboarding.quick_replies.country.hint") %></p>
     </div>
   <% end %>
 </div>
