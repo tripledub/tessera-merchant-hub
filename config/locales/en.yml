@@ -4,6 +4,8 @@ en:
     attributes:
       applicant_domain:
         justification: Reason
+      onboarding_application:
+        onboarding_countries: Target countries
     errors:
       models:
         applicant:
@@ -176,12 +178,30 @@ en:
       submit: Create invitation
       subtitle: Create a secure registration link for %{applicant}.
       title: Invite applicant
+  applicant_sign_in_code_mailer:
+    code:
+      expires: This code expires in %{minutes} minutes and can only be used once.
+      greeting: Hello,
+      ignore: If you didn't request this code, you can ignore this email. Nobody can
+        sign in without it.
+      intro: 'Use this code to sign in to Kynetic:'
+      subject: Your Kynetic sign-in code
   applicant_users:
+    confirmations:
+      new:
+        back_to_sign_in: Back to sign in
+        submit: Resend confirmation instructions
+        title: Resend confirmation
     passwords:
       edit:
         back_to_sign_in: Back to sign in
         confirm_password: Confirm new password
+        first_hint: Use at least %{count} characters. A short phrase works well.
+        first_submit: Save password
+        first_subtitle: Optional. You can always sign in with an email code instead.
+        first_title: Set a password
         new_password: New password
+        not_now: Not now
         submit: Update password
         title: Set new password
       new:
@@ -200,11 +220,26 @@ en:
         submit: Create account
         title: Create your account
     sessions:
-      new:
+      code:
+        email: Email address
+        intro: Enter your email and we'll send you a code to sign in.
+        invalid_email: Enter a valid email address.
+        invited: Invited for the first time? Use the link in your invitation email.
+        page_title: Welcome back
+        submit: Send me a code
+        title: Welcome back
+        use_password: Use a password instead
+      password:
         forgot_password: Forgot your password?
         resend_confirmation: Didn't receive confirmation instructions?
         submit: Sign in
         title: Sign in to Onboarding
+        use_code: Email me a code instead
+    shared:
+      password_field:
+        hide: Hide password
+        minimum: "%{count} characters minimum"
+        show: Show password
   applicants:
     delete:
       button: Delete applicant
@@ -370,6 +405,12 @@ en:
         confirm_no_corporate_owners: Confirm no corporate owners
         confirm_no_corporate_owners_prompt: Confirm that this applicant has no corporate
           owners? This is recorded against your account.
+        conflicts:
+          description: These sources disagree. Nothing is blocked; check them against
+            what the applicant submitted.
+          held: Held
+          proposed: Proposed
+          title: Data conflicts
         details: Details
         documents_count: Documents
         entities_count: Entities
@@ -453,6 +494,13 @@ en:
         warning_total: Total
         warning_unacknowledged: Open
         warnings: Warnings
+  data_provenance:
+    sources:
+      applicant_declared: Applicant
+      document_extracted: Document
+      registry: Registry
+      staff_verified: Staff verified
+    with_provider: "%{source} (%{provider})"
   devise:
     failure:
       deactivated: Your account has been deactivated. Please contact your administrator.
@@ -991,6 +1039,9 @@ en:
       document_extracted: Extracted
       registry_fetched: Companies House
   layouts:
+    applicant_auth_card:
+      back: Back
+      security: Your information is encrypted and only used for compliance checks.
     navigation:
       admin: Admin
       app_name: Kynetic
@@ -1094,6 +1145,11 @@ en:
       skip_deferred: Noted — you can upload %{label} later. Let's continue.
       skip_not_available: Skipping isn't available at this stage yet — let's finish
         this step first.
+    composer:
+      placeholder: Type your reply...
+      send: Send message
+      upload: Upload document
+      uploading: Uploading %{names}…
     conversation:
       error_message: Something went wrong. Please try again.
     conversations:
@@ -1102,6 +1158,18 @@ en:
         replacement_required: Your %{document_type} will need replacing soon — please
           upload an updated one when you can.
         under_review: We're reviewing your %{document_type}.
+      progress:
+        completed: "%{percent}% completed"
+        label: Onboarding progress
+      typing_label: Assistant is typing
+    quick_replies:
+      country:
+        cyprus: Cyprus
+        group_label: Suggested answers
+        hint: Or type your country below.
+        malta: Malta
+        other: Other
+        united_kingdom: United Kingdom
   onboarding_applications:
     show:
       applicant_supplied: This information was supplied by the applicant through self-service
@@ -1222,6 +1290,12 @@ en:
         trading_address_same_as_registered: Trading address is the same as the registered
           address
       continue: Save and continue
+      countries:
+        hint: Search and select every country you plan to operate in.
+        legend: Which countries will you operate in?
+        no_results: No countries found
+        remove: Remove
+        search: Search countries
       currencies:
         add: Add currency
         code: ISO currency code
@@ -1289,7 +1363,6 @@ en:
         descriptor: Descriptor details
         fulfilment: Fulfilment and services
         payments: Payment methods
-        pricing: Pricing
         principals: Directors and beneficial owners
         processing: Processing history
         review: Review and submit
@@ -1297,13 +1370,103 @@ en:
       submitted: Your application has been submitted.
       title: Your onboarding application
       'yes': 'Yes'
+      your_details_fields:
+        first_name: First name
+        hint: Optional. We'll use it to greet you.
+        last_name: Last name
+        legend: Your name
     dashboard:
+      password_link:
+        change: Change password
+        set: Set a password
+      password_link_sent:
+        body: We've sent a link to %{email} to set your password. It works for %{hours}
+          hours.
+        title: Check your email
+      password_prompt:
+        body: Set a password so you don't need an email code each time. It's optional.
+        not_now: Not now
+        set: Set a password
+        title: Sign in faster next time
       show:
         continue_application: Continue application
         welcome: Welcome, %{name}!
+        welcome_back: Welcome back!
+    invitation_renewals:
+      create:
+        body: If your invitation can be renewed, we've sent a new link to the address
+          you were invited with. It's valid for 48 hours.
+        page_title: Check your email
+        title: Check your email
+    invitations:
+      dead_link:
+        body: For your security, invitation links only last 48 hours. Request a new
+          one and we'll send it to the email address you were invited with.
+        page_title: This link has expired
+        request: Request a new link
+        title: This link has expired
+      help_links:
+        help: Need help? Contact the person who invited you.
+        registered: Already registered?
+        sign_in: Sign in
+      show:
+        address_note: We'll send a code to this address
+        continue: Continue
+        eyebrow: You've been invited
+        intro: It takes about 10 minutes. You can stop and pick up where you left
+          off at any time.
+        page_title: You've been invited
+        steps:
+          account: Confirm your email with a one-time code
+          documents: Upload your documents
+          questions: Answer a few questions about your business
+        title: Complete your onboarding for %{company}
+    password_setups:
+      too_many: You've asked a few times. Check your email for the link, or try again
+        in an hour.
+    sign_in_codes:
+      expired:
+        body: For your security, codes only last 10 minutes. We can send a new one
+          to
+        page_title: This code has expired
+        send_new: Send a new code
+        title: This code has expired
+      locked:
+        body: For your security, this code no longer works. Send a new one to try
+          again.
+        page_title: Too many attempts
+        send_new: Send a new code
+        title: Too many attempts
+      no_pending: Your sign-in has timed out. Sign in, or open the link in your invitation
+        email again.
+      show:
+        didnt_get_it: Didn't get it?
+        digit: Digit %{number} of 6
+        expires: ". It expires in 10 minutes."
+        incomplete: Enter all 6 digits of the code.
+        legend: One-time verification code
+        page_title: Check your email
+        resend: Resend code
+        resend_in: Resend code in
+        resend_ready: You can now ask for a new code.
+        sent_to: We've sent a 6-digit code to
+        sent_to_returning: If that address is registered, we've sent a 6-digit code
+          to
+        title: Check your email
+        verify: Verify and continue
+        wrong:
+          one: That code isn't right. You have %{count} attempt left.
+          other: That code isn't right. You have %{count} attempts left.
+      support:
+        wrong_email: Wrong email? Contact the person who invited you.
+        wrong_email_returning: Wrong email? Go back and try again.
+      try_again_later:
+        body: You've asked for several codes. For your security, please wait about
+          20 minutes and then try again.
+        page_title: Try again later
+        title: Try again later
     sign_out: Sign out
     title: Kynetic Portal
-    toggle_dark_mode: Toggle dark mode
   processing_statements:
     actions:
       map: Map

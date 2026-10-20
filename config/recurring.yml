@@ -11,3 +11,8 @@ production:
     class: Kyc::DocumentExpiryMonitoringJob
     queue: default
     schedule: every day at 2am
+  # MH-412: Solid Queue keeps finished jobs, and their arguments, until told not
+  # to. Failed jobs are not touched by this.
+  clear_solid_queue_finished_jobs:
+    command: "SolidQueue::Job.clear_finished_in_batches(finished_before: 1.day.ago, sleep_between_batches: 0.3)"
+    schedule: every day at 3am

@@ -1,0 +1,21 @@
+<%# Round icon badge for the dead-link and confirmation pages.
+    Usage: render "layouts/applicant_badge", kind: :clock | :mail | :lock %>
+<% if local_assigns[:kind] == :mail %>
+  <span class="flex size-12 items-center justify-center rounded-full border border-kyn-primary/25 bg-kyn-primary-tint" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="size-6" stroke="#4F5BF5" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7.5 8 6 8-6"/>
+    </svg>
+  </span>
+<% elsif local_assigns[:kind] == :lock %>
+  <span class="flex size-12 items-center justify-center rounded-full border border-kyn-warning/25 bg-kyn-warning-tint" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="size-6" stroke="#8A5A00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="5" y="10.5" width="14" height="9.5" rx="2.5"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>
+    </svg>
+  </span>
+<% else %>
+  <span class="flex size-12 items-center justify-center rounded-full border border-kyn-warning/25 bg-kyn-warning-tint" aria-hidden="true">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="size-6" stroke="#8A5A00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>
+    </svg>
+  </span>
+<% end %>

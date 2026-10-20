@@ -40,6 +40,7 @@ RSpec.describe OnboardingApplications::Submit do
       completed_steps: OnboardingApplication::STEPS - [ "review" ], **required_answers)
     application.processing_currencies.create!(code: "GBP")
     application.settlement_currencies.create!(code: "GBP")
+    application.onboarding_countries.create!(code: "GB")
     application
   end
 

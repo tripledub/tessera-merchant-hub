@@ -5,6 +5,8 @@
 ignore_unused:
   # Devise resolves this via User#inactive_message returning :deactivated
   - devise.failure.deactivated
+  # Devise looks up "<scope>_subject" first, so applicants get their own subject (MH-408)
+  - devise.mailer.password_change.applicant_user_subject
   # Rails form builder resolves these at runtime
   - helpers.submit.applicant_user.*
   # ActiveModel resolves attribute names via human_attribute_name at runtime

@@ -5,7 +5,7 @@ gem "rails", "~> 8.1.4"
 # The modern asset pipeline for Rails [https://github.com/rails/propshaft]
 gem "propshaft"
 # Use postgresql as the database for Active Record
-gem "pg", "~> 1.1"
+gem "pg", "~> 1.7"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
@@ -41,7 +41,7 @@ gem "kamal", require: false
 gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
-gem "image_processing", "~> 2.1"
+gem "image_processing", "~> 2.2"
 gem "ruby-vips", "~> 2.0"
 
 # Authentication
@@ -68,7 +68,7 @@ gem "jaro_winkler"
 
 # Unified LLM client — Anthropic/Claude, structured output, streaming.
 # Pinned to the 2.0 RC: fixes CVE-2026-67991 (ReDoS), no stable 2.x release yet.
-gem "ruby_llm", "2.0.0"
+gem "ruby_llm", "2.1.1"
 
 # Real-time WebSocket support via AnyCable + Redis pub/sub.
 gem "anycable-rails"
@@ -136,3 +136,7 @@ gem "honeybadger", "~> 6.9"
 gem "roo", "~> 3.0"
 gem "roo-xls", "~> 2.0" # legacy .xls (binary) support — roo alone only handles xlsx/csv/ods
 gem "csv"
+
+# ISO 3166 country data for the applicant target-countries picker (MH-384)
+# Use ISO3166::Country directly; do not require countries/global (defines a top-level Country constant)
+gem "countries", "~> 8.1"

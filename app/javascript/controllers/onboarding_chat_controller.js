@@ -2,8 +2,8 @@ import { Controller } from "@hotwired/stimulus"
 import { cable } from "@hotwired/turbo-rails"
 
 export default class extends Controller {
-  static targets = ["composer", "input", "messages", "submit", "typing", "uploadButton", "uploadInput", "uploadStatus"]
-  static values  = { sessionId: String, token: String }
+  static targets = ["composer", "input", "messages", "quickReplies", "quickReply", "submit", "typing", "uploadButton", "uploadInput", "uploadStatus"]
+  static values  = { sessionId: String, token: String, uploadingTemplate: String }
 
   connect() {
     this.scrollToLatest()
@@ -55,6 +55,7 @@ export default class extends Controller {
     if (!event.detail.success) {
       this.setSubmitting(false)
       this.hideTyping()
+      this.showQuickReplies()
       this.inputTarget.focus()
     }
     // On success: stay disabled and keep typing indicator until WS complete event arrives
@@ -67,6 +68,31 @@ export default class extends Controller {
     this.inputTarget.style.height = `${Math.min(this.inputTarget.scrollHeight, 128)}px`
   }
 
+  // A country chip sends exactly what typing it would: fill the textarea and
+  // submit the composer, so the pending bubble, typing dots and streaming are
+  // the ordinary ones.
+  sendQuickReply(event) {
+    if (this.inputTarget.disabled) return
+
+    this.inputTarget.value = event.currentTarget.dataset.reply
+    this.hideQuickReplies()
+    this.composerTarget.requestSubmit()
+  }
+
+  // "Other" sends nothing: the applicant types their own answer.
+  focusComposer() {
+    this.inputTarget.focus()
+    this.scrollComposerIntoView()
+  }
+
+  hideQuickReplies() {
+    if (this.hasQuickRepliesTarget) this.quickRepliesTarget.hidden = true
+  }
+
+  showQuickReplies() {
+    if (this.hasQuickRepliesTarget) this.quickRepliesTarget.hidden = false
+  }
+
   triggerUpload() {
     if (this.hasUploadInputTarget) this.uploadInputTarget.click()
   }
@@ -76,7 +102,8 @@ export default class extends Controller {
 
     const names = Array.from(event.target.files).map(file => file.name).join(", ")
     if (this.hasUploadStatusTarget) {
-      this.uploadStatusTarget.innerHTML = `<p class="text-xs text-gray-500 dark:text-gray-400">Uploading ${this.escapeHtml(names)}…</p>`
+      const text = this.uploadingTemplateValue.replace("%{names}", names)
+      this.uploadStatusTarget.innerHTML = `<p role="status" class="text-xs text-kyn-slate">${this.escapeHtml(text)}</p>`
     }
 
     event.target.form.requestSubmit()
@@ -99,7 +126,7 @@ export default class extends Controller {
         this.appendStreamToken(data.content)
         break
       case "complete":
-        this.finalizeStreamingBubble(data.bot_message, data.stage_changed)
+        this.finalizeStreamingBubble(data.bot_message)
         break
       case "error":
         this.handleStreamError()
@@ -136,10 +163,10 @@ export default class extends Controller {
     }
   }
 
-  finalizeStreamingBubble(botMessage, stageChanged) {
+  finalizeStreamingBubble(botMessage) {
     if (this.drainingTokens) {
       // Wait for the rAF drain to finish before finalizing
-      requestAnimationFrame(() => this.finalizeStreamingBubble(botMessage, stageChanged))
+      requestAnimationFrame(() => this.finalizeStreamingBubble(botMessage))
       return
     }
 
@@ -166,7 +193,7 @@ export default class extends Controller {
     this.scrollComposerIntoView()
     this.inputTarget.focus({ preventScroll: true })
 
-    if (stageChanged) this.refreshProgress()
+    this.refreshFragments()
   }
 
   handleStreamError() {
@@ -178,32 +205,45 @@ export default class extends Controller {
     this.pendingApplicantMessageEl = null
     this.hideTyping()
     this.setSubmitting(false)
+    this.showQuickReplies()
     this.inputTarget.focus()
   }
 
   createStreamingBubble() {
     const wrapper = document.createElement("div")
-    wrapper.className = "flex"
+    wrapper.className = "flex justify-start"
 
-    const row = document.createElement("div")
-    row.className = "flex max-w-[85%] items-end gap-3 sm:max-w-[72%]"
-
-    const avatar = document.createElement("div")
-    avatar.className = "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-300"
-    avatar.textContent = "AI"
+    const column = document.createElement("div")
+    column.className = "max-w-[85%] sm:max-w-[75%]"
 
     const bubble = document.createElement("div")
-    bubble.className = "chat-prose rounded-2xl rounded-bl-sm bg-gray-100 px-4 py-3 text-sm leading-6 text-gray-800 dark:bg-gray-800 dark:text-gray-100"
+    bubble.className = "kyn-bubble kyn-bubble-assistant chat-prose"
     bubble.setAttribute("data-streaming-text", "")
 
-    row.append(avatar, bubble)
-    wrapper.append(row)
+    column.append(bubble)
+    wrapper.append(column)
     return wrapper
   }
 
-  refreshProgress() {
-    const progressEl = document.querySelector("[data-onboarding-progress]")
-    if (progressEl) progressEl.src = window.location.href
+  // The progress bar and the quick-reply chips are server-rendered from the
+  // session state, so after each completed reply fetch the page again and swap
+  // in the fresh fragments.
+  async refreshFragments() {
+    try {
+      const response = await fetch(window.location.href, {
+        headers: { Accept: "text/html" },
+        credentials: "same-origin"
+      })
+      if (!response.ok) return
+
+      const doc = new DOMParser().parseFromString(await response.text(), "text/html")
+      for (const id of ["onboarding_progress", "onboarding_quick_replies"]) {
+        const fresh = doc.getElementById(id)
+        if (fresh) document.getElementById(id)?.replaceWith(fresh)
+      }
+    } catch (_error) {
+      // Leave what is on screen; the next reply or a reload corrects it.
+    }
   }
 
   appendApplicantPreview(content) {
@@ -211,31 +251,27 @@ export default class extends Controller {
     wrapper.id = "onboarding_pending_applicant_message"
     wrapper.className = "flex justify-end"
 
-    const row = document.createElement("div")
-    row.className = "flex max-w-[85%] flex-row-reverse items-end gap-3 sm:max-w-[72%]"
+    const column = document.createElement("div")
+    column.className = "max-w-[85%] sm:max-w-[75%]"
 
-    const avatar = document.createElement("div")
-    avatar.className = "flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-500 text-white"
-    avatar.textContent = "You"
-
-    const body = document.createElement("div")
     const bubble = document.createElement("div")
-    bubble.className = "rounded-2xl rounded-br-sm bg-brand-500 px-4 py-3 text-sm leading-6 text-white"
+    bubble.className = "kyn-bubble kyn-bubble-applicant"
     bubble.textContent = content
 
     const status = document.createElement("p")
-    status.className = "mt-1 text-right text-xs text-gray-500 dark:text-gray-500"
+    status.className = "mt-1 px-1 text-right text-xs text-kyn-slate"
     status.textContent = "Sending"
 
-    body.append(bubble, status)
-    row.append(avatar, body)
-    wrapper.append(row)
+    column.append(bubble, status)
+    wrapper.append(column)
     this.messagesTarget.append(wrapper)
+    return wrapper
   }
 
   setSubmitting(submitting) {
     this.inputTarget.disabled = submitting
     if (this.hasSubmitTarget) this.submitTarget.disabled = submitting
+    this.quickReplyTargets.forEach(chip => { chip.disabled = submitting })
   }
 
   showTyping() {

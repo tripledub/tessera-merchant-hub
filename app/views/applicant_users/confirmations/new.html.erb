@@ -1,0 +1,18 @@
+<%= render "layouts/applicant_auth_card", title: t("applicant_users.confirmations.new.title") do %>
+  <%= form_for(resource, as: resource_name, url: confirmation_path(resource_name), html: { method: :post }) do |f| %>
+    <div class="space-y-5">
+      <div class="kyn-field" data-field>
+        <%= f.label :email, class: "kyn-label" %>
+        <%= f.email_field :email, autofocus: true, autocomplete: "email",
+              class: kyn_field_class(resource, :email), placeholder: "you@example.com",
+              **kyn_field_aria(resource, :email, kyn_field_error_id(resource_name, :email)) %>
+        <%= kyn_field_error(resource, :email, id: kyn_field_error_id(resource_name, :email)) %>
+      </div>
+      <%= f.submit t("applicant_users.confirmations.new.submit"), class: "kyn-btn-primary" %>
+    </div>
+  <% end %>
+  <div class="mt-4 flex justify-center">
+    <%= link_to t("applicant_users.confirmations.new.back_to_sign_in"), new_session_path(resource_name),
+          class: "kyn-link inline-flex min-h-[44px] items-center text-sm" %>
+  </div>
+<% end %>

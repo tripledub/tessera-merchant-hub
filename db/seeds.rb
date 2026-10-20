@@ -191,3 +191,34 @@ if Rails.env.development?
   puts "  admin@merchant-4.example.com  →  Polder Stores BV (merchant_admin)"
   puts "  admin@merchant-5.example.com  →  Celtic Cart Limited (merchant_admin)"
 end
+
+# =============================================================================
+# Applicant portal test user  —  development ONLY
+# Invited, invitation accepted, email confirmed, onboarding form not started.
+# Re-running resets the applicant to that state (drops any saved application).
+# =============================================================================
+if Rails.env.development?
+  portal_email = "applicant-new@tessera.test"
+  inviter      = User.find_by!(email: "psp-admin@tessera.test")
+
+  portal_applicant = Applicant.find_or_create_by!(name: "Portal Test Applicant Ltd") do |applicant|
+    applicant.company_name = "Portal Test Applicant Ltd"
+  end
+  portal_applicant.onboarding_application&.destroy!
+
+  portal_user = ApplicantUser.find_or_initialize_by(email: portal_email)
+  portal_user.assign_attributes(
+    applicant: portal_applicant, first_name: "Test", last_name: "Applicant",
+    password: demo_password, password_confirmation: demo_password
+  )
+  portal_user.skip_confirmation!
+  portal_user.save!
+  portal_user.update!(confirmed_at: Time.current) unless portal_user.confirmed?
+
+  invitation = ApplicantInvitation.find_by(applicant: portal_applicant, email: portal_email) ||
+    ApplicantInvitation.issue!(applicant: portal_applicant, email: portal_email, invited_by: inviter).first
+  invitation.claim!(portal_user) if invitation.claimed_at.nil?
+
+  puts "Seeded applicant portal user #{portal_email} (invited, accepted, confirmed, form not started). Password: #{demo_password}"
+  puts "  Sign in at /portal/sign_in"
+end

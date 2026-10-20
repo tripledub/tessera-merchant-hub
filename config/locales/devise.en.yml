@@ -27,6 +27,7 @@ en:
         subject: "Email Changed"
       password_change:
         subject: "Password Changed"
+        applicant_user_subject: "Your Kynetic password was changed"
     omniauth_callbacks:
       failure: "Could not authenticate you from %{kind} because \"%{reason}\"."
       success: "Successfully authenticated from %{kind} account."

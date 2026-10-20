@@ -26,15 +26,39 @@ export default class extends Controller {
     if (!valid) {
       event.preventDefault()
       firstInvalid?.focus()
+      this.announceInvalid()
     }
+  }
+
+  // Reuses the repeatable-fields status region so screen readers hear a
+  // summary of the failed submit alongside add/remove announcements.
+  announceInvalid() {
+    const status = this.element.querySelector("[data-repeatable-fields-target~='status']")
+    if (!status) return
+
+    const count = this.element.querySelectorAll("[aria-invalid='true']").length
+    status.textContent = count === 1 ? "1 field needs attention" : `${count} fields need attention`
   }
 
   handleBlur(event) {
     const field = event.target
     if (!this.isCandidate(field)) return
 
-    field.dataset.touched = "true"
-    this.isValid(field) ? this.clearError(field) : this.showError(field)
+    if (this.isValid(field)) {
+      field.dataset.touched = "true"
+      this.clearError(field)
+    } else if (!this.focusMovesToButton(event)) {
+      field.dataset.touched = "true"
+      this.showError(field)
+    }
+  }
+
+  // An error appearing on blur shifts the layout, which can move the button
+  // out from under the pointer before mouseup and swallow the click. Submit,
+  // add and remove each validate (or discard) the field themselves, so the
+  // blur error can wait.
+  focusMovesToButton(event) {
+    return event.relatedTarget?.matches("button, input[type='submit'], input[type='button']")
   }
 
   handleChange(event) {
@@ -80,8 +104,12 @@ export default class extends Controller {
       return
     }
 
-    field.classList.remove("form-input")
-    field.classList.add("form-input-error")
+    // kyn-* fields (MH-395) style their error state from aria-invalid, so they
+    // keep their class; everything else swaps the legacy classes as before.
+    if (!this.usesAriaStyling(field)) {
+      field.classList.remove("form-input")
+      field.classList.add("form-input-error")
+    }
     field.setAttribute("aria-invalid", "true")
 
     const errorEl = this.errorElementFor(field)
@@ -95,12 +123,18 @@ export default class extends Controller {
       return
     }
 
-    field.classList.remove("form-input-error")
-    field.classList.add("form-input")
+    if (!this.usesAriaStyling(field)) {
+      field.classList.remove("form-input-error")
+      field.classList.add("form-input")
+    }
     field.removeAttribute("aria-invalid")
     field.removeAttribute("aria-describedby")
 
     this.errorElementFor(field, { create: false })?.remove()
+  }
+
+  usesAriaStyling(field) {
+    return Array.from(field.classList).some((name) => name.startsWith("kyn-"))
   }
 
   showRadioGroupError(field) {
@@ -140,7 +174,7 @@ export default class extends Controller {
   }
 
   fieldContainer(field) {
-    return field.closest("[data-field]") || field.closest("div:not([data-controller])")?.parentElement || field.parentElement
+    return field.closest("[data-field]") || field.parentElement
   }
 
   errorMessage(field) {

@@ -18,8 +18,8 @@ RSpec.describe "Onboarding authentication", type: :request do
       get new_applicant_user_registration_path(invitation_token: token)
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include('data-controller="dark-mode"')
-      expect(response.body).to include('aria-label="Toggle dark mode"')
+      expect(response.body).not_to include('data-controller="dark-mode"')
+      expect(response.body).not_to include('aria-label="Toggle dark mode"')
       email = Nokogiri::HTML(response.body).at_css("input[name='applicant_user[email]']")
       expect(email["value"]).to eq(invitation.email)
       expect(email.attribute("readonly")).to be_present
@@ -91,6 +91,17 @@ RSpec.describe "Onboarding authentication", type: :request do
       expect(response).to have_http_status(:unprocessable_content)
     end
 
+    it "still requires a first name, a last name and a password on the password form" do
+      invitation
+
+      [ { first_name: "" }, { last_name: "" }, { password: "", password_confirmation: "" } ].each do |blank|
+        params = sign_up_params.deep_merge(applicant_user: blank)
+
+        expect { post applicant_user_registration_path, params: params }.not_to change(ApplicantUser, :count)
+        expect(response).to have_http_status(:unprocessable_content)
+      end
+    end
+
     it "rejects registration without a usable invitation" do
       sign_up_params[:invitation_token] = "unknown"
 
@@ -140,6 +151,18 @@ RSpec.describe "Onboarding authentication", type: :request do
       expect(response).to redirect_to(portal_root_path)
     end
 
+    it "never signs in a user who has no password, whatever password is sent" do
+      create(:applicant_user, :nameless, email: "code.only@example.com")
+
+      [ "password123!", "", "code.only@example.com" ].each do |attempt|
+        post new_applicant_user_session_path, params: { applicant_user: { email: "code.only@example.com", password: attempt } }
+
+        expect(response).not_to redirect_to(portal_root_path)
+        get portal_root_path
+        expect(response).to redirect_to(new_applicant_user_session_path)
+      end
+    end
+
     it "rejects invalid credentials" do
       post new_applicant_user_session_path, params: {
         applicant_user: { email: "user@example.com", password: "wrong" }
@@ -183,6 +206,17 @@ RSpec.describe "Onboarding authentication", type: :request do
       expect(response.body).to include("Welcome, Alex!")
     end
 
+    it "greets a user with no name plainly, not by email address" do
+      applicant_user = create(:applicant_user, :nameless, email: "invitee@example.com")
+      sign_in applicant_user, scope: :applicant_user
+
+      get portal_root_path
+
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Welcome back!")
+      expect(Nokogiri::HTML(response.body).at_css("h1").text).not_to include("invitee@example.com")
+    end
+
     it "does not allow an unconfirmed applicant user to sign in" do
       applicant_user = create(:applicant_user, :unconfirmed)
 
@@ -204,17 +238,15 @@ RSpec.describe "Onboarding authentication", type: :request do
       expect(response).to redirect_to(portal_root_path)
     end
 
-    it "provides a keyboard-accessible theme toggle in the authenticated portal header" do
+    it "is light only: the authenticated portal header has no theme toggle (MH-394)" do
       applicant_user = create(:applicant_user)
       sign_in applicant_user, scope: :applicant_user
 
       get portal_root_path
 
       expect(response).to have_http_status(:ok)
-      toggle = Capybara.string(response.body).find("header button[data-controller='dark-mode']")
-      expect(toggle["data-action"]).to eq("click->dark-mode#toggle")
-      expect(toggle["aria-label"]).to eq("Toggle dark mode")
-      expect(toggle.tag_name).to eq("button")
+      expect(Capybara.string(response.body)).not_to have_css("header button[data-controller='dark-mode']")
+      expect(response.body).not_to include("Toggle dark mode")
     end
 
     it "links authenticated applicant users to the onboarding chat" do

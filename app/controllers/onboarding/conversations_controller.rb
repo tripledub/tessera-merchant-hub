@@ -2,8 +2,6 @@
 
 module Onboarding
   class ConversationsController < Portal::BaseController
-    layout "onboarding"
-
     before_action :set_onboarding_session
 
     def show
@@ -15,6 +13,9 @@ module Onboarding
       @collection_service = Onboarding::DocumentCollectionService.new(@onboarding_session)
       @outstanding_items = @collection_service.outstanding_items
       @resume_notice = resume_notice
+      @quick_replies = Onboarding::QuickReplies.for(@onboarding_session)
+      @company_confirmation = Onboarding::CompanyIdentityConfirmation.prompt(@onboarding_session) if
+        Onboarding::CompanyIdentityConfirmation.pending?(@onboarding_session)
     end
 
     def create

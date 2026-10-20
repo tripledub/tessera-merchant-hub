@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_10_01_160000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_20_100000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,6 +98,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_160000) do
     t.index ["token_digest"], name: "index_applicant_invitations_on_token_digest", unique: true
   end
 
+  create_table "applicant_sign_in_codes", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.uuid "applicant_invitation_id"
+    t.uuid "applicant_user_id"
+    t.string "email", null: false
+    t.string "code_digest", null: false
+    t.datetime "expires_at", null: false
+    t.integer "attempts", default: 0, null: false
+    t.datetime "consumed_at"
+    t.datetime "invalidated_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id", "email", "created_at"], name: "index_applicant_sign_in_codes_on_applicant_email_and_time"
+    t.index ["applicant_id"], name: "index_applicant_sign_in_codes_on_applicant_id"
+    t.index ["applicant_invitation_id"], name: "index_applicant_sign_in_codes_on_applicant_invitation_id"
+    t.index ["applicant_user_id"], name: "index_applicant_sign_in_codes_on_applicant_user_id"
+  end
+
   create_table "applicant_users", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.uuid "applicant_id", null: false
     t.datetime "confirmation_sent_at"
@@ -113,6 +131,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_160000) do
     t.string "reset_password_token"
     t.string "unconfirmed_email"
     t.datetime "updated_at", null: false
+    t.datetime "password_prompt_dismissed_at"
     t.index ["applicant_id"], name: "index_applicant_users_on_applicant_id"
     t.index ["confirmation_token"], name: "index_applicant_users_on_confirmation_token", unique: true
     t.index ["email"], name: "index_applicant_users_on_email", unique: true
@@ -128,6 +147,41 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_160000) do
     t.datetime "updated_at", null: false
     t.index ["author_id"], name: "index_comments_on_author_id"
     t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable_type_and_commentable_id"
+  end
+
+  create_table "data_conflicts", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.string "record_type", null: false
+    t.string "record_id", null: false
+    t.string "field", null: false
+    t.text "held_value"
+    t.integer "held_source", default: 0, null: false
+    t.string "held_provider"
+    t.text "proposed_value"
+    t.integer "proposed_source", default: 0, null: false
+    t.string "proposed_provider"
+    t.integer "status", default: 0, null: false
+    t.datetime "detected_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id", "status"], name: "index_data_conflicts_on_applicant_id_and_status"
+    t.index ["applicant_id"], name: "index_data_conflicts_on_applicant_id"
+    t.index ["record_type", "record_id", "field"], name: "index_data_conflicts_on_open_record_field", unique: true, where: "(status = 0)"
+  end
+
+  create_table "data_provenances", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "applicant_id", null: false
+    t.string "record_type", null: false
+    t.string "record_id", null: false
+    t.string "field", default: "", null: false
+    t.integer "source", default: 0, null: false
+    t.string "provider"
+    t.datetime "retrieved_at"
+    t.text "previous_value"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["applicant_id"], name: "index_data_provenances_on_applicant_id"
+    t.index ["record_type", "record_id", "field"], name: "index_data_provenances_on_record_and_field", unique: true
   end
 
   create_table "domain_blocklist_entries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
@@ -365,6 +419,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_160000) do
     t.index ["applicant_id"], name: "index_onboarding_applications_on_applicant_id", unique: true
   end
 
+  create_table "onboarding_countries", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+    t.uuid "onboarding_application_id", null: false
+    t.string "code", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["onboarding_application_id", "code"], name: "index_onboarding_countries_on_application_and_code", unique: true
+    t.index ["onboarding_application_id"], name: "index_onboarding_countries_on_onboarding_application_id"
+  end
+
   create_table "onboarding_currencies", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.string "code", null: false
     t.datetime "created_at", null: false
@@ -542,8 +605,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_160000) do
   add_foreign_key "applicant_invitations", "applicant_users", column: "claimed_by_id"
   add_foreign_key "applicant_invitations", "merchants", column: "applicant_id"
   add_foreign_key "applicant_invitations", "users", column: "invited_by_id"
+  add_foreign_key "applicant_sign_in_codes", "applicant_invitations", on_delete: :nullify
+  add_foreign_key "applicant_sign_in_codes", "applicant_users", on_delete: :nullify
+  add_foreign_key "applicant_sign_in_codes", "merchants", column: "applicant_id"
   add_foreign_key "applicant_users", "merchants", column: "applicant_id"
   add_foreign_key "comments", "users", column: "author_id"
+  add_foreign_key "data_conflicts", "merchants", column: "applicant_id"
+  add_foreign_key "data_provenances", "merchants", column: "applicant_id"
   add_foreign_key "domain_blocklist_entries", "users", column: "created_by_id", on_delete: :nullify
   add_foreign_key "kyc_corporate_entities", "kyc_documents"
   add_foreign_key "kyc_corporate_entities", "merchants", column: "applicant_id"
@@ -572,6 +640,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_10_01_160000) do
   add_foreign_key "kyc_validation_warnings", "merchants", column: "applicant_id"
   add_foreign_key "merchants", "users", column: "no_corporate_owners_attested_by_id", on_delete: :nullify
   add_foreign_key "onboarding_applications", "merchants", column: "applicant_id"
+  add_foreign_key "onboarding_countries", "onboarding_applications"
   add_foreign_key "onboarding_currencies", "onboarding_applications"
   add_foreign_key "onboarding_messages", "onboarding_sessions"
   add_foreign_key "onboarding_sessions", "merchants", column: "applicant_id"

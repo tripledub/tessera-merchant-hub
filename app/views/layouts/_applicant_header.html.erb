@@ -1,0 +1,12 @@
+<header class="border-b border-kyn-border bg-kyn-surface px-4 sm:px-6 lg:px-8">
+  <div class="mx-auto flex h-14 w-full items-center justify-between gap-4 lg:h-16 <%= applicant_content_width_class %>">
+    <%= render "layouts/applicant_logo", signed_in: true %>
+
+    <div class="flex min-w-0 items-center gap-4">
+      <span class="hidden truncate text-sm text-kyn-slate sm:block"><%= current_applicant_user.email %></span>
+      <%= link_to t("portal.sign_out"), destroy_applicant_user_session_path,
+            data: { turbo_method: :delete },
+            class: "shrink-0 text-sm font-semibold text-kyn-primary-text hover:underline" %>
+    </div>
+  </div>
+</header>

@@ -19,7 +19,7 @@ module Applicants
       record_attempt(result)
       return Result.failure(@applicant, result.error_type) unless result.success
 
-      @applicant.update(company_name: result.registry_profile.company_name)
+      record_registry_company_details(result.registry_profile)
       Kyc::PrincipalsFromRegistry.call(result.registry_profile)
       Kyc::OwnershipFromRegistry.call(result.registry_profile)
 
@@ -27,6 +27,15 @@ module Applicants
     end
 
     private
+
+    # MH-389: through the trust-order rules, so a replaced name is kept for audit and the source is recorded.
+    def record_registry_company_details(profile)
+      provider = Registry::Lookup.provider_for(profile.jurisdiction)
+      { "company_name" => profile.company_name, "company_number" => profile.company_number }.each do |field, value|
+        Provenance::CompanyFields.apply!(applicant: @applicant, field: field, value: value, source: :registry,
+                                         provider: provider, retrieved_at: profile.fetched_at)
+      end
+    end
 
     # Recorded here (not in Registry::Lookup) so PSC-chain lookups for other companies'
     # numbers cannot overwrite the applicant's own status.

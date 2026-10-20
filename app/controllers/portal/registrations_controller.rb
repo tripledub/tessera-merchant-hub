@@ -2,8 +2,9 @@
 
 class Portal::RegistrationsController < Devise::RegistrationsController
   include Portal::AbuseProtection
+  include Portal::InvitationPage
 
-  layout "portal"
+  layout "applicant"
   before_action :load_invitation, only: %i[new create]
   before_action -> { reject_oversized_portal_payload(REGISTRATION_PAYLOAD_LIMIT) }, only: :create
   rate_limit to: 5, within: 10.minutes, with: :portal_rate_limited,
@@ -13,7 +14,7 @@ class Portal::RegistrationsController < Devise::RegistrationsController
     build_resource(sign_up_params)
 
     saved = ApplicantUser.transaction do
-      next false unless resource.save
+      next false unless resource.save(context: :password_registration)
 
       invitation.claim!(resource)
       true
@@ -29,7 +30,7 @@ class Portal::RegistrationsController < Devise::RegistrationsController
       respond_with resource
     end
   rescue ActiveRecord::RecordNotUnique, ApplicantInvitation::NotClaimable
-    head :not_found
+    render_dead_link(params[:invitation_token])
   end
 
   private
@@ -45,10 +46,7 @@ class Portal::RegistrationsController < Devise::RegistrationsController
 
   def load_invitation
     self.invitation = ApplicantInvitation.find_usable_by_token(params[:invitation_token])
-    unless invitation
-      log_invalid_portal_access
-      head :not_found
-    end
+    render_dead_link(params[:invitation_token]) unless invitation
   end
 
   attr_accessor :invitation

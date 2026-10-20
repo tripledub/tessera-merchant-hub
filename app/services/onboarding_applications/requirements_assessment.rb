@@ -8,8 +8,23 @@ module OnboardingApplications
       end
     end
 
+    DocumentRequirements = Data.define(:required, :missing, :readiness)
+
     def self.for(application)
       new(application).call
+    end
+
+    # Documents the shared KYC policy asks for, and which of them are still
+    # missing. Independent of submission, so it also serves draft applications.
+    def self.document_requirements(applicant)
+      readiness = Kyc::Compliance::ReadinessAssessment.for(applicant)
+      document_types = KycDocument.document_types.keys
+
+      DocumentRequirements.new(
+        required: readiness.all_results.flat_map(&:requirements).intersection(document_types).uniq.freeze,
+        missing: readiness.all_results.flat_map(&:missing).intersection(document_types).uniq.freeze,
+        readiness: readiness
+      )
     end
 
     def initialize(application)
@@ -20,30 +35,18 @@ module OnboardingApplications
       return unless application.submitted?
 
       application.valid?(:submission)
-      readiness = Kyc::Compliance::ReadinessAssessment.for(application.applicant)
-      document_types = KycDocument.document_types.keys
-      required_documents = readiness.all_results.flat_map(&:requirements).intersection(document_types)
-      missing_documents = readiness.all_results.flat_map(&:missing).intersection(document_types)
+      documents = self.class.document_requirements(application.applicant)
 
       Result.new(
-        missing_information: missing_information.freeze,
-        required_documents: required_documents.uniq.freeze,
-        missing_documents: missing_documents.uniq.freeze,
-        readiness: readiness
+        missing_information: ErrorMessages.for(application).freeze,
+        required_documents: documents.required,
+        missing_documents: documents.missing,
+        readiness: documents.readiness
       )
     end
 
     private
 
     attr_reader :application
-
-    def missing_information
-      application.errors.objects.map do |error|
-        next error.full_message if application.respond_to?(error.attribute)
-
-        message = I18n.t(error.type, scope: "errors.messages", default: error.type.to_s.humanize)
-        "#{error.attribute.to_s.humanize} #{message}"
-      end
-    end
   end
 end

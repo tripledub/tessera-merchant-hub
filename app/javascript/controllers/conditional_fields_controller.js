@@ -17,6 +17,7 @@ export default class extends Controller {
       container.hidden = !visible
       container.querySelectorAll("input, select, textarea").forEach((field) => {
         field.disabled = !visible
+        if (field.hasAttribute("data-conditional-required")) field.required = visible
       })
     })
   }

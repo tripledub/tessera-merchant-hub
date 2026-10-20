@@ -80,6 +80,19 @@ body {
   border-radius: 8px;
 }
 
+.email-code {
+  margin: 8px 0 20px;
+  padding: 16px 12px;
+  background-color: #eef0fe; /* kyn-primary-tint */
+  border-radius: 12px;
+  color: #0e1b2b; /* kyn-navy */
+  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 8px;
+  text-align: center;
+}
+
 .email-link-fallback {
   word-break: break-all;
   color: #465fff; /* brand-500 */

@@ -1,0 +1,64 @@
+<%# Enter the six-digit code (Auth / 2) and, after a wrong one, Auth / 2a. %>
+<% content_for :title, t("portal.sign_in_codes.show.page_title") %>
+
+<%= render "layouts/applicant_auth_card", title: t("portal.sign_in_codes.show.title"), back_path: back_path do %>
+  <p class="-mt-3 text-[13px] leading-[21px] text-kyn-slate">
+    <% if pending_sign_in.returning %>
+      <%= t("portal.sign_in_codes.show.sent_to_returning") %>
+    <% else %>
+      <%= t("portal.sign_in_codes.show.sent_to") %>
+    <% end %>
+    <span class="break-words font-semibold text-kyn-navy"><%= pending_sign_in.email %></span><%= t("portal.sign_in_codes.show.expires") %>
+  </p>
+
+  <%= form_with url: portal_sign_in_code_path, method: :post, class: "mt-5",
+        data: { controller: "code-input", code_input_error_value: @attempts_left.present? || action_name == "create" } do %>
+    <%= hidden_field_tag :code, "", id: nil, data: { code_input_target: "hidden" } %>
+    <fieldset class="m-0 min-w-0 border-0 p-0" aria-describedby="code-error">
+      <legend class="sr-only"><%= t("portal.sign_in_codes.show.legend") %></legend>
+      <div class="flex justify-between gap-2">
+        <% 6.times do |index| %>
+          <%= tag.input type: "text", inputmode: "numeric", pattern: "[0-9]*", enterkeyhint: "go",
+                autocomplete: index.zero? ? "one-time-code" : "off",
+                aria: { label: t("portal.sign_in_codes.show.digit", number: index + 1), invalid: (action_name == "create").to_s },
+                class: "kyn-otp-box",
+                data: { code_input_target: "box",
+                        action: "input->code-input#input keydown->code-input#keydown paste->code-input#paste focus->code-input#select" } %>
+        <% end %>
+      </div>
+    </fieldset>
+
+    <% if action_name == "create" %>
+      <p id="code-error" role="alert" data-code-input-target="error" class="mt-3 text-[13px] text-kyn-error">
+        <% if @attempts_left %>
+          <%= t("portal.sign_in_codes.show.wrong", count: @attempts_left) %>
+        <% else %>
+          <%= t("portal.sign_in_codes.show.incomplete") %>
+        <% end %>
+      </p>
+    <% end %>
+
+    <%= button_tag t("portal.sign_in_codes.show.verify"), type: "submit", disabled: true,
+          class: "kyn-btn-primary mt-6", data: { code_input_target: "submit" } %>
+  <% end %>
+
+  <div class="mt-5 text-center text-[13px] leading-[18px] text-kyn-slate"
+       data-controller="resend-countdown"
+       data-resend-countdown-seconds-value="<%= @code_status.resend_in %>"
+       data-resend-countdown-ready-value="<%= t("portal.sign_in_codes.show.resend_ready") %>">
+    <p data-resend-countdown-target="waiting">
+      <%= t("portal.sign_in_codes.show.didnt_get_it") %>
+      <span class="font-medium"><%= t("portal.sign_in_codes.show.resend_in") %></span>
+      <span class="font-semibold text-kyn-navy" data-resend-countdown-target="time"><%= format("%d:%02d", *@code_status.resend_in.divmod(60)) %></span>
+    </p>
+    <div data-resend-countdown-target="action" hidden>
+      <%= button_to portal_sign_in_code_resend_path, method: :post, class: "inline-flex min-h-[44px] items-center",
+            form: { class: "inline" } do %>
+        <%= t("portal.sign_in_codes.show.didnt_get_it") %>&nbsp;<span class="kyn-link"><%= t("portal.sign_in_codes.show.resend") %></span>
+      <% end %>
+    </div>
+    <p class="sr-only" aria-live="polite" data-resend-countdown-target="status"></p>
+  </div>
+
+  <%= render "portal/sign_in_codes/support" %>
+<% end %>
