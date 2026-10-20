@@ -131,6 +131,71 @@ RSpec.describe ApplicantUser, type: :model do
     end
   end
 
+  # MH-408: passwords are optional, and applicants choose a stronger minimum than the admin users.
+  describe "password rules" do
+    it "needs at least 8 characters for an applicant, and at most 128" do
+      short = build(:applicant_user, password: "abcdefg", password_confirmation: "abcdefg")
+      ok = build(:applicant_user, password: "abcdefgh", password_confirmation: "abcdefgh")
+      long = build(:applicant_user, password: "a" * 129, password_confirmation: "a" * 129)
+
+      expect(short).not_to be_valid
+      expect(short.errors[:password]).to be_present
+      expect(ok).to be_valid
+      expect(long).not_to be_valid
+    end
+
+    it "leaves the admin user's rules alone (6 to 128)" do
+      expect(build(:user, password: "abc123", password_confirmation: "abc123")).to be_valid
+      expect(User.password_length).to eq(6..128)
+    end
+
+    it "lets an existing 6 or 7 character password keep signing in, because the rule only applies when a password is set" do
+      user = create(:applicant_user, :nameless)
+      user.update_column(:encrypted_password, Devise::Encryptor.digest(described_class, "abc123"))
+
+      expect(user.reload.valid_password?("abc123")).to be(true)
+      expect(user.update(first_name: "Alex")).to be(true)
+    end
+  end
+
+  describe "#password_prompt_due?" do
+    let(:user) { create(:applicant_user, :nameless) }
+
+    def start_onboarding(completed: [ "company" ])
+      create(:onboarding_application, applicant: user.applicant, current_step: "fulfilment", completed_steps: completed)
+    end
+
+    it "is due for a user with no password, not dismissed, who has completed a step" do
+      start_onboarding
+
+      expect(user).to be_password_prompt_due
+    end
+
+    it "is not due before any step is completed, or with no application" do
+      expect(user).not_to be_password_prompt_due
+
+      start_onboarding(completed: [])
+      expect(user.reload).not_to be_password_prompt_due
+    end
+
+    it "is not due once dismissed, or once a password is set" do
+      start_onboarding
+      user.touch(:password_prompt_dismissed_at)
+      expect(user).not_to be_password_prompt_due
+
+      other = create(:applicant_user)
+      create(:onboarding_application, applicant: other.applicant, current_step: "fulfilment", completed_steps: [ "company" ])
+      expect(other).not_to be_password_prompt_due
+    end
+  end
+
+  describe "#password_set?" do
+    it "tells a user with a password from one without" do
+      expect(build(:applicant_user)).to be_password_set
+      expect(build(:applicant_user, :nameless)).not_to be_password_set
+    end
+  end
+
   it "leaves existing users with names and passwords exactly as they were" do
     existing = create(:applicant_user, first_name: "Alex", last_name: "Sample")
 
