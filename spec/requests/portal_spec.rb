@@ -213,7 +213,7 @@ RSpec.describe "Onboarding authentication", type: :request do
       get portal_root_path
 
       expect(response).to have_http_status(:ok)
-      expect(response.body).to include("Welcome back!")
+      expect(response.body).to include("Welcome back")
       expect(Nokogiri::HTML(response.body).at_css("h1").text).not_to include("invitee@example.com")
     end
 
@@ -255,7 +255,7 @@ RSpec.describe "Onboarding authentication", type: :request do
 
       get portal_root_path
 
-      expect(response.body).to include("Continue KYC onboarding")
+      expect(response.body).to include("Start onboarding")
       expect(response.body).to include(portal_onboarding_path)
     end
   end
