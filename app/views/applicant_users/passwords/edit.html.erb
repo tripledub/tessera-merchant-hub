@@ -1,26 +1,45 @@
-<%= render "layouts/auth_card", title: t("applicant_users.passwords.edit.title") do %>
+<%# Set (or change) a password from the emailed link. For someone with no password
+    yet it reads as optional, per the "Set password" Figma frames (MH-408). %>
+<% first = first_password? %>
+<%= render "layouts/applicant_auth_card",
+      title: (first ? t("applicant_users.passwords.edit.first_title") : t("applicant_users.passwords.edit.title")) do %>
+  <% if first %>
+    <p class="-mt-3 mb-5 text-sm leading-[22px] text-kyn-slate"><%= t("applicant_users.passwords.edit.first_subtitle") %></p>
+  <% end %>
   <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put }) do |f| %>
-    <%= render "devise/shared/error_messages", resource: resource %>
+    <%# The reset token has no field of its own, so its error is an announced callout. %>
+    <% if resource.errors[:reset_password_token].any? %>
+      <div role="alert" class="mb-5 rounded-kyn-md border border-kyn-error bg-kyn-error-tint p-3 text-sm font-medium text-kyn-error">
+        <%= resource.errors.full_messages_for(:reset_password_token).first %>
+      </div>
+    <% end %>
     <%= f.hidden_field :reset_password_token %>
     <div class="space-y-5">
-      <div>
-        <%= f.label :password, t("applicant_users.passwords.edit.new_password"), class: "form-label" %>
-        <% if @minimum_password_length %>
-          <p class="mb-1 text-xs text-gray-400"><%= @minimum_password_length %> characters minimum</p>
-        <% end %>
-        <%= f.password_field :password, autofocus: true, autocomplete: "new-password",
-              class: "form-input", placeholder: "••••••••" %>
-      </div>
-      <div>
-        <%= f.label :password_confirmation, t("applicant_users.passwords.edit.confirm_password"), class: "form-label" %>
-        <%= f.password_field :password_confirmation, autocomplete: "new-password",
-              class: "form-input", placeholder: "••••••••" %>
-      </div>
-      <%= f.submit t("applicant_users.passwords.edit.submit"), class: "btn-primary w-full" %>
+      <%= render "applicant_users/shared/password_field",
+            form: f, resource: resource, attribute: :password,
+            label: t("applicant_users.passwords.edit.new_password"),
+            autocomplete: "new-password", required: true, autofocus: true,
+            minlength: @minimum_password_length,
+            hint: (if first
+                     t("applicant_users.passwords.edit.first_hint", count: @minimum_password_length)
+                   elsif @minimum_password_length
+                     t("applicant_users.shared.password_field.minimum", count: @minimum_password_length)
+                   end) %>
+      <%= render "applicant_users/shared/password_field",
+            form: f, resource: resource, attribute: :password_confirmation,
+            label: t("applicant_users.passwords.edit.confirm_password"),
+            autocomplete: "new-password", required: true, toggle: false %>
+      <%= f.submit (first ? t("applicant_users.passwords.edit.first_submit") : t("applicant_users.passwords.edit.submit")),
+            class: "kyn-btn-primary" %>
     </div>
   <% end %>
-  <div class="mt-5 text-center">
-    <%= link_to t("applicant_users.passwords.edit.back_to_sign_in"), new_session_path(resource_name),
-          class: "text-sm text-brand-600 hover:text-brand-700 hover:underline" %>
+  <div class="mt-4 flex justify-center">
+    <% if first && applicant_user_signed_in? %>
+      <%= link_to t("applicant_users.passwords.edit.not_now"), portal_root_path,
+            class: "inline-flex min-h-[44px] items-center text-sm font-semibold text-kyn-slate hover:underline" %>
+    <% else %>
+      <%= link_to t("applicant_users.passwords.edit.back_to_sign_in"), new_session_path(resource_name),
+            class: "kyn-link inline-flex min-h-[44px] items-center text-sm" %>
+    <% end %>
   </div>
 <% end %>

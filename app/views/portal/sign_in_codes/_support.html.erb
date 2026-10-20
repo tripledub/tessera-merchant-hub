@@ -1,0 +1,7 @@
+<p class="mt-5 text-center text-xs font-semibold leading-4 tracking-[0.02em] text-kyn-slate">
+  <% if pending_sign_in&.returning %>
+    <%= link_to t("portal.sign_in_codes.support.wrong_email_returning"), back_path, class: "kyn-link text-xs" %>
+  <% else %>
+    <%= t("portal.sign_in_codes.support.wrong_email") %>
+  <% end %>
+</p>

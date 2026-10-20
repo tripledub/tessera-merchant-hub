@@ -126,7 +126,7 @@ RSpec.describe "Portal application shell", type: :request do
     expect(applicant.primary_business_address).to have_attributes(line1: "1 Test Street")
   end
 
-  it "applies dark-mode contrast tokens to the registered and trading address fieldsets" do
+  it "renders the registered and trading address fieldsets as cards, with no dark-mode classes" do
     applicant_user = create(:applicant_user)
     create(:onboarding_application, applicant: applicant_user.applicant)
     sign_in applicant_user, scope: :applicant_user
@@ -137,8 +137,8 @@ RSpec.describe "Portal application shell", type: :request do
     page = Capybara.string(response.body)
     fieldsets = page.all("fieldset.card")
     expect(fieldsets.size).to eq(2)
-    fieldsets.each { |fieldset| expect(fieldset["class"]).to include("card") } # theme-aware surface: dark:bg-gray-900 dark:border-gray-800
-    page.all("fieldset.card legend").each { |legend| expect(legend["class"]).to include("dark:text-white/90") }
+    fieldsets.each { |fieldset| expect(fieldset["class"]).to include("card") }
+    page.all("fieldset.card legend").each { |legend| expect(legend["class"]).not_to include("dark:") }
   end
 
   it "does not mark the company number input as required" do
@@ -292,6 +292,42 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response).to redirect_to(portal_application_path(step: "processing"))
     expect(application.processing_currencies.pluck(:code)).to contain_exactly("GBP", "EUR")
     expect(application.settlement_currencies.pluck(:code)).to contain_exactly("USD")
+  end
+
+  it "saves the selected target countries and advances" do
+    applicant_user = create(:applicant_user)
+    application = countries_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "countries")
+    expect(response.body).to include("United Kingdom", "Singapore", "New Zealand")
+
+    patch portal_application_path, params: {
+      step: "countries",
+      onboarding_application: { target_country_codes: [ "", "GB", "IE" ] }
+    }
+
+    expect(response).to redirect_to(portal_application_path(step: "principals"))
+    expect(application.reload.onboarding_countries.pluck(:code)).to contain_exactly("GB", "IE")
+  end
+
+  it "re-checks saved countries and blocks an empty selection" do
+    applicant_user = create(:applicant_user)
+    application = countries_application_for(applicant_user)
+    application.onboarding_countries.create!(code: "FR")
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "countries")
+    expect(Capybara.string(response.body)).to have_select("country-picker-select", selected: "France")
+
+    patch portal_application_path, params: {
+      step: "countries",
+      onboarding_application: { target_country_codes: [ "" ] }
+    }
+
+    expect(response).to have_http_status(:unprocessable_content)
+    expect(response.body).to include("Target countries can&#39;t be blank")
+    expect(application.reload.current_step).to eq("countries")
   end
 
   it "restores currencies and renders nested format errors" do
@@ -463,7 +499,7 @@ RSpec.describe "Portal application shell", type: :request do
       }
     }
 
-    expect(response).to redirect_to(portal_application_path(step: "pricing"))
+    expect(response).to redirect_to(portal_application_path(step: "volumes"))
     expect(application.reload).to have_attributes(
       descriptor: "SPECIMEN SHOP",
       descriptor_company_number: "12345678",
@@ -637,6 +673,26 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response.body).not_to include("Same as registered address")
   end
 
+  it "enqueues a registry re-check once the application is submitted (MH-389)" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    expect { patch portal_application_path, params: { step: "review" } }
+      .to have_enqueued_job(RegistryRecheckJob).with(application.applicant_id)
+  end
+
+  it "does not enqueue a registry re-check when submission fails (MH-389)" do
+    applicant_user = create(:applicant_user)
+    application = review_application_for(applicant_user)
+    application.update_column(:descriptor, nil)
+    sign_in applicant_user, scope: :applicant_user
+
+    expect { patch portal_application_path, params: { step: "review" } }
+      .not_to have_enqueued_job(RegistryRecheckJob)
+    expect(application.reload).to be_draft
+  end
+
   it "reviews supplied information by section and submits a complete application" do
     applicant_user = create(:applicant_user)
     application = review_application_for(applicant_user)
@@ -658,7 +714,7 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response.body).to include('aria-valuenow="100"')
   end
 
-  it "applies dark-mode contrast tokens to the review page sections and values" do
+  it "renders the review page sections as cards, with no dark-mode classes" do
     applicant_user = create(:applicant_user)
     application = review_application_for(applicant_user)
     sign_in applicant_user, scope: :applicant_user
@@ -669,17 +725,25 @@ RSpec.describe "Portal application shell", type: :request do
     page = Capybara.string(response.body)
     sections = page.all("section.card")
     expect(sections.size).to be >= 2
-    sections.each { |section| expect(section["class"]).to include("card") } # theme-aware surface: dark:bg-gray-900 dark:border-gray-800
-    page.all("section.card h3").each { |heading| expect(heading["class"]).to include("dark:text-white/90") }
-    page.all("section.card dt").each { |label| expect(label["class"]).to include("dark:text-gray-400") }
-    page.all("section.card dd").each { |value| expect(value["class"]).to include("dark:text-white/90") }
+    sections.each { |section| expect(section["class"]).to include("card") }
+    expect(response.body).not_to include("dark:")
 
     patch portal_application_path, params: { step: "review" }
     expect(response).to redirect_to(portal_application_path(step: "review"))
 
     get portal_application_path(step: "review")
     submitted_notice = Capybara.string(response.body).find("p.text-green-700")
-    expect(submitted_notice["class"]).to include("dark:text-green-400")
+    expect(submitted_notice["class"]).not_to include("dark:")
+  end
+
+  it "shows the selected target countries on the review page" do
+    applicant_user = create(:applicant_user)
+    review_application_for(applicant_user)
+    sign_in applicant_user, scope: :applicant_user
+
+    get portal_application_path(step: "review")
+
+    expect(response.body).to include("Target countries", "United Kingdom")
   end
 
   it "highlights missing required information and prevents submission" do
@@ -695,9 +759,11 @@ RSpec.describe "Portal application shell", type: :request do
     expect(application.reload).to be_draft
   end
 
-  it "wires client-side validation onto every non-repeatable onboarding step form" do
+  it "wires client-side validation onto every onboarding step form, including the repeatable ones" do
     steps_setup = {
       "company" => ->(applicant_user) { create(:onboarding_application, applicant: applicant_user.applicant) },
+      "currencies" => method(:currency_application_for),
+      "principals" => method(:principals_application_for),
       "descriptor" => method(:descriptor_application_for),
       "fulfilment" => method(:fulfilment_application_for),
       "processing" => method(:processing_application_for),
@@ -763,6 +829,15 @@ RSpec.describe "Portal application shell", type: :request do
     )
   end
 
+  def countries_application_for(applicant_user)
+    create(
+      :onboarding_application,
+      applicant: applicant_user.applicant,
+      current_step: "countries",
+      completed_steps: %w[company fulfilment currencies processing payments descriptor volumes]
+    )
+  end
+
   def processing_application_for(applicant_user, **attributes)
     create(
       :onboarding_application,
@@ -798,7 +873,7 @@ RSpec.describe "Portal application shell", type: :request do
       :onboarding_application,
       applicant: applicant_user.applicant,
       current_step: "principals",
-      completed_steps: %w[company fulfilment currencies processing payments descriptor pricing volumes countries]
+      completed_steps: %w[company fulfilment currencies processing payments descriptor volumes countries]
     )
   end
 
@@ -831,6 +906,7 @@ RSpec.describe "Portal application shell", type: :request do
       completed_steps: OnboardingApplication::STEPS - [ "review" ], **review_required_answers)
     application.processing_currencies.create!(code: "GBP")
     application.settlement_currencies.create!(code: "GBP")
+    application.onboarding_countries.create!(code: "GB")
     application
   end
 

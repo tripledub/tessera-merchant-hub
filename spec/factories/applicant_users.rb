@@ -12,5 +12,12 @@ FactoryBot.define do
     trait :unconfirmed do
       confirmed_at { nil }
     end
+
+    # What a one-time-code sign-in creates: an email and nothing else.
+    trait :nameless do
+      first_name { nil }
+      last_name { nil }
+      password { nil }
+    end
   end
 end

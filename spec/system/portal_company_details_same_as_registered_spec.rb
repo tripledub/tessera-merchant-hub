@@ -27,7 +27,7 @@ RSpec.describe "Portal company details: same as registered address", type: :syst
   end
 
   def sign_in_to_portal(applicant_user)
-    visit new_applicant_user_session_path
+    visit applicant_user_password_sign_in_path
     fill_in "applicant_user_email", with: applicant_user.email
     fill_in "applicant_user_password", with: applicant_user.password
     click_button "Sign in"

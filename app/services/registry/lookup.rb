@@ -31,6 +31,13 @@ module Registry
       CLIENTS[jurisdiction] || (SYNTHETIC_CLIENTS[jurisdiction] if synthetic_data_enabled?)
     end
 
+    # MH-389: the label recorded in provenance for the provider behind a jurisdiction's client.
+    PROVIDERS = { "gb" => "companies_house", "xu" => "synthetic" }.freeze
+
+    def self.provider_for(jurisdiction)
+      PROVIDERS.fetch(jurisdiction.to_s, jurisdiction.to_s)
+    end
+
     # Jurisdictions a user can pick when creating an applicant.
     def self.selectable_jurisdictions
       CLIENTS.keys + (synthetic_data_enabled? ? SYNTHETIC_CLIENTS.keys : [])

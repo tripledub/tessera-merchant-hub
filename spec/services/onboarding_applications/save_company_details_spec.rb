@@ -40,6 +40,37 @@ RSpec.describe OnboardingApplications::SaveCompanyDetails do
     expect(applicant.reload.company_number).to be_nil
   end
 
+  it "records applicant provenance for the company name and number it saves (MH-389)" do
+    save_details
+
+    expect(Provenance::CompanyFields.source_for(applicant, "company_name")).to eq(:applicant_declared)
+    expect(Provenance::CompanyFields.source_for(applicant, "company_number")).to eq(:applicant_declared)
+  end
+
+  it "keeps the applicant's change to a registry-sourced name and records a conflict (MH-389)" do
+    applicant.update!(company_name: "SPECIMEN WIDGETS LIMITED")
+    Provenance::CompanyFields.apply!(applicant: applicant, field: "company_name", value: "SPECIMEN WIDGETS LIMITED",
+                                     source: :registry, provider: "companies_house")
+
+    expect(save_details).to be true
+
+    expect(applicant.reload.company_name).to eq("Specimen Widgets Ltd")
+    expect(applicant.data_conflicts.status_open.first)
+      .to have_attributes(field: "company_name", held_value: "SPECIMEN WIDGETS LIMITED", held_source: "registry",
+                          proposed_value: "Specimen Widgets Ltd")
+  end
+
+  it "records no conflict when the form leaves a registry-sourced name unchanged (MH-389)" do
+    applicant.update!(company_name: "Specimen Widgets Ltd")
+    Provenance::CompanyFields.apply!(applicant: applicant, field: "company_name", value: "Specimen Widgets Ltd",
+                                     source: :registry, provider: "companies_house")
+
+    save_details
+
+    expect(applicant.data_conflicts).to be_empty
+    expect(Provenance::CompanyFields.source_for(applicant, "company_name")).to eq(:registry)
+  end
+
   it "stores company answers in the shared application and applicant domain" do
     expect(save_details).to be true
 

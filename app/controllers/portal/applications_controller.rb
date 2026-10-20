@@ -30,6 +30,7 @@ class Portal::ApplicationsController < Portal::BaseController
     return update_company if step == "company"
     return update_fulfilment if step == "fulfilment"
     return update_currencies if step == "currencies"
+    return update_countries if step == "countries"
     return update_processing if step == "processing"
     return update_payments if step == "payments"
     return update_descriptor if step == "descriptor"
@@ -53,13 +54,46 @@ class Portal::ApplicationsController < Portal::BaseController
     same_as_registered = ActiveModel::Type::Boolean.new.cast(attributes.delete(:trading_address_same_as_registered))
     mirror_trading_address!(attributes) if same_as_registered
 
-    if OnboardingApplications::SaveCompanyDetails.call(application: @application, attributes: attributes)
+    # The names are checked first, so a name error is never hidden behind a
+    # company save that has already moved the applicant on (MH-407).
+    if assign_applicant_names && OnboardingApplications::SaveCompanyDetails.call(application: @application, attributes: attributes)
+      save_applicant_names
       redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
     else
       @step = "company"
       prepare_company_details
       render :show, status: :unprocessable_content
     end
+  end
+
+  # The optional name belongs to the signed-in applicant user only (never to a
+  # colleague on the same company), and arrives apart from the company answers.
+  # No applicant_user params at all means "leave the names alone"; a blank value
+  # clears one. Returns false when a name is not valid; the typed values stay on
+  # the user so the form shows them.
+  def assign_applicant_names
+    names = applicant_name_params
+    return true if names.blank?
+
+    current_applicant_user.assign_attributes(names)
+    current_applicant_user.validate
+    %i[first_name last_name].all? { |attribute| current_applicant_user.errors[attribute].empty? }
+  end
+
+  # Only the two name columns are written: the rest of the user (email, password)
+  # is not this step's business, and the names were validated above.
+  def save_applicant_names
+    changed = current_applicant_user.changes_to_save.slice("first_name", "last_name")
+    return if changed.empty?
+
+    current_applicant_user.update_columns(changed.transform_values(&:last).merge(updated_at: Time.current))
+  end
+
+  def applicant_name_params
+    raw = params[:applicant_user]
+    return unless raw.is_a?(ActionController::Parameters)
+
+    raw.permit(:first_name, :last_name).to_h
   end
 
   def prepare_company_details
@@ -110,6 +144,15 @@ class Portal::ApplicationsController < Portal::BaseController
     @application.settlement_currencies.build if @application.settlement_currencies.empty?
   end
 
+  def update_countries
+    if OnboardingApplications::SaveCountries.call(application: @application, attributes: countries_params)
+      redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
+    else
+      @step = "countries"
+      render :show, status: :unprocessable_content
+    end
+  end
+
   def update_processing
     if OnboardingApplications::SaveProcessingHistory.call(application: @application, attributes: processing_params)
       redirect_to portal_application_path(step: @application.current_step), notice: t("portal.applications.saved")
@@ -154,6 +197,8 @@ class Portal::ApplicationsController < Portal::BaseController
 
   def update_review
     if OnboardingApplications::Submit.call(application: @application)
+      # MH-389: after the submission has committed; never affects it.
+      RegistryRecheckJob.perform_later(@application.applicant_id)
       redirect_to portal_application_path(step: "review"), notice: t("portal.applications.submitted")
     else
       @step = "review"
@@ -198,6 +243,10 @@ class Portal::ApplicationsController < Portal::BaseController
       processing_currencies_attributes: %i[id code _destroy],
       settlement_currencies_attributes: %i[id code _destroy]
     )
+  end
+
+  def countries_params
+    params.require(:onboarding_application).permit(target_country_codes: [])
   end
 
   def processing_params

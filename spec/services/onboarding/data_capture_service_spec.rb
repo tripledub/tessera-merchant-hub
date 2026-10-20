@@ -37,6 +37,67 @@ RSpec.describe Onboarding::DataCaptureService do
       expect(session.reload.stage_data["company_info"]).to eq(result)
     end
 
+    describe "company identity write-through (MH-387)" do
+      it "records applicant provenance and a conflict when the chat changes a registry-sourced name (MH-389)" do
+        applicant = create(:applicant, company_name: nil, company_number: nil)
+        Provenance::CompanyFields.apply!(applicant: applicant, field: "company_name", value: "ACME WIDGETS LIMITED",
+                                         source: :registry, provider: "companies_house")
+        session = create(:onboarding_session, applicant: applicant, current_stage: :company_info)
+
+        described_class.call(session: session, extracted_data: { "company_name" => "Acme Widgets Ltd" })
+
+        expect(applicant.reload.company_name).to eq("Acme Widgets Ltd")
+        expect(Provenance::CompanyFields.source_for(applicant, "company_name")).to eq(:applicant_declared)
+        expect(applicant.data_conflicts.status_open.first)
+          .to have_attributes(held_value: "ACME WIDGETS LIMITED", proposed_value: "Acme Widgets Ltd")
+      end
+
+      it "writes the company name and number captured in chat to the application" do
+        applicant = create(:applicant, company_name: nil, company_number: nil)
+        session = create(:onboarding_session, applicant: applicant, current_stage: :company_info)
+
+        described_class.call(session: session, extracted_data: {
+          "company_name" => "Acme Widgets Ltd",
+          "registration_number" => "12345678"
+        })
+
+        expect(applicant.reload).to have_attributes(company_name: "Acme Widgets Ltd", company_number: "12345678")
+      end
+
+      it "replaces values already on the application with the applicant's answer" do
+        applicant = create(:applicant, company_name: "Old Name Ltd", company_number: "00000001")
+        session = create(:onboarding_session, applicant: applicant, current_stage: :company_info)
+
+        described_class.call(session: session, extracted_data: {
+          "company_name" => "New Name Ltd",
+          "registration_number" => "87654321"
+        })
+
+        expect(applicant.reload).to have_attributes(company_name: "New Name Ltd", company_number: "87654321")
+      end
+
+      it "does not overwrite stored values with blank answers" do
+        applicant = create(:applicant, company_name: "Acme Widgets Ltd", company_number: "12345678")
+        session = create(:onboarding_session, applicant: applicant, current_stage: :company_info)
+
+        described_class.call(session: session, extracted_data: { "company_name" => " ", "registration_number" => "" })
+
+        expect(applicant.reload).to have_attributes(company_name: "Acme Widgets Ltd", company_number: "12345678")
+      end
+
+      it "leaves the application alone for company fields the form has no home for" do
+        applicant = create(:applicant, company_name: "Acme Widgets Ltd", company_number: "12345678")
+        session = create(:onboarding_session, applicant: applicant, current_stage: :company_info)
+
+        described_class.call(session: session, extracted_data: {
+          "company_type" => "limited_company",
+          "registered_address" => "1 High Street"
+        })
+
+        expect(applicant.reload).to have_attributes(company_name: "Acme Widgets Ltd", company_number: "12345678")
+      end
+    end
+
     it "merges looping stage values into current_item until the item is complete" do
       session = create(:onboarding_session, current_stage: :directors_ubos)
 

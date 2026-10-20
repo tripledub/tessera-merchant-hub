@@ -14,8 +14,36 @@ RSpec.describe OnboardingApplication, type: :model do
 
   it "defines the ordered self-service sections" do
     expect(described_class::STEPS).to eq(%w[
-      company fulfilment currencies processing payments descriptor pricing volumes countries principals review
+      company fulfilment currencies processing payments descriptor volumes countries principals review
     ])
+  end
+
+  describe "target countries" do
+    it "requires at least one country on the countries step and at submission" do
+      application = create(:onboarding_application)
+
+      expect(application.valid?(:countries)).to be false
+      expect(application.errors.of_kind?(:onboarding_countries, :blank)).to be true
+      expect(application.valid?(:submission)).to be false
+      expect(application.errors.of_kind?(:onboarding_countries, :blank)).to be true
+    end
+
+    it "exposes the selected codes through target_country_codes" do
+      application = create(:onboarding_application)
+      application.target_country_codes = %w[gb de]
+
+      expect(application.target_country_codes).to contain_exactly("GB", "DE")
+      expect(application.valid?(:countries)).to be true
+    end
+
+    it "does not count unselected countries" do
+      application = create(:onboarding_application)
+      application.onboarding_countries.create!(code: "GB")
+      application.target_country_codes = []
+
+      expect(application.target_country_codes).to be_empty
+      expect(application.valid?(:countries)).to be false
+    end
   end
 
   describe "payment details validation" do

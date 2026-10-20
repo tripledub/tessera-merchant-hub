@@ -10,6 +10,10 @@ class ApplicationController < ActionController::Base
 
   before_action :authenticate_user!
 
+  # Devise's own controllers (password reset, confirmation) serve applicants as
+  # well as admins. Applicant ones use the applicant layout (MH-394).
+  layout :resolve_layout
+
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
 
   # Safe alternative to `policy(record).query` for partials that may be
@@ -30,6 +34,10 @@ class ApplicationController < ActionController::Base
   helper_method :viewer_can?
 
   private
+
+  def resolve_layout
+    devise_controller? && devise_mapping.name == :applicant_user ? "applicant" : "application"
+  end
 
   def user_not_authorized
     respond_to do |format|

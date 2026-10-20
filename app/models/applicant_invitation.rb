@@ -3,6 +3,10 @@
 class ApplicantInvitation < ApplicationRecord
   TOKEN_BYTES = 32
   EXPIRY = 48.hours
+  # A renewal email's link travels to the mail job encrypted for this long and for
+  # this purpose (MH-412): job arguments are stored in the queue database.
+  RENEWAL_MAIL_PURPOSE = :applicant_invitation_renewal
+  RENEWAL_MAIL_LIFETIME = 15.minutes
   class NotClaimable < StandardError; end
 
   belongs_to :applicant
@@ -34,6 +38,18 @@ class ApplicantInvitation < ApplicationRecord
     return if token.blank?
 
     usable.find_by(token_digest: digest(token))
+  end
+
+  # Finds an invitation whether or not it is still usable (expired, claimed or
+  # revoked included); only for deciding whether a fresh link may be sent.
+  def self.find_by_token(token)
+    return if token.blank?
+
+    find_by(token_digest: digest(token))
+  end
+
+  def expired?
+    expires_at.present? && expires_at <= Time.current
   end
 
   def self.digest(token)

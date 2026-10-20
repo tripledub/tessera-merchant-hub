@@ -1,12 +1,32 @@
-@import url("https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap") layer(base);
-
 @import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
+/* Applicant font (MH-394): Plus Jakarta Sans, self-hosted (SIL OFL) so applicant
+   pages never call Google. Variable font, Latin and Latin Extended (Maltese).
+   Outfit (admin) is loaded by the admin layout, not from this shared sheet. */
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("PlusJakartaSans-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: "Plus Jakarta Sans";
+  font-style: normal;
+  font-weight: 400 700;
+  font-display: swap;
+  src: url("PlusJakartaSans-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
 @theme {
   --font-*: initial;
   --font-outfit: Outfit, sans-serif;
+  --font-kynetic: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 
   --breakpoint-*: initial;
   --breakpoint-2xsm: 375px;
@@ -149,6 +169,32 @@
   --z-index-999: 999;
   --z-index-9999: 9999;
   --z-index-99999: 99999;
+
+  /* Kynetic applicant theme (MH-394). Names and values mirror the Figma
+     variable collections "Kynetic Applicant" and "Kynetic Shape". Applicant
+     pages only; the admin UI keeps brand-*. Cyan is never used as text. */
+  --color-kyn-primary: #4f5bf5;
+  --color-kyn-primary-hover: #4650e0;
+  --color-kyn-primary-disabled: #a7adfa;
+  --color-kyn-primary-tint: #eef0fe;
+  --color-kyn-primary-text: #3f4bd8;
+  --color-kyn-navy: #0e1b2b;
+  --color-kyn-slate: #5b6878;
+  --color-kyn-bg: #f7f9fc;
+  --color-kyn-surface: #ffffff;
+  --color-kyn-assistant-bubble: #f0f3f7;
+  --color-kyn-border: #e2e8f0;
+  --color-kyn-error: #c9342b;
+  --color-kyn-error-tint: #fdf3f2;
+  --color-kyn-success: #0b7a4b;
+  --color-kyn-success-tint: #e7f4ee;
+  --color-kyn-warning: #8a5a00;
+  --color-kyn-warning-tint: #fdf3e1;
+  --kyn-gradient-brand: linear-gradient(90deg, #00d5fd, #2e88fb, #7e32f9);
+
+  --radius-kyn-md: 12px;
+  --radius-kyn-lg: 16px;
+  --radius-kyn-full: 9999px;
 }
 
 /* ─── Base ────────────────────────────────���────────────────────────────��─── */
@@ -348,6 +394,167 @@ aside[data-collapsed] .menu-item {
   appearance: none;
 }
 
+/* ─── Applicant primitives (MH-395) ──────────────────────────────────────────
+   Kynetic applicant look: kyn-* tokens only, light only (no dark: variants).
+   The shared utilities above are used by admin views too, so these are
+   separate. Error state comes from aria-invalid (set by form_validation_controller
+   and by FormHelper#kyn_field_aria), not from swapping classes.
+   Controls are at least 44px tall; keyboard focus shows a 3px primary ring.
+   The select chevron and checkbox tick are inline SVGs, so their colours are
+   literal (a data URI cannot read CSS variables): slate #5B6878, white. */
+
+@utility kyn-btn-primary {
+  @apply inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-kyn-md bg-kyn-primary px-6
+         text-[15px] font-semibold text-kyn-surface no-underline transition-colors;
+
+  &:hover:not(:disabled):not([aria-disabled="true"]) { @apply bg-kyn-primary-hover; }
+  &:focus-visible { @apply ring-[3px] ring-kyn-primary/30 outline-none; }
+  &:disabled,
+  &[aria-disabled="true"] { @apply cursor-not-allowed bg-kyn-primary-disabled; }
+}
+
+@utility kyn-btn-secondary {
+  @apply inline-flex min-h-[52px] w-full items-center justify-center gap-2 rounded-kyn-md border-[1.5px]
+         border-kyn-border bg-kyn-surface px-6 text-[15px] font-semibold text-kyn-navy no-underline transition-colors;
+
+  &:hover:not(:disabled):not([aria-disabled="true"]) { @apply bg-kyn-bg; }
+  &:focus-visible { @apply ring-[3px] ring-kyn-primary/30 outline-none; }
+  &:disabled,
+  &[aria-disabled="true"] { @apply cursor-not-allowed text-kyn-slate; }
+}
+
+/* Text input, select and textarea share one look. */
+@utility kyn-input {
+  @apply block min-h-[50px] w-full rounded-kyn-md border-[1.5px] border-kyn-border bg-kyn-surface px-4 py-3
+         text-[15px] leading-6 text-kyn-navy placeholder:text-kyn-slate outline-none transition-colors;
+
+  &:focus-visible { @apply border-kyn-primary ring-[3px] ring-kyn-primary/30; }
+  &[aria-invalid="true"] { @apply border-kyn-error; }
+  &[aria-invalid="true"]:focus-visible { @apply border-kyn-error ring-kyn-error/20; }
+  &:disabled { @apply cursor-not-allowed bg-kyn-bg text-kyn-slate; }
+
+  &:is(select) {
+    @apply appearance-none pr-11;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%235B6878' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 8l5 5 5-5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1rem;
+  }
+
+  &:is(textarea) { @apply min-h-[104px]; }
+}
+
+@utility kyn-label {
+  @apply mb-1.5 block text-[13px] font-semibold text-kyn-navy;
+}
+
+/* Wrapper for a label, a field and its inline message. Restyles the message the
+   validation controller creates (.form-error / data-form-validation-error). */
+@utility kyn-field {
+  & .form-error,
+  & [data-form-validation-error] { @apply mt-1.5 text-[13px] font-medium text-kyn-error; }
+}
+
+@utility kyn-card {
+  @apply rounded-kyn-lg border border-kyn-border bg-kyn-surface p-5 sm:p-8;
+}
+
+@utility kyn-checkbox {
+  @apply size-[22px] shrink-0 cursor-pointer appearance-none rounded-md border-[1.5px] border-kyn-border
+         bg-kyn-surface transition-colors;
+
+  &:checked {
+    @apply border-kyn-primary bg-kyn-primary;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%23fff' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4.5 10.5l3.5 3.5 7.5-8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 14px;
+  }
+  &:focus-visible { @apply ring-[3px] ring-kyn-primary/30 outline-none; }
+  &[aria-invalid="true"] { @apply border-kyn-error; }
+  &:disabled { @apply cursor-not-allowed bg-kyn-bg; }
+}
+
+/* One digit of the one-time sign-in code (MH-405). Six sit in a row with 8px
+   between them; error comes from aria-invalid, as for the other fields. */
+@utility kyn-otp-box {
+  @apply block h-14 min-w-0 max-w-[52px] flex-1 rounded-kyn-md border-[1.5px] border-kyn-border bg-kyn-surface p-0
+         text-center text-[22px] font-bold text-kyn-navy caret-kyn-primary outline-none transition-colors;
+
+  &:focus-visible { @apply border-2 border-kyn-primary ring-[3px] ring-kyn-primary/30; }
+  &[aria-invalid="true"] { @apply border-kyn-error bg-kyn-error-tint; }
+  &[aria-invalid="true"]:focus-visible { @apply border-kyn-error ring-kyn-error/20; }
+}
+
+/* The label that wraps a kyn-checkbox: gives the control a 44px touch target. */
+@utility kyn-check-label {
+  @apply flex min-h-[44px] cursor-pointer items-center gap-3 text-[14px] text-kyn-navy;
+}
+
+@utility kyn-link {
+  @apply font-semibold text-kyn-primary-text no-underline;
+
+  &:hover { @apply underline; }
+  &:focus-visible { @apply rounded-sm ring-[3px] ring-kyn-primary/30 outline-none; }
+}
+
+/* ─── Applicant chat (MH-398) ────────────────────────────────────────────────
+   Used by the ERB partial and by the JS-built (pending / streaming) bubbles, so
+   the two copies cannot drift. Markdown links and code inside the assistant
+   bubble are recoloured by the unlayered rules after .chat-prose below: the
+   admin transcript view shares .chat-prose, so it is left alone, and unlayered
+   rules beat @utility (layered) ones. */
+
+@utility kyn-bubble {
+  @apply rounded-kyn-lg px-4 py-3 text-[15px] leading-6 [overflow-wrap:anywhere];
+}
+
+@utility kyn-bubble-assistant {
+  @apply rounded-bl-md bg-kyn-assistant-bubble text-kyn-navy;
+}
+
+@utility kyn-bubble-applicant {
+  @apply rounded-br-md bg-kyn-primary text-kyn-surface;
+}
+
+@utility kyn-typing-dot {
+  @apply size-2 rounded-full bg-kyn-slate;
+  animation: kyn-typing 1.2s ease-in-out infinite;
+
+  &:nth-child(2) { animation-delay: 0.15s; }
+  &:nth-child(3) { animation-delay: 0.3s; }
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+@utility kyn-progress {
+  @apply h-1.5 w-full overflow-hidden rounded-full bg-kyn-border;
+}
+
+@utility kyn-progress-fill {
+  @apply h-full rounded-full transition-[width] duration-300;
+  background-image: var(--kyn-gradient-brand);
+}
+
+/* Quick-reply chip (MH-399): a suggested answer under the chat. A real button,
+   at least 44px tall for touch. */
+@utility kyn-chip {
+  @apply inline-flex min-h-[44px] items-center justify-center rounded-full border-[1.5px] border-kyn-border
+         bg-kyn-surface px-5 text-[15px] font-semibold text-kyn-navy transition-colors;
+
+  &:hover:not(:disabled) { @apply border-kyn-primary bg-kyn-primary-tint text-kyn-primary-text; }
+  &:focus-visible { @apply ring-[3px] ring-kyn-primary/30 outline-none; }
+  &:disabled { @apply cursor-not-allowed text-kyn-slate; }
+}
+
+@keyframes kyn-typing {
+  0%, 60%, 100% { opacity: 0.35; }
+  30% { opacity: 1; }
+}
+
+
 /* Icon-only row actions — matches TailAdmin table-07 pattern */
 @utility table-action {
   @apply inline-flex items-center justify-center text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-white/90;
@@ -426,6 +633,12 @@ aside[data-collapsed] .menu-item {
 .chat-prose h1,
 .chat-prose h2,
 .chat-prose h3 { @apply mb-1 font-semibold; }
+
+/* Applicant assistant bubble (MH-398): kyn colours for markdown output. */
+.chat-prose.kyn-bubble-assistant a { @apply font-semibold text-kyn-primary-text underline hover:text-kyn-primary-hover; }
+.chat-prose.kyn-bubble-assistant code { @apply bg-kyn-border; }
+.chat-prose.kyn-bubble-assistant pre { @apply bg-kyn-border; }
+.chat-prose.kyn-bubble-assistant blockquote { @apply border-kyn-border text-kyn-slate; }
 
 /* ─── Flatpickr date-picker theming ─────────────────────────────────────── */
 

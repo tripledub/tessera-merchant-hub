@@ -56,13 +56,36 @@ class ApplicantPresenter < BasePresenter
 
   def detail_rows
     rows = []
-    rows << { label: "Company", value: applicant.company_name } if applicant.company_name.present?
+    rows << { label: "Company", value: applicant.company_name, source: company_name_source } if applicant.company_name.present?
     rows << { label: "Email", value: applicant.contact_email } if applicant.contact_email.present?
     rows << { label: "Country", value: applicant.country } if applicant.country.present?
     rows
   end
 
+  # MH-389: open data conflicts for the staff overview, read-only.
+  def open_conflicts
+    applicant.data_conflicts.status_open.order(:detected_at).map do |conflict|
+      {
+        field: conflict.field.humanize,
+        held: conflict.held_value,
+        held_source: source_label(conflict.held_source, conflict.held_provider),
+        proposed: conflict.proposed_value,
+        proposed_source: source_label(conflict.proposed_source, conflict.proposed_provider)
+      }
+    end
+  end
+
   private
+
+  def company_name_source
+    provenance = Provenance::CompanyFields.provenance_for(applicant, "company_name")
+    source_label(provenance&.source || "applicant_declared", provenance&.provider)
+  end
+
+  def source_label(source, provider)
+    label = t("data_provenance.sources.#{source}")
+    provider.present? ? t("data_provenance.with_provider", source: label, provider: provider) : label
+  end
 
   def failed_registry_lookup_banner
     retry_label = t("applicants.tabs.overview.registry_lookup.retry") if applicant.registry_lookup_retryable?

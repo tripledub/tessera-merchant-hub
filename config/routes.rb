@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   get "/repeatable-fields-preview", to: "repeatable_fields_preview#show" if Rails.env.test?
+  get "/kyn-components-preview", to: "kyn_components_preview#show" if Rails.env.test?
 
   devise_for :users
 
@@ -7,18 +8,34 @@ Rails.application.routes.draw do
              path: "portal",
              controllers: {
                registrations: "portal/registrations",
-               sessions: "portal/sessions"
+               sessions: "portal/sessions",
+               passwords: "portal/passwords"
              }
+
+  # MH-406: /portal/sign_in is the "Welcome back" code request page; the password
+  # form moves here and still posts to Devise's create.
+  devise_scope :applicant_user do
+    get "portal/sign_in/password", to: "portal/sessions#password", as: :applicant_user_password_sign_in
+  end
 
   namespace :portal do
     root to: "dashboard#show"
+    post "password_setup", to: "password_setups#create", as: :password_setup
+    post "password_prompt_dismissal", to: "password_prompt_dismissals#create", as: :password_prompt_dismissal
     resource :application, only: %i[show update]
   end
 
   scope :portal, as: :portal do
     get "invitations/:token", to: "portal/invitations#show", as: :invitation
+    post "invitations/:token/renewal", to: "portal/invitation_renewals#create", as: :invitation_renewal
+    post "invitations/:token/code", to: "portal/sign_in_codes#start", as: :invitation_code
+    post "sign_in/start", to: "portal/sign_in_codes#request_code", as: :sign_in_start
+    get "sign_in/code", to: "portal/sign_in_codes#show", as: :sign_in_code
+    post "sign_in/code", to: "portal/sign_in_codes#create"
+    post "sign_in/code/resend", to: "portal/sign_in_codes#resend", as: :sign_in_code_resend
     resource :onboarding, only: :show, controller: "onboarding/conversations"
     post "onboarding/messages", to: "onboarding/conversations#create", as: :onboarding_messages
+    post "onboarding/company_confirmation", to: "onboarding/company_confirmations#create", as: :onboarding_company_confirmation
     post "onboarding/documents", to: "onboarding/documents#create", as: :onboarding_documents
     post "onboarding/document_deferrals", to: "onboarding/document_deferrals#create", as: :onboarding_document_deferrals
   end

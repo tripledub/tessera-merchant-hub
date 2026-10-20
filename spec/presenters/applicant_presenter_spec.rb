@@ -43,6 +43,43 @@ RSpec.describe ApplicantPresenter, type: :presenter do
     end
   end
 
+  describe "#detail_rows source (MH-389)" do
+    it "says where the company name came from" do
+      applicant.update!(company_name: "ACME WIDGETS LIMITED")
+      Provenance::CompanyFields.apply!(applicant: applicant, field: "company_name", value: "ACME WIDGETS LIMITED",
+                                       source: :registry, provider: "companies_house")
+
+      expect(presenter.detail_rows).to include(a_hash_including(label: "Company", source: "Registry (companies_house)"))
+    end
+
+    it "defaults to the applicant as the source" do
+      applicant.update!(company_name: "Acme Widgets Ltd")
+
+      expect(presenter.detail_rows).to include(a_hash_including(label: "Company", source: "Applicant"))
+    end
+  end
+
+  describe "#open_conflicts (MH-389)" do
+    it "lists each open conflict with both values and their sources" do
+      applicant.data_conflicts.create!(record_type: "Applicant", record_id: applicant.id, field: "company_name",
+                                       held_value: "ACME WIDGETS LIMITED", held_source: :registry,
+                                       held_provider: "companies_house", proposed_value: "Acme Widgets Ltd",
+                                       proposed_source: :applicant_declared, detected_at: Time.current)
+
+      expect(presenter.open_conflicts).to contain_exactly(
+        a_hash_including(field: "Company name", held: "ACME WIDGETS LIMITED", held_source: "Registry (companies_house)",
+                         proposed: "Acme Widgets Ltd", proposed_source: "Applicant")
+      )
+    end
+
+    it "ignores resolved conflicts" do
+      applicant.data_conflicts.create!(record_type: "Applicant", record_id: applicant.id, field: "company_name",
+                                       held_value: "A", proposed_value: "B", status: :resolved, detected_at: Time.current)
+
+      expect(presenter.open_conflicts).to be_empty
+    end
+  end
+
   describe "counts" do
     it "counts principals" do
       create(:kyc_principal, applicant: applicant, name: "Alice Smith")

@@ -2,7 +2,7 @@
 
 class Portal::BaseController < ApplicationController
   skip_before_action :authenticate_user!
-  layout "portal"
+  layout "applicant"
   before_action :authenticate_applicant_user!
 
   private

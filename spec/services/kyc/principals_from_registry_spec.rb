@@ -99,6 +99,26 @@ RSpec.describe Kyc::PrincipalsFromRegistry do
       expect { call }.not_to change { applicant.kyc_principals.count }
     end
 
+    it "records registry provenance against a declared principal it matches (MH-389)" do
+      declared = create(:kyc_principal, applicant: applicant, name: "Jane Doe", source: :applicant_declared)
+      create(:registry_director, registry_profile: registry_profile, name: "Jane Doe", resigned_on: nil)
+
+      call
+
+      expect(Provenance::Records.source_for(declared)).to eq(:registry)
+      expect(DataProvenance.find_by(record_type: "KycPrincipal", record_id: declared.id))
+        .to have_attributes(source: "registry", provider: "companies_house", retrieved_at: registry_profile.fetched_at)
+      expect(declared.reload.source).to eq("applicant_declared")
+    end
+
+    it "records registry provenance for a principal it creates (MH-389)" do
+      create(:registry_director, registry_profile: registry_profile, name: "DOE, Jane", resigned_on: nil)
+
+      call
+
+      expect(Provenance::Records.source_for(applicant.kyc_principals.last)).to eq(:registry)
+    end
+
     it "is idempotent across repeated calls with the same registry data" do
       create(:registry_director, registry_profile: registry_profile, name: "DOE, Jane", resigned_on: nil)
 
