@@ -36,6 +36,7 @@ Rails.application.routes.draw do
     resource :onboarding, only: :show, controller: "onboarding/conversations"
     post "onboarding/messages", to: "onboarding/conversations#create", as: :onboarding_messages
     post "onboarding/company_confirmation", to: "onboarding/company_confirmations#create", as: :onboarding_company_confirmation
+    post "onboarding/registry_check", to: "onboarding/registry_checks#create", as: :onboarding_registry_check
     post "onboarding/documents", to: "onboarding/documents#create", as: :onboarding_documents
     post "onboarding/document_deferrals", to: "onboarding/document_deferrals#create", as: :onboarding_document_deferrals
   end

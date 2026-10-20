@@ -14,10 +14,13 @@ module Onboarding
         looping: false,
         fields: [
           Field.new(name: :company_name, type: :string, required: true, options: nil, required_when: nil),
-          Field.new(name: :registration_number, type: :string, required: true, options: nil, required_when: nil),
-          Field.new(name: :company_type, type: :string, required: true, options: nil, required_when: nil),
-          Field.new(name: :registered_address, type: :string, required: true, options: nil, required_when: nil),
-          Field.new(name: :country_of_incorporation, type: :string, required: true, options: nil, required_when: nil)
+          Field.new(name: :company_type, type: :option, required: true, options: Onboarding::CompanyTypes::KEYS,
+            required_when: nil),
+          Field.new(name: :country_of_incorporation, type: :string, required: true, options: nil, required_when: nil),
+          # A registry holds limited companies, PLCs and LLPs; a sole trader has no number to give.
+          Field.new(name: :registration_number, type: :string, required: false, options: nil,
+            required_when: ->(data) { Onboarding::CompanyTypes.registry_searchable?(data["company_type"]) }),
+          Field.new(name: :registered_address, type: :string, required: true, options: nil, required_when: nil)
         ]
       ),
       Stage.new(

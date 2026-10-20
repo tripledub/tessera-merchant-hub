@@ -11,10 +11,10 @@ RSpec.describe Onboarding::CompanyIdentityConfirmation do
       expect(described_class.pending?(session)).to be(true)
     end
 
-    it "is false when the application has no company name" do
+    it "falls back to the name the PSP gave when the applicant has not declared a company name (MH-415)" do
       applicant.update!(company_name: nil, company_number: nil)
 
-      expect(described_class.pending?(session)).to be(false)
+      expect(described_class.pending?(session)).to be(true)
     end
 
     it "is false once the applicant has answered" do
@@ -90,6 +90,63 @@ RSpec.describe Onboarding::CompanyIdentityConfirmation do
       described_class.decline!(session)
 
       expect(applicant.reload).to have_attributes(company_name: "Acme Widgets Ltd", company_number: "12345678")
+    end
+  end
+
+  # MH-415: a business added by the PSP has a name but no declared company name yet.
+  describe "when only the PSP's name is held" do
+    let(:applicant) { create(:applicant, name: "Stew & Co", company_name: nil, company_number: nil) }
+
+    it "names the company from the PSP's name, with no number" do
+      expect(described_class.company_name(session)).to eq("Stew & Co")
+      expect(described_class.prompt(session)).to eq("I have your company as **Stew & Co**. Is this correct?")
+    end
+
+    it "prefers a declared company name over the PSP's name" do
+      applicant.update!(company_name: "Stew & Co Ltd")
+
+      expect(described_class.company_name(session)).to eq("Stew & Co Ltd")
+    end
+
+    it "on yes, keeps the name as the applicant's own answer, in the chat data and on the applicant" do
+      described_class.confirm!(session)
+
+      session.reload
+      expect(session.stage_data["company_info"]).to eq("company_name" => "Stew & Co")
+      expect(applicant.reload.company_name).to eq("Stew & Co")
+      expect(Provenance::CompanyFields.source_for(applicant, "company_name")).to eq(:applicant_declared)
+      reply = session.onboarding_messages.bot.last
+      expect(reply.content).to include("Company type", "Country of incorporation", "Registered address")
+      expect(reply.content).not_to include("Company name")
+    end
+
+    it "does not ask for the country when the PSP chose a registry jurisdiction (MH-391)" do
+      applicant.update!(registry_jurisdiction: "gb")
+
+      described_class.confirm!(session)
+
+      expect(session.reload.stage_data["company_info"]).to include("country_of_incorporation" => "United Kingdom")
+      expect(session.onboarding_messages.bot.last.content).not_to include("Country of incorporation")
+    end
+
+    it "never changes the PSP's name, whatever the answer" do
+      described_class.confirm!(session)
+
+      expect(applicant.reload.name).to eq("Stew & Co")
+    end
+
+    it "on no, asks for the name, and leaves the company name blank" do
+      described_class.decline!(session)
+
+      expect(applicant.reload).to have_attributes(name: "Stew & Co", company_name: nil)
+      expect(session.reload.stage_data["company_identity_check"]).to eq("declined")
+      expect(session.onboarding_messages.bot.last.content).to include("name of your business")
+    end
+
+    it "is not pending once the chat has started" do
+      create(:onboarding_message, onboarding_session: session, role: :applicant, content: "Hello")
+
+      expect(described_class.pending?(session)).to be(false)
     end
   end
 end

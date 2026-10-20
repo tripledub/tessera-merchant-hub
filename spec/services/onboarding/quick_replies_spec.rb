@@ -16,6 +16,7 @@ RSpec.describe Onboarding::QuickReplies do
       }
     }
   end
+  let(:company_info_without_type) { { "company_info" => { "company_name" => "Acme Widgets Ltd" } } }
   let(:stage_data) { company_info_without_country }
   let(:session) do
     create(:onboarding_session, applicant: applicant, current_stage: :company_info, stage_data: stage_data)
@@ -50,9 +51,54 @@ RSpec.describe Onboarding::QuickReplies do
       end
     end
 
-    it "offers nothing when other company details are still missing" do
-      session.update!(stage_data: { "company_info" => { "company_name" => "Acme Widgets Ltd" } })
-      say(:bot, "What is your registration number, type, address and country?")
+    context "when the company type is the next thing to ask (MH-391)" do
+      before do
+        session.update!(stage_data: company_info_without_type)
+        say(:bot, "What type of company is it?")
+      end
+
+      it "offers the six company types, each sent as an answer" do
+        options = described_class.for(session)
+
+        expect(options.map(&:key)).to eq(%i[limited_company plc llp sole_trader partnership other])
+        expect(options.map(&:label)).to eq(
+          [ "Limited company", "Public limited company (PLC)", "LLP", "Sole trader", "Partnership", "Other" ]
+        )
+        expect(options.map(&:kind)).to all(eq(:answer))
+        expect(options.map(&:field)).to all(eq(:company_type))
+      end
+
+      it "asks for the type before the country" do
+        expect(described_class.question(session)).to eq(:company_type)
+      end
+    end
+
+    it "offers nothing before the company name is known" do
+      session.update!(stage_data: {})
+      say(:bot, "What is the name of your business?")
+
+      expect(described_class.for(session)).to be_empty
+    end
+
+    it "offers the countries when the type is known and the country is next, even if the number and address are not" do
+      session.update!(stage_data: { "company_info" => { "company_name" => "Acme", "company_type" => "limited_company" } })
+      say(:bot, "Which country is the company registered in?")
+
+      expect(described_class.for(session).map(&:key)).to eq(%i[united_kingdom malta cyprus other])
+      expect(described_class.for(session).map(&:field)).to all(eq(:country_of_incorporation))
+    end
+
+    it "offers nothing when the next question has no chips" do
+      session.update!(stage_data: { "company_info" => { "company_name" => "Acme", "company_type" => "limited_company",
+                                                        "country_of_incorporation" => "United Kingdom" } })
+      say(:bot, "What is the company's registration number?")
+
+      expect(described_class.for(session)).to be_empty
+    end
+
+    it "offers nothing while the registry match waits for its Yes or No" do
+      session.update!(stage_data: company_info_without_type.merge("registry_check" => { "state" => "pending" }))
+      say(:bot, "I found Acme. Is this your company?")
 
       expect(described_class.for(session)).to be_empty
     end
