@@ -159,6 +159,19 @@ RSpec.describe Onboarding::RegistryCompanyCheck do
       expect(reply.content).to include("Thanks")
     end
 
+    it "opens with the registry's people when the answer finishes the company details (MH-417)" do
+      session.update!(stage_data: session.stage_data.merge(
+        "company_info" => company_info.merge("registered_address" => "10 Business Park, Bristol, BS1 1AA")
+      ))
+      create(:registry_director, registry_profile: profile, name: "DOE, Jane")
+
+      reply = described_class.confirm!(session)
+
+      expect(session.reload.current_stage).to eq("directors_ubos")
+      expect(reply.content).to include("Thanks, I've saved those details.", "**Jane Doe** as a director")
+      expect(reply.content).not_to include("Please provide the first person")
+    end
+
     it "does nothing when nothing is waiting for an answer" do
       described_class.confirm!(session)
 

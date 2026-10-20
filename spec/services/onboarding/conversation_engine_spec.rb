@@ -119,6 +119,45 @@ RSpec.describe Onboarding::ConversationEngine do
       end
     end
 
+    describe "registry people (MH-417)" do
+      let(:applicant) { create(:applicant, company_name: "Acme Ltd", registry_jurisdiction: "gb") }
+      let(:profile) { create(:registry_profile, applicant: applicant) }
+      let(:session) do
+        create(:onboarding_session, applicant: applicant, current_stage: :directors_ubos,
+                                    stage_data: { "registry_check" => { "state" => "confirmed", "profile_id" => profile.id } })
+      end
+      let(:adapter) do
+        instance_double(Kyc::Inference::Base, generate: {
+          "bot_message" => "Thanks, anyone else?",
+          "extracted_data" => { "date_of_birth" => "1980-02-14", "nationality" => "British" }
+        })
+      end
+
+      before do
+        create(:registry_director, registry_profile: profile, name: "DOE, Jane")
+        create(:registry_director, registry_profile: profile, name: "ROE, Rita")
+        Onboarding::RegistryPeople.begin!(session)
+        Onboarding::RegistryPeople.confirm!(session)
+      end
+
+      it "replaces the model's reply with the next registry person once the current one is complete" do
+        result = described_class.respond(session: session, user_message: "14 Feb 1980, British", inference_adapter: adapter)
+
+        expect(result[:bot_message]).to include("**Rita Roe** as a director")
+        expect(applicant.kyc_principals.pluck(:name)).to eq([ "Jane Doe" ])
+      end
+
+      it "leaves the model's reply alone while details are still missing" do
+        incomplete = instance_double(Kyc::Inference::Base, generate: {
+          "bot_message" => "And their nationality?", "extracted_data" => { "date_of_birth" => "1980-02-14" }
+        })
+
+        result = described_class.respond(session: session, user_message: "14 Feb 1980", inference_adapter: incomplete)
+
+        expect(result[:bot_message]).to eq("And their nationality?")
+      end
+    end
+
     it "does not auto-advance looping stages after the first complete item" do
       session = create(:onboarding_session, current_stage: :directors_ubos)
       adapter = instance_double(Kyc::Inference::Base, generate: {

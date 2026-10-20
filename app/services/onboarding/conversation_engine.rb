@@ -89,9 +89,10 @@ module Onboarding
           extracted_data: response.fetch("extracted_data")
         )
         registry_check = run_registry_check(session)
+        next_registry_person = Onboarding::RegistryPeople.progress!(session)
         stage_changed = registry_check != :found &&
           advance_if_complete(session, extracted_data: response.fetch("extracted_data"))
-        bot_message = bot_message_for(session, response.fetch("bot_message"), registry_check)
+        bot_message = next_registry_person || bot_message_for(session, response.fetch("bot_message"), registry_check)
         bot_message = add_stage_transition_prompt(bot_message, session) if stage_changed
 
         create_message!(
@@ -183,7 +184,8 @@ module Onboarding
     def stage_transition_prompt(session)
       case Onboarding::StateMachine.current_stage(session)
       when :directors_ubos
-        "Next, let’s add the directors and beneficial owners. Please provide the first person’s full name, date of birth, nationality, and whether they are a director, shareholder/UBO, or both."
+        Onboarding::RegistryPeople.begin!(session) ||
+          "Next, let’s add the directors and beneficial owners. Please provide the first person’s full name, date of birth, nationality, and whether they are a director, shareholder/UBO, or both."
       when :ownership
         "Next, let’s map the ownership structure. Who owns or controls #{company_name(session)}, what do they own, and is the relationship equity, nominee, or contractual?"
       when :business_activity
