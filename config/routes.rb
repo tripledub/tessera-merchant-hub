@@ -8,7 +8,8 @@ Rails.application.routes.draw do
              path: "portal",
              controllers: {
                registrations: "portal/registrations",
-               sessions: "portal/sessions"
+               sessions: "portal/sessions",
+               passwords: "portal/passwords"
              }
 
   # MH-406: /portal/sign_in is the "Welcome back" code request page; the password
@@ -19,6 +20,8 @@ Rails.application.routes.draw do
 
   namespace :portal do
     root to: "dashboard#show"
+    post "password_setup", to: "password_setups#create", as: :password_setup
+    post "password_prompt_dismissal", to: "password_prompt_dismissals#create", as: :password_prompt_dismissal
     resource :application, only: %i[show update]
   end
 

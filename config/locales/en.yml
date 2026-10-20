@@ -196,7 +196,12 @@ en:
       edit:
         back_to_sign_in: Back to sign in
         confirm_password: Confirm new password
+        first_hint: Use at least %{count} characters. A short phrase works well.
+        first_submit: Save password
+        first_subtitle: Optional. You can always sign in with an email code instead.
+        first_title: Set a password
         new_password: New password
+        not_now: Not now
         submit: Update password
         title: Set new password
       new:
@@ -1371,6 +1376,18 @@ en:
         last_name: Last name
         legend: Your name
     dashboard:
+      password_link:
+        change: Change password
+        set: Set a password
+      password_link_sent:
+        body: We've sent a link to %{email} to set your password. It works for %{hours}
+          hours.
+        title: Check your email
+      password_prompt:
+        body: Set a password so you don't need an email code each time. It's optional.
+        not_now: Not now
+        set: Set a password
+        title: Sign in faster next time
       show:
         continue_application: Continue application
         welcome: Welcome, %{name}!
@@ -1404,6 +1421,9 @@ en:
           documents: Upload your documents
           questions: Answer a few questions about your business
         title: Complete your onboarding for %{company}
+    password_setups:
+      too_many: You've asked a few times. Check your email for the link, or try again
+        in an hour.
     sign_in_codes:
       expired:
         body: For your security, codes only last 10 minutes. We can send a new one

@@ -4,11 +4,15 @@
     Usage: render "layouts/applicant_auth_card", title: "Sign in" do ... end
     Optional: eyebrow: "text" (small pill above the title), badge: html (icon badge above the title),
     back_path: "/path" (a Back link at the top of the card), note: "text" (a line under the card). %>
-<div class="flex min-h-screen flex-col items-center px-4 py-12 sm:py-16">
+<%# A signed-in applicant already has the header with the logo, so the card sits in the page instead (MH-408). %>
+<% embedded = applicant_user_signed_in? %>
+<div class="<%= embedded ? "flex flex-col items-center py-4" : "flex min-h-screen flex-col items-center px-4 py-12 sm:py-16" %>">
   <div class="w-full max-w-[440px]">
-    <div class="mb-8 flex justify-center">
-      <%= render "layouts/applicant_logo", signed_in: false %>
-    </div>
+    <% unless embedded %>
+      <div class="mb-8 flex justify-center">
+        <%= render "layouts/applicant_logo", signed_in: false %>
+      </div>
+    <% end %>
     <div class="kyn-card">
       <% if local_assigns[:back_path] %>
         <%= link_to local_assigns[:back_path], class: "kyn-link mb-4 -mt-1 inline-flex min-h-[44px] items-center gap-1.5 text-[13px] font-normal text-kyn-slate" do %>
@@ -26,6 +30,8 @@
     <% if local_assigns[:note] %>
       <p class="mt-5 text-center text-[13px] leading-[21px] text-kyn-slate"><%= local_assigns[:note] %></p>
     <% end %>
-    <p class="mt-6 text-center text-xs text-kyn-slate"><%= t("layouts.applicant_auth_card.security") %></p>
+    <% unless embedded %>
+      <p class="mt-6 text-center text-xs text-kyn-slate"><%= t("layouts.applicant_auth_card.security") %></p>
+    <% end %>
   </div>
 </div>
