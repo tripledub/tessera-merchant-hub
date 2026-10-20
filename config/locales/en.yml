@@ -1145,6 +1145,9 @@ en:
       skip_deferred: Noted — you can upload %{label} later. Let's continue.
       skip_not_available: Skipping isn't available at this stage yet — let's finish
         this step first.
+    company_confirmation:
+      'no': No, a different name
+      'yes': Yes, %{name}
     composer:
       placeholder: Type your reply...
       send: Send message
@@ -1273,6 +1276,8 @@ en:
           postcode: Postcode
         business_model_description: Description of business model
         company_name: Company name
+        company_name_prefilled: We've used the name we have on file. Change it if
+          needed.
         company_number: Company number
         domain: Website domain
         domain_placeholder: example.com
