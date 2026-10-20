@@ -38,11 +38,13 @@ module Onboarding
     def confirm!(session)
       declare_company_name!(session)
       session.update!(stage_data: with_company_identity(session))
+      Onboarding::CompanyDefaults.seed_country(session)
       reply(session, remaining_questions(session))
     end
 
     def decline!(session)
       session.update!(stage_data: session.stage_data.merge(CHECK_KEY => "declined"))
+      Onboarding::CompanyDefaults.seed_country(session)
       reply(session, "No problem, let's start again. Please tell us the name of your business.")
     end
 

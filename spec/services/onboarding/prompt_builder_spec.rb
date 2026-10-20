@@ -19,6 +19,21 @@ RSpec.describe Onboarding::PromptBuilder do
       expect(prompt).to include("country_of_incorporation")
     end
 
+    it "tells the model the order and the allowed company types for the company details (MH-391)" do
+      session = build(:onboarding_session, current_stage: :company_info)
+
+      prompt = described_class.build(session: session)
+
+      expect(prompt).to include("company name, company type, country of incorporation, registration number")
+      expect(prompt).to include("limited_company, plc, llp, sole_trader, partnership, other")
+    end
+
+    it "gives no company details guidance in other stages" do
+      session = build(:onboarding_session, current_stage: :business_activity)
+
+      expect(described_class.build(session: session)).not_to include("company_type use only")
+    end
+
     it "includes collected stage data as JSON" do
       session = build(:onboarding_session, current_stage: :business_activity, stage_data: {
         "company_info" => {
