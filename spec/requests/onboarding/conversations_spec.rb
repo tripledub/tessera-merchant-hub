@@ -107,6 +107,28 @@ RSpec.describe "Onboarding conversations", type: :request do
       expect(composer.text).to include("Your information is encrypted and only used for compliance checks.")
     end
 
+    # MH-391: the company type chips come before the country ones.
+    context "with the company type quick replies" do
+      let(:applicant_user) { create(:applicant_user, applicant: create(:applicant, company_name: nil)) }
+
+      before { sign_in applicant_user, scope: :applicant_user }
+
+      it "renders the six company types as chips once the name is known" do
+        session = create(:onboarding_session, applicant: applicant_user.applicant,
+                                              stage_data: { "company_info" => { "company_name" => "Acme Widgets Ltd" } })
+        create(:onboarding_message, onboarding_session: session, role: :bot, content: "What type of company is it?")
+
+        get portal_onboarding_path
+
+        strip = Nokogiri::HTML(response.body).at_css("#onboarding_quick_replies")
+        expect(strip.css("button.kyn-chip").map { |button| button.text.strip }).to eq(
+          [ "Limited company", "Public limited company (PLC)", "LLP", "Sole trader", "Partnership", "Other" ]
+        )
+        expect(strip.at_css("[role='group']")["aria-label"]).to eq("Company types")
+        expect(strip.at_css("#onboarding_quick_replies_hint").text).to eq("Or type your company type below.")
+      end
+    end
+
     # MH-399: country quick-reply chips, driven by the session state.
     context "with the country quick replies" do
       let(:applicant_user) { create(:applicant_user, applicant: create(:applicant, company_name: nil)) }

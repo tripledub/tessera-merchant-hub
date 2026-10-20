@@ -21,8 +21,50 @@ RSpec.describe Onboarding::StateMachine do
       })
 
       expect(described_class.missing_fields(session)).to eq(
-        %i[company_type registered_address country_of_incorporation]
+        %i[company_type country_of_incorporation registered_address]
       )
+    end
+
+    describe "company type and registration number (MH-391)" do
+      def company_info_session(data)
+        build(:onboarding_session, current_stage: :company_info, stage_data: { "company_info" => data })
+      end
+
+      it "asks for the company name, then the type, then the country, then the number, then the address" do
+        expect(described_class.missing_fields(build(:onboarding_session, current_stage: :company_info))).to eq(
+          %i[company_name company_type country_of_incorporation registered_address]
+        )
+      end
+
+      it "asks for the registration number once the type is one a registry holds" do
+        %w[limited_company plc llp].each do |type|
+          session = company_info_session("company_name" => "Acme Ltd", "company_type" => type,
+                                         "country_of_incorporation" => "United Kingdom")
+
+          expect(described_class.missing_fields(session)).to eq(%i[registration_number registered_address])
+        end
+      end
+
+      it "does not ask a sole trader, partnership or other type for a registration number" do
+        %w[sole_trader partnership other].each do |type|
+          session = company_info_session("company_name" => "Acme", "company_type" => type,
+                                         "country_of_incorporation" => "France")
+
+          expect(described_class.missing_fields(session)).to eq(%i[registered_address])
+        end
+      end
+
+      it "accepts only the known company types" do
+        expect(described_class.validate_field(:company_type, "sole_trader")).to eq(valid: true)
+        expect(described_class.validate_field(:company_type, "a charity")).to include(valid: false)
+      end
+
+      it "completes the stage without a number for a sole trader" do
+        session = company_info_session("company_name" => "Acme", "company_type" => "sole_trader",
+                                       "country_of_incorporation" => "France", "registered_address" => "1 Rue")
+
+        expect(described_class.stage_complete?(session)).to be(true)
+      end
     end
 
     it "uses current_item sub-state for looping stages" do
