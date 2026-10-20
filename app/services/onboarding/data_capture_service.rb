@@ -310,6 +310,8 @@ module Onboarding
         country: data["nationality"]
       )
       principal.save!
+      Onboarding::RegistryPeople.record_confirmed!(session, principal, data) if data["registry_person"].present?
+      principal
     end
     private_class_method :create_principal!
 
