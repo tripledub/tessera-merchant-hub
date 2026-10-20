@@ -11,7 +11,13 @@
     <div class="grid gap-4 sm:grid-cols-2">
       <div>
         <%= applicant_form.label :company_name, t("portal.applications.company.company_name"), class: "form-label" %>
-        <%= applicant_form.text_field :company_name, required: true, class: "form-input" %>
+        <%# A business the PSP added has a name but no company name the applicant has declared: offer it (MH-415). %>
+        <% prefilled_name = applicant_form.object.company_name.blank? && applicant_form.object.name.present? %>
+        <%= applicant_form.text_field :company_name, required: true, class: "form-input",
+              **(prefilled_name ? { value: applicant_form.object.name } : {}) %>
+        <% if prefilled_name %>
+          <p class="mt-1 text-xs text-gray-500"><%= t("portal.applications.company.company_name_prefilled") %></p>
+        <% end %>
       </div>
       <div>
         <%= applicant_form.label :company_number, t("portal.applications.company.company_number"), class: "form-label" %>

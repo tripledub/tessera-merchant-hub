@@ -10,7 +10,8 @@ RSpec.describe "Onboarding conversations", type: :request do
       expect(response).to redirect_to(new_applicant_user_session_path)
     end
 
-    it "renders the applicant chat page with a welcome message" do
+    # MH-415: with no declared company name the chat opens by confirming the name the PSP gave.
+    it "renders the applicant chat page, opening with the company confirmation" do
       applicant_user = create(:applicant_user, applicant: create(:applicant, company_name: nil))
       sign_in applicant_user, scope: :applicant_user
 
@@ -18,7 +19,7 @@ RSpec.describe "Onboarding conversations", type: :request do
 
       expect(response).to have_http_status(:ok)
       expect(response.body).to include("KYC onboarding")
-      expect(response.body).to include("Welcome")
+      expect(response.body).to include("I have your company as")
       expect(response.body).to include("data-controller=\"onboarding-chat\"")
       expect(response.body).to include("data-onboarding-chat-session-id-value=")
       expect(response.body).to include("data-onboarding-chat-target=\"typing\"")

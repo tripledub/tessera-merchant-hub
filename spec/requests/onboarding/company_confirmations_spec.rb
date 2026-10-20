@@ -20,13 +20,44 @@ RSpec.describe "Onboarding company confirmation", type: :request do
       expect(response.body).not_to include("please tell us the name of your business")
     end
 
-    it "shows the usual welcome when the application has no company name" do
-      applicant.update!(company_name: nil, company_number: nil)
+    it "names the company on the buttons, so the applicant can see what they are agreeing to (MH-415)" do
+      get portal_onboarding_path
+
+      page = Capybara.string(response.body)
+      expect(page.find("[data-testid='company-confirmation-yes']")).to have_text("Yes, Acme Widgets Ltd")
+      expect(page.find("[data-testid='company-confirmation-no']")).to have_text("No, a different name")
+    end
+
+    it "confirms the name the PSP gave when the applicant has not declared one yet, instead of asking for it (MH-415)" do
+      applicant.update!(name: "Stew & Co", company_name: nil, company_number: nil)
 
       get portal_onboarding_path
 
-      expect(response.body).to include("please tell us the name of your business")
-      expect(response.body).not_to include("data-testid=\"company-confirmation-yes\"")
+      page = Capybara.string(response.body)
+      expect(page).to have_text("I have your company as Stew & Co. Is this correct?")
+      expect(page.find("[data-testid='company-confirmation-yes']")).to have_text("Yes, Stew & Co")
+      expect(response.body).not_to include("please tell us the name of your business")
+    end
+
+    it "carries on from the confirmed PSP name: saved as the applicant's answer, so the form agrees (MH-415)" do
+      applicant.update!(name: "Stew & Co", company_name: nil, company_number: nil)
+
+      post portal_onboarding_company_confirmation_path, params: { answer: "yes" }
+
+      expect(applicant.reload.company_name).to eq("Stew & Co")
+      expect(applicant.name).to eq("Stew & Co")
+      get portal_application_path(step: "company")
+      expect(Capybara.string(response.body)).to have_field("onboarding_application[applicant_attributes][company_name]", with: "Stew & Co")
+      expect(Capybara.string(response.body)).to have_no_text("We've used the name we have on file")
+    end
+
+    it "asks for the name when the applicant says no to the PSP's name (MH-415)" do
+      applicant.update!(name: "Stew & Co", company_name: nil, company_number: nil)
+
+      post portal_onboarding_company_confirmation_path, params: { answer: "no" }
+
+      expect(applicant.reload.company_name).to be_nil
+      expect(applicant.onboarding_session.onboarding_messages.bot.last.content).to include("name of your business")
     end
 
     it "does not ask again once the applicant has answered" do
