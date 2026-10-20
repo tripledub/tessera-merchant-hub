@@ -7,12 +7,11 @@
   </div>
 
   <% jurisdictions = Registry::Lookup.selectable_jurisdictions %>
-  <% if jurisdictions.many? %>
-    <div>
-      <%= f.label :registry_jurisdiction, t(".fields.jurisdiction"), class: "form-label" %>
-      <%= f.select :registry_jurisdiction, jurisdictions.map { |code| [t("applicants.jurisdictions.#{code}"), code] }, {}, class: "form-input" %>
-    </div>
-  <% end %>
+  <div>
+    <%= f.label :registry_jurisdiction, t(".fields.jurisdiction"), class: "form-label" %>
+    <%= f.select :registry_jurisdiction, jurisdictions.map { |code| [t("applicants.jurisdictions.#{code}"), code] },
+          { include_blank: t(".fields.jurisdiction_blank"), selected: nil }, class: "form-input" %>
+  </div>
 
   <div>
     <%= f.label :company_number, t(".fields.company_number"), class: "form-label" %>
