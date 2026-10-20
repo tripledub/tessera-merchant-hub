@@ -37,6 +37,17 @@ RSpec.describe ApplicantSignInCodeMailer, type: :mailer do
       expect(html).not_to include("<link")
     end
 
+    # MH-414: the six digits wrapped onto two lines on a narrow phone.
+    it "keeps the code on one line, with the style inlined into the delivered HTML" do
+      mail.deliver_now
+
+      html = Nokogiri::HTML(ActionMailer::Base.deliveries.last.html_part.body.to_s)
+      style = html.at_css(".email-code")["style"]
+
+      expect(style).to include("white-space: nowrap")
+      expect(style).to match(/font-size: (2[4-9]|3\d)px/)
+    end
+
     it "sends nothing once the encrypted code has expired" do
       mail
 
