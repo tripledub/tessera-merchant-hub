@@ -39,22 +39,41 @@ module Onboarding
         capture_looping_stage(session, valid_data)
       else
         capture_non_looping_stage(session, valid_data)
-        write_company_identity(session, valid_data) if Onboarding::StateMachine.current_stage(session) == :company_info
+        write_company_details(session, valid_data) if Onboarding::StateMachine.current_stage(session) == :company_info
       end
 
       valid_data
     end
 
-    # The form reads company name and number from the applicant, so what the
-    # applicant tells the chat has to land there too. Their answer wins.
-    def write_company_identity(session, valid_data)
+    # The form reads the company's name, number and type from the applicant, so what
+    # the applicant tells the chat has to land there too. Their answer wins.
+    def write_company_details(session, valid_data)
+      applicant = session.applicant
+      write_company_identity(applicant, valid_data)
+      applicant.update!(company_type: valid_data["company_type"]) if valid_data["company_type"].present?
+      set_jurisdiction(applicant, valid_data["country_of_incorporation"])
+      Onboarding::CompanyDefaults.seed_country(session)
+    end
+    private_class_method :write_company_details
+
+    def write_company_identity(applicant, valid_data)
       { "company_name" => valid_data["company_name"], "company_number" => valid_data["registration_number"] }
         .each do |field, value|
-          Provenance::CompanyFields.apply!(applicant: session.applicant, field: field, value: value,
+          Provenance::CompanyFields.apply!(applicant: applicant, field: field, value: value,
                                            source: :applicant_declared)
         end
     end
     private_class_method :write_company_identity
+
+    # The country picks the registry to look in. The PSP's choice, made when they
+    # added the business, is never overwritten.
+    def set_jurisdiction(applicant, country)
+      return if applicant.registry_jurisdiction.present?
+
+      jurisdiction = Onboarding::Jurisdictions.jurisdiction_for(country)
+      applicant.update!(registry_jurisdiction: jurisdiction) if jurisdiction
+    end
+    private_class_method :set_jurisdiction
 
     def valid_extracted_data(extracted_data)
       extracted_data.each_with_object({}) do |(field, value), result|
@@ -69,6 +88,7 @@ module Onboarding
       definition = Onboarding::StateMachine::FIELDS_BY_NAME[field.to_sym]
       return normalize_date(value) if definition&.type == :date
       return normalize_role(value) if field.to_s == "role"
+      return Onboarding::CompanyTypes.normalize(value) if field.to_s == "company_type"
 
       value
     end

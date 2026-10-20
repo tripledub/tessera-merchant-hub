@@ -76,6 +76,62 @@ RSpec.describe "Portal application shell", type: :request do
     )
   end
 
+  # MH-415: a business added by the PSP has a name but no declared company name.
+  describe "the Company name field for an applicant with only the PSP's name" do
+    let(:applicant_user) { create(:applicant_user) }
+    let(:field) { "onboarding_application[applicant_attributes][company_name]" }
+
+    before do
+      applicant_user.applicant.update!(name: "Stew & Co", company_name: nil)
+      create(:onboarding_application, applicant: applicant_user.applicant)
+      sign_in applicant_user, scope: :applicant_user
+    end
+
+    it "is pre-filled from the PSP's name, with a hint to change it" do
+      get portal_application_path(step: "company")
+
+      page = Capybara.string(response.body)
+      expect(page).to have_field(field, with: "Stew & Co")
+      expect(page).to have_text("We've used the name we have on file. Change it if needed.")
+    end
+
+    it "stores what is in the field as the applicant's own answer, and never changes the PSP's name" do
+      application = applicant_user.applicant.onboarding_application
+      params = company_details_params(application)
+      params[:onboarding_application][:applicant_attributes][:company_name] = "Stew & Co Ltd"
+
+      patch portal_application_path, params: params
+
+      applicant = applicant_user.applicant.reload
+      expect(applicant).to have_attributes(company_name: "Stew & Co Ltd", name: "Stew & Co")
+      expect(Provenance::CompanyFields.source_for(applicant, "company_name")).to eq(:applicant_declared)
+    end
+
+    it "shows the saved value, with no hint, once there is a company name" do
+      applicant_user.applicant.update!(company_name: "Stew & Co Ltd")
+
+      get portal_application_path(step: "company")
+
+      page = Capybara.string(response.body)
+      expect(page).to have_field(field, with: "Stew & Co Ltd")
+      expect(page).to have_no_text("We've used the name we have on file")
+    end
+
+    it "keeps what the applicant typed, with no hint, when the step fails to save" do
+      application = applicant_user.applicant.onboarding_application
+      params = company_details_params(application)
+      params[:onboarding_application][:applicant_attributes][:company_name] = "Typed Name Ltd"
+      params[:onboarding_application][:business_model_description] = ""
+
+      patch portal_application_path, params: params
+
+      page = Capybara.string(response.body)
+      expect(response).to have_http_status(:unprocessable_content)
+      expect(page).to have_field(field, with: "Typed Name Ltd")
+      expect(page).to have_no_text("We've used the name we have on file")
+    end
+  end
+
   it "labels the address groups and defaults the same-as-registered option to checked for a new applicant" do
     applicant_user = create(:applicant_user)
     create(:onboarding_application, applicant: applicant_user.applicant)

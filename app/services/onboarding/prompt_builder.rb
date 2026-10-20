@@ -11,10 +11,11 @@ module Onboarding
       [
         system_instructions,
         stage_context(session),
+        company_info_guidance(session),
         collected_data(session),
         recent_history(session),
         streaming ? streaming_extraction_instructions : extraction_instructions
-      ].join("\n\n")
+      ].compact.join("\n\n")
     end
 
     def system_instructions
@@ -39,6 +40,21 @@ module Onboarding
       PROMPT
     end
     private_class_method :stage_context
+
+    # MH-391: the company details are asked in a fixed order, and some answers are
+    # one of a fixed set the server validates.
+    def company_info_guidance(session)
+      return unless Onboarding::StateMachine.current_stage(session) == :company_info
+
+      <<~PROMPT.squish
+        Ask for company details in this order: company name, company type, country of incorporation,
+        registration number, registered address. Ask one question at a time.
+        For company_type use only one of: #{Onboarding::CompanyTypes::KEYS.join(", ")}.
+        For country_of_incorporation give the country name, for example United Kingdom.
+        Only ask for a registration number if it is listed as missing. A sole trader or partnership has none.
+      PROMPT
+    end
+    private_class_method :company_info_guidance
 
     def collected_data(session)
       <<~PROMPT

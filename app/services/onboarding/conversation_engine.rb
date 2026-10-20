@@ -7,6 +7,7 @@ module Onboarding
     def respond(session:, user_message:, stream: false, inference_adapter: Kyc::Inference.adapter)
       stage = Onboarding::StateMachine.current_stage(session)
       create_message!(session, role: :applicant, content: user_message, stage: stage)
+      Onboarding::CompanyDefaults.seed_country(session) if stage == :company_info
 
       command = Onboarding::ChatCommands.detect(user_message)
       return handle_command(session, stage, command, stream: stream) if command
@@ -87,8 +88,10 @@ module Onboarding
           session: session,
           extracted_data: response.fetch("extracted_data")
         )
-        stage_changed = advance_if_complete(session, extracted_data: response.fetch("extracted_data"))
-        bot_message = response.fetch("bot_message")
+        registry_check = run_registry_check(session)
+        stage_changed = registry_check != :found &&
+          advance_if_complete(session, extracted_data: response.fetch("extracted_data"))
+        bot_message = bot_message_for(session, response.fetch("bot_message"), registry_check)
         bot_message = add_stage_transition_prompt(bot_message, session) if stage_changed
 
         create_message!(
@@ -107,6 +110,30 @@ module Onboarding
       end
     end
     private_class_method :persist_and_return
+
+    # MH-391: the registry match is a fixed message, so what is shown is exactly what
+    # the registry holds. It waits for the applicant's Yes or No before anything moves on.
+    def run_registry_check(session)
+      Onboarding::RegistryCompanyCheck.run!(session) if Onboarding::RegistryCompanyCheck.due?(session)
+    end
+    private_class_method :run_registry_check
+
+    def bot_message_for(session, message, registry_check)
+      case registry_check
+      when :found then Onboarding::RegistryCompanyCheck.prompt(session)
+      when :failed then [ message, Onboarding::RegistryCompanyCheck.failure_notice ].join(" ")
+      else message
+      end
+    end
+    private_class_method :bot_message_for
+
+    # For the fixed replies that are not an LLM turn (Yes or No on a registry match):
+    # moves on when the answer completed the stage, and gives the next stage's opening.
+    def advance_after_fixed_reply(session)
+      return unless advance_if_complete(session, extracted_data: {})
+
+      stage_transition_prompt(session)
+    end
 
     def create_message!(session, role:, content:, stage:, structured_data: {})
       OnboardingMessage.create!(

@@ -48,6 +48,7 @@ RSpec.describe Onboarding::ConversationEngine do
     end
 
     it "captures extracted data and advances when the stage is complete" do
+      allow(Registry::Lookup).to receive(:call).and_return(Registry::Lookup::Result.failure(:not_found))
       session = create(:onboarding_session, current_stage: :company_info)
       adapter = instance_double(Kyc::Inference::Base, generate: {
         "bot_message" => "Thanks, let's talk about directors.",
@@ -67,6 +68,55 @@ RSpec.describe Onboarding::ConversationEngine do
       expect(session.stage_data["company_info"]).to include("company_name" => "Acme Ltd")
       expect(result[:stage_changed]).to be(true)
       expect(result[:bot_message]).to include("Next, let’s add the directors and beneficial owners")
+    end
+
+    describe "registry match (MH-391)" do
+      let(:applicant) { create(:applicant, company_name: nil, company_number: nil) }
+      let(:session) { create(:onboarding_session, applicant: applicant, current_stage: :company_info) }
+      let(:all_company_details) do
+        { "company_name" => "Acme Ltd", "registration_number" => "12345678", "company_type" => "limited_company",
+          "registered_address" => "1 High Street", "country_of_incorporation" => "United Kingdom" }
+      end
+      let(:adapter) do
+        instance_double(Kyc::Inference::Base, generate: {
+          "bot_message" => "Thanks, let's talk about directors.", "extracted_data" => all_company_details
+        })
+      end
+
+      def respond
+        described_class.respond(session: session, user_message: "Here are the details", inference_adapter: adapter)
+      end
+
+      it "replaces the reply with the registry match and holds the stage until the applicant answers" do
+        profile = create(:registry_profile, applicant: applicant, company_name: "ACME LTD", status: "active")
+        allow(Registry::Lookup).to receive(:call).and_return(Registry::Lookup::Result.success(profile))
+
+        result = respond
+
+        expect(result[:bot_message]).to include("I found **ACME LTD**").and include("Is this your company?")
+        expect(result[:stage_changed]).to be(false)
+        expect(session.reload.current_stage).to eq("company_info")
+        expect(Onboarding::RegistryCompanyCheck.pending?(session)).to be(true)
+      end
+
+      it "falls back to the normal flow with a one-line notice when nothing is found" do
+        allow(Registry::Lookup).to receive(:call).and_return(Registry::Lookup::Result.failure(:not_found))
+
+        result = respond
+
+        expect(result[:bot_message]).to include("Thanks, let's talk about directors.", "couldn't find that company")
+        expect(result[:stage_changed]).to be(true)
+        expect(session.reload.current_stage).to eq("directors_ubos")
+      end
+
+      it "does not look up a sole trader" do
+        allow(Registry::Lookup).to receive(:call)
+        all_company_details["company_type"] = "sole_trader"
+
+        respond
+
+        expect(Registry::Lookup).not_to have_received(:call)
+      end
     end
 
     it "does not auto-advance looping stages after the first complete item" do

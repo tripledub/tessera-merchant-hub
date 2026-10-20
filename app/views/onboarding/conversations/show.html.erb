@@ -34,11 +34,12 @@
               created_at: Time.current
             ) %>
       <div class="flex flex-wrap justify-start gap-3" data-testid="company-confirmation">
-        <%= button_to "Yes, that's right", portal_onboarding_company_confirmation_path,
+        <%= button_to t("onboarding.company_confirmation.yes", name: Onboarding::CompanyIdentityConfirmation.company_name(@onboarding_session)),
+              portal_onboarding_company_confirmation_path,
               params: { answer: "yes" }, method: :post,
               class: "kyn-btn-primary w-auto! min-h-11! px-4!",
               data: { testid: "company-confirmation-yes" } %>
-        <%= button_to "No, start again", portal_onboarding_company_confirmation_path,
+        <%= button_to t("onboarding.company_confirmation.no"), portal_onboarding_company_confirmation_path,
               params: { answer: "no" }, method: :post,
               class: "kyn-btn-secondary w-auto! min-h-11! px-4!",
               data: { testid: "company-confirmation-no" } %>
@@ -54,7 +55,7 @@
     <% end %>
   </div>
 
-  <%= render "onboarding/conversations/quick_replies", quick_replies: @quick_replies %>
+  <%= render "onboarding/conversations/quick_replies", quick_replies: @quick_replies, onboarding_session: @onboarding_session %>
 
   <div
     id="onboarding_typing"

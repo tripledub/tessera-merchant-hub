@@ -118,6 +118,58 @@ RSpec.describe OnboardingApplications::Snapshot, type: :service do
     end
   end
 
+  # MH-397: how much of what is asked has been answered, in either channel.
+  describe "progress" do
+    let(:form_steps) { (OnboardingApplication::STEPS - described_class::UNVALIDATED_STEPS).size }
+    let(:chat_questions) do
+      Onboarding::StateMachine::STAGES.reject(&:looping).sum { |stage| stage.fields.count(&:required) }
+    end
+
+    def progress = described_class.for(application).progress
+
+    it "counts the form's validated steps and the chat's required questions" do
+      expect(progress.total).to eq(form_steps + chat_questions)
+    end
+
+    it "keeps the same total once a chat session exists, so progress never drops when the chat starts" do
+      before = progress.total
+
+      create(:onboarding_session, applicant: applicant, stage_data: {})
+
+      expect(progress.total).to eq(before)
+    end
+
+    it "counts a form step once it has no missing answers, and the chat questions its answers also cover" do
+      before = progress.done
+
+      application.update!(business_model_description: "Sells widgets", operating_licence: "Not required")
+      create(:address, :business, :primary, addressable: applicant)
+      create(:address, :primary, type: "Address::Trading", addressable: applicant)
+
+      # The step itself, plus the chat questions the same facts answer (business description, registered address).
+      expect(progress.done).to be >= before + 1
+      expect(described_class.for(application).missing).not_to have_key("company")
+    end
+
+    it "counts a question answered only in the chat" do
+      session = create(:onboarding_session, applicant: applicant, stage_data: {})
+      before = progress.done
+
+      session.update!(stage_data: { "company_info" => { "company_type" => "Limited company" } })
+
+      expect(progress.done).to eq(before + 1)
+    end
+
+    it "gives a percentage that is whole, and 100 only when nothing is missing" do
+      expect(progress.percentage).to be_between(0, 99)
+
+      all_done = described_class::Progress.new(done: 5, total: 5)
+      expect(all_done.percentage).to eq(100)
+      expect(described_class::Progress.new(done: 1, total: 3).percentage).to eq(33)
+      expect(described_class::Progress.new(done: 0, total: 0).percentage).to eq(0)
+    end
+  end
+
   describe "principals" do
     it "lists name, role, origin and what is still missing for each" do
       create(:kyc_principal, applicant: applicant, name: "Test Director", role: :director, source: :applicant_declared)

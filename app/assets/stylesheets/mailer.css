@@ -80,17 +80,23 @@ body {
   border-radius: 8px;
 }
 
+/* The sign-in code (MH-404). It must never break across lines (MH-414): mail
+   apps scale text up and some (Gmail) let a long word wrap anywhere, so six
+   digits at 32px with wide spacing wrapped onto two lines on a narrow phone.
+   Sized to still fit at the largest Android text setting; Gmail rarely honours
+   a monospace stack, so Courier New (which it does) comes first. */
 .email-code {
   margin: 8px 0 20px;
-  padding: 16px 12px;
+  padding: 14px 4px;
   background-color: #eef0fe; /* kyn-primary-tint */
   border-radius: 12px;
   color: #0e1b2b; /* kyn-navy */
-  font-family: "SFMono-Regular", Menlo, Consolas, monospace;
-  font-size: 32px;
+  font-family: "Courier New", Courier, "SFMono-Regular", Menlo, Consolas, monospace;
+  font-size: 26px;
   font-weight: 700;
-  letter-spacing: 8px;
+  letter-spacing: 3px;
   text-align: center;
+  white-space: nowrap;
 }
 
 .email-link-fallback {
