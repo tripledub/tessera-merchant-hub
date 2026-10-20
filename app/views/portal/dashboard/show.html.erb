@@ -1,28 +1,65 @@
-<% if @password_link_sent %>
-  <%= render "portal/dashboard/password_link_sent" %>
-<% elsif @show_password_prompt %>
-  <%= render "portal/dashboard/password_prompt" %>
-<% end %>
+<%# The applicant's home (MH-397): a greeting, the optional password banner (MH-408),
+    and one card for where they are: not started, in progress or submitted. %>
+<% present(current_applicant_user, ApplicantDashboardPresenter) do |dashboard| %>
+  <% pill = {
+       not_started: "bg-kyn-assistant-bubble text-kyn-slate",
+       in_progress: "bg-kyn-primary-tint text-kyn-primary-text",
+       submitted: "bg-kyn-success-tint text-kyn-success"
+     }.fetch(dashboard.state) %>
 
-<div class="rounded-2xl border border-gray-200 bg-white p-8">
-  <h1 class="mb-2 text-xl font-semibold text-gray-900">
-    <%= current_applicant_user.first_name.present? ? t(".welcome", name: current_applicant_user.first_name) : t(".welcome_back") %>
-  </h1>
-  <p class="max-w-2xl text-gray-600">
-    Continue your KYC onboarding conversation when you are ready.
-  </p>
+  <div class="mx-auto w-full">
+    <div class="mb-5">
+      <h1 class="text-[26px] font-bold leading-8 tracking-tight text-kyn-navy"><%= dashboard.heading %></h1>
+      <p class="mt-1 text-[15px] leading-6 text-kyn-slate"><%= dashboard.intro %></p>
+    </div>
 
-  <div class="mt-6">
-    <%= link_to t("portal.dashboard.show.continue_application"), portal_application_path,
-          class: "btn-primary mr-3" %>
-    <%= link_to portal_onboarding_path,
-          class: "inline-flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2" do %>
-      Continue KYC onboarding
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4" aria-hidden="true">
-        <path fill-rule="evenodd" d="M3 10a.75.75 0 0 1 .75-.75h10.69l-3.22-3.22a.75.75 0 1 1 1.06-1.06l4.5 4.5a.75.75 0 0 1 0 1.06l-4.5 4.5a.75.75 0 1 1-1.06-1.06l3.22-3.22H3.75A.75.75 0 0 1 3 10Z" clip-rule="evenodd"/>
-      </svg>
+    <% if @password_link_sent %>
+      <%= render "portal/dashboard/password_link_sent" %>
+    <% elsif @show_password_prompt %>
+      <%= render "portal/dashboard/password_prompt" %>
     <% end %>
-  </div>
-</div>
 
-<%= render "portal/dashboard/password_link" %>
+    <% if dashboard.submitted? %>
+      <section class="kyn-card" aria-labelledby="dashboard-card-title">
+        <span class="flex size-12 items-center justify-center rounded-full bg-kyn-success-tint text-kyn-success" aria-hidden="true">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" class="size-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>
+        </span>
+        <h2 id="dashboard-card-title" class="mt-4 text-xl font-bold text-kyn-navy"><%= t("portal.dashboard.show.submitted_title") %></h2>
+        <p class="mt-2 text-[15px] leading-6 text-kyn-slate"><%= t("portal.dashboard.show.submitted_body") %></p>
+        <span class="mt-4 inline-flex rounded-full px-3 py-1 text-xs font-semibold <%= pill %>"><%= t("portal.dashboard.show.status.submitted") %></span>
+        <%= link_to t("portal.dashboard.show.view_answers"), portal_application_path(step: "review"), class: "kyn-btn-secondary mt-6" %>
+      </section>
+    <% else %>
+      <section class="kyn-card" aria-labelledby="dashboard-card-title">
+        <div class="flex items-center justify-between gap-3">
+          <h2 id="dashboard-card-title" class="text-xl font-bold text-kyn-navy"><%= t("portal.dashboard.show.card_title") %></h2>
+          <span class="inline-flex shrink-0 rounded-full px-3 py-1 text-xs font-semibold <%= pill %>"><%= t("portal.dashboard.show.status.#{dashboard.state}") %></span>
+        </div>
+
+        <div class="kyn-progress mt-4" role="progressbar" aria-label="<%= t("portal.dashboard.show.progress_label") %>"
+             aria-valuenow="<%= dashboard.percentage %>" aria-valuemin="0" aria-valuemax="100">
+          <div class="kyn-progress-fill" style="width: <%= dashboard.percentage %>%"></div>
+        </div>
+        <p class="mt-3 text-[15px] leading-6 text-kyn-slate">
+          <% if dashboard.not_started? %>
+            <%= t("portal.dashboard.show.about") %>
+          <% else %>
+            <%= t("portal.dashboard.show.progress_text", percent: dashboard.percentage, next_up: dashboard.next_up) %>
+          <% end %>
+        </p>
+
+        <% if dashboard.not_started? %>
+          <%= link_to t("portal.dashboard.show.start_chat"), portal_onboarding_path, class: "kyn-btn-primary mt-5" %>
+        <% else %>
+          <%= link_to t("portal.dashboard.show.continue_chat"), portal_onboarding_path, class: "kyn-btn-primary mt-5" %>
+        <% end %>
+        <%= link_to t("portal.dashboard.show.use_form"), portal_application_path, class: "kyn-btn-secondary mt-3" %>
+        <p class="mt-4 text-[13px] leading-5 text-kyn-slate"><%= t("portal.dashboard.show.chat_note") %></p>
+      </section>
+    <% end %>
+
+    <%= render "portal/dashboard/password_link" %>
+
+    <p class="mt-2 pb-4 text-center text-xs text-kyn-slate"><%= t("layouts.applicant_auth_card.security") %></p>
+  </div>
+<% end %>

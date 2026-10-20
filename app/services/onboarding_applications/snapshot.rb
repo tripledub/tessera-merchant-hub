@@ -18,6 +18,13 @@ module OnboardingApplications
     NextAction = Data.define(:step, :message)
     Conflict = Data.define(:field, :held_value, :held_source, :proposed_value, :proposed_source)
 
+    # done of total questions answered. Not a percentage of steps: see #progress.
+    Progress = Data.define(:done, :total) do
+      def percentage
+        total.zero? ? 0 : (done.fdiv(total) * 100).round
+      end
+    end
+
     # The only facts that may be sent to an LLM. Widen deliberately, here, if
     # that ever becomes appropriate (e.g. private inference). Addresses and
     # anything personal stay out.
@@ -94,6 +101,19 @@ module OnboardingApplications
     end
 
     def current_step = application.current_step
+
+    # MH-397: how much of what is asked has been answered, counting the form's
+    # validated steps (a step is done when it has no gaps) and the chat's required
+    # questions (done when the chat or the application has the answer), so an
+    # answer counts whichever channel it came in through. The total is fixed (it
+    # does not depend on whether a chat session exists), so progress never drops
+    # when the chat starts.
+    def progress
+      steps = OnboardingApplication::STEPS - UNVALIDATED_STEPS
+      answered_steps = steps.count { |step| missing[step].blank? }
+      answered_questions = chat_required_fields.count { |stage, field| chat_field_answered?(stage, field) }
+      Progress.new(done: answered_steps + answered_questions, total: steps.size + chat_required_fields.size)
+    end
 
     def facts
       @facts ||= FACT_DEFINITIONS.filter_map { |definition| build_fact(definition) }
@@ -194,15 +214,19 @@ module OnboardingApplications
       OnboardingApplication::STEPS.find { |step| missing[step].present? }
     end
 
+    # The chat's required questions, as [stage, field] name pairs (the looping
+    # stages, directors and owners, are principals and are counted elsewhere).
+    def chat_required_fields
+      @chat_required_fields ||= Onboarding::StateMachine::STAGES.reject(&:looping).flat_map do |stage|
+        stage.fields.select(&:required).map { |field| [ stage.name.to_s, field.name.to_s ] }
+      end
+    end
+
     # Required chat questions that neither the chat nor the application has answered.
     def chat_gaps
       return {} unless applicant.onboarding_session
 
-      gaps = Onboarding::StateMachine::STAGES.reject(&:looping).flat_map do |stage|
-        stage.fields.select(&:required).filter_map do |field|
-          field.name.to_s.humanize unless chat_field_answered?(stage.name.to_s, field.name.to_s)
-        end
-      end
+      gaps = chat_required_fields.reject { |stage, field| chat_field_answered?(stage, field) }.map { |_stage, field| field.humanize }
       { CHAT_STEP => gaps }
     end
 
