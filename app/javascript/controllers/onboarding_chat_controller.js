@@ -140,7 +140,19 @@ export default class extends Controller {
       case "error":
         this.handleStreamError()
         break
+      case "document_update":
+        this.appendBotMessage(data.bot_message)
+        this.refreshFragments()
+        break
     }
+  }
+
+  // A fixed assistant message pushed by the server (the outcome of an upload).
+  appendBotMessage(html) {
+    const wrapper = this.createStreamingBubble()
+    wrapper.querySelector("[data-streaming-text]").innerHTML = html
+    this.messagesTarget.append(wrapper)
+    this.scrollToLatest()
   }
 
   appendStreamToken(token) {

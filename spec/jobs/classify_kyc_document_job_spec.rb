@@ -54,6 +54,58 @@ RSpec.describe ClassifyKycDocumentJob, type: :job do
       end
     end
 
+    context "when the applicant is in the chat's documents stage (MH-422)" do
+      let!(:session) { create(:onboarding_session, applicant: applicant, current_stage: :document_collection) }
+
+      before do
+        allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("John Smith - Passport - 16-11-2027.pdf"))
+        allow(KycDocument).to receive(:find).with(document.id).and_return(document)
+      end
+
+      it "tells the chat, saving one message and broadcasting it to the session" do
+        expect { described_class.new.perform(document.id) }
+          .to have_broadcasted_to("onboarding:#{session.id}")
+          .with(a_hash_including(type: "document_update", bot_message: a_string_including("recognised your Passport")))
+
+        expect(session.onboarding_messages.bot.last.content).to include("I've recognised your Passport")
+      end
+
+      it "ends in the could-not-read message, never stuck processing, for any unexpected failure" do
+        allow(DocumentClassifiers).to receive(:obtain).and_raise(Faraday::TimeoutError, "slow")
+        allow(Honeybadger).to receive(:notify)
+
+        expect { described_class.new.perform(document.id) }
+          .to have_broadcasted_to("onboarding:#{session.id}").with(a_hash_including(type: "document_update"))
+
+        expect(document.reload.status).to eq("error")
+        expect(session.onboarding_messages.bot.last.content).to include("I couldn't read")
+        expect(Honeybadger).to have_received(:notify).with("KYC document classification failed", hash_including(cause: nil))
+      end
+
+      it "does not turn a failure to tell the chat into a document error" do
+        allow(Onboarding::DocumentOutcomeMessage).to receive(:record!).and_raise(StandardError, "chat down")
+
+        expect { described_class.new.perform(document.id) }.not_to raise_error
+        expect(document.reload.status).not_to eq("error")
+      end
+    end
+
+    context "when the applicant has no chat session" do
+      before do
+        allow(document.file).to receive(:filename).and_return(ActiveStorage::Filename.new("John Smith - Passport - 16-11-2027.pdf"))
+        allow(KycDocument).to receive(:find).with(document.id).and_return(document)
+      end
+
+      it "tells no chat and saves no message" do
+        allow(ActionCable.server).to receive(:broadcast)
+
+        described_class.new.perform(document.id)
+
+        expect(ActionCable.server).not_to have_received(:broadcast)
+        expect(OnboardingMessage.count).to eq(0)
+      end
+    end
+
     context "when the AI classifier cannot determine a document type (MH-337)" do
       let(:mock_chat) { instance_double(RubyLLM::Chat) }
 
