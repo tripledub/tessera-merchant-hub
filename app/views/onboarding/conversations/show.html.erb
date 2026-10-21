@@ -88,9 +88,9 @@
       data-action="change->onboarding-chat#submitUpload" />
   <% end %>
 
-  <% if @onboarding_session.document_collection? %>
-    <%= render "onboarding/conversations/document_checklist", outstanding_items: @outstanding_items %>
-  <% end %>
+  <%# Always rendered (hidden when it does not apply) so the chat can swap it by id after a reply. %>
+  <%= render "onboarding/conversations/document_checklist",
+        outstanding_items: @onboarding_session.document_collection? ? @outstanding_items : [] %>
   <%= render "onboarding/conversations/document_status_notices", onboarding_session: @onboarding_session %>
   <%= render "onboarding/conversations/composer", session: @onboarding_session %>
 </section>
