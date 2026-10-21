@@ -1175,6 +1175,12 @@ en:
         completed: "%{percent}% completed"
         label: Onboarding progress
       typing_label: Assistant is typing
+    document_outcome:
+      error: I couldn't read “%{filename}”. Please try uploading it again.
+      recognised: I've recognised your %{document_type} and it's under review. Your
+        checklist shows what is still needed.
+      unrecognised: I couldn't tell what “%{filename}” is. Please check it's one of
+        the documents listed and upload it again.
     quick_replies:
       company_type:
         group_label: Company types

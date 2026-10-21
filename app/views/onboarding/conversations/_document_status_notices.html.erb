@@ -1,19 +1,18 @@
+<%# Always rendered, empty when there is nothing to say, so the chat can swap it by id after a reply. %>
 <% present(onboarding_session, OnboardingDocumentValidityPresenter) do |dvp| %>
   <% notices = dvp.notices %>
-  <% if notices.any? %>
-    <div
-      id="onboarding_document_status_notices"
-      class="space-y-2 border-t border-kyn-border bg-kyn-warning-tint px-4 py-3 sm:px-6"
-      data-testid="document-status-notices">
-      <% notices.each do |notice| %>
-        <p class="flex items-start gap-2 text-sm text-kyn-warning">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true">
-            <circle cx="12" cy="12" r="9"/>
-            <path stroke-linecap="round" d="M12 11v5m0-8.5v.01"/>
-          </svg>
-          <span><%= notice.message %></span>
-        </p>
-      <% end %>
-    </div>
-  <% end %>
+  <div
+    id="onboarding_document_status_notices"
+    class="<%= "space-y-2 border-t border-kyn-border bg-kyn-warning-tint px-4 py-3 sm:px-6" if notices.any? %>"
+    <%= "data-testid=document-status-notices" if notices.any? %>>
+    <% notices.each do |notice| %>
+      <p class="flex items-start gap-2 text-sm text-kyn-warning">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <path stroke-linecap="round" d="M12 11v5m0-8.5v.01"/>
+        </svg>
+        <span><%= notice.message %></span>
+      </p>
+    <% end %>
+  </div>
 <% end %>

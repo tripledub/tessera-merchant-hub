@@ -8,6 +8,8 @@
         action: "turbo:submit-start->onboarding-chat#submitStart turbo:submit-end->onboarding-chat#submitEnd"
       } do |form| %>
   <div class="flex items-end gap-2">
+    <%# A slot of its own, always present, so the chat can swap just this after a reply. %>
+    <div id="onboarding_upload_slot" class="contents">
     <% if session.document_collection? %>
       <button
         type="button"
@@ -21,6 +23,7 @@
         </svg>
       </button>
     <% end %>
+    </div>
     <%= form.text_area :message,
           name: :message,
           rows: 1,
