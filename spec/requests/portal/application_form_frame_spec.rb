@@ -25,6 +25,9 @@ RSpec.describe "Portal application form: frame and Company step", type: :request
     app/views/portal/applications/_descriptor_fields.html.erb
     app/views/portal/applications/_country_fields.html.erb
     app/javascript/controllers/country_picker_controller.js
+    app/views/portal/applications/_principal_fields.html.erb
+    app/views/portal/applications/_principal_item_fields.html.erb
+    app/views/portal/applications/_review.html.erb
   ].freeze
   ADMIN_THEME = /
     (?<![\w-])(?:card|form-input|form-input-error|form-label|form-select|btn-primary|btn-secondary)(?![\w-])
@@ -133,6 +136,60 @@ RSpec.describe "Portal application form: frame and Company step", type: :request
       render_step("countries")
 
       expect(page).to have_css("select#country-picker-select.kyn-input[multiple]", visible: :all)
+    end
+  end
+
+  describe "principals and review (MH-425)" do
+    def open_step(step, **attributes)
+      OnboardingApplication.where(applicant: applicant_user.applicant).destroy_all
+      completed = OnboardingApplication::STEPS.take_while { |candidate| candidate != step }
+      create(:onboarding_application, applicant: applicant_user.applicant, current_step: step,
+                                      completed_steps: completed, **attributes)
+      get portal_application_path(step: step)
+    end
+
+    it "renders the principals step with kyn fields and the role names unchanged" do
+      open_step("principals")
+
+      expect(page).to have_css("input.kyn-input[name*='[name]']", visible: :all)
+      expect(page).to have_css("input[type='date'].kyn-input", visible: :all)
+      expect(page).to have_css("input[type='email'].kyn-input", visible: :all)
+      expect(page).to have_css("select.kyn-input option", text: "Director & PSC", visible: :all)
+      expect(page).to have_css("input[type='submit'].kyn-btn-primary", visible: :all)
+    end
+
+    it "shows a blank answer on the review page in red, with a link to fix it" do
+      open_step("review")
+
+      missing = page.all("[data-testid='review-missing']")
+      expect(missing).not_to be_empty
+      expect(missing.first.text.squish).to include("Missing. Add this before you submit.")
+      expect(missing.first).to have_css("a[href*='/portal/application?step=']", text: "Add this before you submit.")
+      expect(missing.first[:class]).to include("text-kyn-error")
+    end
+
+    it "says so when there are no principals, and links to that step" do
+      open_step("review")
+
+      principals_card = page.all("section.kyn-card").find { |card| card.has_css?("h3", text: "Directors and beneficial owners") }
+      expect(principals_card).to have_css("a[href='#{portal_application_path(step: 'principals')}']", text: "Add this before you submit.")
+    end
+
+    it "lists the principals with their role" do
+      OnboardingApplication.where(applicant: applicant_user.applicant).destroy_all
+      application = create(:onboarding_application, applicant: applicant_user.applicant, current_step: "review",
+                                                    completed_steps: OnboardingApplication::STEPS - [ "review" ])
+      create(:kyc_principal, applicant: application.applicant, name: "Test Principal", role: :director_and_psc)
+      get portal_application_path(step: "review")
+
+      expect(page).to have_css("li", text: "Test Principal — Director & PSC")
+    end
+
+    it "does not wrap the review cards in another card" do
+      open_step("review")
+
+      expect(page).to have_no_css("section.kyn-card section.kyn-card")
+      expect(page).to have_css("input[type='submit'].kyn-btn-primary[value='Submit application']")
     end
   end
 

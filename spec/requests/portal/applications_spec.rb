@@ -772,7 +772,7 @@ RSpec.describe "Portal application shell", type: :request do
     expect(response.body).to include('aria-valuenow="100"')
   end
 
-  it "renders the review page sections as cards, with no dark-mode classes" do
+  it "renders the review page sections as cards in the applicant look (MH-425)" do
     applicant_user = create(:applicant_user)
     application = review_application_for(applicant_user)
     sign_in applicant_user, scope: :applicant_user
@@ -781,16 +781,15 @@ RSpec.describe "Portal application shell", type: :request do
 
     expect(response).to have_http_status(:ok)
     page = Capybara.string(response.body)
-    sections = page.all("section.card")
+    sections = page.all("section.kyn-card")
     expect(sections.size).to be >= 2
-    sections.each { |section| expect(section["class"]).to include("card") }
     expect(response.body).not_to include("dark:")
 
     patch portal_application_path, params: { step: "review" }
     expect(response).to redirect_to(portal_application_path(step: "review"))
 
     get portal_application_path(step: "review")
-    submitted_notice = Capybara.string(response.body).find("p.text-green-700")
+    submitted_notice = Capybara.string(response.body).find("p.text-kyn-success")
     expect(submitted_notice["class"]).not_to include("dark:")
   end
 
