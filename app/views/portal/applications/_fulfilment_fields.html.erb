@@ -1,7 +1,7 @@
 <%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6",
       data: { controller: "form-validation", action: "submit->form-validation#submitForm" } do |form| %>
   <%= hidden_field_tag :step, "fulfilment" %>
-  <%= render "shared/error_messages", object: application %>
+  <%= render "portal/applications/error_summary", object: application %>
 
   <% [
        [ :delivery_over_seven_days, t("portal.applications.fulfilment.delivery_over_seven_days") ],

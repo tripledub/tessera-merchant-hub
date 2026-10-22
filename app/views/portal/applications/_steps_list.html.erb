@@ -1,0 +1,36 @@
+<%# The form's ten steps (MH-400): done steps ticked and linked, the current step
+    tinted, locked steps muted with a lock. Rendered twice by show.html.erb: inside
+    the phone bar and as the sidebar from lg up, so each shows at only one width. %>
+<ol class="space-y-0.5 rounded-kyn-lg border border-kyn-border bg-kyn-surface p-2">
+  <% steps.each_with_index do |step, index| %>
+    <% state = if step[:key] == current_key then :current elsif step[:completed] then :done elsif step[:accessible] then :available else :locked end %>
+    <% row = "flex min-h-11 items-center gap-3 rounded-kyn-md px-3 py-2.5 text-[14px] outline-none focus-visible:ring-[3px] focus-visible:ring-kyn-primary/30" %>
+    <li <%= tag.attributes("aria-current": ("step" if state == :current), "aria-disabled": ("true" if state == :locked)) %>>
+      <% marker = capture do %>
+        <% if state == :done %>
+          <span class="grid size-6 shrink-0 place-items-center rounded-full bg-kyn-primary text-kyn-surface" aria-hidden="true">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="size-3.5"><path d="M4.5 10.5l3.5 3.5 7.5-8"/></svg>
+          </span>
+        <% else %>
+          <span class="grid size-6 shrink-0 place-items-center rounded-full border-[1.5px] text-xs font-semibold <%= state == :locked ? "border-kyn-border text-kyn-slate" : "border-kyn-primary text-kyn-primary-text" %>" aria-hidden="true"><%= index + 1 %></span>
+        <% end %>
+      <% end %>
+      <% label = capture do %>
+        <%= marker %>
+        <span class="min-w-0 flex-1"><%= step[:label] %><% if state == :done %><span class="sr-only"> (<%= t("portal.applications.step_done") %>)</span><% end %></span>
+        <% if state == :locked %>
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-4 shrink-0 text-kyn-slate" aria-hidden="true"><rect x="4.5" y="9" width="11" height="8" rx="2"/><path d="M7 9V6.5a3 3 0 0 1 6 0V9"/></svg>
+          <span class="sr-only">(<%= t("portal.applications.step_locked") %>)</span>
+        <% end %>
+      <% end %>
+      <% if state == :locked %>
+        <span class="<%= row %> text-kyn-slate"><%= label %></span>
+      <% else %>
+        <%= link_to portal_application_path(step: step[:key]),
+              class: "#{row} #{state == :current ? "bg-kyn-primary-tint font-semibold text-kyn-primary-text" : "text-kyn-navy hover:bg-kyn-bg"}" do %>
+          <%= label %>
+        <% end %>
+      <% end %>
+    </li>
+  <% end %>
+</ol>

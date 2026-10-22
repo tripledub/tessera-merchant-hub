@@ -1323,6 +1323,7 @@ en:
       title: Payment
   portal:
     applications:
+      all_steps: All steps
       company:
         add_domain: Add website
         address:
@@ -1369,6 +1370,10 @@ en:
         company_city: Company city
         company_number: Company number
         descriptor: Descriptor
+      error_summary:
+        header:
+          one: '1 error prevented this from being saved:'
+          other: "%{count} errors prevented this from being saved:"
       fulfilment:
         delivery_over_seven_days: Is the time between purchase and delivery over seven
           days?
@@ -1379,6 +1384,7 @@ en:
         remaining_balance_due: When is the remaining balance due?
         service_requirements: Service requirements
         takes_deposits: Does your business take deposits?
+      hide_steps: Hide steps
       'no': 'No'
       payments:
         sends_advance_notifications: Do you notify customers before an upcoming recurring
@@ -1414,10 +1420,11 @@ en:
       revisiting: You are reviewing a previously completed section. Its fields will
         be added in the corresponding application-section ticket.
       saved: Company details saved.
-      saved_progress: Your progress is saved securely whenever you continue to the
-        next section.
       section_placeholder: This section is ready for its application fields. Those
         fields are delivered in the next stacked slices.
+      step_done: completed
+      step_locked: locked
+      step_of: Step %{number} of %{total}
       steps:
         company: Company details
         countries: Target countries
@@ -1429,6 +1436,8 @@ en:
         processing: Processing history
         review: Review and submit
         volumes: Volumes and transaction profile
+      steps_note: Finish a step to unlock the next one. Your answers are saved as
+        you go.
       submitted: Your application has been submitted.
       title: Your onboarding application
       'yes': 'Yes'

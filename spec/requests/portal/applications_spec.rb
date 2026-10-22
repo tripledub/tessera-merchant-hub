@@ -182,7 +182,7 @@ RSpec.describe "Portal application shell", type: :request do
     expect(applicant.primary_business_address).to have_attributes(line1: "1 Test Street")
   end
 
-  it "renders the registered and trading address fieldsets as cards, with no dark-mode classes" do
+  it "renders the registered and trading address as fieldsets with legends, in the applicant look (MH-400)" do
     applicant_user = create(:applicant_user)
     create(:onboarding_application, applicant: applicant_user.applicant)
     sign_in applicant_user, scope: :applicant_user
@@ -191,10 +191,12 @@ RSpec.describe "Portal application shell", type: :request do
 
     expect(response).to have_http_status(:ok)
     page = Capybara.string(response.body)
-    fieldsets = page.all("fieldset.card")
-    expect(fieldsets.size).to eq(2)
-    fieldsets.each { |fieldset| expect(fieldset["class"]).to include("card") }
-    page.all("fieldset.card legend").each { |legend| expect(legend["class"]).not_to include("dark:") }
+    address_fieldsets = page.all("fieldset", visible: :all).select { |fieldset| fieldset.has_css?("input[name*='[line1]']", visible: :all) }
+    expect(address_fieldsets.size).to eq(2)
+    address_fieldsets.each do |fieldset|
+      expect(fieldset).to have_css("legend", visible: :all)
+      expect(fieldset["class"].to_s).not_to match(/card|dark:/)
+    end
   end
 
   it "does not mark the company number input as required" do

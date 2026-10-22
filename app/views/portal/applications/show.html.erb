@@ -2,40 +2,54 @@
 <% content_for :applicant_width, "wide" %>
 
 <% present(@application) do |application_presenter| %>
+  <% steps = application_presenter.steps %>
+  <% number = steps.index { |step| step[:key] == @step } + 1 %>
+  <% step_of = t("portal.applications.step_of", number: number, total: steps.size) %>
+  <% step_title = t("portal.applications.steps.#{@step}") %>
+  <% percent = application_presenter.progress_percentage %>
+
   <div class="mx-auto max-w-5xl">
-    <div class="mb-8">
-      <h1 class="text-2xl font-semibold text-gray-900"><%= t("portal.applications.title") %></h1>
-      <p class="mt-2 text-sm text-gray-500"><%= t("portal.applications.saved_progress") %></p>
-      <div class="mt-4 h-2 overflow-hidden rounded-full bg-gray-200" role="progressbar"
-           aria-valuenow="<%= application_presenter.progress_percentage %>" aria-valuemin="0" aria-valuemax="100">
-        <div class="h-full bg-brand-500" style="width: <%= application_presenter.progress_percentage %>%"></div>
+    <%# Phones: one compact bar, "Step N of 10 · All steps", that opens the full list.
+        A native <details>, so it needs no JavaScript and closes on each step change. %>
+    <h1 class="sr-only lg:hidden"><%= step_title %></h1>
+    <details class="group mb-5 lg:hidden" data-testid="steps-bar">
+      <summary class="block min-h-11 cursor-pointer list-none rounded-kyn-md outline-none focus-visible:ring-[3px] focus-visible:ring-kyn-primary/30 [&::-webkit-details-marker]:hidden">
+        <span class="flex items-center justify-between gap-3">
+          <span class="text-xs font-semibold text-kyn-slate"><%= step_of %></span>
+          <span class="text-[13px] font-semibold text-kyn-primary-text">
+            <span class="group-open:hidden"><%= t("portal.applications.all_steps") %></span>
+            <span class="hidden group-open:inline"><%= t("portal.applications.hide_steps") %></span>
+          </span>
+        </span>
+        <span class="mt-1 block text-2xl font-bold text-kyn-navy" aria-hidden="true"><%= step_title %></span>
+        <span class="kyn-progress mt-3 block" aria-hidden="true">
+          <span class="kyn-progress-fill block" style="width: <%= percent %>%"></span>
+        </span>
+      </summary>
+      <nav class="mt-4" aria-label="<%= t("portal.applications.progress") %>">
+        <%= render "portal/applications/steps_list", steps: steps, current_key: @step %>
+        <p class="mt-3 text-xs text-kyn-slate"><%= t("portal.applications.steps_note") %></p>
+      </nav>
+    </details>
+
+    <div class="mb-6 hidden lg:block">
+      <p class="text-xs font-semibold text-kyn-slate"><%= step_of %></p>
+      <h1 class="mt-1 text-2xl font-bold text-kyn-navy"><%= step_title %></h1>
+      <div class="kyn-progress mt-3" role="progressbar" aria-label="<%= t("portal.applications.progress") %>"
+           aria-valuenow="<%= percent %>" aria-valuemin="0" aria-valuemax="100">
+        <div class="kyn-progress-fill" style="width: <%= percent %>%"></div>
       </div>
     </div>
 
-    <div class="grid gap-8 lg:grid-cols-[16rem_1fr]">
-      <nav aria-label="<%= t("portal.applications.progress") %>">
-        <ol class="space-y-2">
-          <% application_presenter.steps.each do |step| %>
-            <li>
-              <% if step[:accessible] %>
-                <%= link_to portal_application_path(step: step[:key]),
-                      class: "block rounded-lg px-3 py-2 text-sm #{step[:key] == @step ? 'bg-brand-50 font-semibold text-brand-700' : 'text-gray-600 hover:bg-gray-100'}" do %>
-                  <span aria-hidden="true"><%= step[:completed] ? "✓" : "○" %></span>
-                  <%= step[:label] %>
-                <% end %>
-              <% else %>
-                <span class="block px-3 py-2 text-sm text-gray-400" aria-disabled="true">
-                  <span aria-hidden="true">○</span>
-                  <%= step[:label] %>
-                </span>
-              <% end %>
-            </li>
-          <% end %>
-        </ol>
-      </nav>
+    <div class="lg:grid lg:grid-cols-[18rem_1fr] lg:items-start lg:gap-8">
+      <aside class="hidden lg:block" data-testid="steps-sidebar">
+        <nav aria-label="<%= t("portal.applications.progress") %>">
+          <%= render "portal/applications/steps_list", steps: steps, current_key: @step %>
+        </nav>
+        <p class="mt-3 text-xs text-kyn-slate"><%= t("portal.applications.steps_note") %></p>
+      </aside>
 
-      <section class="card">
-        <h2 class="text-xl font-semibold text-gray-900"><%= t("portal.applications.steps.#{@step}") %></h2>
+      <section class="kyn-card">
         <% if @step == "company" %>
           <%= render "portal/applications/company_fields", application: @application %>
         <% elsif @step == "fulfilment" %>
@@ -55,13 +69,13 @@
         <% elsif @step == "review" %>
           <%= render "portal/applications/review", application: @application %>
         <% elsif @step == @application.current_step %>
-          <p class="mt-2 text-sm text-gray-500"><%= t("portal.applications.section_placeholder") %></p>
+          <p class="text-sm text-kyn-slate"><%= t("portal.applications.section_placeholder") %></p>
           <%= form_with url: portal_application_path, method: :patch, class: "mt-8" do %>
             <%= hidden_field_tag :step, @step %>
-            <%= submit_tag t("portal.applications.continue"), class: "btn-primary" %>
+            <%= submit_tag t("portal.applications.continue"), class: "kyn-btn-primary sm:w-60" %>
           <% end %>
         <% else %>
-          <p class="mt-8 text-sm text-gray-500"><%= t("portal.applications.revisiting") %></p>
+          <p class="text-sm text-kyn-slate"><%= t("portal.applications.revisiting") %></p>
         <% end %>
       </section>
     </div>

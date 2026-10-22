@@ -1,0 +1,21 @@
+<%# The form's error summary in the applicant look (MH-400). The shared
+    shared/error_messages stays for the staff and Devise views. %>
+<%
+  # Nested-attribute errors (e.g. a child record's own validation failure bubbling up
+  # through dotted attribute keys like "applicant.applicant_domains.name") already have
+  # a dedicated inline message next to their field. Showing them here too would
+  # duplicate it with confusing wording.
+  banner_errors = object.errors.reject { |error| error.attribute.to_s.include?(".") }
+%>
+<% if banner_errors.any? %>
+  <div class="mb-4 rounded-kyn-md border border-kyn-error/30 bg-kyn-error-tint p-4">
+    <h3 class="text-[14px] font-semibold text-kyn-error">
+      <%= t("portal.applications.error_summary.header", count: banner_errors.count) %>
+    </h3>
+    <ul class="mt-2 list-inside list-disc text-[14px] text-kyn-error">
+      <% banner_errors.each do |error| %>
+        <li><%= error.full_message %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

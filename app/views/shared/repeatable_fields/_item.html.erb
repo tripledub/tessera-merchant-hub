@@ -1,4 +1,4 @@
-<div class="rounded-lg border border-gray-200 p-4"
+<div class="rounded-kyn-md border border-kyn-border p-4"
      data-repeatable-fields-target="item">
   <%= item_form.hidden_field :id if item_form.object.persisted? %>
   <%= item_form.hidden_field :_destroy,
@@ -15,7 +15,7 @@
   <% end %>
 
   <button type="button"
-          class="btn-secondary mt-3"
+          class="kyn-btn-secondary mt-3 sm:w-auto"
           data-repeatable-fields-target="remove"
           data-action="repeatable-fields#remove">
     <%= remove_label %>
