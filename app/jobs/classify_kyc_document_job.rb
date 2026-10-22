@@ -2,6 +2,7 @@
 
 class ClassifyKycDocumentJob < ApplicationJob
   include KycDocumentBroadcaster
+  include OnboardingChatNotifier
 
   # Deliberately not a re-raise of the original broadcast error: some
   # exception classes (e.g. ActionView::Template::Error) override #cause to
@@ -37,13 +38,27 @@ class ClassifyKycDocumentJob < ApplicationJob
     end
     broadcast_document(document)
     auto_confirm_for_onboarding(document) unless no_extraction
+    notify_onboarding_chat(document)
   rescue DocumentClassifiers::AiFallback::Error, HandlerRegisterable::NoHandlerAccepted => e
-    document&.update!(status: :error, result: { "error" => e.message })
-    notify_honeybadger(e, kyc_document_id, document)
-    broadcast_after_classification_failure(document)
+    fail_classification(e, kyc_document_id, document)
+  rescue ActiveRecord::RecordNotFound
+    raise
+  rescue StandardError => e
+    # MH-422: whatever else goes wrong, the document ends in error (not stuck in
+    # processing) and the applicant is told, instead of an endless "processing now...".
+    raise unless document
+
+    fail_classification(e, kyc_document_id, document)
   end
 
   private
+
+  def fail_classification(exception, kyc_document_id, document)
+    document&.update!(status: :error, result: { "error" => exception.message })
+    notify_honeybadger(exception, kyc_document_id, document)
+    broadcast_after_classification_failure(document)
+    notify_onboarding_chat(document) if document
+  end
 
   # error/message deliberately excluded: both can echo back document-derived
   # content (e.g. JSON::ParserError quoting the AI's raw response). cause:

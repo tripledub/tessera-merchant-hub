@@ -1,6 +1,15 @@
 import { Controller } from "@hotwired/stimulus"
 import { cable } from "@hotwired/turbo-rails"
 
+const FRAGMENT_IDS = [
+  "onboarding_progress",
+  "onboarding_quick_replies",
+  "onboarding_upload_slot",
+  "onboarding_document_checklist",
+  "onboarding_document_status_notices"
+]
+const AT_BOTTOM_TOLERANCE = 24
+
 export default class extends Controller {
   static targets = ["composer", "input", "messages", "quickReplies", "quickReply", "submit", "typing", "uploadButton", "uploadInput", "uploadStatus"]
   static values  = { sessionId: String, token: String, uploadingTemplate: String }
@@ -131,7 +140,19 @@ export default class extends Controller {
       case "error":
         this.handleStreamError()
         break
+      case "document_update":
+        this.appendBotMessage(data.bot_message)
+        this.refreshFragments()
+        break
     }
+  }
+
+  // A fixed assistant message pushed by the server (the outcome of an upload).
+  appendBotMessage(html) {
+    const wrapper = this.createStreamingBubble()
+    wrapper.querySelector("[data-streaming-text]").innerHTML = html
+    this.messagesTarget.append(wrapper)
+    this.scrollToLatest()
   }
 
   appendStreamToken(token) {
@@ -225,9 +246,11 @@ export default class extends Controller {
     return wrapper
   }
 
-  // The progress bar and the quick-reply chips are server-rendered from the
-  // session state, so after each completed reply fetch the page again and swap
-  // in the fresh fragments.
+  // What the server renders from the session state: the progress bar, the
+  // quick-reply chips and Yes/No buttons, the upload button, the documents
+  // checklist and the status notices. After each completed reply fetch the page
+  // again and swap in the fresh fragments. (The composer's textarea is never
+  // swapped, so what the applicant is typing is kept.)
   async refreshFragments() {
     try {
       const response = await fetch(window.location.href, {
@@ -237,13 +260,22 @@ export default class extends Controller {
       if (!response.ok) return
 
       const doc = new DOMParser().parseFromString(await response.text(), "text/html")
-      for (const id of ["onboarding_progress", "onboarding_quick_replies"]) {
+      const wasAtBottom = this.isAtBottom()
+      for (const id of FRAGMENT_IDS) {
         const fresh = doc.getElementById(id)
         if (fresh) document.getElementById(id)?.replaceWith(fresh)
       }
+      // The swaps change how much room the messages have; an applicant who was
+      // reading the latest message still sees all of it, one who scrolled up is left alone.
+      if (wasAtBottom) this.scrollToLatest()
     } catch (_error) {
       // Leave what is on screen; the next reply or a reload corrects it.
     }
+  }
+
+  isAtBottom() {
+    const list = this.messagesTarget
+    return list.scrollHeight - list.scrollTop - list.clientHeight <= AT_BOTTOM_TOLERANCE
   }
 
   appendApplicantPreview(content) {
