@@ -1410,7 +1410,8 @@ en:
         your latest saved step.
       review:
         edit: Edit
-        missing: Missing
+        missing: Missing.
+        missing_hint: Add this before you submit.
         not_applicable: Not applicable
         registered_address: Registered address
         submit: Submit application
