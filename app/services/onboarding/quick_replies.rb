@@ -10,9 +10,11 @@ module Onboarding
   # with kind :answer is sent as the applicant's reply (the same text they could
   # have typed); :other only prompts them to type.
   module QuickReplies
-    Option = Data.define(:field, :key, :label, :kind)
+    Option = Data.define(:field, :key, :label, :kind, :icon)
 
     COUNTRY_KEYS = %i[united_kingdom malta cyprus].freeze
+    # The flag shown on each country chip (app/assets/images/flags); Other gets a globe.
+    COUNTRY_ICONS = { united_kingdom: "gb", malta: "mt", cyprus: "cy", other: "globe" }.freeze
     CHIP_FIELDS = %i[company_type country_of_incorporation].freeze
 
     module_function
@@ -44,13 +46,13 @@ module Onboarding
     end
 
     def company_type_option(key)
-      Option.new(field: :company_type, key: key, label: Onboarding::CompanyTypes.label(key), kind: :answer)
+      Option.new(field: :company_type, key: key, label: Onboarding::CompanyTypes.label(key), kind: :answer, icon: nil)
     end
     private_class_method :company_type_option
 
     def country_option(key, kind)
       Option.new(field: :country_of_incorporation, key: key,
-                 label: I18n.t("onboarding.quick_replies.country.#{key}"), kind: kind)
+                 label: I18n.t("onboarding.quick_replies.country.#{key}"), kind: kind, icon: COUNTRY_ICONS.fetch(key))
     end
     private_class_method :country_option
   end

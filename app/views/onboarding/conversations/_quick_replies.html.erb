@@ -40,6 +40,7 @@
               data-reply="<%= option.label %>"
               data-onboarding-chat-target="quickReply"
               data-action="onboarding-chat#sendQuickReply">
+              <%= image_tag "flags/#{option.icon}.svg", alt: "", class: "mr-2 h-4 w-[21px] shrink-0 rounded-[2px]" if option.icon %>
               <%= option.label %>
             </button>
           <% else %>
@@ -48,6 +49,7 @@
               class="kyn-chip"
               data-onboarding-chat-target="quickReply"
               data-action="onboarding-chat#focusComposer">
+              <%= image_tag "flags/#{option.icon}.svg", alt: "", class: "mr-2 h-4 w-[21px] shrink-0 rounded-[2px]" if option.icon %>
               <%= option.label %>
             </button>
           <% end %>

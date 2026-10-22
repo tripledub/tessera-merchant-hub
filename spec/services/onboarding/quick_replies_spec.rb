@@ -37,6 +37,10 @@ RSpec.describe Onboarding::QuickReplies do
         expect(options.map(&:label)).to eq([ "United Kingdom", "Malta", "Cyprus", "Other" ])
       end
 
+      it "gives each country its flag and Other a globe (MH-402)" do
+        expect(described_class.for(session).map(&:icon)).to eq(%w[gb mt cy globe])
+      end
+
       it "marks the countries as answers and Other as a prompt to type" do
         options = described_class.for(session)
 
@@ -66,6 +70,10 @@ RSpec.describe Onboarding::QuickReplies do
         )
         expect(options.map(&:kind)).to all(eq(:answer))
         expect(options.map(&:field)).to all(eq(:company_type))
+      end
+
+      it "gives the company types no icon" do
+        expect(described_class.for(session).map(&:icon)).to all(be_nil)
       end
 
       it "asks for the type before the country" do
