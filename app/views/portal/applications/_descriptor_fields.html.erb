@@ -1,24 +1,26 @@
-<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6",
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "space-y-6",
       data: { controller: "form-validation", action: "submit->form-validation#submitForm" } do |form| %>
   <%= hidden_field_tag :step, "descriptor" %>
   <%= render "portal/applications/error_summary", object: application %>
 
-  <div>
-    <%= form.label :descriptor, t("portal.applications.descriptor.descriptor"), class: "form-label" %>
-    <%= form.text_field :descriptor, required: true, class: "form-input" %>
+  <div class="kyn-field">
+    <%= form.label :descriptor, t("portal.applications.descriptor.descriptor"), class: "kyn-label" %>
+    <%= form.text_field :descriptor, required: true, class: "kyn-input" %>
   </div>
 
-  <div>
+  <div class="kyn-field">
     <%= form.label :descriptor_company_number,
-          t("portal.applications.descriptor.company_number"), class: "form-label" %>
-    <%= form.text_field :descriptor_company_number, required: true, class: "form-input" %>
+          t("portal.applications.descriptor.company_number"), class: "kyn-label" %>
+    <%= form.text_field :descriptor_company_number, required: true, class: "kyn-input" %>
   </div>
 
-  <div>
+  <div class="kyn-field">
     <%= form.label :descriptor_company_city,
-          t("portal.applications.descriptor.company_city"), class: "form-label" %>
-    <%= form.text_field :descriptor_company_city, required: true, class: "form-input" %>
+          t("portal.applications.descriptor.company_city"), class: "kyn-label" %>
+    <%= form.text_field :descriptor_company_city, required: true, class: "kyn-input" %>
   </div>
 
-  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+  <div class="flex justify-end">
+    <%= form.submit t("portal.applications.continue"), class: "kyn-btn-primary sm:w-60" %>
+  </div>
 <% end %>

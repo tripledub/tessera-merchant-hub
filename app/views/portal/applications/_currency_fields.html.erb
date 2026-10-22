@@ -1,4 +1,4 @@
-<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6",
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "space-y-6",
       data: { controller: "form-validation", action: "submit->form-validation#submitForm" } do |form| %>
   <%= hidden_field_tag :step, "currencies" %>
   <%= render "portal/applications/error_summary", object: application %>
@@ -8,7 +8,7 @@
        [ :settlement_currencies, t("portal.applications.currencies.settlement") ]
      ].each do |association, label| %>
     <fieldset>
-      <legend class="form-label"><%= label %></legend>
+      <legend class="kyn-label"><%= label %></legend>
       <%= render "shared/repeatable_fields/component",
             form: form,
             association: association,
@@ -21,5 +21,7 @@
     </fieldset>
   <% end %>
 
-  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+  <div class="flex justify-end">
+    <%= form.submit t("portal.applications.continue"), class: "kyn-btn-primary sm:w-60" %>
+  </div>
 <% end %>

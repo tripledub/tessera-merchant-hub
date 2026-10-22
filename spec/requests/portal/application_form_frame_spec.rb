@@ -17,6 +17,14 @@ RSpec.describe "Portal application form: frame and Company step", type: :request
     app/views/portal/applications/_domain_fields.html.erb
     app/views/shared/repeatable_fields/_component.html.erb
     app/views/shared/repeatable_fields/_item.html.erb
+    app/views/portal/applications/_fulfilment_fields.html.erb
+    app/views/portal/applications/_currency_fields.html.erb
+    app/views/portal/applications/_currency_item_fields.html.erb
+    app/views/portal/applications/_processing_fields.html.erb
+    app/views/portal/applications/_payment_fields.html.erb
+    app/views/portal/applications/_descriptor_fields.html.erb
+    app/views/portal/applications/_country_fields.html.erb
+    app/javascript/controllers/country_picker_controller.js
   ].freeze
   ADMIN_THEME = /
     (?<![\w-])(?:card|form-input|form-input-error|form-label|form-select|btn-primary|btn-secondary)(?![\w-])
@@ -84,6 +92,47 @@ RSpec.describe "Portal application form: frame and Company step", type: :request
     it "keeps the progress bar's value" do
       bar = page.find("[role='progressbar']")
       expect(bar["aria-valuenow"]).to eq("10")
+    end
+  end
+
+  describe "steps 2 to 8 (MH-424)" do
+    def render_step(step, **application_attributes)
+      OnboardingApplication.where(applicant: applicant_user.applicant).destroy_all
+      completed = OnboardingApplication::STEPS.take_while { |candidate| candidate != step }
+      create(:onboarding_application, applicant: applicant_user.applicant, current_step: step,
+                                      completed_steps: completed, **application_attributes)
+      get portal_application_path(step: step)
+    end
+
+    %w[fulfilment currencies processing payments descriptor countries].each do |step|
+      it "renders #{step} with the Kynetic controls and the portal error summary" do
+        render_step(step)
+
+        expect(response).to have_http_status(:ok)
+        expect(page).to have_css("form .kyn-label, form legend.kyn-label, form label.kyn-label")
+        expect(page).to have_css("form input[type='submit'].kyn-btn-primary[value='Save and continue']")
+        expect(response.body).not_to include("form-input")
+      end
+    end
+
+    it "gives every Yes/No question round kyn radios in 44px labels" do
+      render_step("fulfilment")
+
+      expect(page.all("input[type='radio']", visible: :all).size).to eq(6)
+      expect(page.all("input[type='radio'].kyn-radio", visible: :all).size).to eq(6)
+      expect(page).to have_css("label.kyn-check-label", minimum: 6)
+    end
+
+    it "keeps the conditional fields hidden until their answer is Yes" do
+      render_step("processing")
+
+      expect(page).to have_css("[data-conditional-fields-target='dependent'][hidden]", visible: :all)
+    end
+
+    it "keeps the no-JavaScript country list as a plain multi-select with the kyn input look" do
+      render_step("countries")
+
+      expect(page).to have_css("select#country-picker-select.kyn-input[multiple]", visible: :all)
     end
   end
 

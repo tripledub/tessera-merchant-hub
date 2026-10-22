@@ -1,4 +1,4 @@
-<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6",
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "space-y-6",
       data: { controller: "form-validation", action: "submit->form-validation#submitForm" } do |form| %>
   <%= hidden_field_tag :step, "fulfilment" %>
   <%= render "portal/applications/error_summary", object: application %>
@@ -8,11 +8,11 @@
        [ :full_payment_before_delivery, t("portal.applications.fulfilment.full_payment_before_delivery") ]
      ].each do |field, label| %>
     <fieldset>
-      <legend class="form-label"><%= label %></legend>
-      <div class="flex gap-6">
+      <legend class="kyn-label"><%= label %></legend>
+      <div class="flex flex-wrap gap-x-6">
         <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, option| %>
-          <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-            <%= form.radio_button field, value, required: true %>
+          <label class="kyn-check-label">
+            <%= form.radio_button field, value, class: "kyn-radio", required: true %>
             <%= option %>
           </label>
         <% end %>
@@ -22,11 +22,11 @@
 
   <fieldset data-controller="conditional-fields"
             data-conditional-fields-show-when-value="true">
-    <legend class="form-label"><%= t("portal.applications.fulfilment.takes_deposits") %></legend>
-    <div class="flex gap-6">
+    <legend class="kyn-label"><%= t("portal.applications.fulfilment.takes_deposits") %></legend>
+    <div class="flex flex-wrap gap-x-6">
       <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, option| %>
-        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-          <%= form.radio_button :takes_deposits, value,
+        <label class="kyn-check-label">
+          <%= form.radio_button :takes_deposits, value, class: "kyn-radio",
                 required: true,
                 data: {
                   conditional_fields_target: "source",
@@ -40,27 +40,29 @@
     <div class="mt-4 grid gap-4 sm:grid-cols-2"
          data-conditional-fields-target="dependent"
          <%= "hidden" unless application.takes_deposits? %>>
-      <div>
-        <%= form.label :deposit_percentage, t("portal.applications.fulfilment.deposit_percentage"), class: "form-label" %>
+      <div class="kyn-field">
+        <%= form.label :deposit_percentage, t("portal.applications.fulfilment.deposit_percentage"), class: "kyn-label" %>
         <%= form.number_field :deposit_percentage, min: 0.01, max: 100, step: 0.01,
-              required: true, disabled: !application.takes_deposits?, class: "form-input" %>
+              required: true, disabled: !application.takes_deposits?, class: "kyn-input" %>
       </div>
-      <div>
-        <%= form.label :remaining_balance_due, t("portal.applications.fulfilment.remaining_balance_due"), class: "form-label" %>
+      <div class="kyn-field">
+        <%= form.label :remaining_balance_due, t("portal.applications.fulfilment.remaining_balance_due"), class: "kyn-label" %>
         <%= form.text_field :remaining_balance_due,
-              required: true, disabled: !application.takes_deposits?, class: "form-input" %>
+              required: true, disabled: !application.takes_deposits?, class: "kyn-input" %>
       </div>
     </div>
   </fieldset>
 
-  <div>
-    <%= form.label :service_requirements, t("portal.applications.fulfilment.service_requirements"), class: "form-label" %>
-    <%= form.text_area :service_requirements, rows: 4, required: true, class: "form-input" %>
+  <div class="kyn-field">
+    <%= form.label :service_requirements, t("portal.applications.fulfilment.service_requirements"), class: "kyn-label" %>
+    <%= form.text_area :service_requirements, rows: 4, required: true, class: "kyn-input" %>
   </div>
-  <div>
-    <%= form.label :integration_type, t("portal.applications.fulfilment.integration_type"), class: "form-label" %>
-    <%= form.text_field :integration_type, required: true, class: "form-input" %>
+  <div class="kyn-field">
+    <%= form.label :integration_type, t("portal.applications.fulfilment.integration_type"), class: "kyn-label" %>
+    <%= form.text_field :integration_type, required: true, class: "kyn-input" %>
   </div>
 
-  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+  <div class="flex justify-end">
+    <%= form.submit t("portal.applications.continue"), class: "kyn-btn-primary sm:w-60" %>
+  </div>
 <% end %>
