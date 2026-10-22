@@ -1,7 +1,7 @@
 <%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6",
       data: { controller: "form-validation", action: "submit->form-validation#submitForm" } do |form| %>
   <%= hidden_field_tag :step, "processing" %>
-  <%= render "shared/error_messages", object: application %>
+  <%= render "portal/applications/error_summary", object: application %>
 
   <fieldset data-controller="conditional-fields" data-conditional-fields-show-when-value="true">
     <legend class="form-label"><%= t("portal.applications.processing.accepts_cards") %></legend>

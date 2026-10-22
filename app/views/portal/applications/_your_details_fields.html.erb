@@ -2,14 +2,14 @@
     used only to greet them. Sent apart from the company answers, as applicant_user[...]. %>
 <%= fields_for :applicant_user, current_applicant_user do |user_form| %>
   <fieldset>
-    <legend class="form-label"><%= t(".legend") %></legend>
-    <p class="mb-2 text-xs text-gray-500"><%= t(".hint") %></p>
+    <legend class="kyn-label"><%= t(".legend") %></legend>
+    <p class="mb-3 text-[13px] text-kyn-slate"><%= t(".hint") %></p>
     <div class="grid gap-4 sm:grid-cols-2">
       <% %i[first_name last_name].each do |attribute| %>
-        <div>
-          <%= user_form.label attribute, t(".#{attribute}"), class: "form-label" %>
+        <div class="kyn-field">
+          <%= user_form.label attribute, t(".#{attribute}"), class: "kyn-label" %>
           <%= user_form.text_field attribute, autocomplete: attribute == :first_name ? "given-name" : "family-name",
-                maxlength: ApplicantUser::NAME_MAX_LENGTH, class: "form-input" %>
+                maxlength: ApplicantUser::NAME_MAX_LENGTH, class: "kyn-input" %>
           <% current_applicant_user.errors[attribute].each do |message| %>
             <p class="form-error"><%= t(".#{attribute}") %> <%= message %></p>
           <% end %>

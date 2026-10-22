@@ -1,11 +1,11 @@
-<fieldset class="card">
-  <legend class="px-1 text-sm font-semibold text-gray-900"><%= title %></legend>
+<fieldset class="space-y-4">
+  <legend class="mb-3 text-[14px] font-bold text-kyn-navy"><%= title %></legend>
   <%= form.hidden_field :id if form.object.persisted? %>
-  <div class="grid gap-4 sm:grid-cols-2">
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-6">
     <% %i[line1 line2 city postcode country].each do |field| %>
-      <div class="<%= "sm:col-span-2" if field.in?(%i[line1 line2]) %>">
-        <%= form.label field, t("portal.applications.company.address.#{field}"), class: "form-label" %>
-        <%= form.text_field field, required: field.in?(%i[line1 city country]), class: "form-input" %>
+      <div class="kyn-field <%= field.in?(%i[line1 line2]) ? "col-span-2 sm:col-span-6" : (field == :country ? "col-span-2" : "col-span-1 sm:col-span-2") %>">
+        <%= form.label field, t("portal.applications.company.address.#{field}"), class: "kyn-label" %>
+        <%= form.text_field field, required: field.in?(%i[line1 city country]), class: "kyn-input" %>
         <% form.object.errors.full_messages_for(field).each do |message| %>
           <p class="form-error"><%= message %></p>
         <% end %>

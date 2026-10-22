@@ -1,7 +1,7 @@
-<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6",
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "space-y-6",
       data: { controller: "form-validation", action: "submit->form-validation#submitForm" } do |form| %>
   <%= hidden_field_tag :step, "company" %>
-  <%= render "shared/error_messages", object: application %>
+  <%= render "portal/applications/error_summary", object: application %>
 
   <%= render "portal/applications/your_details_fields" %>
 
@@ -9,19 +9,19 @@
     <%= applicant_form.hidden_field :id %>
 
     <div class="grid gap-4 sm:grid-cols-2">
-      <div>
-        <%= applicant_form.label :company_name, t("portal.applications.company.company_name"), class: "form-label" %>
+      <div class="kyn-field">
+        <%= applicant_form.label :company_name, t("portal.applications.company.company_name"), class: "kyn-label" %>
         <%# A business the PSP added has a name but no company name the applicant has declared: offer it (MH-415). %>
         <% prefilled_name = applicant_form.object.company_name.blank? && applicant_form.object.name.present? %>
-        <%= applicant_form.text_field :company_name, required: true, class: "form-input",
+        <%= applicant_form.text_field :company_name, required: true, class: "kyn-input",
               **(prefilled_name ? { value: applicant_form.object.name } : {}) %>
         <% if prefilled_name %>
-          <p class="mt-1 text-xs text-gray-500"><%= t("portal.applications.company.company_name_prefilled") %></p>
+          <p class="mt-1.5 text-[13px] text-kyn-slate"><%= t("portal.applications.company.company_name_prefilled") %></p>
         <% end %>
       </div>
-      <div>
-        <%= applicant_form.label :company_number, t("portal.applications.company.company_number"), class: "form-label" %>
-        <%= applicant_form.text_field :company_number, class: "form-input" %>
+      <div class="kyn-field">
+        <%= applicant_form.label :company_number, t("portal.applications.company.company_number"), class: "kyn-label" %>
+        <%= applicant_form.text_field :company_number, class: "kyn-input" %>
       </div>
     </div>
 
@@ -30,9 +30,9 @@
     <% end %>
 
     <div data-controller="address-same-as">
-      <label class="flex items-center gap-2 text-sm text-gray-700">
+      <label class="kyn-check-label">
         <%= check_box_tag "onboarding_application[trading_address_same_as_registered]", "1", @trading_address_same_as_registered,
-              data: { "address-same-as-target": "checkbox", action: "change->address-same-as#toggle" } %>
+              class: "kyn-checkbox", data: { "address-same-as-target": "checkbox", action: "change->address-same-as#toggle" } %>
         <%= t("portal.applications.company.trading_address_same_as_registered") %>
       </label>
 
@@ -44,7 +44,7 @@
     </div>
 
     <fieldset>
-      <legend class="form-label"><%= t("portal.applications.company.domains") %></legend>
+      <legend class="kyn-label"><%= t("portal.applications.company.domains") %></legend>
       <%= render "shared/repeatable_fields/component",
             form: applicant_form,
             association: :applicant_domains,
@@ -55,35 +55,37 @@
             min: 0 %>
     </fieldset>
 
-    <div>
-      <%= applicant_form.label :sector, t("portal.applications.company.sector"), class: "form-label" %>
+    <div class="kyn-field">
+      <%= applicant_form.label :sector, t("portal.applications.company.sector"), class: "kyn-label" %>
       <%= applicant_form.select :sector,
             Applicant.sectors.keys.map { |sector| [t("applicants.sectors.#{sector}"), sector] },
-            {}, class: "form-select" %>
+            {}, class: "kyn-input" %>
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :eu_entity_details, t("portal.applications.company.eu_entity_details"), class: "form-label" %>
-    <%= form.text_area :eu_entity_details, rows: 3, class: "form-input" %>
+  <div class="kyn-field">
+    <%= form.label :eu_entity_details, t("portal.applications.company.eu_entity_details"), class: "kyn-label" %>
+    <%= form.text_area :eu_entity_details, rows: 3, class: "kyn-input" %>
   </div>
-  <div>
-    <%= form.label :referrer, t("portal.applications.company.referrer"), class: "form-label" %>
-    <%= form.text_field :referrer, class: "form-input" %>
+  <div class="kyn-field">
+    <%= form.label :referrer, t("portal.applications.company.referrer"), class: "kyn-label" %>
+    <%= form.text_field :referrer, class: "kyn-input" %>
   </div>
-  <div>
-    <%= form.label :business_model_description, t("portal.applications.company.business_model_description"), class: "form-label" %>
-    <%= form.text_area :business_model_description, rows: 5, required: true, class: "form-input" %>
+  <div class="kyn-field">
+    <%= form.label :business_model_description, t("portal.applications.company.business_model_description"), class: "kyn-label" %>
+    <%= form.text_area :business_model_description, rows: 5, required: true, class: "kyn-input" %>
   </div>
-  <div>
-    <%= form.label :test_login_details, t("portal.applications.company.test_login_details"), class: "form-label" %>
-    <p class="mb-2 text-xs text-gray-500"><%= t("portal.applications.company.test_login_warning") %></p>
-    <%= form.text_area :test_login_details, rows: 3, class: "form-input", autocomplete: "off" %>
+  <div class="kyn-field">
+    <%= form.label :test_login_details, t("portal.applications.company.test_login_details"), class: "kyn-label" %>
+    <p class="mb-2 text-[13px] text-kyn-slate"><%= t("portal.applications.company.test_login_warning") %></p>
+    <%= form.text_area :test_login_details, rows: 3, class: "kyn-input", autocomplete: "off" %>
   </div>
-  <div>
-    <%= form.label :operating_licence, t("portal.applications.company.operating_licence"), class: "form-label" %>
-    <%= form.text_area :operating_licence, rows: 3, required: true, class: "form-input" %>
+  <div class="kyn-field">
+    <%= form.label :operating_licence, t("portal.applications.company.operating_licence"), class: "kyn-label" %>
+    <%= form.text_area :operating_licence, rows: 3, required: true, class: "kyn-input" %>
   </div>
 
-  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+  <div class="flex justify-end">
+    <%= form.submit t("portal.applications.continue"), class: "kyn-btn-primary sm:w-60" %>
+  </div>
 <% end %>

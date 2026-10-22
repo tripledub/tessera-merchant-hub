@@ -1,6 +1,6 @@
-<div>
-  <%= form.label :name, t("portal.applications.company.domain"), class: "form-label" %>
-  <%= form.text_field :name, placeholder: t("portal.applications.company.domain_placeholder"), class: "form-input" %>
+<div class="kyn-field">
+  <%= form.label :name, t("portal.applications.company.domain"), class: "kyn-label" %>
+  <%= form.text_field :name, placeholder: t("portal.applications.company.domain_placeholder"), class: "kyn-input" %>
   <% form.object.errors.full_messages_for(:name).each do |message| %>
     <p class="form-error"><%= message %></p>
   <% end %>

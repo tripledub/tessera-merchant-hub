@@ -1,5 +1,5 @@
 <div class="mt-6 space-y-6">
-  <%= render "shared/error_messages", object: application %>
+  <%= render "portal/applications/error_summary", object: application %>
 
   <% applicant = application.applicant %>
   <% trading_address_row = if applicant.trading_address_same_as_registered?
