@@ -1,33 +1,33 @@
-<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6",
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "space-y-6",
       data: { controller: "form-validation", action: "submit->form-validation#submitForm" } do |form| %>
   <%= hidden_field_tag :step, "payments" %>
   <%= render "portal/applications/error_summary", object: application %>
 
   <fieldset data-controller="conditional-fields" data-conditional-fields-show-when-value="true">
-    <legend class="form-label"><%= t("portal.applications.payments.uses_shopping_cart") %></legend>
-    <div class="flex gap-6">
+    <legend class="kyn-label"><%= t("portal.applications.payments.uses_shopping_cart") %></legend>
+    <div class="flex flex-wrap gap-x-6">
       <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, label| %>
-        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-          <%= form.radio_button :uses_shopping_cart, value, required: true,
+        <label class="kyn-check-label">
+          <%= form.radio_button :uses_shopping_cart, value, class: "kyn-radio", required: true,
                 data: { conditional_fields_target: "source", action: "conditional-fields#toggle" } %>
           <%= label %>
         </label>
       <% end %>
     </div>
-    <div class="mt-4" data-conditional-fields-target="dependent"
+    <div class="kyn-field mt-4" data-conditional-fields-target="dependent"
          <%= "hidden" unless application.uses_shopping_cart? %>>
-      <%= form.label :shopping_cart_provider, t("portal.applications.payments.shopping_cart_provider"), class: "form-label" %>
+      <%= form.label :shopping_cart_provider, t("portal.applications.payments.shopping_cart_provider"), class: "kyn-label" %>
       <%= form.text_field :shopping_cart_provider, required: true,
-            disabled: !application.uses_shopping_cart?, class: "form-input" %>
+            disabled: !application.uses_shopping_cart?, class: "kyn-input" %>
     </div>
   </fieldset>
 
   <fieldset data-controller="conditional-fields" data-conditional-fields-show-when-value="true">
-    <legend class="form-label"><%= t("portal.applications.payments.takes_recurring_payments") %></legend>
-    <div class="flex gap-6">
+    <legend class="kyn-label"><%= t("portal.applications.payments.takes_recurring_payments") %></legend>
+    <div class="flex flex-wrap gap-x-6">
       <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, label| %>
-        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-          <%= form.radio_button :takes_recurring_payments, value, required: true,
+        <label class="kyn-check-label">
+          <%= form.radio_button :takes_recurring_payments, value, class: "kyn-radio", required: true,
                 data: { conditional_fields_target: "source", action: "conditional-fields#toggle" } %>
           <%= label %>
         </label>
@@ -40,11 +40,11 @@
            [ :sends_recurring_payment_advance_notifications, t("portal.applications.payments.sends_advance_notifications") ]
          ].each do |attribute, question| %>
         <fieldset>
-          <legend class="form-label"><%= question %></legend>
-          <div class="flex gap-6">
+          <legend class="kyn-label"><%= question %></legend>
+          <div class="flex flex-wrap gap-x-6">
             <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, label| %>
-              <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-                <%= form.radio_button attribute, value, required: true, disabled: !application.takes_recurring_payments? %>
+              <label class="kyn-check-label">
+                <%= form.radio_button attribute, value, class: "kyn-radio", required: true, disabled: !application.takes_recurring_payments? %>
                 <%= label %>
               </label>
             <% end %>
@@ -54,5 +54,7 @@
     </div>
   </fieldset>
 
-  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+  <div class="flex justify-end">
+    <%= form.submit t("portal.applications.continue"), class: "kyn-btn-primary sm:w-60" %>
+  </div>
 <% end %>

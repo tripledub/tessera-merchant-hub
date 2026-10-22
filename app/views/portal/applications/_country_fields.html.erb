@@ -1,24 +1,24 @@
-<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6" do |form| %>
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "space-y-6" do |form| %>
   <%= hidden_field_tag :step, "countries" %>
   <%= render "portal/applications/error_summary", object: application %>
 
-  <div data-controller="country-picker"
+  <div class="kyn-field" data-controller="country-picker"
        data-country-picker-remove-label-value="<%= t("portal.applications.countries.remove") %>"
        data-country-picker-no-results-value="<%= t("portal.applications.countries.no_results") %>">
-    <label for="country-picker-select" class="form-label"><%= t("portal.applications.countries.legend") %></label>
-    <p class="mt-1 text-sm text-gray-500"><%= t("portal.applications.countries.hint") %></p>
+    <label for="country-picker-select" class="kyn-label"><%= t("portal.applications.countries.legend") %></label>
+    <p class="mt-1 text-[13px] text-kyn-slate"><%= t("portal.applications.countries.hint") %></p>
 
     <%# Blank value lets an emptied selection reach the server (and fail the presence check). %>
     <%= hidden_field_tag "onboarding_application[target_country_codes][]", "", id: nil %>
     <%# Plain multi-select that works without JavaScript; the controller hides it and renders pills + search. %>
     <%= select_tag "onboarding_application[target_country_codes][]",
           options_for_select(OnboardingCountry.options, application.target_country_codes),
-          multiple: true, id: "country-picker-select", size: 10, class: "form-select mt-3 !h-auto",
+          multiple: true, id: "country-picker-select", size: 10, class: "kyn-input mt-3 !h-auto bg-none",
           data: { country_picker_target: "select" } %>
 
     <div hidden data-country-picker-target="ui" class="relative mt-3">
       <div data-country-picker-target="control" data-action="click->country-picker#focusInput"
-           class="form-input flex min-h-12 flex-wrap items-center gap-2 !py-2">
+           class="flex min-h-[50px] w-full flex-wrap items-center gap-2 rounded-kyn-md border-[1.5px] border-kyn-border bg-kyn-surface px-3 py-2 transition-colors focus-within:border-kyn-primary focus-within:ring-[3px] focus-within:ring-kyn-primary/30">
         <div data-country-picker-target="pills" class="contents"></div>
         <input type="text" role="combobox" autocomplete="off" spellcheck="false"
                aria-label="<%= t("portal.applications.countries.search") %>"
@@ -26,13 +26,15 @@
                placeholder="<%= t("portal.applications.countries.search") %>"
                data-country-picker-target="input"
                data-action="input->country-picker#filter focus->country-picker#open keydown->country-picker#keydown"
-               class="min-w-32 flex-1 border-0 bg-transparent p-1 text-theme-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0">
+               class="min-h-8 min-w-32 flex-1 border-0 bg-transparent p-1 text-[15px] text-kyn-navy placeholder:text-kyn-slate focus:outline-none focus:ring-0">
       </div>
       <ul id="country-picker-list" role="listbox" aria-multiselectable="true" hidden
           data-country-picker-target="list"
-          class="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-lg border border-gray-300 bg-white py-1 shadow-theme-lg"></ul>
+          class="absolute z-20 mt-1 max-h-64 w-full overflow-y-auto rounded-kyn-md border border-kyn-border bg-kyn-surface py-1 shadow-lg"></ul>
     </div>
   </div>
 
-  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+  <div class="flex justify-end">
+    <%= form.submit t("portal.applications.continue"), class: "kyn-btn-primary sm:w-60" %>
+  </div>
 <% end %>

@@ -1,25 +1,27 @@
-<%= form_with model: application, url: portal_application_path, method: :patch, class: "mt-8 space-y-6",
+<%= form_with model: application, url: portal_application_path, method: :patch, class: "space-y-6",
       data: { controller: "form-validation", action: "submit->form-validation#submitForm" } do |form| %>
   <%= hidden_field_tag :step, "processing" %>
   <%= render "portal/applications/error_summary", object: application %>
 
   <fieldset data-controller="conditional-fields" data-conditional-fields-show-when-value="true">
-    <legend class="form-label"><%= t("portal.applications.processing.accepts_cards") %></legend>
-    <div class="flex gap-6">
+    <legend class="kyn-label"><%= t("portal.applications.processing.accepts_cards") %></legend>
+    <div class="flex flex-wrap gap-x-6">
       <% [[true, t("portal.applications.yes")], [false, t("portal.applications.no")]].each do |value, label| %>
-        <label class="inline-flex items-center gap-2 text-sm text-gray-700">
-          <%= form.radio_button :currently_accepts_card_payments, value, required: true,
+        <label class="kyn-check-label">
+          <%= form.radio_button :currently_accepts_card_payments, value, class: "kyn-radio", required: true,
                 data: { conditional_fields_target: "source", action: "conditional-fields#toggle" } %>
           <%= label %>
         </label>
       <% end %>
     </div>
-    <div class="mt-4" data-conditional-fields-target="dependent"
+    <div class="kyn-field mt-4" data-conditional-fields-target="dependent"
          <%= "hidden" unless application.currently_accepts_card_payments? %>>
-      <%= form.label :current_acquirer, t("portal.applications.processing.current_acquirer"), class: "form-label" %>
+      <%= form.label :current_acquirer, t("portal.applications.processing.current_acquirer"), class: "kyn-label" %>
       <%= form.text_field :current_acquirer, required: true,
-            disabled: !application.currently_accepts_card_payments?, class: "form-input" %>
+            disabled: !application.currently_accepts_card_payments?, class: "kyn-input" %>
     </div>
   </fieldset>
-  <%= form.submit t("portal.applications.continue"), class: "btn-primary" %>
+  <div class="flex justify-end">
+    <%= form.submit t("portal.applications.continue"), class: "kyn-btn-primary sm:w-60" %>
+  </div>
 <% end %>

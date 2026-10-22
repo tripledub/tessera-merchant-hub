@@ -475,6 +475,21 @@ aside[data-collapsed] .menu-item {
   &:disabled { @apply cursor-not-allowed bg-kyn-bg; }
 }
 
+/* Radio (MH-424): the same look as kyn-checkbox, round, with a dot when chosen. Sits in a
+   kyn-check-label for a 44px touch target; error comes from aria-invalid. */
+@utility kyn-radio {
+  @apply size-[22px] shrink-0 cursor-pointer appearance-none rounded-full border-[1.5px] border-kyn-border
+         bg-kyn-surface transition-colors;
+
+  &:checked {
+    @apply border-kyn-primary bg-kyn-primary;
+    background-image: radial-gradient(circle, #fff 0 4px, transparent 5px);
+  }
+  &:focus-visible { @apply ring-[3px] ring-kyn-primary/30 outline-none; }
+  &[aria-invalid="true"] { @apply border-kyn-error; }
+  &:disabled { @apply cursor-not-allowed bg-kyn-bg; }
+}
+
 /* One digit of the one-time sign-in code (MH-405). Six sit in a row with 8px
    between them; error comes from aria-invalid, as for the other fields. */
 @utility kyn-otp-box {
