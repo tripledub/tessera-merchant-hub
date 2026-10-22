@@ -143,6 +143,18 @@ RSpec.describe "Onboarding conversations", type: :request do
 
       before { sign_in applicant_user, scope: :applicant_user }
 
+      it "puts a decorative flag on each country chip and keeps its label (MH-402)" do
+        session = create(:onboarding_session, applicant: applicant_user.applicant, stage_data: all_but_country)
+        create(:onboarding_message, onboarding_session: session, role: :bot, content: "Which country?")
+
+        get portal_onboarding_path
+
+        chips = strip.css("button.kyn-chip")
+        expect(chips.map { |chip| chip.text.strip }).to eq([ "United Kingdom", "Malta", "Cyprus", "Other" ])
+        expect(chips.map { |chip| chip.at_css("img")&.[]("src").to_s[%r{/flags/(\w+)}, 1] }).to eq(%w[gb mt cy globe])
+        expect(chips.map { |chip| chip.at_css("img")["alt"] }).to all(eq(""))
+      end
+
       it "renders the chips, the hint and a labelled group when the country is the question" do
         session = create(:onboarding_session, applicant: applicant_user.applicant, stage_data: all_but_country)
         create(:onboarding_message, onboarding_session: session, role: :bot, content: "Which country?")
