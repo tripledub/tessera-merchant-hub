@@ -130,7 +130,7 @@ gem "pdf-inspector", "~> 1.3", group: :test
 # via roo; declared explicitly since we now depend on it directly.
 gem "rubyzip", "~> 3.7", require: "zip"
 
-gem "honeybadger", "~> 6.9"
+gem "honeybadger", "~> 6.10"
 
 # Read .xlsx/.xls/.csv processing statements for Statements::SpreadsheetReader [https://github.com/roo-rb/roo]
 gem "roo", "~> 3.0"
